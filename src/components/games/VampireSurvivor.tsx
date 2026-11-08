@@ -17,6 +17,7 @@ import { GameJuice } from '@/lib/games/game-juice';
 import { playSyntheticTone } from '@/lib/games/audio-mixer';
 import { useArcadePortal } from '@/lib/games/arcade-portal';
 import { celebrate } from '@/lib/games/celebration';
+import { loadHighScore, saveHighScore } from '@/lib/games/game-save';
 import { VAMPIRE_SURVIVOR_SPRITES } from '@/lib/games/sprites';
 import {
   createShareCardCanvas,
@@ -75,6 +76,7 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
   const keysPressedRef = useRef<Record<string, boolean>>({});
 
   const [gameState, setGameState] = useState<VampireSurvivorState['gameState']>('playing');
+  const [highScore, setHighScore] = useState(() => loadHighScore('vampire-survivor', 0));
   const [isCopied, setIsCopied] = useState(false);
   const [hud, setHud] = useState({
     hp: 100,
@@ -328,6 +330,11 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
               triggerHaptic('heavy');
               MobileHapticsPro.warningPattern();
               reportDeath();
+              const { isNewBest, bestScore } = saveHighScore('vampire-survivor', s.killCount);
+              if (isNewBest) setHighScore(bestScore);
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'vampire-survivor', score: s.killCount } }));
+              }
               if (s.survivalTime >= 60 || s.killCount >= 30) {
                 celebrate(containerRef.current, { preset: 'stardust' });
               }

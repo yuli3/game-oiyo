@@ -28,6 +28,7 @@ import {
 } from "../../lib/games/quiet-hunt";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import { getSpriteUrl, QUIET_HUNT_UI_SPRITES } from "../../lib/games/sprites";
 import QuietHuntScene, { type FieldGlide } from "./QuietHuntScene";
 
@@ -492,8 +493,20 @@ export default function QuietHunt({ locale = "en" }: { locale?: Locale }) {
   const reduce = usePrefersReducedMotion();
   const opening = useRef(createHunt(0));
   const [seed, setSeed] = useState(0);
+  const [highScore, setHighScore] = useState(() => loadHighScore("quiet-hunt", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<HuntState>(opening.current);
+
+  useEffect(() => {
+    if (state.status === "win") {
+      const score = Math.max(10, 100 - state.steps * 10);
+      const { isNewBest, bestScore } = saveHighScore("quiet-hunt", score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "quiet-hunt", score } }));
+      }
+    }
+  }, [state.status, state.steps]);
   const [shown, setShown] = useState<HuntState>(opening.current);
   const [glide, setGlide] = useState<FieldGlide | null>(null);
   const [busy, setBusy] = useState(false);

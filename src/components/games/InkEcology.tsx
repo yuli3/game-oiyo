@@ -27,6 +27,7 @@ import {
 } from "../../lib/games/ink-ecology";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import InkEcologyScene, { type PondGlide } from "./InkEcologyScene";
 
 function TiltInkButton({
@@ -528,8 +529,20 @@ export default function InkEcology({ locale = "en" }: { locale?: Locale }) {
   const reduce = usePrefersReducedMotion();
   const opening = useRef(createPond(0));
   const [seed, setSeed] = useState(0);
+  const [highScore, setHighScore] = useState(() => loadHighScore("ink-ecology", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<PondState>(opening.current);
+
+  useEffect(() => {
+    if (state.status === "win") {
+      const score = Math.max(10, 100 - state.steps * 10);
+      const { isNewBest, bestScore } = saveHighScore("ink-ecology", score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "ink-ecology", score } }));
+      }
+    }
+  }, [state.status, state.steps]);
   const [shown, setShown] = useState<PondState>(opening.current);
   const [glide, setGlide] = useState<PondGlide | null>(null);
   const [busy, setBusy] = useState(false);

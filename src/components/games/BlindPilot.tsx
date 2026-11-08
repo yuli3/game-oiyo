@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Share2, Check } from "lucide-react";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
 import { celebrate } from "../../lib/games/celebration";
@@ -810,8 +811,20 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
   const reduce = usePrefersReducedMotion();
   const opening = useRef(createPilot(0));
   const [seed, setSeed] = useState(0);
+  const [highScore, setHighScore] = useState(() => loadHighScore("blind-pilot", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<PilotState>(opening.current);
+
+  useEffect(() => {
+    if (state.status === "win") {
+      const score = Math.max(10, 100 - state.steps * 10);
+      const { isNewBest, bestScore } = saveHighScore("blind-pilot", score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "blind-pilot", score } }));
+      }
+    }
+  }, [state.status, state.steps]);
   const [shown, setShown] = useState<PilotState>(opening.current);
   const [call, setCall] = useState(() => attitudeOf(opening.current));
   const [glide, setGlide] = useState<PilotGlide | null>(null);

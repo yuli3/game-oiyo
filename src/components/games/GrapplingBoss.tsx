@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import { GRAPPLING_BOSS_SPRITES } from "../../lib/games/sprites";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
@@ -115,6 +116,7 @@ export function GrapplingBoss() {
 
   // Immersive Fullscreen and Victory/Defeat Modal state
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [highScore, setHighScore] = useState(() => loadHighScore("grappling-boss", 0));
   const [modalState, setModalState] = useState<{
     status: "playing" | "victory" | "defeated";
     score: number;
@@ -122,6 +124,16 @@ export function GrapplingBoss() {
     status: "playing",
     score: 0,
   });
+
+  useEffect(() => {
+    if (modalState.status === "victory" || modalState.status === "defeated") {
+      const { isNewBest, bestScore } = saveHighScore("grappling-boss", modalState.score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "grappling-boss", score: modalState.score } }));
+      }
+    }
+  }, [modalState.status, modalState.score]);
 
   const getAudioContext = useAudioContext();
   const { copied, shareText } = useClipboardShare();

@@ -13,6 +13,7 @@ import { addTrauma, createShakeState, updateShake } from "@/lib/games/juice-engi
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
 import { celebrate } from "@/lib/games/celebration";
+import { loadHighScore, saveHighScore } from "@/lib/games/game-save";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -72,7 +73,19 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
   const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const [copied, setCopied] = useState(false);
   const [game, setGame] = useState<PeglinGame>(() => createInitialPeglinGame(1));
+  const [highScore, setHighScore] = useState(() => loadHighScore("peglin-rogue", 0));
   const [aimAngle, setAimAngle] = useState(Math.PI / 2); // default straight down
+
+  useEffect(() => {
+    if (game.status === "won" || game.status === "gameover") {
+      const score = game.stage * 1000 + (game.enemy.maxHp - game.enemy.hp);
+      const { isNewBest, bestScore } = saveHighScore("peglin-rogue", score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "peglin-rogue", score } }));
+      }
+    }
+  }, [game.status, game.stage, game.enemy.hp, game.enemy.maxHp]);
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
 
   const gameRef = useRef<PeglinGame>(game);

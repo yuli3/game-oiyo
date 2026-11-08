@@ -14,6 +14,7 @@ import {
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
 import { celebrate } from "@/lib/games/celebration";
+import { loadHighScore, saveHighScore } from "@/lib/games/game-save";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -73,8 +74,19 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
   const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const [copied, setCopied] = useState(false);
   const [game, setGame] = useState<MiniMetroGame>(() => createInitialMiniMetroGame());
+  const [highScore, setHighScore] = useState(() => loadHighScore("mini-metro", 0));
   const [activeLineId, setActiveLineId] = useState<string>("line-red");
   const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (game.status === "gameover") {
+      const { isNewBest, bestScore } = saveHighScore("mini-metro", game.passengersDelivered);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "mini-metro", score: game.passengersDelivered } }));
+      }
+    }
+  }, [game.status, game.passengersDelivered]);
 
   const gameRef = useRef<MiniMetroGame>(game);
   gameRef.current = game;

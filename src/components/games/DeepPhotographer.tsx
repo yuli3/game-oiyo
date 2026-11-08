@@ -31,6 +31,7 @@ import {
 } from "../../lib/games/deep-photographer";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import DeepPhotographerScene, { type ShotGlide } from "./DeepPhotographerScene";
 import { DEEP_PHOTOGRAPHER_UI_SPRITES } from "../../lib/games/sprites";
 
@@ -549,8 +550,20 @@ export default function DeepPhotographer({ locale = "en" }: { locale?: Locale })
   const reduce = usePrefersReducedMotion();
   const opening = useRef(createShot(0));
   const [seed, setSeed] = useState(0);
+  const [highScore, setHighScore] = useState(() => loadHighScore("deep-photographer", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<ShotState>(opening.current);
+
+  useEffect(() => {
+    if (state.status === "win") {
+      const score = Math.max(10, 100 - state.steps * 10);
+      const { isNewBest, bestScore } = saveHighScore("deep-photographer", score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "deep-photographer", score } }));
+      }
+    }
+  }, [state.status, state.steps]);
   const [shown, setShown] = useState<ShotState>(opening.current);
   const [glide, setGlide] = useState<ShotGlide | null>(null);
   const [busy, setBusy] = useState(false);

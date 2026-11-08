@@ -14,6 +14,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 import { getSpriteUrl, POTION_CRAFT_SPRITES } from '../../lib/games/sprites';
 import { Maximize2, Minimize2, Share2, Check, RotateCcw, Sparkles } from 'lucide-react';
 
@@ -75,7 +76,18 @@ export default function PotionCraft() {
 
   // Reactive UI State
   const [gold, setGold] = useState<number>(50);
+  const [highScore, setHighScore] = useState(() => loadHighScore('potion-craft', 50));
   const [activeIngredient, setActiveIngredient] = useState<IngredientId | null>(null);
+
+  useEffect(() => {
+    if (gold > 50) {
+      const { isNewBest, bestScore } = saveHighScore('potion-craft', gold);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'potion-craft', score: gold } }));
+      }
+    }
+  }, [gold]);
   const [grindProgress, setGrindProgress] = useState<number>(0);
   const [activeEffects, setActiveEffects] = useState<PotionEffect[]>([]);
   const [isFailed, setIsFailed] = useState<boolean>(false);

@@ -9,6 +9,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 import {
   IntoTheBreachEngine,
   type MechUnit,
@@ -99,9 +100,21 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
   const [currentTurn, setCurrentTurn] = useState<number>(1);
   const [maxTurns] = useState<number>(4);
   const [gamePhase, setGamePhase] = useState<'player' | 'enemy' | 'victory' | 'defeat'>('player');
+  const [highScore, setHighScore] = useState(() => loadHighScore('into-the-breach', 0));
   const [mechsState, setMechsState] = useState<MechUnit[]>([]);
   const [screenShake, setScreenShake] = useState<number>(0);
   const [shareStatus, setShareStatus] = useState<'idle' | 'copied' | 'downloaded'>('idle');
+
+  useEffect(() => {
+    if (gamePhase === 'victory' || gamePhase === 'defeat') {
+      const score = powerGrid * 150 + currentTurn * 100 + (gamePhase === 'victory' ? 500 : 0);
+      const { isNewBest, bestScore } = saveHighScore('into-the-breach', score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'into-the-breach', score } }));
+      }
+    }
+  }, [gamePhase, powerGrid, currentTurn]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

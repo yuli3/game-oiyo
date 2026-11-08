@@ -27,6 +27,7 @@ import {
 } from "../../lib/games/cloud-sculptor";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import CloudSculptorScene, { type CloudGlide } from "./CloudSculptorScene";
 import { CLOUD_SCULPTOR_UI_SPRITES } from "../../lib/games/sprites";
 
@@ -464,8 +465,20 @@ export default function CloudSculptor({ locale = "en" }: { locale?: Locale }) {
   const reduce = usePrefersReducedMotion();
   const opening = useRef(createCloud(0));
   const [seed, setSeed] = useState(0);
+  const [highScore, setHighScore] = useState(() => loadHighScore("cloud-sculptor", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<CloudState>(opening.current);
+
+  useEffect(() => {
+    if (state.status === "win") {
+      const score = Math.max(10, 100 - state.steps * 10);
+      const { isNewBest, bestScore } = saveHighScore("cloud-sculptor", score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "cloud-sculptor", score } }));
+      }
+    }
+  }, [state.status, state.steps]);
   const [shown, setShown] = useState<CloudState>(opening.current);
   const [glide, setGlide] = useState<CloudGlide | null>(null);
   const [busy, setBusy] = useState(false);

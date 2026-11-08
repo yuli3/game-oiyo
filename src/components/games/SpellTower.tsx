@@ -21,6 +21,7 @@ import { playSyntheticTone } from "@/lib/games/audio-mixer";
 import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
 import { celebrate } from "@/lib/games/celebration";
+import { loadHighScore, saveHighScore } from "@/lib/games/game-save";
 import { getSpriteUrl } from "@/lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "@/lib/games/share-card";
 import { RotateCcw, Volume2, VolumeX, CheckCircle, Sparkles, AlertTriangle, Maximize2, Minimize2, Camera, Check } from "lucide-react";
@@ -192,7 +193,18 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
   const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const [game, setGame] = useState<SpellTowerState>(() => initSpellTower());
+  const [highScore, setHighScore] = useState(() => loadHighScore("spell-tower", 0));
   const [soundEnabled, setSoundEnabled] = useState(true);
+
+  useEffect(() => {
+    if (game.score > 0) {
+      const { isNewBest, bestScore } = saveHighScore("spell-tower", game.score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "spell-tower", score: game.score } }));
+      }
+    }
+  }, [game.score, game.status]);
   const [, setShakeState] = useState<ScreenShakeState>(() => createShakeState());
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
   const [message, setMessage] = useState<string | null>(null);

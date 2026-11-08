@@ -3,6 +3,7 @@ import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getSpriteUrl } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { celebrate } from "../../lib/games/celebration";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import {
   type WaffleGameState,
@@ -92,6 +93,18 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
   const [puzzle] = useState<WafflePuzzleDefinition>(initData.puzzle);
   const [game, setGame] = useState<WaffleGameState>(initData.game);
   const [selectedCoord, setSelectedCoord] = useState<{ r: number; c: number } | null>(null);
+  const [highScore, setHighScore] = useState(() => loadHighScore("word-waffle", 0));
+
+  useEffect(() => {
+    if (game.status === "won") {
+      const score = game.stars * 100 + game.swapsRemaining * 10;
+      const { isNewBest, bestScore } = saveHighScore("word-waffle", score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "word-waffle", score } }));
+      }
+    }
+  }, [game.status, game.stars, game.swapsRemaining]);
 
   const shakeStateRef = useRef(createShakeState());
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });

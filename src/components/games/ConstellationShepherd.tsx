@@ -29,6 +29,7 @@ import {
 } from "../../lib/games/constellation-shepherd";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import ConstellationShepherdScene, { type SkyGlide } from "./ConstellationShepherdScene";
 
 interface Copy {
@@ -414,8 +415,20 @@ export default function ConstellationShepherd({ locale = "en" }: { locale?: Loca
   const reduce = usePrefersReducedMotion();
   const opening = useRef(createConstellation(0));
   const [seed, setSeed] = useState(0);
+  const [highScore, setHighScore] = useState(() => loadHighScore("constellation-shepherd", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<SkyState>(opening.current);
+
+  useEffect(() => {
+    if (state.status === "win") {
+      const score = Math.max(10, 100 - state.steps * 10);
+      const { isNewBest, bestScore } = saveHighScore("constellation-shepherd", score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "constellation-shepherd", score } }));
+      }
+    }
+  }, [state.status, state.steps]);
   const [shown, setShown] = useState<SkyState>(opening.current);
   const [glide, setGlide] = useState<SkyGlide | null>(null);
   const [busy, setBusy] = useState(false);

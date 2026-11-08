@@ -11,6 +11,7 @@ import {
 } from "../../lib/games/neon-katana";
 import { useAudioContext } from "../../lib/games/use-audio-context";
 import { useClipboardShare } from "../../lib/games/use-clipboard-share";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import { GameStatTile } from "../ui/game/GameStatTile";
 import { Button } from "../ui/button";
 
@@ -165,6 +166,7 @@ export default function NeonKatana({ locale = "ko" }: NeonKatanaProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gameStateRef = useRef<GameState>(createInitialKatanaState());
   const [uiState, setUiState] = useState<GameState>(gameStateRef.current);
+  const [highScore, setHighScore] = useState(() => loadHighScore("neon-katana", 0));
   const [ratingPopup, setRatingPopup] = useState<{ text: string; color: string } | null>(null);
 
   const getAudioContext = useAudioContext();
@@ -451,8 +453,16 @@ export default function NeonKatana({ locale = "ko" }: NeonKatanaProps) {
       ctx.restore();
 
       // UI state sync (approx 15fps for React re-render optimization)
-      if (Math.random() < 0.25) {
+      if (Math.random() < 0.25 || gameStateRef.current.isGameOver) {
         setUiState({ ...gameStateRef.current });
+        if (gameStateRef.current.isGameOver) {
+          const finalScore = gameStateRef.current.score;
+          const { isNewBest, bestScore } = saveHighScore("neon-katana", finalScore);
+          if (isNewBest) setHighScore(bestScore);
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "neon-katana", score: finalScore } }));
+          }
+        }
       }
 
       animId = requestAnimationFrame(loop);
@@ -545,7 +555,7 @@ export default function NeonKatana({ locale = "ko" }: NeonKatanaProps) {
             <h2 className="text-2xl font-bold text-destructive">{t.gameOver}</h2>
             <div className="text-center space-y-1">
               <p className="text-lg font-semibold text-foreground">
-                {t.score}: {uiState.score}
+                {t.score}: {uiState.score} · <span className="text-primary text-sm font-bold">BEST: {Math.max(highScore, uiState.score)}</span>
               </p>
               <p className="text-sm text-muted-foreground">
                 {t.wave}: Wave {uiState.wave} · MAX {t.combo}: {uiState.maxCombo}x

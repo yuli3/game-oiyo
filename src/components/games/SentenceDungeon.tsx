@@ -9,6 +9,7 @@ import { Maximize2, Minimize2, Volume2, VolumeX, Share2 } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import { getSpriteUrl, SENTENCE_DUNGEON_UI_SPRITES } from "../../lib/games/sprites";
 import {
   createShareCardCanvas,
@@ -517,8 +518,20 @@ export default function SentenceDungeon({ locale = "en" }: { locale?: Locale }) 
   const reduce = usePrefersReducedMotion();
   const opening = useRef(createRoom(0));
   const [seed, setSeed] = useState(0);
+  const [highScore, setHighScore] = useState(() => loadHighScore("sentence-dungeon", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<RoomState>(opening.current);
+
+  useEffect(() => {
+    if (state.status === "win") {
+      const score = Math.max(10, 100 - state.steps * 10);
+      const { isNewBest, bestScore } = saveHighScore("sentence-dungeon", score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "sentence-dungeon", score } }));
+      }
+    }
+  }, [state.status, state.steps]);
   const [shown, setShown] = useState<RoomState>(opening.current);
   const [glide, setGlide] = useState<RoomGlide | null>(null);
   const [busy, setBusy] = useState(false);

@@ -17,6 +17,7 @@ import { useClipboardShare } from '../../lib/games/use-clipboard-share';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { CHEESE_FACTORY_SPRITES } from '../../lib/games/sprites';
 import { celebrate } from '../../lib/games/celebration';
+import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 import { GameStatTile } from '../ui/game/GameStatTile';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
@@ -60,8 +61,19 @@ export default function CheeseFactory() {
   const [gameState, setGameState] = useState<CheeseFactoryGameState>(() =>
     createCheeseFactoryGame(300)
   );
+  const [highScore, setHighScore] = useState(() => loadHighScore('cheese-factory', 300));
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
+
+  useEffect(() => {
+    if (gameState.cash > 300) {
+      const { isNewBest, bestScore } = saveHighScore('cheese-factory', gameState.cash);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'cheese-factory', score: gameState.cash } }));
+      }
+    }
+  }, [gameState.cash]);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const celebratedRef = useRef(false);

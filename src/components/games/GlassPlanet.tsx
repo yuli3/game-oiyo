@@ -26,6 +26,7 @@ import {
   type PlanetState,
 } from "../../lib/games/glass-planet";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import GlassPlanetScene, { type PlanetGlide } from "./GlassPlanetScene";
 
 interface Copy {
@@ -389,8 +390,20 @@ export default function GlassPlanet({ locale = "en" }: { locale?: Locale }) {
   const reduce = usePrefersReducedMotion();
   const opening = useRef(createGlassPlanet(0));
   const [seed, setSeed] = useState(0);
+  const [highScore, setHighScore] = useState(() => loadHighScore("glass-planet", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<PlanetState>(opening.current);
+
+  useEffect(() => {
+    if (state.status === "win") {
+      const score = Math.max(10, 100 - state.steps * 10);
+      const { isNewBest, bestScore } = saveHighScore("glass-planet", score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "glass-planet", score } }));
+      }
+    }
+  }, [state.status, state.steps]);
   const [shown, setShown] = useState<PlanetState>(opening.current);
   const [glide, setGlide] = useState<PlanetGlide | null>(null);
   const [busy, setBusy] = useState(false);

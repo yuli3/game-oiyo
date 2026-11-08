@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import type { Game2048Direction } from '../../lib/games/game-2048';
 import { createTonePlayer, type TonePlayer } from '../../lib/games/tone';
+import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 
 export type Game2048Theme = "classic" | "neon" | "pastel";
 
@@ -94,6 +95,7 @@ export default function Game2048PixiCanvas({
   const toneRef = useRef<TonePlayer | null>(null);
   const boardRef = useRef<readonly (number | null)[]>(board);
   boardRef.current = board;
+  const bestScoreRef = useRef(() => loadHighScore("game-2048", 0));
 
   const onDirectionRef = useRef(onDirection);
   onDirectionRef.current = onDirection;

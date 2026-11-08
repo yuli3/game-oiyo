@@ -11,6 +11,7 @@ import { playSyntheticTone } from '@/lib/games/audio-mixer';
 import { useCardTiltPro, MobileHapticsPro } from '@/lib/games/engine-suite-unified';
 import { BACKPACK_HERO_SPRITES } from '@/lib/games/sprites';
 import { celebrate } from '@/lib/games/celebration';
+import { loadHighScore, saveHighScore } from '@/lib/games/game-save';
 
 interface BackpackHeroProps {
   locale?: string;
@@ -106,18 +107,27 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<BackpackHeroEngine>(new BackpackHeroEngine(5, 6));
   const [engineState, setEngineState] = useState<BackpackHeroState>(() => engineRef.current.getState());
+  const [highScore, setHighScore] = useState(() => loadHighScore('backpack-hero', 0));
 
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
   const shakeStateRef = useRef(createShakeState());
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  // Trigger celebration on victory
+  // Trigger celebration and save on victory or game over
   useEffect(() => {
-    if (engineState.gameState === 'victory' && containerRef.current) {
-      celebrate(containerRef.current, { preset: 'stardust' });
+    if (engineState.gameState === 'victory' || engineState.gameState === 'game_over') {
+      const score = engineState.floor * 100 + engineState.gold;
+      const { isNewBest, bestScore } = saveHighScore('backpack-hero', score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'backpack-hero', score } }));
+      }
+      if (engineState.gameState === 'victory' && containerRef.current) {
+        celebrate(containerRef.current, { preset: 'stardust' });
+      }
     }
-  }, [engineState.gameState]);
+  }, [engineState.gameState, engineState.floor, engineState.gold]);
 
   // Initialize Web Audio
   useEffect(() => {

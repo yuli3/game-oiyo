@@ -32,6 +32,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 
 function TiltHeroButton({
   children,
@@ -121,6 +122,18 @@ export const LoopHero: React.FC = () => {
   const [dayProgress, setDayProgress] = useState(0);
   const [inCombat, setInCombat] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  const [highScore, setHighScore] = useState(() => loadHighScore('loop-hero', 0));
+
+  useEffect(() => {
+    if (gameOver) {
+      const score = loopCount * 100 + dayCount * 20;
+      const { isNewBest, bestScore } = saveHighScore('loop-hero', score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'loop-hero', score } }));
+      }
+    }
+  }, [gameOver, loopCount, dayCount]);
   const [hand, setHand] = useState<CardDef[]>([]);
   const [equipped, setEquipped] = useState<Record<EquipSlot, Equipment | null>>({
     weapon: null,

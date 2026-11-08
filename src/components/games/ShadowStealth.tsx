@@ -17,6 +17,7 @@ import { useAudioContext } from '../../lib/games/use-audio-context';
 import { useClipboardShare } from '../../lib/games/use-clipboard-share';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 import { getSpriteUrl, SHADOW_STEALTH_UI_SPRITES } from '../../lib/games/sprites';
 import {
   createShareCardCanvas,
@@ -33,6 +34,17 @@ export default function ShadowStealth() {
   const [gameState, setGameState] = useState<ShadowStealthGameState>(() =>
     createShadowStealthGame(20261031)
   );
+  const [highScore, setHighScore] = useState(() => loadHighScore('shadow-stealth', 0));
+
+  useEffect(() => {
+    if (gameState.isGameOver || gameState.isVictory) {
+      const { isNewBest, bestScore } = saveHighScore('shadow-stealth', gameState.score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'shadow-stealth', score: gameState.score } }));
+      }
+    }
+  }, [gameState.isGameOver, gameState.isVictory, gameState.score]);
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
 

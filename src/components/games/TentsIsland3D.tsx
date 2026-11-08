@@ -10,6 +10,7 @@ import {
 } from '../../lib/games/tents';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
+import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 import { useAudioContext } from '../../lib/games/use-audio-context';
 import { playProceduralSfx } from '../../lib/games/audio-mixer';
 import { TENTS_ISLAND_3D_UI_SPRITES } from '../../lib/games/sprites';
@@ -152,6 +153,7 @@ export function TentsIsland3D({ lang = 'ko' }: Props) {
   );
 
   const [seconds, setSeconds] = useState(0);
+  const [highScore, setHighScore] = useState(() => loadHighScore('tents-island-3d', 0));
   const [timerActive, setTimerActive] = useState(true);
   const [shareCardCopied, setShareCardCopied] = useState(false);
 
@@ -222,9 +224,15 @@ export function TentsIsland3D({ lang = 'ko' }: Props) {
     if (isComplete && !prevCompleteRef.current && containerRef.current) {
       playSfx('win');
       celebrate(containerRef.current, { preset: "leaves" });
+      const score = Math.max(10, 1000 - seconds * 5);
+      const { isNewBest, bestScore } = saveHighScore('tents-island-3d', score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'tents-island-3d', score } }));
+      }
     }
     prevCompleteRef.current = isComplete;
-  }, [isComplete, containerRef, playSfx]);
+  }, [isComplete, containerRef, playSfx, seconds]);
 
   const handleCellClick = (r: number, c: number) => {
     if (isComplete) return;

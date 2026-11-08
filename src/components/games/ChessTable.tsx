@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import type { Locale } from "../../lib/i18n";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import {
   CHESS_TABLE_ENGINE,
   chessTableAiReply,
@@ -51,7 +52,19 @@ export default function ChessTable({ locale = "ko", onBack }: { locale?: Locale 
   const loc = (COPY[locale as keyof typeof COPY] ? locale : "en") as Locale;
   const t = COPY[loc];
   const [table, setTable] = useState<ChessTableState>(createChessTable);
+  const [highScore, setHighScore] = useState(() => loadHighScore("chess-table", 0));
   const [webgl] = useState(hasWebgl);
+
+  useEffect(() => {
+    if (table.end && table.winner === "white") {
+      const score = Math.max(10, Math.floor(table.whiteSeconds));
+      const { isNewBest, bestScore } = saveHighScore("chess-table", score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "chess-table", score } }));
+      }
+    }
+  }, [table.end, table.winner, table.whiteSeconds]);
   const status = useMemo(() => {
     if (!table.end) return table.position.whiteToMove ? t.thinking.replace("상대가 수를 읽고 있습니다", "").trim() : "";
     if (table.end === "resign" || table.end === "time" && table.winner === "black") return t.ai;

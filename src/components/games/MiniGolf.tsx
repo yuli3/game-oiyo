@@ -28,6 +28,7 @@ import {
 import { celebrate } from '../../lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 import { getSpriteUrl, MINI_GOLF_SPRITES } from '../../lib/games/sprites';
 
 function TiltGolfButton({
@@ -208,9 +209,21 @@ const UI_TEXT: Record<Locale, {
 
 export default function MiniGolf({ locale }: Props) {
   const [gameState, setGameState] = useState<MiniGolfState>(() => createInitialGolfState(0));
+  const [highScore, setHighScore] = useState(() => loadHighScore('mini-golf-3d', 0));
   const [shareCopied, setShareCopied] = useState(false);
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
+
+  useEffect(() => {
+    if (gameState.status === 'finished') {
+      const score = Math.max(10, 1000 - gameState.totalStrokes * 25);
+      const { isNewBest, bestScore } = saveHighScore('mini-golf-3d', score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'mini-golf-3d', score } }));
+      }
+    }
+  }, [gameState.status, gameState.totalStrokes]);
 
   const [isMuted, setIsMuted] = useState(false);
   const isMutedRef = useRef(isMuted);

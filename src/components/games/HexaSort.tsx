@@ -16,6 +16,7 @@ import { playSyntheticTone } from "../../lib/games/audio-mixer";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { HEXA_SORT_SPRITES } from "../../lib/games/sprites";
 import { celebrate } from "../../lib/games/celebration";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import { Button } from "../ui/button";
 
 interface HexaSortProps {
@@ -76,7 +77,18 @@ function TiltHandHexaButton({
 export default function HexaSort({ locale = "ko" }: HexaSortProps) {
   const [game, setGame] = useState<HexaSortGameState>(() => createInitialHexaSortGame(1));
   const [selectedHandIdx, setSelectedHandIdx] = useState<number | null>(null);
+  const [highScore, setHighScore] = useState(() => loadHighScore("hexa-sort", 0));
   const [shakeState, setShakeState] = useState(() => createShakeState());
+
+  useEffect(() => {
+    if (game.score > 0) {
+      const { isNewBest, bestScore } = saveHighScore("hexa-sort", game.score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "hexa-sort", score: game.score } }));
+      }
+    }
+  }, [game.score, game.status]);
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
   const [shareCopied, setShareCopied] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);

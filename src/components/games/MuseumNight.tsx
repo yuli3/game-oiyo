@@ -26,6 +26,7 @@ import {
   type NightState,
 } from "../../lib/games/museum-night";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import MuseumNightScene, { type NightGlide } from "./MuseumNightScene";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { getSpriteUrl } from "../../lib/games/sprites";
@@ -497,8 +498,20 @@ export default function MuseumNight({ locale = "en" }: { locale?: Locale }) {
   const reduce = usePrefersReducedMotion();
   const opening = useRef(createNight(0));
   const [seed, setSeed] = useState(0);
+  const [highScore, setHighScore] = useState(() => loadHighScore("museum-night", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<NightState>(opening.current);
+
+  useEffect(() => {
+    if (state.status === "win") {
+      const score = Math.max(10, 100 - state.steps * 10);
+      const { isNewBest, bestScore } = saveHighScore("museum-night", score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "museum-night", score } }));
+      }
+    }
+  }, [state.status, state.steps]);
   const [shown, setShown] = useState<NightState>(opening.current);
   const [glide, setGlide] = useState<NightGlide | null>(null);
   const [busy, setBusy] = useState(false);

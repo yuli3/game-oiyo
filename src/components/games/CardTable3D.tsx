@@ -11,6 +11,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 import { useAudioContext } from '../../lib/games/use-audio-context';
 import { playProceduralSfx } from '../../lib/games/audio-mixer';
 import type { Locale } from '../../lib/i18n';
@@ -182,6 +183,17 @@ export function CardTable3D({ lang = 'ko' }: Props) {
     locale: portalLocale(lang),
   });
   const [state, setState] = useState<SolitaireState>(createInitialSolitaireState);
+  const [highScore, setHighScore] = useState(() => loadHighScore('card-table-3d', 0));
+
+  useEffect(() => {
+    if (state.score > 0) {
+      const { isNewBest, bestScore } = saveHighScore('card-table-3d', state.score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'card-table-3d', score: state.score } }));
+      }
+    }
+  }, [state.score, state.isWon]);
   const [selectedCard, setSelectedCard] = useState<{
     card: Card;
     source: 'waste' | 'tableau';

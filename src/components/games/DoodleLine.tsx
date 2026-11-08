@@ -32,6 +32,7 @@ import {
 } from "../../lib/games/doodle-line";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import DoodleLineScene, { type LineGlide } from "./DoodleLineScene";
 
 function TiltDoodleButton({
@@ -590,8 +591,20 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
   const reduce = usePrefersReducedMotion();
   const opening = useRef(createLine(0));
   const [seed, setSeed] = useState(0);
+  const [highScore, setHighScore] = useState(() => loadHighScore("doodle-line", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<LineState>(opening.current);
+
+  useEffect(() => {
+    if (state.status === "win") {
+      const score = Math.max(10, 100 - state.steps * 10);
+      const { isNewBest, bestScore } = saveHighScore("doodle-line", score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "doodle-line", score } }));
+      }
+    }
+  }, [state.status, state.steps]);
   const [shown, setShown] = useState<LineState>(opening.current);
   const [glide, setGlide] = useState<LineGlide | null>(null);
   const [busy, setBusy] = useState(false);

@@ -3,6 +3,7 @@ import { celebrate } from "../../lib/games/celebration";
 import { BEAT_SLICE_SPRITES } from "../../lib/games/sprites";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { createInputGenerosity } from "../../lib/games/input-generosity";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import {
   Play,
   RotateCcw,
@@ -117,6 +118,7 @@ export default function BeatSlice3D() {
 
   // HUD States
   const [score, setScore] = useState(0);
+  const [highScore, setHighScore] = useState(() => loadHighScore("beat-slice-3d", 0));
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
   const [multiplier, setMultiplier] = useState(1);
@@ -459,6 +461,11 @@ export default function BeatSlice3D() {
         if (state.isComplete) {
           setShowResult(true);
           setIsPlaying(false);
+          const { isNewBest, bestScore } = saveHighScore("beat-slice-3d", state.score);
+          if (isNewBest) setHighScore(bestScore);
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "beat-slice-3d", score: state.score } }));
+          }
           MobileHapticsPro.success();
           if (canvasRef.current) {
             celebrate(canvasRef.current, { preset: "stardust" });
@@ -858,6 +865,7 @@ export default function BeatSlice3D() {
               <div>
                 <p className="text-xs text-muted-foreground">FINAL SCORE</p>
                 <p className="text-lg font-bold text-primary">{score.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">BEST: {Math.max(highScore, score).toLocaleString()}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">FINAL RANK</p>

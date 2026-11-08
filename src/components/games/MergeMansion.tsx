@@ -16,6 +16,7 @@ import {
 } from '../../lib/games/share-card';
 import { getSpriteUrl, MERGE_MANSION_SPRITES } from '../../lib/games/sprites';
 import { celebrate } from '../../lib/games/celebration';
+import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 
 function getItemSprite(it: MergeItem): string | null {
   if (it.isSpawner) return MERGE_MANSION_SPRITES.spawner;
@@ -126,7 +127,19 @@ export default function MergeMansion() {
   const [board, setBoard] = useState<Array<MergeItem | null>>(() => [...engine.board]);
   const [energy, setEnergy] = useState(() => engine.energy);
   const [stars, setStars] = useState(() => engine.stars);
+  const [highScore, setHighScore] = useState(() => loadHighScore('merge-mansion', 0));
   const [completedCount, setCompletedCount] = useState(() => engine.completedQuests.length);
+
+  useEffect(() => {
+    if (stars > 0) {
+      const score = stars * 100 + completedCount * 250;
+      const { isNewBest, bestScore } = saveHighScore('merge-mansion', score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'merge-mansion', score } }));
+      }
+    }
+  }, [stars, completedCount]);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [message, setMessage] = useState<string>('스포너를 눌러 도구를 만들고, 같은 도구를 합쳐보세요!');
   const [soundEnabled, setSoundEnabled] = useState(true);

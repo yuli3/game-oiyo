@@ -20,6 +20,7 @@ import {
   type KingdomState,
 } from "../../lib/games/screen-kingdom";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import ScreenKingdomScene, { type FieldGlide } from "./ScreenKingdomScene";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
@@ -498,8 +499,20 @@ export default function ScreenKingdom({ locale = "en" }: { locale?: Locale }) {
   const [shareCardCopied, setShareCardCopied] = useState(false);
   const opening = useRef(createKingdom(0));
   const [seed, setSeed] = useState(0);
+  const [highScore, setHighScore] = useState(() => loadHighScore("screen-kingdom", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<KingdomState>(opening.current);
+
+  useEffect(() => {
+    if (state.status === "win") {
+      const score = Math.max(10, 100 - state.steps * 10);
+      const { isNewBest, bestScore } = saveHighScore("screen-kingdom", score);
+      if (isNewBest) setHighScore(bestScore);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "screen-kingdom", score } }));
+      }
+    }
+  }, [state.status, state.steps]);
   const [shown, setShown] = useState<KingdomState>(opening.current);
   const [glide, setGlide] = useState<FieldGlide | null>(null);
   const [busy, setBusy] = useState(false);
