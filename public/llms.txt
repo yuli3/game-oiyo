@@ -12,6 +12,10 @@
 - news.oiyo.net — daily curated news & market briefs
 - news.oiyo.net/ai/ — AI guides, model catalog and curation (ai.oiyo.net redirects here)
 
+## Machine-readable catalogs
+- [Full games directory](https://game.oiyo.net/llms-full.txt): Comprehensive 155+ games catalog, AI opponent details, rules, and direct links.
+- [Knowledge catalog](https://game.oiyo.net/knowledge/index.json): Schema.org ItemList and game metadata.
+
 ## Key pages
 - https://game.oiyo.net/en/ — arcade catalog (all games, 6 locales: en/ko/ja/zh/fr/es)
 - https://game.oiyo.net/en/chess/ — chess vs AI
