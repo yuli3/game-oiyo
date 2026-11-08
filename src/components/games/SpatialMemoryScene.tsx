@@ -108,6 +108,7 @@ export default function SpatialMemoryScene(props: SceneProps) {
   const frameloop = usePlayFrameloop(true);
   return (
     <Canvas
+      shadows
       frameloop={frameloop}
       camera={{ position: [0, 0, 12], fov: 55 }}
       // Capped for phones: an uncapped pixel ratio is the usual cause of a

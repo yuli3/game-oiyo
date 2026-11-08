@@ -237,6 +237,7 @@ export function TentsIsland3DScene(props: Props) {
     <div className="relative h-150 w-full overflow-hidden rounded-2xl border border-border bg-slate-950 shadow-inner">
       <Canvas
         shadows
+        dpr={[1, 2]}
         camera={{ position: [0, 8.5, 6.2], fov: 45 }}
         className="h-full w-full"
       >

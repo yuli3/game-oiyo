@@ -304,6 +304,8 @@ export default function VoxelMaze3D() {
     >
       {/* 3D WebGL Canvas */}
       <Canvas
+        shadows
+        dpr={[1, 2]}
         camera={{ position: [7, 16, 20], fov: 50 }}
         gl={{ antialias: true }}
       >

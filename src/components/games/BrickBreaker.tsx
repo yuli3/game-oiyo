@@ -306,7 +306,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
 
     const padY = BRICK_BREAKER_BOARD.paddleY;
     const frameNow = now ?? performance.now();
-    const deltaMs = lastFrame.current === null ? 0 : frameNow - lastFrame.current;
+    const deltaMs = lastFrame.current === null ? 0 : Math.min(Math.max(0, frameNow - lastFrame.current), 50);
 
     // Apply Touch/Mouse Lerp Damper for arcade smoothness
     if (targetPadXRef.current !== null && !pausedRef.current) {

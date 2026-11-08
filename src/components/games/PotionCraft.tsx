@@ -380,7 +380,10 @@ export default function PotionCraft() {
       });
     }
 
+    let lastTime = performance.now();
     const render = (time: number) => {
+      const dt = Math.min((time - lastTime) / 1000, 0.05);
+      lastTime = time;
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');

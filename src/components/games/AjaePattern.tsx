@@ -427,6 +427,7 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
     arena.current?.focus({ preventScroll: true });
 
     const tick = (now: number) => {
+      const dt = Math.min((now - (startedAt.current || now)) / 1000, 0.05);
       const total = deadline.current - startedAt.current;
       const left = Math.max(0, deadline.current - now);
       setRemaining(left / total);

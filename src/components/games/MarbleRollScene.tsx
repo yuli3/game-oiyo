@@ -165,6 +165,7 @@ export default function MarbleRollScene({ marble, className }: SceneProps & { cl
   return (
     <div className={className ?? "relative w-full h-130 rounded-2xl overflow-hidden bg-slate-950 shadow-2xl"}>
       <Canvas
+        dpr={[1, 2]}
         camera={{ position: [0, 5, -8], fov: 60 }}
         shadows
         gl={{ antialias: true, alpha: false }}

@@ -203,6 +203,7 @@ export default function BlockBreakerScene({ state }: Props) {
 
   return (
     <Canvas
+      shadows
       className="w-full h-full touch-none select-none"
       camera={{ position: [0, 4.5, 13.5], fov: 52 }}
       dpr={[1, 2]}

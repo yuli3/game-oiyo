@@ -261,7 +261,8 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
     const frameNow = now ?? performance.now();
     // Clamped delta, so a backgrounded tab resumes the song instead of skipping
     // a chunk of the chart and handing the player unavoidable misses.
-    gs.songSeconds += frameDeltaSeconds(lastFrame.current, frameNow);
+    const dt = Math.min(frameDeltaSeconds(lastFrame.current, frameNow), 0.05);
+    gs.songSeconds += dt;
     lastFrame.current = frameNow;
 
     // Miss detection: a note is gone once the GOOD window has fully passed.

@@ -139,6 +139,8 @@ export function GravityRoller3DScene(props: Props & { className?: string }) {
   return (
     <div className={props.className ?? "relative h-155 w-full overflow-hidden rounded-2xl border border-border bg-slate-950 shadow-inner"}>
       <Canvas
+        shadows
+        dpr={[1, 2]}
         camera={{ position: [0, 14, 9], fov: 45 }}
         className="h-full w-full"
       >

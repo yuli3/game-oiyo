@@ -352,7 +352,7 @@ export default function SpacePinball({ locale }: Props) {
 
     const loop = (now: number) => {
       animId = requestAnimationFrame(loop);
-      const dt = (now - lastTime) / 1000;
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
       if (stateRef.current.status === "playing" && stateRef.current.ball.active) {

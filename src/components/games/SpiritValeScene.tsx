@@ -894,6 +894,7 @@ export default function SpiritValeScene(props: SceneProps) {
   const frameloop = usePlayFrameloop(true);
   return (
     <Canvas
+      shadows
       frameloop={frameloop}
       // Capped DPR: at 3× the blade count becomes fill-rate bound on phones for
       // detail nobody can resolve.

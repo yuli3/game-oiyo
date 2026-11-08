@@ -214,6 +214,8 @@ export default function RetroHighwayScene({ state }: SceneProps) {
   return (
     <div className="relative w-full h-130 rounded-2xl overflow-hidden bg-slate-950 shadow-2xl">
       <Canvas
+        shadows
+        dpr={[1, 2]}
         camera={{ position: [0, 3.8, -5.5], fov: 65 }}
         gl={{ antialias: true, alpha: false }}
       >

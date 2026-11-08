@@ -217,7 +217,7 @@ export function CardSurge({ locale = "ko", lang }: CardSurgeProps) {
     shakeEngineRef.current = addTrauma(shakeEngineRef.current, amount);
     let lastTime = performance.now();
     const tick = (now: number) => {
-      const dt = (now - lastTime) / 1000;
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
       const res = updateCameraShake(shakeEngineRef.current, dt);
       shakeEngineRef.current = res.state;

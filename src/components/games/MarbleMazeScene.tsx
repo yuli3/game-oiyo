@@ -421,6 +421,7 @@ export default function MarbleMazeScene({
     >
       <Canvas
         shadows
+        dpr={[1, 2]}
         camera={{ position: [0, 14, 11], fov: 46 }}
         gl={{ antialias: true, alpha: false, toneMapping: THREE.ACESFilmicToneMapping }}
       >

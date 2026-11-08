@@ -290,6 +290,8 @@ export default function CyberHighway3D() {
     >
       {/* 3D Canvas */}
       <Canvas
+        shadows
+        dpr={[1, 2]}
         camera={{ position: [0, 4.2, -6.5], fov: 60, rotation: [0.15, Math.PI, 0] }}
         className="w-full h-full"
       >

@@ -431,7 +431,8 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     if (!ctx) return;
 
     if (!pausedRef.current) {
-      accumulatorRef.current += frameDeltaSeconds(previousFrameRef.current, now);
+      const dt = Math.min(frameDeltaSeconds(previousFrameRef.current, now), 0.05);
+      accumulatorRef.current += dt;
       let steps = 0;
       while (accumulatorRef.current >= STAR_BLASTER_STEP_SECONDS && steps < MAX_STEPS_PER_FRAME) {
         const replayTarget = Math.round(targetXRef.current * 2) / 2;

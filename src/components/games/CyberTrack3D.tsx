@@ -150,7 +150,7 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
     let lastTime = performance.now();
 
     const loop = (now: number) => {
-      const dt = (now - lastTime) / 1000;
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
       const currentCar = carStateRef.current;
@@ -288,7 +288,7 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
 
       {/* 3D Canvas Viewport */}
       <div className="relative h-96 w-full overflow-hidden rounded-2xl border border-border bg-background shadow-inner">
-        <Canvas camera={{ position: [0, 5, -10], fov: 60 }} shadows>
+        <Canvas camera={{ position: [0, 5, -10], fov: 60 }} shadows dpr={[1, 2]}>
           <CyberTrack3DScene track={track} car={car} ghostFrames={ghostFrames} />
         </Canvas>
 

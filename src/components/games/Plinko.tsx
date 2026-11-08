@@ -291,7 +291,11 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 ctx.fill();
             }
         };
-        const draw = () => {
+        let lastDraw = performance.now();
+        const draw = (now?: number) => {
+            const frameNow = now ?? performance.now();
+            const dt = Math.min((frameNow - lastDraw) / 1000, 0.05);
+            lastDraw = frameNow;
             paint();
             if (!ballRef.current) {
                 raf = 0;

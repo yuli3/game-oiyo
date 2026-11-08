@@ -238,7 +238,7 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
         return;
       }
 
-      const delta = lastTime === null ? 0 : Math.min(100, Math.max(0, now - lastTime));
+      const delta = lastTime === null ? 0 : Math.min(50, Math.max(0, now - lastTime));
       lastTime = now;
 
       // Update game elapsed time if playing

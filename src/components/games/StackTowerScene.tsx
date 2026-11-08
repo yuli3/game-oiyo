@@ -108,6 +108,8 @@ export default function StackTowerScene({
   return (
     <div className="relative w-full h-130 rounded-2xl overflow-hidden bg-background select-none touch-none">
       <Canvas
+        shadows
+        dpr={[1, 2]}
         camera={{ position: [8, 8, 8], fov: 45 }}
         gl={{ antialias: true, alpha: false }}
       >

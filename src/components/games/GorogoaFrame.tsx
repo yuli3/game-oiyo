@@ -565,7 +565,10 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
   // Render loop for the 4 panel canvases
   useEffect(() => {
     let rafId = 0;
+    let lastTime = performance.now();
     const render = (now: number) => {
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
       const st = stateRef.current;
       const spec = CHAPTERS[st.chapterIndex];
       for (const p of st.panels) {

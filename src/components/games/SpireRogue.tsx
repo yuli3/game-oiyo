@@ -625,7 +625,10 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
     if (!ctx) return;
 
     let animId = 0;
+    let lastTime = performance.now();
     const render = (time: number) => {
+      const dt = Math.min((time - lastTime) / 1000, 0.05);
+      lastTime = time;
       const w = canvas.width;
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);

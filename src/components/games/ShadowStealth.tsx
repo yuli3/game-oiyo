@@ -178,6 +178,7 @@ export default function ShadowStealth() {
     let hasTriggeredVictorySound = false;
     let hasTriggeredGameOver = false;
 
+    const FIXED_DT = 1 / 60;
     const loop = () => {
       const current = stateRef.current;
 
@@ -191,7 +192,7 @@ export default function ShadowStealth() {
         if (inputStateRef.current.smoke) mask |= INPUT_SMOKE;
         if (inputStateRef.current.takedown) mask |= INPUT_TAKEDOWN;
 
-        stepShadowStealth(current, mask, 1 / 60);
+        stepShadowStealth(current, mask, FIXED_DT);
 
         if (current.isVictory && !hasTriggeredVictorySound) {
           hasTriggeredVictorySound = true;

@@ -260,7 +260,7 @@ export default function PaperFlight3D() {
     let prevCranes = 0;
 
     const tick = (now: number) => {
-      const dt = (now - lastTime) / 1000;
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
       if (engine.status === 'flying') {
@@ -388,6 +388,8 @@ export default function PaperFlight3D() {
       }`}
     >
       <Canvas
+        shadows
+        dpr={[1, 2]}
         camera={{ position: [0, 22, 7], fov: 55, near: 0.1, far: 1200 }}
         className="w-full h-full"
       >

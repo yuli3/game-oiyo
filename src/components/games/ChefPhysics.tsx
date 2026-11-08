@@ -302,7 +302,7 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
       const canvas = fxCanvasRef.current;
       const ctx = canvas?.getContext("2d");
       if (!world || !canvas || !ctx) return;
-      world.update(now - previous, now);
+      world.update(Math.min(now - previous, 50), now);
       previous = now;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = getComputedStyle(canvas).color;

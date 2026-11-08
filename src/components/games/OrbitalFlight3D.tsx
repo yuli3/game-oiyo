@@ -337,6 +337,8 @@ export default function OrbitalFlight3D() {
     >
       {/* 3D WebGL Canvas */}
       <Canvas
+        shadows
+        dpr={[1, 2]}
         camera={{ position: [50, 6, -12], fov: 60 }}
         gl={{ antialias: true }}
       >

@@ -36,7 +36,7 @@ export default function ChessTableScene({
   onPick: (square: [number, number]) => void;
 }) {
   return (
-    <Canvas camera={{ fov: 32, near: 0.1, far: 40 }} dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: "low-power" }}>
+    <Canvas shadows camera={{ fov: 32, near: 0.1, far: 40 }} dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: "low-power" }}>
       <FixedCamera />
       <color attach="background" args={["#1a2430"]} />
       <ambientLight intensity={0.7} />

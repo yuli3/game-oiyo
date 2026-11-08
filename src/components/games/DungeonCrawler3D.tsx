@@ -197,6 +197,8 @@ export default function DungeonCrawler3D() {
     >
       {/* 3D Canvas with isometric action camera following player */}
       <Canvas
+        shadows
+        dpr={[1, 2]}
         camera={{
           position: [gameState.playerX + 4.5, 9.5, gameState.playerZ + 8.5],
           fov: 45,

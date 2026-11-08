@@ -317,7 +317,7 @@ export default function AimFlashField({ diff, copy, tone, onHit, onMiss }: Props
     };
 
     const frame = (now: number) => {
-      const delta = lastFrame.current === null ? 0 : Math.min(100, now - lastFrame.current);
+      const delta = lastFrame.current === null ? 0 : Math.min(50, Math.max(0, now - lastFrame.current));
       lastFrame.current = now;
       const active = (lockedRef.current || coarseRef.current) && !document.hidden;
       if (active) {

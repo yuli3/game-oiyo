@@ -116,7 +116,7 @@ useEffect(()=>{
 },[]);
 const publish=useCallback((s:GravityGardenState)=>{stateRef.current=s;setState(s);},[]);
 useEffect(()=>{recordAchievementEvent("gravity-garden","opened");},[]);
-useEffect(()=>{if(!state.running)return;let frame=0,last=performance.now(),acc=0,active=true;const loop=(now:number)=>{if(!active)return;acc+=Math.min(.1,(now-last)/1000);last=now;let s=stateRef.current;while(acc>=GRAVITY_GARDEN_STEP&&s.running){s=stepGravityGarden(s);acc-=GRAVITY_GARDEN_STEP;}publish(s);if(s.running)frame=requestAnimationFrame(loop);};frame=requestAnimationFrame(loop);return()=>{active=false;cancelAnimationFrame(frame);};},[state.running,publish]);
+useEffect(()=>{if(!state.running)return;let frame=0,last=performance.now(),acc=0,active=true;const loop=(now:number)=>{if(!active)return;acc+=Math.min(0.05,(now-last)/1000);last=now;let s=stateRef.current;while(acc>=GRAVITY_GARDEN_STEP&&s.running){s=stepGravityGarden(s);acc-=GRAVITY_GARDEN_STEP;}publish(s);if(s.running)frame=requestAnimationFrame(loop);};frame=requestAnimationFrame(loop);return()=>{active=false;cancelAnimationFrame(frame);};},[state.running,publish]);
 useEffect(()=>{if(!ended||recordedRun.current)return;recordedRun.current=true;const saved=state.drops.filter(d=>d.saved).length;const score=gravityGardenScore(state);recordBest("gravity-garden",score,"score",`${saved}/5 drops`);recordAchievementEvent("gravity-garden",saved>=3?"cleared":"played");if(saved===5){
   playGardenAudio("win");
   MobileHapticsPro.success();

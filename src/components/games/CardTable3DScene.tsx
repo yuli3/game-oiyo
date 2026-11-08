@@ -286,6 +286,7 @@ export function CardTable3DScene(props: Props) {
     <div className="relative h-155 w-full overflow-hidden rounded-2xl border border-border bg-slate-950 shadow-inner">
       <Canvas
         shadows
+        dpr={[1, 2]}
         camera={{ position: [0, -1.0, 7.8], fov: 50 }}
         className="h-full w-full"
       >

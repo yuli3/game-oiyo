@@ -195,7 +195,7 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | st
     let accumulator = 0;
     const run = (now: number) => {
       if (!active) return;
-      const elapsed = Math.min(.1, Math.max(0, now - previous) / 1_000);
+      const elapsed = Math.min(0.05, Math.max(0, now - previous) / 1_000);
       previous = now;
       if (statusRef.current === "playing" && missionRef.current.phase === "playing") {
         accumulator += elapsed;
