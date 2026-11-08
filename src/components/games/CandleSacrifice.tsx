@@ -1,5 +1,10 @@
 import { useState, useRef } from 'react';
-import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import {
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+  getSharedAudioContext,
+} from '../../lib/games/engine-suite-unified';
 import { CANDLE_SACRIFICE_SPRITES } from '../../lib/games/sprites';
 import { celebrate } from '../../lib/games/celebration';
 import {
@@ -24,9 +29,9 @@ interface Props {
 }
 
 const playCabinAudio = (kind: 'card' | 'sacrifice' | 'bell' | 'victory' | 'defeat') => {
-  if (typeof AudioContext === 'undefined') return;
+  const ctx = getSharedAudioContext();
+  if (!ctx) return;
   try {
-    const ctx = new AudioContext();
     const t = ctx.currentTime;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -197,6 +202,8 @@ export default function CandleSacrifice({ locale }: Props) {
   const [state, setState] = useState<CandleSacrificeState>(() =>
     createCandleSacrificeState()
   );
+  const { shakeCssVars, addTrauma, triggerHitStop } = useGameJuicePro();
+  const [bloodPops, setBloodPops] = useState<Array<{ id: number; lane: number; text: string }>>([]);
 
   const recordArcadePass = (won: number) => {
     try {
@@ -212,7 +219,19 @@ export default function CandleSacrifice({ locale }: Props) {
   const handleRingBell = () => {
     playCabinAudio('bell');
     MobileHapticsPro.heavy();
+    const prevScale = state.scaleBalance;
+    const prevCandles = state.candlesRemaining;
     const next = ringCombatBell(state);
+    const deltaScale = next.scaleBalance - prevScale;
+
+    if (Math.abs(deltaScale) > 0) {
+      addTrauma(Math.min(0.8, 0.35 + Math.abs(deltaScale) * 0.08));
+    }
+    if (next.candlesRemaining < prevCandles) {
+      addTrauma(0.75);
+      triggerHitStop(110);
+    }
+
     setState(next);
     if (next.status === 'victory') {
       playCabinAudio('victory');
@@ -229,14 +248,20 @@ export default function CandleSacrifice({ locale }: Props) {
 
   const handleLaneClick = (idx: number) => {
     const next = clickPlayerLane(state, idx);
-    setState(next);
     if (next.sacrificedLanes.length > state.sacrificedLanes.length) {
       playCabinAudio('sacrifice');
-      MobileHapticsPro.impact();
+      MobileHapticsPro.heavy();
+      addTrauma(0.28);
+      const newPop = { id: Date.now() + Math.random(), lane: idx, text: isKo ? '🩸 희생! +1 피' : '🩸 Sacrificed! +1 Blood' };
+      setBloodPops((prev) => [...prev, newPop]);
+      setTimeout(() => {
+        setBloodPops((prev) => prev.filter((p) => p.id !== newPop.id));
+      }, 1200);
     } else {
       playCabinAudio('card');
       MobileHapticsPro.light();
     }
+    setState(next);
   };
 
   const handleDraw = (deckType: 'squirrel' | 'main') => {
@@ -248,11 +273,24 @@ export default function CandleSacrifice({ locale }: Props) {
   const selectedCard = state.hand.find((c) => c.id === state.selectedHandCardId);
 
   return (
-    <div ref={containerRef} className="mx-auto max-w-5xl p-4 text-foreground">
+    <div
+      ref={containerRef}
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className="mx-auto max-w-5xl p-4 text-foreground transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)"
+    >
       {/* Top Cabin HUD: Balance Scale, Candles, Bones, Preset */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2.5 rounded-xl border border-border bg-secondary px-3.5 py-2 text-secondary-foreground">
+          <div
+            style={{
+              '--scale-tilt': `${Math.max(-15, Math.min(15, state.scaleBalance * 2.8))}deg`,
+            } as React.CSSProperties}
+            className="flex items-center gap-2.5 rounded-xl border border-border bg-secondary px-3.5 py-2 text-secondary-foreground transition-transform duration-300 transform rotate-(--scale-tilt)"
+          >
             <img src={CANDLE_SACRIFICE_SPRITES.scale} alt="" className="size-8 object-contain" />
             <div>
               <div className="text-xs text-muted-foreground">
@@ -410,7 +448,7 @@ export default function CandleSacrifice({ locale }: Props) {
                   <TiltPlayerLaneButton
                     key={`pr-${idx}`}
                     onClick={() => handleLaneClick(idx)}
-                    className={`flex min-h-28 flex-col items-center justify-center rounded-xl border p-2.5 text-center transition ${
+                    className={`relative flex min-h-28 flex-col items-center justify-center rounded-xl border p-2.5 text-center transition ${
                       isSacrificed
                         ? 'border-destructive bg-destructive/20'
                         : card
@@ -418,6 +456,16 @@ export default function CandleSacrifice({ locale }: Props) {
                           : 'border-border bg-background hover:border-primary hover:bg-accent'
                     }`}
                   >
+                    {bloodPops
+                      .filter((p) => p.lane === idx)
+                      .map((pop) => (
+                        <span
+                          key={pop.id}
+                          className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-black text-destructive drop-shadow-md z-20 animate-fade-up whitespace-nowrap"
+                        >
+                          {pop.text}
+                        </span>
+                      ))}
                     {card ? (
                       <>
                         <span className="text-3xl">{card.icon}</span>

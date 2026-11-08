@@ -447,9 +447,12 @@ export function useGameJuicePro(options?: { decay?: number; maxOffset?: number }
   return {
     shakeOffset,
     shakeStyle,
+    shakeCssVars: shakeStyle,
     isHitStopped,
     applyTrauma,
+    addTrauma: applyTrauma,
     applyHitStop,
+    triggerHitStop: applyHitStop,
     triggerImpact,
     updateJuice,
   };
