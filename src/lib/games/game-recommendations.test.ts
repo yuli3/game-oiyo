@@ -1,10 +1,30 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { getGameRecommendations, CATALOG_GAMES } from "./game-recommendations";
+import { getGameRecommendations, CATALOG_GAMES, CURATED_CLUSTERS } from "./game-recommendations";
 import { locales } from "../i18n";
 
 describe("game-recommendations", () => {
   it("contains all 162 catalog games", () => {
     expect(Object.keys(CATALOG_GAMES)).toHaveLength(162);
+  });
+
+  // 2026-11-10: CATALOG_GAMES는 index.astro GAMES의 스냅샷이다. 신작이 index에만
+  // 추가되면 추천 체인에서 빠지므로, 두 목록이 어긋나면 여기서 실패시킨다.
+  it("stays in sync with the playable games in index.astro", () => {
+    const page = readFileSync("src/pages/[...lang]/index.astro", "utf8");
+    const catalog = page.slice(page.indexOf("const GAMES"), page.indexOf("const byCat"));
+    const playable = [...catalog.matchAll(/slug:\s*"([^"]+)"(?:,\s*kind:\s*"([^"]+)")?/g)]
+      .filter((m) => (m[2] ?? "game") === "game")
+      .map((m) => m[1])
+      .sort();
+    expect(Object.keys(CATALOG_GAMES).sort()).toEqual(playable);
+  });
+
+  it("only references catalog games in curated clusters", () => {
+    for (const [key, list] of Object.entries(CURATED_CLUSTERS)) {
+      expect(CATALOG_GAMES[key], `cluster key ${key}`).toBeDefined();
+      for (const s of list) expect(CATALOG_GAMES[s], `${key} → ${s}`).toBeDefined();
+    }
   });
 
   it("returns exactly 4 recommendations for flagship titles", () => {

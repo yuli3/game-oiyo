@@ -201,7 +201,7 @@ export const CURATED_CLUSTERS: Record<string, string[]> = {
   "ftl-mini": ["into-the-breach", "vampire-survivor", "loop-hero", "dome-keeper"],
   "loop-hero": ["vampire-survivor", "emberdeep", "spire-rogue", "darkest-torch"],
   "spire-rogue": ["backpack-hero", "candle-sacrifice", "slot-rogue", "card-surge"],
-  "peglin-rogue": ["spire-rogue", "slot-rogue", "block-burst", "marble-roll"],
+  "peglin-rogue": ["spire-rogue", "slot-rogue", "block-burst", "brick-breaker"],
   "backpack-hero": ["spire-rogue", "emberdeep", "candle-sacrifice", "patch-dungeon"],
   "swat-breach": ["urban-strike", "border-inspector", "into-the-breach", "bad-north-tactics"],
 
