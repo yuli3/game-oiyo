@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro } from "../../lib/games/engine-suite-unified";
 import { GameContainer, PlayingCard } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
@@ -116,6 +116,7 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
   const [game, setGame] = useState<BlackjackState>(() => createBlackjackGame(1));
   const [paused, setPaused] = useState(false), [restored, setRestored] = useState(false);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "ko" });
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
 
   const [bankroll, setBankroll] = useState<number>(() => {
     try {
@@ -222,15 +223,24 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
       return updated === 0 ? 500 : updated;
     });
 
+    if (game.outcome === "lost") {
+      addTrauma(0.45);
+      MobileHapticsPro.error();
+    } else if (game.outcome === "win") {
+      MobileHapticsPro.success();
+    }
+
     const dealerScore = evaluateBlackjackHand(game.dealer);
     const playerScore = evaluateBlackjackHand(game.player);
     const isNatural = game.outcome === "win" && playerScore.total === 21 && game.player.length === 2;
     if (isNatural) {
+      addTrauma(0.35);
       if (containerRef.current) celebrate(containerRef.current, { preset: "coins" });
     } else if (game.outcome === "win" && dealerScore.total > 21) {
+      addTrauma(0.4);
       if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
     }
-  }, [activeRoundBet, game, tone]);
+  }, [activeRoundBet, addTrauma, containerRef, game, tone]);
 
   const hit = useCallback(() => {
     if (paused || game.status !== "playing") return;
@@ -252,9 +262,10 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
     if (paused || game.status !== "playing" || game.player.length !== 2) return;
     tone("chip");
     MobileHapticsPro.impact();
+    addTrauma(0.2);
     const next = doubleBlackjack(game);
     setGame(next);
-  }, [game, paused, tone]);
+  }, [addTrauma, game, paused, tone]);
 
   useEffect(() => {
     const keys = (event: KeyboardEvent) => {
@@ -321,11 +332,16 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
     <div
       ref={containerRef}
       data-game-surface
-      className={
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
         isImmersive
           ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col justify-between m-0 select-none"
           : "relative"
-      }
+      }`}
     >
       <GameContainer title={t.title} subtitle={t.subtitle} onReset={start}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs font-bold">

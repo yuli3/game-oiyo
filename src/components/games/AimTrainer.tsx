@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { celebrate } from "../../lib/games/celebration";
 import { AIM_TRAINER_UI_SPRITES } from "../../lib/games/sprites";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro } from "../../lib/games/engine-suite-unified";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
@@ -401,6 +401,7 @@ interface Props {
 const AimTrainer: React.FC<Props> = ({ locale }) => {
   const t = T[locale] ?? T.en;
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
 
   const [phase, setPhase] = useState<Phase>("menu");
   const [mode, setMode] = useState<Mode>("gridshot");
@@ -652,15 +653,17 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     setIsNewBest(beat && score > 0);
     if (beat && score > 0) {
       MobileHapticsPro.success();
+      addTrauma(0.4);
     } else {
       MobileHapticsPro.medium();
+      addTrauma(0.2);
     }
     tone(beat && score > 0 ? 880 : 440, beat && score > 0 ? 0.22 : 0.15);
     if (beat && score > 0 && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       celebrate(shellRef.current, { preset: "sparks", colors: ["#f87171", "#fde68a", "#ffffff"], origin: { x: 0.5, y: 0.5 } });
     }
     setPhase("result");
-  }, [stop, mode, hits, misses, key, diff, t.diffName, tone, track]);
+  }, [addTrauma, stop, mode, hits, misses, key, diff, t.diffName, tone, track]);
 
   // keep finish() fresh inside the interval without re-subscribing
   const finishRef = useRef(finish);
@@ -909,6 +912,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       playHitSound(streakRef.current);
       vibrate(10);
       recoilShakeRef.current = Math.min(8, 3.5 + streakRef.current * 0.4);
+      addTrauma(Math.min(0.25, 0.06 + streakRef.current * 0.02));
 
       const hitColor = MODE_COLORS[mode]?.primary ?? "#38bdf8";
       const hitPxX = (hitTg.x / 100) * rect.width;
@@ -932,9 +936,11 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       playMissSound();
       vibrate(25);
       recoilShakeRef.current = 6;
+      addTrauma(0.18);
+      MobileHapticsPro.error();
       ripplesRef.current.push(createRipple(clickX, clickY, "rgba(239, 68, 68, 0.7)", 26));
     }
-  }, [phase, mode, recoveryObscured, playHitSound, playMissSound, vibrate, scheduleRecoveryTarget, spawn, targetSize]);
+  }, [addTrauma, phase, mode, recoveryObscured, playHitSound, playMissSound, vibrate, scheduleRecoveryTarget, spawn, targetSize]);
 
   const flashHit = useCallback((reactionMs: number) => {
     reactionsRef.current.push(reactionMs);
@@ -994,7 +1000,12 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     <div
       ref={setContainerRef}
       data-game-surface
-      className={`select-none transition-all duration-200 ${
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`select-none transition-all duration-200 transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
         isImmersive
           ? "fixed inset-0 z-50 flex flex-col justify-between bg-background p-3 sm:p-5 h-dvh w-screen overflow-hidden m-0"
           : "not-prose my-10 scroll-mt-20 rounded-3xl border border-border bg-card p-5 text-card-foreground shadow-sm max-w-xl mx-auto"
