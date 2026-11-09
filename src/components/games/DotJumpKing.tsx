@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth, getSharedAudioContext } from "../../lib/games/engine-suite-unified";
 import { frameScale } from "../../lib/games/time-contracts";
 import { GameJuice } from "../../lib/games/game-juice";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
@@ -199,6 +199,7 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
     [restored, setRestored] = useState(false),
     [shareCopied, setShareCopied] = useState(false);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "en" });
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
   const [sound, setSound] = useState<boolean>(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
@@ -276,6 +277,14 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
     if (state.current !== before) {
       MobileHapticsPro.impact();
       tone(520);
+      if (sound) {
+        try {
+          const audioCtx = getSharedAudioContext();
+          if (audioCtx) RetroChiptuneSynth.playJump(audioCtx);
+        } catch {
+          /* audio disabled */
+        }
+      }
       juiceRef.current.spring.punch(1.3, 0.7);
       const sy = (y: number) => y - state.current.camY;
       juiceRef.current.particles.emit(state.current.x, sy(state.current.y) + 12, { count: 8, kind: 'spark', color: '#cbd5e1', speedMin: 20, speedMax: 60 });
@@ -345,6 +354,15 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
         // Landing impact detection
         if (!wasOnGroundRef.current && state.current.onGround) {
           juiceRef.current.camera.addTrauma(0.16);
+          addTrauma(0.12);
+          if (sound) {
+            try {
+              const audioCtx = getSharedAudioContext();
+              if (audioCtx) RetroChiptuneSynth.playHit(audioCtx);
+            } catch {
+              /* audio disabled */
+            }
+          }
           const sy = (y: number) => y - state.current.camY;
           juiceRef.current.particles.emit(state.current.x, sy(state.current.y) + 12, { count: 6, kind: 'spark', color: '#9eb66d', speedMin: 15, speedMax: 45 });
         }
@@ -357,13 +375,29 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
         if (state.current.status === "over") {
           setPhase("over");
           localStorage.removeItem(SAVE_KEY);
-          tone(120);
+          addTrauma(0.45);
+          if (sound) {
+            try {
+              const audioCtx = getSharedAudioContext();
+              if (audioCtx) RetroChiptuneSynth.playGameOver(audioCtx);
+            } catch {
+              /* audio disabled */
+            }
+          }
           const sy = (y: number) => y - state.current.camY;
           juiceRef.current.impact(state.current.x, sy(state.current.y), 'heavy', 'FALL!');
           if (h > best) {
             setBest(h);
             localStorage.setItem(BEST_KEY, String(h));
             MobileHapticsPro.success();
+            if (sound) {
+              try {
+                const audioCtx = getSharedAudioContext();
+                if (audioCtx) RetroChiptuneSynth.playPowerup(audioCtx);
+              } catch {
+                /* audio disabled */
+              }
+            }
             if (c) celebrate(c, { preset: "stardust" });
           } else {
             MobileHapticsPro.heavy();
@@ -463,11 +497,16 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
     <div
       ref={containerRef}
       data-game-surface
-      className={
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
         isImmersive
           ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col justify-between m-0 select-none"
           : "relative"
-      }
+      }`}
     >
       <GameContainer title={t.title} subtitle={t.sub} onReset={start}>
         <div className="mx-auto max-w-[400px]">

@@ -37,6 +37,20 @@ import {
   type SfxCue,
   type SfxOptions,
 } from "./audio-mixer";
+import {
+  PixelCanvasBuffer,
+  RetroChiptuneSynth,
+  computeIntegerPixelScale,
+  parsePixelMatrix,
+  hexToRgb,
+  PICO8_PALETTE,
+  GAMEBOY_PALETTE,
+  NES_PALETTE,
+  CYBERPUNK_PALETTE,
+  type PixelSprite,
+  type PixelViewportFit,
+  type RgbColor,
+} from "./pixel-engine";
 
 export class MobileHapticsPro {
   public static lightImpact(): void {
@@ -473,5 +487,14 @@ export {
   getSharedAudioContext,
   getShakeCssVars,
   triggerHaptic,
+  PixelCanvasBuffer,
+  RetroChiptuneSynth,
+  computeIntegerPixelScale,
+  parsePixelMatrix,
+  hexToRgb,
+  PICO8_PALETTE,
+  GAMEBOY_PALETTE,
+  NES_PALETTE,
+  CYBERPUNK_PALETTE,
 };
-export type { SfxCue, SfxOptions, HapticStyle };
+export type { SfxCue, SfxOptions, HapticStyle, PixelSprite, PixelViewportFit, RgbColor };
