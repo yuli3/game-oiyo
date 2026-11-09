@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DotFishingComp from "../../components/games/DotFishing";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "도트 피싱 — 무료 픽셀 바다 낚시 & 30종 어류 도감 시뮬레이션",
+    description: "연안 해역부터 심연 해구까지 30종의 희귀 어류를 낚고 전설의 어류 도감을 완성하세요! 텐션 조절 밀당 손맛, 선박 및 낚싯대 업그레이드, 8비트 코지 레트로 사운드를 즐기세요.",
+  },
+  en: {
+    title: "Dot Fishing — Free Pixel Ocean Fishing & 30-Species Fish Encyclopedia",
+    description: "Cast your line from shallow coasts to the abyssal trench! Catch 30 unique marine species, balance line tension, upgrade your boat and rods, and complete the ultimate fish encyclopedia.",
+  },
+  ja: {
+    title: "ドットフィッシング — 無料ピクセル海洋釣り＆30種魚類図鑑シミュレーション",
+    description: "浅瀬から深海・深淵海溝まで全30種の魚を釣り上げて図鑑をコンプリートしよう！リールのテンションを巧みに操る本格フィッシング、ボート＆竿の強化、心地よい8ビットサウンド。",
+  },
+  fr: {
+    title: "Dot Fishing — Pêche rétro en pixel art et encyclopédie de 30 poissons",
+    description: "Pêchez 30 espèces marines des côtes aux abysses ! Gérez la tension de la ligne, améliorez votre canne et votre bateau, et complétez la grande encyclopédie marine en ligne.",
+  },
+  es: {
+    title: "Dot Fishing — Simulador de pesca pixel art y enciclopedia de 30 peces",
+    description: "¡Pesca 30 especies marinas desde las costas hasta la fosa abisal! Controla la tensión del sedal, mejora tu bote y caña, y completa la enciclopedia marina definitiva gratis.",
+  },
+  zh: {
+    title: "点点钓鱼 — 免费复古像素海洋垂钓与30种鱼类全图鉴模拟",
+    description: "从沿岸浅滩一路航向深渊海沟！挑战30种独特稀有鱼类，掌控钓线张力拉扯博弈，升级渔船与钓竿，在8比特复古芯片音乐中收集完整海洋生物图鉴。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["dot-fishing"]}>
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
+    <DotFishingComp client:load locale={locale} />
+    <div class="mx-auto max-w-3xl px-4 mt-8">
+      <GameGuide slug="dot-fishing" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    </div>
+  </div>
+</BaseLayout>
