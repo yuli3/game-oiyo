@@ -573,3 +573,50 @@ export function stepTowerGame(state: TowerDefenseState, dt: number, rng: TowerRn
     totalKills,
   };
 }
+
+export interface TowerMonteCarloReport {
+  runs: number;
+  wave1ClearRate: number;
+  avgKills: number;
+  avgCastleHpRemaining: number;
+}
+
+/**
+ * Monte Carlo balance simulation audit (`game-balance` skill) for Dot Tower Defense.
+ */
+export function runDotTowerMonteCarloAudit(
+  runs = 10,
+  ticksPerRun = 180,
+  baseSeed = 20261110
+): TowerMonteCarloReport {
+  let waveClears = 0;
+  let totalKills = 0;
+  let totalHp = 0;
+
+  for (let r = 0; r < runs; r++) {
+    const rng = new TowerRng(baseSeed + r * 73);
+    let state = createTowerGame(baseSeed + r * 73);
+    state = placeTower(state, 2, 1, "archer");
+    state = placeTower(state, 5, 3, "cannon");
+    state = placeTower(state, 4, 1, "frost");
+    state = startWave(state);
+
+    for (let t = 0; t < ticksPerRun && state.status === "wave_running"; t++) {
+      state = stepTowerGame(state, 0.15, rng);
+    }
+
+    if (state.status === "wave_cleared" || state.status === "victory") {
+      waveClears++;
+    }
+    totalKills += state.totalKills;
+    totalHp += state.castleHp;
+  }
+
+  return {
+    runs,
+    wave1ClearRate: waveClears / Math.max(1, runs),
+    avgKills: totalKills / Math.max(1, runs),
+    avgCastleHpRemaining: totalHp / Math.max(1, runs),
+  };
+}
+

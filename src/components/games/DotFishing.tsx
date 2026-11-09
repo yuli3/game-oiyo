@@ -38,6 +38,11 @@ import {
   getSharedAudioContext,
   useGameJuicePro,
 } from "../../lib/games/engine-suite-unified";
+import {
+  HitStopController,
+  PixelFxController,
+  playMultiLayerPixelSfx,
+} from "../../lib/games/pixelfx-engine";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import {
   loadArcadePassProgress,
@@ -215,8 +220,10 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
 
   const rngRef = useRef<FishingRng>(new FishingRng(Date.now()));
   const animTimeRef = useRef<number>(0);
+  const pixelFxRef = useRef<PixelFxController>(new PixelFxController(32));
+  const hitStopRef = useRef<HitStopController>(new HitStopController());
 
-  // Sound effects
+  // Sound effects (multi-layer synth with detune and harmonic sub-oscillator)
   const playSound = useCallback(
     (type: "cast" | "bite" | "hook" | "catch" | "snap" | "upgrade") => {
       if (!soundEnabled) return;
@@ -224,18 +231,23 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
         const ctx = getSharedAudioContext();
         if (!ctx) return;
         if (ctx.state === "suspended") ctx.resume();
+        const pitchVar = 1 + (Math.random() * 10 - 5) * 0.01;
         switch (type) {
           case "cast":
             RetroChiptuneSynth.playJump(ctx);
+            playMultiLayerPixelSfx(380 * pitchVar, 0.1, "sine", false);
             break;
           case "bite":
             RetroChiptuneSynth.playCoin(ctx);
+            playMultiLayerPixelSfx(520 * pitchVar, 0.12, "triangle", true);
             break;
           case "hook":
             RetroChiptuneSynth.playLaser(ctx);
+            playMultiLayerPixelSfx(640 * pitchVar, 0.14, "square", true);
             break;
           case "catch":
             RetroChiptuneSynth.playPowerup(ctx);
+            playMultiLayerPixelSfx(780 * pitchVar, 0.22, "triangle", true);
             setTimeout(() => {
               const c = getSharedAudioContext();
               if (c) RetroChiptuneSynth.playCoin(c);
@@ -286,16 +298,22 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
     let frameId: number;
 
     const loop = (now: number) => {
-      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
-      animTimeRef.current += dt;
+      const freezing = hitStopRef.current.update(dt);
+      if (!freezing) {
+        animTimeRef.current += dt;
+        pixelFxRef.current.update(dt);
+      }
 
       setGameState((prev) => {
+        if (freezing) return prev;
         if (prev.status === "waiting") {
           const nextTimer = prev.biteAlertTimer - dt * 1000;
           if (nextTimer <= 0) {
             playSound("bite");
             addTrauma(0.18);
+            pixelFxRef.current.spawn("water-splash", 215, 130, { palette: "water", scale: 1.6 });
             return triggerBite(prev, rngRef.current);
           }
           return { ...prev, biteAlertTimer: nextTimer };
@@ -320,9 +338,12 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
           if (next.status === "snapped") {
             playSound("snap");
             addTrauma(0.65);
+            hitStopRef.current.trigger(60);
           } else if (next.status === "caught" || next.status === "victory") {
             playSound("catch");
             addTrauma(0.35);
+            hitStopRef.current.trigger(55);
+            pixelFxRef.current.spawn("coin-sparkle", 110, 115, { palette: "gold", scale: 1.8 });
           }
           return next;
         }
@@ -513,6 +534,9 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
         ctx.fill();
       }
     }
+
+    // 5. Draw PixelFX dual-buffer bursts
+    pixelFxRef.current.drawToCanvas(ctx);
   }, [gameState]);
 
   const handleCastOrHook = () => {

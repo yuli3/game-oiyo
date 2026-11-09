@@ -829,3 +829,47 @@ export function buyBoatUpgrade(state: FishingGameState): FishingGameState {
     logMessage: `선박 업그레이드 [${nextUpgrade.names.ko || nextUpgrade.names.en}] 완료! 새로운 해역이 개방되었습니다!`,
   };
 }
+
+export interface FishingMonteCarloReport {
+  runs: number;
+  catchRate: number;
+  avgGoldEarned: number;
+}
+
+/**
+ * Monte Carlo balance simulation audit (`game-balance` skill) for Dot Fishing tension minigame.
+ */
+export function runDotFishingMonteCarloAudit(
+  runs = 25,
+  baseSeed = 20261110
+): FishingMonteCarloReport {
+  let catches = 0;
+  let totalGoldDelta = 0;
+
+  for (let r = 0; r < runs; r++) {
+    const rng = new FishingRng(baseSeed + r * 89);
+    let state = createFishingGame(baseSeed + r * 89);
+    const startGold = state.gold;
+    state = startCast(state, rng);
+    state = triggerBite(state, rng);
+    state = hookFish(state);
+
+    for (let tick = 0; tick < 200 && state.status === "reeling"; tick++) {
+      // Adaptive policy: reel when tension < 74 and not struggling at high tension
+      const shouldReel = state.lineTension < (state.activeFish?.isStruggling ? 62 : 80);
+      state = stepReelingTick(state, 0.08, shouldReel, rng);
+    }
+
+    if (state.status === "caught" || state.status === "victory") {
+      catches++;
+    }
+    totalGoldDelta += state.gold - startGold;
+  }
+
+  return {
+    runs,
+    catchRate: catches / Math.max(1, runs),
+    avgGoldEarned: totalGoldDelta / Math.max(1, runs),
+  };
+}
+

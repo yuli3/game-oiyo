@@ -40,6 +40,11 @@ import {
   getSharedAudioContext,
   useGameJuicePro,
 } from "../../lib/games/engine-suite-unified";
+import {
+  HitStopController,
+  PixelFxController,
+  playMultiLayerPixelSfx,
+} from "../../lib/games/pixelfx-engine";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import {
   loadArcadePassProgress,
@@ -227,8 +232,10 @@ export default function DotTower({ locale = "en" }: { locale?: string }) {
   const { shakeCssVars, addTrauma } = useGameJuicePro();
 
   const rngRef = useRef<TowerRng>(new TowerRng(Date.now()));
+  const pixelFxRef = useRef<PixelFxController>(new PixelFxController(32));
+  const hitStopRef = useRef<HitStopController>(new HitStopController());
 
-  // Sound effects
+  // Sound effects (multi-layer synth with detune and harmonic sub-oscillator)
   const playSound = useCallback(
     (type: "build" | "upgrade" | "sell" | "shoot" | "boom" | "coin" | "leak" | "wave" | "victory") => {
       if (!soundEnabled) return;
@@ -236,12 +243,15 @@ export default function DotTower({ locale = "en" }: { locale?: string }) {
         const ctx = getSharedAudioContext();
         if (!ctx) return;
         if (ctx.state === "suspended") ctx.resume();
+        const pitchVar = 1 + (Math.random() * 10 - 5) * 0.01;
         switch (type) {
           case "build":
             RetroChiptuneSynth.playCoin(ctx);
+            playMultiLayerPixelSfx(480 * pitchVar, 0.12, "triangle", true);
             break;
           case "upgrade":
             RetroChiptuneSynth.playPowerup(ctx);
+            playMultiLayerPixelSfx(640 * pitchVar, 0.16, "triangle", true);
             break;
           case "sell":
             RetroChiptuneSynth.playBlip(ctx, 350);
@@ -254,6 +264,7 @@ export default function DotTower({ locale = "en" }: { locale?: string }) {
             break;
           case "coin":
             RetroChiptuneSynth.playBlip(ctx, 520);
+            playMultiLayerPixelSfx(520 * pitchVar, 0.09, "sine", false);
             break;
           case "leak":
             RetroChiptuneSynth.playExplosion(ctx);
@@ -263,6 +274,7 @@ export default function DotTower({ locale = "en" }: { locale?: string }) {
             break;
           case "victory":
             RetroChiptuneSynth.playPowerup(ctx);
+            playMultiLayerPixelSfx(820 * pitchVar, 0.24, "triangle", true);
             break;
         }
       } catch {}
@@ -303,21 +315,35 @@ export default function DotTower({ locale = "en" }: { locale?: string }) {
     let frameId: number;
 
     const loop = (now: number) => {
-      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
+      const freezing = hitStopRef.current.update(dt);
+      if (!freezing) {
+        pixelFxRef.current.update(dt);
+      }
 
       setGameState((prev) => {
-        if (prev.status !== "wave_running") return prev;
+        if (freezing || prev.status !== "wave_running") return prev;
 
         const prevCastleHp = prev.castleHp;
         const prevEnemiesCount = prev.enemies.length;
+        const firstEnemy = prev.enemies[0];
         const next = stepTowerGame(prev, dt, rngRef.current);
 
         if (next.castleHp < prevCastleHp) {
           playSound("leak");
           addTrauma(0.5);
+          hitStopRef.current.trigger(55);
         } else if (next.enemies.length < prevEnemiesCount) {
           playSound("coin");
+          if (firstEnemy) {
+            pixelFxRef.current.spawn(
+              "slash-impact",
+              firstEnemy.x * CELL_SIZE + CELL_SIZE / 2,
+              firstEnemy.y * CELL_SIZE + CELL_SIZE / 2,
+              { palette: "fire", scale: 1.5 }
+            );
+          }
         }
 
         if (next.status === "wave_cleared") {
@@ -542,6 +568,9 @@ export default function DotTower({ locale = "en" }: { locale?: string }) {
       ctx.fillStyle = hpPct > 0.5 ? "#22c55e" : hpPct > 0.25 ? "#eab308" : "#ef4444";
       ctx.fillRect(eX - barW / 2, eY - size - 6, barW * hpPct, 3);
     }
+
+    // 8. Draw PixelFX dual-buffer bursts
+    pixelFxRef.current.drawToCanvas(ctx);
   }, [gameState]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {

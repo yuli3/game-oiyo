@@ -1,5 +1,60 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Lane } from '../../lib/games/unseen-boss';
+
+const RADAR_BEST_SCORE_KEY = 'oiyo-unseen-boss-radar-bestScore';
+
+function playRadarSonarSfx(lane: Lane, isTargetLock = false): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    const baseFreqs: Record<Lane, number> = { 0: 520, 1: 660, 2: 780 };
+    const pitchJitter = (Math.random() * 16 - 8) * 0.01;
+    const frequency = (isTargetLock ? 880 : baseFreqs[lane]) * (1 + pitchJitter);
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(frequency * 1.4, now);
+    filter.Q.setValueAtTime(3.2, now);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.11, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + (isTargetLock ? 0.32 : 0.18));
+
+    // Layer 1: Primary sonar sine ping
+    const oscMain = ctx.createOscillator();
+    oscMain.type = 'sine';
+    oscMain.frequency.setValueAtTime(frequency, now);
+    oscMain.detune.setValueAtTime(Math.random() * 12 - 6, now);
+
+    // Layer 2: Harmonic triangle sub-layer for rich tactical resonance
+    const oscSub = ctx.createOscillator();
+    oscSub.type = 'triangle';
+    oscSub.frequency.setValueAtTime(frequency * 0.5, now);
+    oscSub.detune.setValueAtTime(8, now);
+
+    oscMain.connect(filter);
+    oscSub.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    oscMain.start(now);
+    oscSub.start(now);
+    oscMain.stop(now + (isTargetLock ? 0.34 : 0.2));
+    oscSub.stop(now + (isTargetLock ? 0.34 : 0.2));
+    setTimeout(() => {
+      void ctx.close().catch(() => {});
+    }, 400);
+  } catch {
+    // Ignore audio context restrictions before user interaction
+  }
+}
 
 interface Props {
   activeLane: Lane | null;
@@ -39,15 +94,51 @@ export const UnseenBossRadar: React.FC<Props> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animIdRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(0);
   const sweepAngleRef = useRef<number>(0);
+  const traumaRef = useRef<number>(0);
+  const hitStopUntilRef = useRef<number>(0);
   const wavesRef = useRef<PingWave[]>([]);
   const particlesRef = useRef<Particle[]>([]);
   const prevActiveRef = useRef<Lane | null>(null);
+  const prevWonRef = useRef<boolean>(false);
+  const [bestScore, setBestScore] = useState<number>(() => {
+    if (typeof window === 'undefined') return 0;
+    try {
+      const saved = window.localStorage.getItem(RADAR_BEST_SCORE_KEY);
+      return saved ? Math.max(0, parseInt(saved, 10) || 0) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  useEffect(() => {
+    if (isWon && !prevWonRef.current) {
+      prevWonRef.current = true;
+      traumaRef.current = reducedMotion ? 0 : 0.45;
+      hitStopUntilRef.current = performance.now() + 55;
+      playRadarSonarSfx(1, true);
+      setBestScore((prev) => {
+        const next = prev + 1;
+        try {
+          window.localStorage.setItem(RADAR_BEST_SCORE_KEY, String(next));
+        } catch {
+          // Ignore storage quota issues
+        }
+        return next;
+      });
+    } else if (!isWon) {
+      prevWonRef.current = false;
+    }
+  }, [isWon, reducedMotion]);
 
   // Trigger pulse wave on lane change
   useEffect(() => {
     if (activeLane !== null && activeLane !== prevActiveRef.current) {
       prevActiveRef.current = activeLane;
+      if (!reducedMotion) {
+        traumaRef.current = Math.min(0.35, traumaRef.current + 0.18);
+      }
       const canvas = canvasRef.current;
       if (!canvas) return;
       const w = canvas.width / (window.devicePixelRatio || 1);
@@ -97,7 +188,7 @@ export const UnseenBossRadar: React.FC<Props> = ({
     } else if (activeLane === null) {
       prevActiveRef.current = null;
     }
-  }, [activeLane]);
+  }, [activeLane, reducedMotion]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -118,12 +209,24 @@ export const UnseenBossRadar: React.FC<Props> = ({
 
     const render = (time: number) => {
       if (!isRunning) return;
+      const rawDt = lastTimeRef.current > 0 ? (time - lastTimeRef.current) / 1000 : 1 / 60;
+      lastTimeRef.current = time;
+      const dt = Math.min(rawDt, 0.05);
+      const isFreezing = time < hitStopUntilRef.current;
+      const stepScale = isFreezing ? 0 : dt * 60;
+
       const w = canvas.width / dpr;
       const h = canvas.height / dpr;
 
       ctx.save();
       ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, w, h);
+
+      if (traumaRef.current > 0 && !reducedMotion) {
+        const shakeMag = traumaRef.current * traumaRef.current * 6;
+        ctx.translate((Math.random() * 2 - 1) * shakeMag, (Math.random() * 2 - 1) * shakeMag);
+        traumaRef.current = Math.max(0, traumaRef.current - dt * 2.2);
+      }
 
       const cx = w / 2;
       const cy = h / 2 + 10;
@@ -182,7 +285,9 @@ export const UnseenBossRadar: React.FC<Props> = ({
 
       // 2. Rotating Radar Sweep Beam
       if (!reducedMotion) {
-        sweepAngleRef.current = (time * 0.0016) % (Math.PI * 2);
+        if (!isFreezing) {
+          sweepAngleRef.current = (sweepAngleRef.current + dt * 1.6) % (Math.PI * 2);
+        }
         const sAngle = sweepAngleRef.current;
 
         // Draw radial sweep cone
@@ -210,7 +315,7 @@ export const UnseenBossRadar: React.FC<Props> = ({
       // 3. Update & Draw Sonar Waves
       for (let i = wavesRef.current.length - 1; i >= 0; i--) {
         const wave = wavesRef.current[i];
-        wave.radius += 2.2;
+        wave.radius += 2.2 * stepScale;
         wave.alpha = Math.max(0, 1 - wave.radius / wave.maxRadius);
 
         ctx.strokeStyle = `rgba(52, 211, 153, ${wave.alpha * 0.8})`;
@@ -227,10 +332,10 @@ export const UnseenBossRadar: React.FC<Props> = ({
       // 4. Update & Draw Particles
       for (let i = particlesRef.current.length - 1; i >= 0; i--) {
         const p = particlesRef.current[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.alpha -= 0.025;
-        p.life -= 1;
+        p.x += p.vx * stepScale;
+        p.y += p.vy * stepScale;
+        p.alpha -= 0.025 * stepScale;
+        p.life -= 1 * stepScale;
 
         ctx.fillStyle = `rgba(52, 211, 153, ${Math.max(0, p.alpha)})`;
         ctx.beginPath();
@@ -357,6 +462,13 @@ export const UnseenBossRadar: React.FC<Props> = ({
       const ny = cy + Math.sin(theta) * (maxR * 0.88);
       const dist = Math.hypot(x - nx, y - ny);
       if (dist < 32) {
+        playRadarSonarSfx(lane);
+        if (!reducedMotion) {
+          traumaRef.current = Math.min(0.4, traumaRef.current + 0.22);
+        }
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate(12);
+        }
         onPingNode(lane);
       }
     });
@@ -368,8 +480,15 @@ export const UnseenBossRadar: React.FC<Props> = ({
         <span className="inline-block size-2 rounded-full bg-primary animate-pulse" />
         <span>SONAR ACQ-SYS // MK.IV</span>
       </div>
-      <div className="absolute top-3 right-3 z-10 text-xs font-mono text-muted-foreground">
-        PHASE: <span className="font-bold text-foreground uppercase">{phase}</span>
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-2 text-xs font-mono text-muted-foreground">
+        <span>
+          PHASE: <span className="font-bold text-foreground uppercase">{phase}</span>
+        </span>
+        {bestScore > 0 && (
+          <span className="rounded bg-primary/15 px-1.5 py-0.5 text-primary">
+            LOCKS {bestScore}
+          </span>
+        )}
       </div>
       <canvas
         ref={canvasRef}

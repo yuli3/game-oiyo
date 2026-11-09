@@ -581,3 +581,47 @@ export function applyUpgradeStats(state: MinerState): void {
   const hullValues = [100, 160, 240, 350, 500];
   state.maxHull = hullValues[state.upgrades.hull - 1] ?? 500;
 }
+
+export interface MinerMonteCarloReport {
+  runs: number;
+  avgDepthMax: number;
+  avgOresCollected: number;
+  survivalRate: number;
+}
+
+/**
+ * Monte Carlo balance simulation audit (`game-balance` skill) for Dot Miner.
+ */
+export function runDotMinerMonteCarloAudit(
+  runs = 20,
+  maxSteps = 45,
+  baseSeed = 20261110
+): MinerMonteCarloReport {
+  const dirs: MinerDirection[] = ["down", "down", "left", "right"];
+  let totalDepth = 0;
+  let totalOres = 0;
+  let survived = 0;
+
+  for (let r = 0; r < runs; r++) {
+    const rng = new MinerRng(baseSeed + r * 131);
+    let state = createMinerGame(baseSeed + r * 131);
+    let ores = 0;
+    for (let s = 0; s < maxSteps && state.status !== "gameover" && state.status !== "victory"; s++) {
+      const dir = state.fuel < 30 ? "up" : dirs[rng.range(0, 3)];
+      const res = stepMiner(state, { type: "move", dir });
+      state = res.state;
+      if (res.events.collectedOre) ores++;
+    }
+    totalDepth += state.depthMax;
+    totalOres += ores;
+    if (state.status !== "gameover") survived++;
+  }
+
+  return {
+    runs,
+    avgDepthMax: totalDepth / Math.max(1, runs),
+    avgOresCollected: totalOres / Math.max(1, runs),
+    survivalRate: survived / Math.max(1, runs),
+  };
+}
+

@@ -34,6 +34,11 @@ import {
   getSharedAudioContext,
   useGameJuicePro,
 } from "../../lib/games/engine-suite-unified";
+import {
+  HitStopController,
+  PixelFxController,
+  playMultiLayerPixelSfx,
+} from "../../lib/games/pixelfx-engine";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import {
   loadArcadePassProgress,
@@ -206,6 +211,26 @@ export default function DotFarm({ locale = "en" }: { locale?: string }) {
     locale: (locale as any) || "en",
   });
   const { shakeCssVars, addTrauma } = useGameJuicePro();
+  const pixelFxRef = useRef<PixelFxController>(new PixelFxController(32));
+  const hitStopRef = useRef<HitStopController>(new HitStopController());
+  const [fxTick, setFxTick] = useState(0);
+
+  useEffect(() => {
+    let rafId = 0;
+    let last = performance.now();
+    const stepFx = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      const freezing = hitStopRef.current.update(dt);
+      if (!freezing && pixelFxRef.current.getActiveCount() > 0) {
+        pixelFxRef.current.update(dt);
+        setFxTick((v) => (v + 1) % 1000);
+      }
+      rafId = requestAnimationFrame(stepFx);
+    };
+    rafId = requestAnimationFrame(stepFx);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
 
   // BGM
   useEffect(() => {
@@ -261,19 +286,35 @@ export default function DotFarm({ locale = "en" }: { locale?: string }) {
         const result = stepFarmAction(prev, action);
         const { events, state: next } = result;
 
+        const fxX = next.farmerX * TILE_SIZE + 14;
+        const fxY = next.farmerY * TILE_SIZE + 14;
+        if (events.harvested) {
+          pixelFxRef.current.spawn("nature-bloom", fxX, fxY, { palette: "heal", scale: 1.5 });
+          hitStopRef.current.trigger(45);
+        } else if (events.watered) {
+          pixelFxRef.current.spawn("water-splash", fxX, fxY, { palette: "water", scale: 1.3 });
+        } else if (events.soldProduce) {
+          pixelFxRef.current.spawn("coin-sparkle", fxX, fxY, { palette: "gold", scale: 1.6 });
+        }
+
         if (soundEnabled) {
           const audioCtx = getSharedAudioContext();
+          const pitchVar = 1 + (Math.random() * 10 - 5) * 0.01;
+          // Multi-layer synth with detune and harmonic sub-oscillator
           if (events.victory) {
             RetroChiptuneSynth.playPowerup(audioCtx);
+            playMultiLayerPixelSfx(720 * pitchVar, 0.2, "triangle", true);
             setTimeout(() => RetroChiptuneSynth.playCoin(getSharedAudioContext()), 160);
           } else if (events.harvested) {
             RetroChiptuneSynth.playCoin(audioCtx);
+            playMultiLayerPixelSfx(540 * pitchVar, 0.14, "sine", true);
           } else if (events.sleptDay) {
             RetroChiptuneSynth.playJump(audioCtx);
           } else if (events.boughtItem || events.soldProduce) {
             RetroChiptuneSynth.playPowerup(audioCtx);
           } else if (events.watered) {
             RetroChiptuneSynth.playBlip(audioCtx, 320);
+            playMultiLayerPixelSfx(320 * pitchVar, 0.1, "sine", false);
           } else if (events.tilled) {
             RetroChiptuneSynth.playHit(audioCtx);
           } else if (events.planted) {
@@ -457,7 +498,10 @@ export default function DotFarm({ locale = "en" }: { locale?: string }) {
     ctx.fillStyle = "#FFEC27";
     ctx.fillRect(fx + 5, fy + 4, 18, 4);
     ctx.fillRect(fx + 8, fy + 1, 12, 4);
-  }, [gameState]);
+
+    // 3. Draw PixelFX dual-buffer bursts
+    pixelFxRef.current.drawToCanvas(ctx);
+  }, [gameState, fxTick]);
 
   const restartGame = () => {
     setGameState(createFarmGame(Date.now()));

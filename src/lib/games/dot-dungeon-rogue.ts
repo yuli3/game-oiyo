@@ -890,3 +890,48 @@ function getStepTowards(
 
   return null;
 }
+
+export interface DungeonMonteCarloReport {
+  runs: number;
+  avgScore: number;
+  avgMonstersSlain: number;
+  survivalRate: number;
+}
+
+/**
+ * Monte Carlo balance simulation audit (`game-balance` skill) for Dot Dungeon Rogue.
+ */
+export function runDungeonRogueMonteCarloAudit(
+  runs = 20,
+  maxSteps = 40,
+  baseSeed = 20261110
+): DungeonMonteCarloReport {
+  const dirs: Direction[] = ["up", "down", "left", "right"];
+  let totalScore = 0;
+  let totalSlain = 0;
+  let survived = 0;
+
+  for (let r = 0; r < runs; r++) {
+    const rng = new RogueRng(baseSeed + r * 97);
+    let state = createDungeonGame(baseSeed + r * 97);
+    for (let s = 0; s < maxSteps && state.status === "playing"; s++) {
+      if (state.player.hp <= state.player.maxHp * 0.4 && state.player.inventory.length > 0) {
+        state = stepDungeonTurn(state, { type: "use_item", itemIndex: 0 }).state;
+      } else {
+        const dir = dirs[rng.range(0, 3)];
+        state = stepDungeonTurn(state, { type: "move", dir }).state;
+      }
+    }
+    totalScore += state.score;
+    totalSlain += state.monstersSlain;
+    if (state.status !== "gameover") survived++;
+  }
+
+  return {
+    runs,
+    avgScore: totalScore / Math.max(1, runs),
+    avgMonstersSlain: totalSlain / Math.max(1, runs),
+    survivalRate: survived / Math.max(1, runs),
+  };
+}
+

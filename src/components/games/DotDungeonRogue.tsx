@@ -31,6 +31,11 @@ import {
   getSharedAudioContext,
   useGameJuicePro,
 } from "../../lib/games/engine-suite-unified";
+import {
+  HitStopController,
+  PixelFxController,
+  playMultiLayerPixelSfx,
+} from "../../lib/games/pixelfx-engine";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import {
   loadArcadePassProgress,
@@ -196,6 +201,26 @@ export default function DotDungeonRogue({ locale = "en" }: { locale?: string }) 
     locale: (locale as any) || "en",
   });
   const { shakeCssVars, addTrauma } = useGameJuicePro();
+  const pixelFxRef = useRef<PixelFxController>(new PixelFxController(32));
+  const hitStopRef = useRef<HitStopController>(new HitStopController());
+  const [fxTick, setFxTick] = useState(0);
+
+  useEffect(() => {
+    let rafId = 0;
+    let last = performance.now();
+    const stepFx = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      const freezing = hitStopRef.current.update(dt);
+      if (!freezing && pixelFxRef.current.getActiveCount() > 0) {
+        pixelFxRef.current.update(dt);
+        setFxTick((v) => (v + 1) % 1000);
+      }
+      rafId = requestAnimationFrame(stepFx);
+    };
+    rafId = requestAnimationFrame(stepFx);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
 
   // BGM control
   useEffect(() => {
@@ -239,20 +264,36 @@ export default function DotDungeonRogue({ locale = "en" }: { locale?: string }) 
         const result = stepDungeonTurn(prev, action);
         const { events, state: next } = result;
 
-        // Sound & Juice feedback
+        // Sound & Juice feedback (multi-layer synth with detune & pitchVar + PixelFX dual-buffer bursts)
+        const pxCenter = next.player.x * TILE_SIZE + 8;
+        const pyCenter = next.player.y * TILE_SIZE + 8;
+        if (events.attacked) {
+          pixelFxRef.current.spawn("slash-impact", pxCenter, pyCenter, { palette: "fire", scale: 1.5 });
+          hitStopRef.current.trigger(45);
+        } else if (events.pickedItem) {
+          pixelFxRef.current.spawn("coin-sparkle", pxCenter, pyCenter, { palette: "gold", scale: 1.4 });
+        } else if (events.descended || events.victory) {
+          pixelFxRef.current.spawn("frost-nova", pxCenter, pyCenter, { palette: "arcane", scale: 1.8 });
+          hitStopRef.current.trigger(65);
+        }
+
         if (soundEnabled) {
           const audioCtx = getSharedAudioContext();
+          const pitchVar = 1 + (Math.random() * 10 - 5) * 0.01;
           if (events.victory) {
             RetroChiptuneSynth.playPowerup(audioCtx);
+            playMultiLayerPixelSfx(660 * pitchVar, 0.22, "triangle", true);
             setTimeout(() => RetroChiptuneSynth.playCoin(getSharedAudioContext()), 160);
           } else if (events.gameover) {
             RetroChiptuneSynth.playGameOver(audioCtx);
           } else if (events.descended) {
             RetroChiptuneSynth.playJump(audioCtx);
+            playMultiLayerPixelSfx(520 * pitchVar, 0.16, "sine", true);
           } else if (events.hitPlayer) {
             RetroChiptuneSynth.playHit(audioCtx);
           } else if (events.attacked) {
             RetroChiptuneSynth.playLaser(audioCtx);
+            playMultiLayerPixelSfx(340 * pitchVar, 0.1, "sawtooth", false);
           } else if (events.pickedItem) {
             RetroChiptuneSynth.playCoin(audioCtx);
           } else if (events.moved) {
@@ -426,7 +467,10 @@ export default function DotDungeonRogue({ locale = "en" }: { locale?: string }) 
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("@", playerPx + 8, playerPy + 8);
-  }, [gameState]);
+
+    // 5. Draw PixelFX dual-buffer (color + additive light) bursts
+    pixelFxRef.current.drawToCanvas(ctx);
+  }, [gameState, fxTick]);
 
   const restartGame = () => {
     setGameState(createDungeonGame(Date.now()));

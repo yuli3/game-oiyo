@@ -556,3 +556,49 @@ function getDelta(dir: FarmDirection): { x: number; y: number } {
       return { x: 1, y: 0 };
   }
 }
+
+export interface FarmMonteCarloReport {
+  runs: number;
+  avgFinalMoney: number;
+  avgTotalHarvested: number;
+}
+
+/**
+ * Monte Carlo balance simulation audit (`game-balance` skill) for Dot Farm.
+ */
+export function runDotFarmMonteCarloAudit(
+  runs = 15,
+  maxDays = 8,
+  baseSeed = 20261110
+): FarmMonteCarloReport {
+  let totalMoney = 0;
+  let totalHarvest = 0;
+
+  for (let r = 0; r < runs; r++) {
+    let state = createFarmGame(baseSeed + r * 53);
+    // Till, plant, and water a starter tile, then cycle days
+    state = stepFarmAction(state, { type: "select_tool", tool: "hoe" }).state;
+    state = stepFarmAction(state, { type: "interact" }).state;
+    state = stepFarmAction(state, { type: "select_seed", seed: "turnip" }).state;
+    state = stepFarmAction(state, { type: "interact" }).state;
+
+    for (let d = 0; d < maxDays; d++) {
+      state = stepFarmAction(state, { type: "select_tool", tool: "can" }).state;
+      state = stepFarmAction(state, { type: "interact" }).state;
+      state = stepFarmAction(state, { type: "sleep" }).state;
+      // Interact on new morning harvests if mature
+      state = stepFarmAction(state, { type: "interact" }).state;
+      state = stepFarmAction(state, { type: "sell_all" }).state;
+    }
+
+    totalMoney += state.money;
+    totalHarvest += state.totalHarvested;
+  }
+
+  return {
+    runs,
+    avgFinalMoney: totalMoney / Math.max(1, runs),
+    avgTotalHarvested: totalHarvest / Math.max(1, runs),
+  };
+}
+

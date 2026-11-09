@@ -35,6 +35,11 @@ import {
   getSharedAudioContext,
   useGameJuicePro,
 } from "../../lib/games/engine-suite-unified";
+import {
+  HitStopController,
+  PixelFxController,
+  playMultiLayerPixelSfx,
+} from "../../lib/games/pixelfx-engine";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import {
   loadArcadePassProgress,
@@ -196,6 +201,26 @@ export default function DotMiner({ locale = "en" }: { locale?: string }) {
     locale: (locale as any) || "en",
   });
   const { shakeCssVars, addTrauma } = useGameJuicePro();
+  const pixelFxRef = useRef<PixelFxController>(new PixelFxController(32));
+  const hitStopRef = useRef<HitStopController>(new HitStopController());
+  const [fxTick, setFxTick] = useState(0);
+
+  useEffect(() => {
+    let rafId = 0;
+    let last = performance.now();
+    const stepFx = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      const freezing = hitStopRef.current.update(dt);
+      if (!freezing && pixelFxRef.current.getActiveCount() > 0) {
+        pixelFxRef.current.update(dt);
+        setFxTick((v) => (v + 1) % 1000);
+      }
+      rafId = requestAnimationFrame(stepFx);
+    };
+    rafId = requestAnimationFrame(stepFx);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
 
   // BGM playback
   useEffect(() => {
@@ -239,10 +264,31 @@ export default function DotMiner({ locale = "en" }: { locale?: string }) {
         const result = stepMiner(prev, action);
         const { events, state: next } = result;
 
+        const camX = Math.max(
+          0,
+          Math.min(MINER_WORLD_WIDTH - VIEWPORT_TILES_X, next.x - Math.floor(VIEWPORT_TILES_X / 2))
+        );
+        const camY = Math.max(
+          0,
+          Math.min(MINER_WORLD_DEPTH - VIEWPORT_TILES_Y, next.y - Math.floor(VIEWPORT_TILES_Y / 2))
+        );
+        const fxX = (next.x - camX) * TILE_SIZE + 10;
+        const fxY = (next.y - camY) * TILE_SIZE + 10;
+
+        if (events.collectedOre) {
+          pixelFxRef.current.spawn("coin-sparkle", fxX, fxY, { palette: "gold", scale: 1.5 });
+          hitStopRef.current.trigger(45);
+        } else if (events.brokeBlock) {
+          pixelFxRef.current.spawn("ore-shatter", fxX, fxY, { palette: "arcane", scale: 1.3 });
+        }
+
         if (soundEnabled) {
           const audioCtx = getSharedAudioContext();
+          const pitchVar = 1 + (Math.random() * 10 - 5) * 0.01;
+          // Multi-layer synth with detune and harmonic sub-oscillator
           if (events.victory) {
             RetroChiptuneSynth.playPowerup(audioCtx);
+            playMultiLayerPixelSfx(740 * pitchVar, 0.22, "triangle", true);
             setTimeout(() => RetroChiptuneSynth.playCoin(getSharedAudioContext()), 160);
           } else if (events.outOfFuel || events.tookDamage) {
             RetroChiptuneSynth.playHit(audioCtx);
@@ -250,8 +296,10 @@ export default function DotMiner({ locale = "en" }: { locale?: string }) {
             RetroChiptuneSynth.playExplosion(audioCtx);
           } else if (events.collectedOre) {
             RetroChiptuneSynth.playCoin(audioCtx);
+            playMultiLayerPixelSfx(580 * pitchVar, 0.14, "sine", true);
           } else if (events.drilled) {
             RetroChiptuneSynth.playBlip(audioCtx, 180);
+            playMultiLayerPixelSfx(210 * pitchVar, 0.08, "square", false);
           } else if (events.moved) {
             RetroChiptuneSynth.playBlip(audioCtx, 240);
           }
@@ -465,7 +513,10 @@ export default function DotMiner({ locale = "en" }: { locale?: string }) {
     ctx.lineTo(minerScreenX + 16, minerScreenY + 14);
     ctx.closePath();
     ctx.fill();
-  }, [gameState]);
+
+    // 3. Draw PixelFX dual-buffer bursts
+    pixelFxRef.current.drawToCanvas(ctx);
+  }, [gameState, fxTick]);
 
   const restartGame = () => {
     setGameState(createMinerGame(Date.now()));
