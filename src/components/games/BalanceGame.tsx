@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
-import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, getSharedAudioContext, playComboSfx } from '../../lib/games/engine-suite-unified';
 import {
   PENDING_STORAGE_KEY, addVote, parsePending, removeFlushed, shouldFlush, toDeltas,
   withLocalPending, type PendingVotes,
@@ -118,6 +118,8 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
   const total = BALANCE_GAME_PROMPTS.length;
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
+  const [scaleTilt, setScaleTilt] = useState(0);
 
   const [stored, setStored] = useState<Stored>(() => loadStored());
   const [order, setOrder] = useState<number[]>(() => shuffledOrder(total));
@@ -234,11 +236,25 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
   const pick = useCallback((choice: 'a' | 'b') => {
     if (!currentPrompt) return;
+    setScaleTilt(choice === 'a' ? -15 : 15);
     playPop(choice === 'a' ? 520 : 660, 0.07);
     MobileHapticsPro.impact();
+    addTrauma(0.18);
+    if ((cursor + 1) % 10 === 0) {
+      addTrauma(0.35);
+      const ctx = getSharedAudioContext();
+      if (ctx && !muted) {
+        playComboSfx(ctx, "powerup", Math.floor((cursor + 1) / 10));
+      }
+    }
     if (cursor + 1 >= order.length) {
+      addTrauma(0.6);
       MobileHapticsPro.success();
       if (containerRef.current) celebrate(containerRef.current, { preset: 'stardust' });
+      const ctx = getSharedAudioContext();
+      if (ctx && !muted) {
+        playComboSfx(ctx, "powerup", 6);
+      }
     }
     setStored((prev) => {
       const next: Stored = { answered: prev.answered + (prev.picks[currentPrompt.id] ? 0 : 1), picks: { ...prev.picks, [currentPrompt.id]: choice } };
@@ -250,10 +266,12 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     persistPending();
     if (shouldFlush(pendingRef.current)) void flush();
     setCursor((c) => c + 1);
-  }, [currentPrompt, cursor, order.length, persistPending, flush, playPop]);
+  }, [currentPrompt, cursor, order.length, persistPending, flush, playPop, addTrauma, muted]);
 
   const restart = useCallback(() => {
     playPop(440, 0.06);
+    setScaleTilt(0);
+    setRevealed(null);
     setOrder(shuffledOrder(total));
     setCursor(0);
   }, [total, playPop]);
@@ -281,6 +299,17 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [togglePortal, finished, currentPrompt, pick]);
 
+  useEffect(() => {
+    if (!revealed) return;
+    const merged = withLocalPending(crowd[revealed.id] ?? { a: 0, b: 0 }, pendingRef.current[revealed.id]);
+    const sum = merged.a + merged.b;
+    if (sum > 0) {
+      const aPctCrowd = Math.round((merged.a / sum) * 100);
+      const targetTilt = Math.max(-18, Math.min(18, ((50 - aPctCrowd) / 50) * 14));
+      setScaleTilt(targetTilt);
+    }
+  }, [revealed, crowd]);
+
   const answeredCount = Object.keys(stored.picks).length;
   const pickTotal = tally.a + tally.b;
   const aPct = pickTotal > 0 ? Math.round((tally.a / pickTotal) * 100) : 0;
@@ -288,7 +317,12 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   return (
     <div
       ref={containerRef}
-      className={`relative w-full transition-all duration-300 ${
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`relative w-full transition-all duration-300 transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
         isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
       }`}
     >
@@ -318,9 +352,28 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.restart} onReset={restart}>
       <div className="flex flex-col items-center gap-5">
         <p className="text-xs font-medium text-muted-foreground">{t.note}</p>
-        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
           <img src={BALANCE_GAME_SPRITES.scale} alt="" aria-hidden="true" className="h-5 w-5 object-contain" />
           <span>{t.progress(Math.min(cursor, total), total)}</span>
+        </div>
+
+        {/* Animated Seesaw Scale Beam */}
+        <div className="w-full max-w-xs flex flex-col items-center my-1 select-none pointer-events-none" aria-hidden="true">
+          <div
+            style={{ '--scale-rot': `${scaleTilt}deg` } as React.CSSProperties}
+            className="relative w-44 h-2.5 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-between px-2 transition-transform duration-500 ease-out transform rotate-(--scale-rot)"
+          >
+            <div className="size-6 -top-2.5 left-0.5 absolute rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center text-xs font-black text-primary shadow-sm">
+              A
+            </div>
+            <div className="size-6 -top-2.5 right-0.5 absolute rounded-full bg-chart-2/20 border-2 border-chart-2 flex items-center justify-center text-xs font-black text-chart-2 shadow-sm">
+              B
+            </div>
+          </div>
+          <svg className="w-5 h-3.5 fill-muted-foreground/40 -mt-0.5" viewBox="0 0 20 14">
+            <polygon points="10,0 20,14 0,14" />
+          </svg>
+          <div className="w-14 h-1 rounded-full bg-muted-foreground/30 mt-0.5" />
         </div>
 
         {!finished && currentPrompt && (
@@ -328,20 +381,20 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="group" aria-label={t.subtitle}>
               <TiltBalanceChoiceButton
                 onClick={() => pick('a')}
-                className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-border bg-card p-5 text-center text-base font-bold shadow-sm transition-all hover:border-primary hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-border bg-card p-5 text-center text-base font-bold shadow-sm transition-all hover:border-primary hover:bg-primary/5 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 <img src={BALANCE_GAME_SPRITES.badgeA} alt="" aria-hidden="true" className="h-7 w-7 object-contain" />
-                <span>{currentPrompt.a}</span>
+                <span className="text-foreground">{currentPrompt.a}</span>
               </TiltBalanceChoiceButton>
               <TiltBalanceChoiceButton
                 onClick={() => pick('b')}
-                className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-border bg-card p-5 text-center text-base font-bold shadow-sm transition-all hover:border-primary hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-border bg-card p-5 text-center text-base font-bold shadow-sm transition-all hover:border-chart-2 hover:bg-chart-2/5 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chart-2"
               >
                 <img src={BALANCE_GAME_SPRITES.badgeB} alt="" aria-hidden="true" className="h-7 w-7 object-contain" />
-                <span>{currentPrompt.b}</span>
+                <span className="text-foreground">{currentPrompt.b}</span>
               </TiltBalanceChoiceButton>
             </div>
-            <p className="mt-3 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t.vs}</p>
+            <p className="mt-3 text-center text-xs font-black uppercase tracking-widest text-muted-foreground">{t.vs}</p>
           </div>
         )}
 
@@ -354,9 +407,12 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
           const aPctCrowd = Math.round((merged.a / sum) * 100);
           return (
             <div className="w-full max-w-xl rounded-2xl border border-border bg-muted/30 p-4" role="status" aria-live="polite">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t.crowd}</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.crowd}</p>
               <div className="mt-2 flex h-3 w-full overflow-hidden rounded-full bg-muted">
-                <div className="bg-primary" style={{ width: `${aPctCrowd}%` }} />
+                <div
+                  style={{ '--progress-w': `${aPctCrowd}%` } as React.CSSProperties}
+                  className="bg-primary w-(--progress-w)"
+                />
                 <div className="bg-chart-2 flex-1" />
               </div>
               <p className="mt-2 text-sm font-bold">
@@ -377,7 +433,10 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
               <div className="mt-4 rounded-2xl border border-border bg-muted/40 p-4">
                 <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.myPicks}</p>
                 <div className="mt-2 flex h-3 w-full overflow-hidden rounded-full bg-muted">
-                  <div className="bg-primary" style={{ width: `${aPct}%` }} />
+                  <div
+                    style={{ '--progress-w': `${aPct}%` } as React.CSSProperties}
+                    className="bg-primary w-(--progress-w)"
+                  />
                   <div className="bg-chart-2 flex-1" />
                 </div>
                 <p className="mt-2 text-sm font-bold">A {aPct}% · B {100 - aPct}% <span className="font-normal text-muted-foreground">({t.doneSub}: {answeredCount}/{total})</span></p>

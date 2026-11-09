@@ -5,6 +5,8 @@ import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { normalizeWheelItems, parseStoredWheelItems, WHEEL_ITEM_LIMIT } from '../../lib/games/wheel-spinner';
 import { WHEEL_SPINNER_UI_SPRITES } from '../../lib/games/sprites';
+import { useGameJuicePro, MobileHapticsPro, getSharedAudioContext, playComboSfx } from '../../lib/games/engine-suite-unified';
+import { celebrate } from '../../lib/games/celebration';
 
 // ─── Physics: the wheel is a single circular body pinned at its own center
 // (zero gravity, zero linear velocity — it never moves, only spins). Matter's
@@ -29,6 +31,8 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     };
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
     const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
+    const { shakeCssVars, addTrauma } = useGameJuicePro();
+    const [pointerKick, setPointerKick] = useState(false);
 
     const [items, setItems] = useState<string[]>(DEFAULT_ITEMS);
     const [itemsLoaded, setItemsLoaded] = useState(false);
@@ -138,6 +142,10 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 if (currentSlice !== lastTickSliceRef.current && Math.abs(body.angularVelocity) > STOP_THRESHOLD * 2) {
                     lastTickSliceRef.current = currentSlice;
                     playToneRef.current(650, 0.02, 'triangle');
+                    setPointerKick(true);
+                    setTimeout(() => setPointerKick(false), 50);
+                    addTrauma(0.04);
+                    MobileHapticsPro.light();
                 }
             }
 
@@ -152,6 +160,15 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     const resultWinner = currentItems[(winningIndex + currentItems.length) % currentItems.length];
                     setWinner(resultWinner);
                     playToneRef.current(880, 0.25, 'sine');
+                    addTrauma(0.5);
+                    MobileHapticsPro.success();
+                    if (containerRef.current) {
+                        celebrate(containerRef.current, { preset: 'coins' });
+                    }
+                    const ctx = getSharedAudioContext();
+                    if (ctx) {
+                        playComboSfx(ctx, "powerup", 4);
+                    }
                 }
             }
         };
@@ -163,7 +180,73 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             Matter.Events.off(engine, 'afterUpdate', onAfterUpdate);
             Matter.Composite.clear(engine.world, false);
         };
-    }, []);
+    }, [addTrauma, containerRef]);
+
+    const isDraggingRef = useRef(false);
+    const dragLastAngleRef = useRef(0);
+    const dragLastTimeRef = useRef(0);
+    const dragVelocityRef = useRef(0);
+
+    const handleWheelPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (isSpinning) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+        isDraggingRef.current = true;
+        dragLastAngleRef.current = angle;
+        dragLastTimeRef.current = performance.now();
+        dragVelocityRef.current = 0;
+        e.currentTarget.setPointerCapture(e.pointerId);
+    };
+
+    const handleWheelPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!isDraggingRef.current) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+        let delta = currentAngle - dragLastAngleRef.current;
+        if (delta > Math.PI) delta -= Math.PI * 2;
+        if (delta < -Math.PI) delta += Math.PI * 2;
+
+        const now = performance.now();
+        const dt = Math.max(1, now - dragLastTimeRef.current);
+        dragVelocityRef.current = delta / (dt / 16.67);
+        dragLastAngleRef.current = currentAngle;
+        dragLastTimeRef.current = now;
+
+        const body = wheelBodyRef.current;
+        if (body) {
+            Matter.Body.setAngle(body, body.angle + delta);
+            setRotation((body.angle * 180) / Math.PI);
+        }
+    };
+
+    const handleWheelPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!isDraggingRef.current) return;
+        isDraggingRef.current = false;
+        try {
+            e.currentTarget.releasePointerCapture(e.pointerId);
+        } catch {
+            // Ignore
+        }
+        const body = wheelBodyRef.current;
+        const engine = engineRef.current;
+        if (!body || !engine) return;
+
+        const v = dragVelocityRef.current;
+        if (Math.abs(v) > 0.04) {
+            setIsSpinning(true);
+            setWinner(null);
+            addTrauma(0.18);
+            MobileHapticsPro.medium();
+            Matter.Body.setAngularVelocity(body, Math.max(-0.6, Math.min(0.6, v * 1.4)));
+            const runner = Matter.Runner.create();
+            runnerRef.current = runner;
+            Matter.Runner.run(runner, engine);
+        }
+    };
 
     const spin = useCallback(() => {
         const body = wheelBodyRef.current;
@@ -171,6 +254,8 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (!body || !engine || isSpinning || items.length === 0) return;
         setIsSpinning(true);
         setWinner(null);
+        addTrauma(0.2);
+        MobileHapticsPro.medium();
         playTone(440, 0.08, 'sine');
 
         if (reducedMotion) {
@@ -189,7 +274,7 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const runner = Matter.Runner.create();
         runnerRef.current = runner;
         Matter.Runner.run(runner, engine);
-    }, [isSpinning, items, reducedMotion, playTone]);
+    }, [isSpinning, items, reducedMotion, playTone, addTrauma]);
 
     const addItem = () => {
         if (newItem.trim() && items.length < WHEEL_ITEM_LIMIT) {
@@ -227,7 +312,12 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     return (
         <div
             ref={containerRef}
-            className={`relative w-full transition-all duration-300 ${
+            style={{
+                '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+                '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+                '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+            } as React.CSSProperties}
+            className={`relative w-full transition-all duration-300 transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
                 isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
             }`}
         >
@@ -258,17 +348,24 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 <div className="flex flex-col md:flex-row gap-12 items-center">
                     {/* Wheel UI */}
                     <div className="relative">
-                        {/* Fixed Pointer */}
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 z-10 w-8 h-8 bg-destructive rounded-full flex items-center justify-center shadow-lg border-2 border-background">
+                        {/* Fixed Pointer with tactile kickback */}
+                        <div
+                            className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 z-10 w-8 h-8 bg-destructive rounded-full flex items-center justify-center shadow-lg border-2 border-background transition-transform duration-75 ${
+                                pointerKick ? "-rotate-12 scale-110" : "rotate-0"
+                            }`}
+                        >
                             <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-background translate-y-4" />
                         </div>
                         
-                        <div role="img" aria-label={winner ? `${t.wheel}: ${winner}` : t.wheel}
-                            // rotation now comes from the matter.js body's angle every physics
-                            // tick (see the `afterUpdate` handler above), so no CSS transition —
-                            // the frame-by-frame updates already produce a smooth, decelerating spin.
-                            style={{ transform: `rotate(${rotation}deg)` }}
-                            className="w-64 h-64 sm:w-80 sm:h-80 rounded-full border-8 border-muted shadow-2xl relative overflow-hidden"
+                        <div
+                            role="img"
+                            aria-label={winner ? `${t.wheel}: ${winner}` : t.wheel}
+                            onPointerDown={handleWheelPointerDown}
+                            onPointerMove={handleWheelPointerMove}
+                            onPointerUp={handleWheelPointerUp}
+                            onPointerCancel={handleWheelPointerUp}
+                            style={{ '--wheel-rot': `${rotation}deg` } as React.CSSProperties}
+                            className="w-64 h-64 sm:w-80 sm:h-80 rounded-full border-8 border-muted shadow-2xl relative overflow-hidden cursor-grab active:cursor-grabbing touch-none select-none transition-shadow transform rotate-(--wheel-rot)"
                         >
                             {items.map((_, i) => {
                                 const angle = 360 / items.length;
@@ -276,10 +373,11 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                     <div
                                         key={i}
                                         style={{
-                                            transform: `rotate(${i * angle}deg) skewY(${90 - angle}deg)`,
-                                            backgroundColor: `oklch(0.8 0.1 ${150 + i * (30 / items.length)})`
-                                        }}
-                                        className="absolute top-0 right-0 w-1/2 h-1/2 origin-bottom-left border border-background/20"
+                                            '--sector-rot': `${i * angle}deg`,
+                                            '--sector-skew': `${90 - angle}deg`,
+                                            '--sector-bg': `oklch(0.8 0.1 ${150 + i * (30 / items.length)})`,
+                                        } as React.CSSProperties}
+                                        className="absolute top-0 right-0 w-1/2 h-1/2 origin-bottom-left border border-background/20 transform rotate-(--sector-rot) skew-y-(--sector-skew) bg-(--sector-bg)"
                                     />
                                 );
                             })}
@@ -288,8 +386,8 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                 return (
                                     <div 
                                         key={`label-${i}`}
-                                        style={{ transform: `rotate(${i * angle + angle/2}deg)` }}
-                                        className="absolute inset-0 flex items-start justify-center pt-8 text-xs font-black text-foreground/80 uppercase tracking-tighter"
+                                        style={{ '--label-rot': `${i * angle + angle / 2}deg` } as React.CSSProperties}
+                                        className="absolute inset-0 flex items-start justify-center pt-8 text-xs font-black text-foreground/80 uppercase tracking-tighter transform rotate-(--label-rot)"
                                     >
                                         <span className="rotate-90 origin-center">{item}</span>
                                     </div>
@@ -331,8 +429,8 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         </button>
 
                         {winner && (
-                            <div className="text-center animate-bounce motion-reduce:animate-none flex flex-col items-center" role="status" aria-live="assertive">
-                                <img src={WHEEL_SPINNER_UI_SPRITES.trophy} alt="Jackpot Trophy" className="size-16 object-contain mb-1 drop-shadow" />
+                            <div className="text-center animate-bounce motion-reduce:animate-none flex flex-col items-center p-4 rounded-2xl bg-primary/10 border-2 border-primary/40 shadow-lg shadow-primary/20" role="status" aria-live="assertive">
+                                <img src={WHEEL_SPINNER_UI_SPRITES.trophy} alt="Jackpot Trophy" className="size-16 object-contain mb-1 drop-shadow-md" />
                                 <p className="text-xs font-black text-muted-foreground uppercase mb-1">{t.result}</p>
                                 <h4 className="text-3xl font-black text-primary uppercase">{winner}</h4>
                             </div>
