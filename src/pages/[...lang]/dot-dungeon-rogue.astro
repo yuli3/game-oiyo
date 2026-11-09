@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DotDungeonRogueComp from "../../components/games/DotDungeonRogue";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "도트 던전 로그 — 무료 턴제 픽셀 던전 크롤러",
+    description: "절차적으로 생성되는 5층 던전을 탐험하세요! 몬스터와의 턴제 전투, 안개 속 탐색, 8비트 칩튠 사운드와 함께 고대 드래곤의 아뮬렛을 차지하세요.",
+  },
+  en: {
+    title: "Dot Dungeon Rogue — Free Turn-Based Pixel Dungeon Crawler",
+    description: "Explore 5 procedurally generated dungeon depths! Turn-based tactical combat, fog of war, 8-bit chiptune audio, and the quest for the Dragon's Amulet.",
+  },
+  ja: {
+    title: "ドットダンジョンローグ — 無料ターン制ピクセルダンジョンRPG",
+    description: "自動生成される地下5階のダンジョンを冒険！ターン制タクティカル戦闘、視界と霧、8ビットチップチューンBGMと共に古代ドラゴンの秘宝を目指せ。",
+  },
+  fr: {
+    title: "Dot Dungeon Rogue — Rogue-like de donjon pixel au tour par tour gratuit",
+    description: "Explorez 5 profondeurs de donjon générées de manière procédurale ! Combat au tour par tour, brouillard de guerre et quête de l'Amulette du Dragon.",
+  },
+  es: {
+    title: "Dot Dungeon Rogue — Mazmorras pixel por turnos gratis en línea",
+    description: "¡Explora 5 niveles de mazmorra procedurales! Combate por turnos táctico, niebla de guerra, música chiptune de 8 bits y la búsqueda del Amuleto del Dragón.",
+  },
+  zh: {
+    title: "点点地牢肉鸽 — 免费回合制像素地牢探险游戏",
+    description: "探索随机生成的地下5层地牢！经典回合制走位战斗、战争迷雾探索、8比特芯片音乐，击败远古巨龙并夺回秘宝护身符。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["dot-dungeon-rogue"]}>
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
+    <DotDungeonRogueComp client:load locale={locale} />
+    <div class="mx-auto max-w-3xl px-4 mt-8">
+      <GameGuide slug="dot-dungeon-rogue" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    </div>
+  </div>
+</BaseLayout>
