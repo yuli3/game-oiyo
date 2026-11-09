@@ -7,13 +7,11 @@ import {
   placeAndResolve,
 } from "../../lib/games/hexa-sort";
 import {
-  createShakeState,
-  addTrauma,
-  updateShake,
-  triggerHaptic,
-} from "../../lib/games/juice-engine";
-import { playSyntheticTone } from "../../lib/games/audio-mixer";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+  RetroChiptuneSynth,
+} from "../../lib/games/engine-suite-unified";
 import { HEXA_SORT_SPRITES } from "../../lib/games/sprites";
 import { celebrate } from "../../lib/games/celebration";
 import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
@@ -78,7 +76,6 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
   const [game, setGame] = useState<HexaSortGameState>(() => createInitialHexaSortGame(1));
   const [selectedHandIdx, setSelectedHandIdx] = useState<number | null>(null);
   const [highScore, setHighScore] = useState(() => loadHighScore("hexa-sort", 0));
-  const [shakeState, setShakeState] = useState(() => createShakeState());
 
   useEffect(() => {
     if (game.score > 0) {
@@ -89,7 +86,8 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
       }
     }
   }, [game.score, game.status]);
-  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+
+  const { addTrauma, shakeCssVars } = useGameJuicePro();
   const [shareCopied, setShareCopied] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -107,35 +105,21 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
     };
   }, []);
 
-  // Frame animation loop for screen shake
+  const prevStatusRef = useRef(game.status);
   useEffect(() => {
-    let animId: number;
-    let lastTime = performance.now();
-
-    const loop = (time: number) => {
-      const dt = Math.min(0.05, (time - lastTime) / 1000);
-      lastTime = time;
-
-      setShakeState((prev) => {
-        if (prev.trauma <= 0.001) return prev;
-        const { state, offset } = updateShake(prev, dt, time / 1000);
-        setShakeOffset({ x: offset.x, y: offset.y });
-        return state;
-      });
-
-      animId = requestAnimationFrame(loop);
-    };
-
-    animId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animId);
-  }, []);
+    if (prevStatusRef.current !== "game_over" && game.status === "game_over") {
+      addTrauma(0.55);
+      MobileHapticsPro.error();
+      RetroChiptuneSynth.playGameOver(audioCtxRef.current);
+    }
+    prevStatusRef.current = game.status;
+  }, [game.status, addTrauma]);
 
   const handleSelectHand = (idx: number) => {
     if (!game.hand[idx]) return;
     setSelectedHandIdx((prev) => (prev === idx ? null : idx));
-    playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "sine" });
+    RetroChiptuneSynth.playBlip(audioCtxRef.current);
     MobileHapticsPro.light();
-    triggerHaptic("light");
   };
 
   const handleSlotClick = (slotId: string) => {
@@ -143,37 +127,32 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
 
     const resolution = placeAndResolve(game, selectedHandIdx, slotId);
     if (!resolution) {
-      playSyntheticTone(audioCtxRef.current, { freq: 220, duration: 0.15, type: "sawtooth" });
+      RetroChiptuneSynth.playHit(audioCtxRef.current);
       MobileHapticsPro.warning();
-      triggerHaptic("warning");
+      addTrauma(0.12);
       return;
     }
 
     // Move succeeded
     setGame(resolution.nextState);
     setSelectedHandIdx(null);
-    playSyntheticTone(audioCtxRef.current, { freq: 520, duration: 0.12, type: "triangle" });
-    MobileHapticsPro.impact();
-    triggerHaptic("medium");
 
     // Check for 10-stack clear cascade
     if (resolution.clears.length > 0) {
-      setShakeState((prev) => addTrauma(prev, 0.45));
+      addTrauma(0.45);
       MobileHapticsPro.success();
-      triggerHaptic("combo");
+      RetroChiptuneSynth.playCoin(audioCtxRef.current);
 
-      if (resolution.nextState.status === "level_completed" && containerRef.current) {
-        celebrate(containerRef.current, { preset: "tiles" });
+      if (resolution.nextState.status === "level_completed") {
+        RetroChiptuneSynth.playPowerup(audioCtxRef.current);
+        if (containerRef.current) {
+          celebrate(containerRef.current, { preset: "tiles" });
+        }
       }
-
-      // Celebratory ASMR chime chord
-      playSyntheticTone(audioCtxRef.current, { freq: 523.25, duration: 0.25, type: "sine" });
-      setTimeout(() => {
-        playSyntheticTone(audioCtxRef.current, { freq: 659.25, duration: 0.3, type: "sine" });
-      }, 70);
-      setTimeout(() => {
-        playSyntheticTone(audioCtxRef.current, { freq: 783.99, duration: 0.4, type: "sine" });
-      }, 140);
+    } else {
+      RetroChiptuneSynth.playPowerup(audioCtxRef.current);
+      MobileHapticsPro.medium();
+      addTrauma(0.08);
     }
   };
 
@@ -216,11 +195,12 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
       ref={containerRef}
       style={
         {
-          "--shake-x": `${shakeOffset.x}px`,
-          "--shake-y": `${shakeOffset.y}px`,
+          "--shake-x": shakeCssVars["--shake-x"],
+          "--shake-y": shakeCssVars["--shake-y"],
+          "--shake-rot": shakeCssVars["--shake-rot"],
         } as React.CSSProperties
       }
-      className="relative mx-auto flex w-full max-w-xl translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center justify-between rounded-3xl border border-border bg-card p-4 shadow-xl sm:p-6"
+      className="relative mx-auto flex w-full max-w-xl translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) flex-col items-center justify-between rounded-3xl border border-border bg-card p-4 shadow-xl sm:p-6"
     >
       {/* Top Header: Level, Score, Target Progress */}
       <div className="flex w-full items-center justify-between gap-2 border-b border-border pb-3">

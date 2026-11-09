@@ -11,14 +11,11 @@ import {
   type SpellTowerState,
 } from "@/lib/games/spell-tower";
 import {
-  addTrauma,
-  createShakeState,
-  triggerHaptic,
-  updateShake,
-  type ScreenShakeState,
-} from "@/lib/games/juice-engine";
-import { playSyntheticTone } from "@/lib/games/audio-mixer";
-import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+  RetroChiptuneSynth,
+} from "@/lib/games/engine-suite-unified";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
 import { celebrate } from "@/lib/games/celebration";
 import { loadHighScore, saveHighScore } from "@/lib/games/game-save";
@@ -29,8 +26,6 @@ import { RotateCcw, Volume2, VolumeX, CheckCircle, Sparkles, AlertTriangle, Maxi
 interface SpellTowerProps {
   locale?: string;
 }
-
-const PENTATONIC_SCALE = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25];
 
 const I18N: Record<string, Record<string, string>> = {
   ko: {
@@ -205,9 +200,34 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
       }
     }
   }, [game.score, game.status]);
-  const [, setShakeState] = useState<ScreenShakeState>(() => createShakeState());
-  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+  const { addTrauma, shakeCssVars } = useGameJuicePro();
   const [message, setMessage] = useState<string | null>(null);
+
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const getAudioCtx = useCallback(() => {
+    if (typeof window === "undefined") return null;
+    if (!audioCtxRef.current) {
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AudioContextClass) {
+        audioCtxRef.current = new AudioContextClass();
+      }
+    }
+    return audioCtxRef.current;
+  }, []);
+
+  const prevStatusRef = useRef(game.status);
+  useEffect(() => {
+    if (prevStatusRef.current !== "game_over" && game.status === "game_over") {
+      addTrauma(0.6);
+      MobileHapticsPro.error();
+      if (soundEnabled) {
+        RetroChiptuneSynth.playGameOver(getAudioCtx());
+      }
+    }
+    prevStatusRef.current = game.status;
+  }, [game.status, addTrauma, soundEnabled, getAudioCtx]);
 
   const handleShareCard = useCallback(async () => {
     try {
@@ -231,38 +251,6 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
     } catch {}
   }, [game.score, game.status, game.wordsFound.length]);
 
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const getAudioCtx = useCallback(() => {
-    if (typeof window === "undefined") return null;
-    if (!audioCtxRef.current) {
-      const AudioContextClass =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (AudioContextClass) {
-        audioCtxRef.current = new AudioContextClass();
-      }
-    }
-    return audioCtxRef.current;
-  }, []);
-
-  // Screen shake loop
-  useEffect(() => {
-    let animId: number;
-    let lastTime = performance.now();
-    const loop = (time: number) => {
-      const dt = Math.min((time - lastTime) / 1000, 0.05);
-      lastTime = time;
-      setShakeState((prev) => {
-        const { state, offset } = updateShake(prev, dt);
-        setShakeOffset({ x: offset.x, y: offset.y });
-        return state;
-      });
-      animId = requestAnimationFrame(loop);
-    };
-    animId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animId);
-  }, []);
-
   const currentWord = useMemo(() => getSelectedWord(game), [game]);
   const isCurrentValid = useMemo(() => isValidWord(currentWord), [currentWord]);
 
@@ -276,10 +264,8 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
         const len = next.selectedPath.length;
         if (len > 0) {
           MobileHapticsPro.light();
-          triggerHaptic("light");
           if (soundEnabled) {
-            const freq = PENTATONIC_SCALE[(len - 1) % PENTATONIC_SCALE.length] ?? 440;
-            playSyntheticTone(getAudioCtx(), { freq, duration: 0.1, type: "sine" });
+            RetroChiptuneSynth.playBlip(getAudioCtx());
           }
         }
       }
@@ -292,16 +278,20 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
       setMessage(t.tooShort);
       setTimeout(() => setMessage(null), 1500);
       MobileHapticsPro.warning();
+      addTrauma(0.12);
+      if (soundEnabled) {
+        RetroChiptuneSynth.playHit(getAudioCtx());
+      }
       return;
     }
 
     if (!isCurrentValid) {
       setMessage(t.invalidWord);
       setTimeout(() => setMessage(null), 1500);
-      MobileHapticsPro.warning();
-      triggerHaptic("warning");
+      MobileHapticsPro.error();
+      addTrauma(0.2);
       if (soundEnabled) {
-        playSyntheticTone(getAudioCtx(), { freq: 160, duration: 0.2, type: "sawtooth" });
+        RetroChiptuneSynth.playHit(getAudioCtx());
       }
       return;
     }
@@ -310,9 +300,9 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
     setGame(result.state);
 
     if (result.clearedWord) {
-      const mult = result.clearedWord.length >= 5 ? 0.6 : 0.3;
-      setShakeState((s) => addTrauma(s, mult));
-      if (result.clearedWord.length >= 5) {
+      const isMega = result.clearedWord.length >= 5;
+      addTrauma(isMega ? 0.6 : 0.3);
+      if (isMega) {
         MobileHapticsPro.success();
         try {
           if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
@@ -320,18 +310,20 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
       } else {
         MobileHapticsPro.heavy();
       }
-      triggerHaptic("heavy");
 
       if (soundEnabled) {
         const ctx = getAudioCtx();
-        playSyntheticTone(ctx, { freq: 523.25, duration: 0.15, type: "sine" });
-        setTimeout(() => playSyntheticTone(ctx, { freq: 659.25, duration: 0.25, type: "triangle" }), 80);
+        if (isMega) {
+          RetroChiptuneSynth.playCoin(ctx);
+        } else {
+          RetroChiptuneSynth.playPowerup(ctx);
+        }
       }
 
       setMessage(`"${result.clearedWord}" +${result.pointsEarned}${t.pointsPlus}`);
       setTimeout(() => setMessage(null), 2000);
     }
-  }, [game, isCurrentValid, t, soundEnabled, getAudioCtx, containerRef]);
+  }, [game, isCurrentValid, t, soundEnabled, getAudioCtx, containerRef, addTrauma]);
 
   const handleClearPath = useCallback(() => {
     MobileHapticsPro.click();
@@ -347,15 +339,16 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
   return (
     <div
       ref={containerRef}
-      className={`relative mx-auto flex flex-col items-center gap-4 p-4 font-sans text-foreground select-none translate-x-(--shake-x) translate-y-(--shake-y) ${
+      className={`relative mx-auto flex flex-col items-center gap-4 p-4 font-sans text-foreground select-none transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
         isImmersive
           ? "fixed inset-0 z-50 w-screen h-dvh overflow-y-auto bg-background p-3 sm:p-6 justify-between m-0 max-w-none"
-          : "max-w-xl"
+          : "w-full max-w-xl px-2 sm:px-4"
       }`}
       style={
         {
-          "--shake-x": `${shakeOffset.x}px`,
-          "--shake-y": `${shakeOffset.y}px`,
+          "--shake-x": shakeCssVars["--shake-x"],
+          "--shake-y": shakeCssVars["--shake-y"],
+          "--shake-rot": shakeCssVars["--shake-rot"],
         } as React.CSSProperties
       }
     >
