@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DotFarmComp from "../../components/games/DotFarm";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "도트 팜 — 무료 픽셀 코지 농장 타이쿤 & 작물 수확 시뮬레이션",
+    description: "한적한 시골 픽셀 농장에서 당근, 토마토, 고대 과일을 재배하고 수확하세요! 8비트 코지 사운드와 함께 자동 스프링클러를 구축하고 5,000골드 부농의 꿈을 달성하세요.",
+  },
+  en: {
+    title: "Dot Farm — Free Cozy Pixel Farm Tycoon & Crop Harvesting Sim",
+    description: "Grow carrots, juicy tomatoes, and legendary Ancient Fruit on your cozy pixel farm! Set up auto-sprinklers, master the seasons, and build a $5,000 agricultural empire in your browser.",
+  },
+  ja: {
+    title: "ドットファーム — 無料ピクセル癒し系農場経営＆収穫タイクーン",
+    description: "のんびりピクセル牧場でカブやトマト、伝説の古代フルーツを育てよう！スプリンクラーを設置して農場を自動化し、総資産5,000ゴールドの豪農を目指す無料ブラウザゲーム。",
+  },
+  fr: {
+    title: "Dot Farm — Jeu de ferme pixel cozy et simulation de récolte gratuit",
+    description: "Cultivez des navets, des tomates et des fruits anciens dans votre ferme rétro en pixel art ! Installez des arroseurs automatiques et atteignez 5 000 pièces d'or.",
+  },
+  es: {
+    title: "Dot Farm — Simulador de granja pixel art y cosechas relajante gratis",
+    description: "¡Siembra zanahorias, tomates y la legendaria Fruta Ancestral en tu acogedora granja pixel! Instala aspersores automáticos y alcanza una fortuna de 5,000 de oro.",
+  },
+  zh: {
+    title: "点点农场 — 免费复古像素治愈系农场经营与作物收割模拟",
+    description: "在温馨宁静的像素农场种植胡萝卜、多汁番茄和传说中的远古水果！搭建全自动洒水系统，赚取5,000金币成为顶级传奇大农场主。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["dot-farm"]}>
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
+    <DotFarmComp client:load locale={locale} />
+    <div class="mx-auto max-w-3xl px-4 mt-8">
+      <GameGuide slug="dot-farm" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    </div>
+  </div>
+</BaseLayout>
