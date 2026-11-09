@@ -504,71 +504,77 @@ export function runNeonKatanaMonteCarloAudit(
   playerSkill: "novice" | "adept" | "master" = "adept",
   seed: number = 1337
 ): MonteCarloResult {
+  const origRandom = Math.random;
   let rng = seed;
   const nextRandom = () => {
     rng = (rng * 1664525 + 1013904223) >>> 0;
     return rng / 4294967296;
   };
+  Math.random = nextRandom;
 
-  const perfectProb = playerSkill === "master" ? 0.95 : playerSkill === "adept" ? 0.65 : 0.35;
-  const guardProb = playerSkill === "master" ? 0.04 : playerSkill === "adept" ? 0.22 : 0.30;
+  try {
+    const perfectProb = playerSkill === "master" ? 0.95 : playerSkill === "adept" ? 0.65 : 0.35;
+    const guardProb = playerSkill === "master" ? 0.04 : playerSkill === "adept" ? 0.22 : 0.30;
 
-  let totalScore = 0;
-  let totalWaves = 0;
-  let totalCombos = 0;
-  let reachedWave3 = 0;
+    let totalScore = 0;
+    let totalWaves = 0;
+    let totalCombos = 0;
+    let reachedWave3 = 0;
 
-  for (let t = 0; t < trials; t++) {
-    let state = createInitialKatanaState();
-    // Simulate initial enemy
-    state.enemies.push(spawnWaveEnemy(state, `mc-${t}`));
+    for (let t = 0; t < trials; t++) {
+      let state = createInitialKatanaState();
+      // Simulate initial enemy
+      state.enemies.push(spawnWaveEnemy(state, `mc-${t}`));
 
-    const maxSteps = 1200; // max ~20 seconds of gameplay (60fps simulation)
-    const dt = 1 / 60;
+      const maxSteps = 1200; // max ~20 seconds of gameplay (60fps simulation)
+      const dt = 1 / 60;
 
-    for (let step = 0; step < maxSteps; step++) {
-      if (state.isGameOver) break;
+      for (let step = 0; step < maxSteps; step++) {
+        if (state.isGameOver) break;
 
-      // Check if incoming projectile is close
-      for (const p of state.projectiles) {
-        if (p.reflected) continue;
-        const dist = Math.hypot(p.x - state.playerPos.x, p.y - state.playerPos.y);
-        if (dist <= 100) {
-          const roll = nextRandom();
-          if (roll < perfectProb) {
-            // Simulated perfect parry
-            p.targetTime = state.time; // perfect alignment
-            const res = executeParry(state);
-            state = res.newState;
-          } else if (roll < perfectProb + guardProb) {
-            p.targetTime = state.time + 0.18; // guard alignment
-            const res = executeParry(state);
-            state = res.newState;
+        // Check if incoming projectile is close
+        for (const p of state.projectiles) {
+          if (p.reflected) continue;
+          const dist = Math.hypot(p.x - state.playerPos.x, p.y - state.playerPos.y);
+          if (dist <= 100) {
+            const roll = nextRandom();
+            if (roll < perfectProb) {
+              // Simulated perfect parry
+              p.targetTime = state.time; // perfect alignment
+              const res = executeParry(state);
+              state = res.newState;
+            } else if (roll < perfectProb + guardProb) {
+              p.targetTime = state.time + 0.18; // guard alignment
+              const res = executeParry(state);
+              state = res.newState;
+            }
+            break;
           }
-          break;
         }
+
+        // Check blade dash
+        if (state.gauge >= 100) {
+          const res = executeBladeDash(state, nextRandom() * Math.PI * 2);
+          state = res.newState;
+        }
+
+        state = stepKatanaGame(state, dt);
       }
 
-      // Check blade dash
-      if (state.gauge >= 100) {
-        const res = executeBladeDash(state, nextRandom() * Math.PI * 2);
-        state = res.newState;
-      }
-
-      state = stepKatanaGame(state, dt);
+      totalScore += state.score;
+      totalWaves += state.wave;
+      totalCombos += state.maxCombo;
+      if (state.wave >= 3) reachedWave3++;
     }
 
-    totalScore += state.score;
-    totalWaves += state.wave;
-    totalCombos += state.maxCombo;
-    if (state.wave >= 3) reachedWave3++;
+    return {
+      trials,
+      avgScore: Math.round(totalScore / trials),
+      avgWavesSurvived: Number((totalWaves / trials).toFixed(2)),
+      avgCombos: Math.round(totalCombos / trials),
+      survivalRateAtWave3: Number(((reachedWave3 / trials) * 100).toFixed(1)),
+    };
+  } finally {
+    Math.random = origRandom;
   }
-
-  return {
-    trials,
-    avgScore: Math.round(totalScore / trials),
-    avgWavesSurvived: Number((totalWaves / trials).toFixed(2)),
-    avgCombos: Math.round(totalCombos / trials),
-    survivalRateAtWave3: Number(((reachedWave3 / trials) * 100).toFixed(1)),
-  };
 }
