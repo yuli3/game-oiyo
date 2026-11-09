@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   CANNON_X,
@@ -9,8 +9,6 @@ import {
   type PeglinGame,
   stepPeglinPhysics,
 } from "@/lib/games/peglin-rogue";
-import { addTrauma, createShakeState, updateShake } from "@/lib/games/juice-engine";
-import { playSyntheticTone } from "@/lib/games/audio-mixer";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
 import { celebrate } from "@/lib/games/celebration";
 import { loadHighScore, saveHighScore } from "@/lib/games/game-save";
@@ -19,7 +17,7 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "@/lib/games/share-card";
-import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from "@/lib/games/engine-suite-unified";
 import { getSpriteUrl, PEGLIN_ROGUE_SPRITES } from "@/lib/games/sprites";
 import { Maximize2, Minimize2, Share2, Check, RotateCcw, Target } from "lucide-react";
 
@@ -86,12 +84,11 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
       }
     }
   }, [game.status, game.stage, game.enemy.hp, game.enemy.maxHp]);
-  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+  const { addTrauma, shakeCssVars } = useGameJuicePro();
 
   const gameRef = useRef<PeglinGame>(game);
   gameRef.current = game;
 
-  const shakeStateRef = useRef(createShakeState());
   const audioCtxRef = useRef<AudioContext | null>(null);
   const victoryHandledRef = useRef(false);
   const gameOverHandledRef = useRef(false);
@@ -118,69 +115,67 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
       const dt = Math.min(0.04, (time - lastTime) / 1000);
       lastTime = time;
 
-      // Update screen shake
-      if (shakeStateRef.current.trauma > 0.001) {
-        const { state, offset } = updateShake(shakeStateRef.current, dt, time / 1000);
-        shakeStateRef.current = state;
-        setShakeOffset({ x: offset.x, y: offset.y });
-      } else if (shakeOffset.x !== 0 || shakeOffset.y !== 0) {
-        setShakeOffset({ x: 0, y: 0 });
-      }
-
       const current = gameRef.current;
       if (current.status === "firing") {
         const step = stepPeglinPhysics(current, dt);
 
         if (step.pegHitCount > 0) {
           MobileHapticsPro.light();
+          addTrauma(0.12);
           const pitchBase = 320 + (current.currentTurnDamage % 30) * 18;
-          playSyntheticTone(audioCtxRef.current, {
-            freq: pitchBase,
-            duration: 0.06,
-            type: "sine",
-            gain: 0.1,
-          });
+          if (audioCtxRef.current) {
+            RetroChiptuneSynth.playBlip(audioCtxRef.current, pitchBase);
+          }
         }
 
         if (step.bombExploded) {
-          shakeStateRef.current = addTrauma(shakeStateRef.current, 0.45);
+          addTrauma(0.55);
           MobileHapticsPro.heavy();
-          playSyntheticTone(audioCtxRef.current, {
-            freq: 120,
-            duration: 0.25,
-            type: "sawtooth",
-            gain: 0.2,
-          });
+          if (audioCtxRef.current) {
+            RetroChiptuneSynth.playExplosion(audioCtxRef.current);
+          }
         }
 
         if (step.critActivated) {
+          addTrauma(0.25);
           MobileHapticsPro.medium();
-          playSyntheticTone(audioCtxRef.current, {
-            freq: 880,
-            duration: 0.15,
-            type: "triangle",
-            gain: 0.15,
-          });
+          if (audioCtxRef.current) {
+            RetroChiptuneSynth.playPowerup(audioCtxRef.current);
+          }
         }
 
         if (step.enemyDamaged > 0) {
-          shakeStateRef.current = addTrauma(shakeStateRef.current, 0.5);
+          addTrauma(0.4);
           MobileHapticsPro.heavy();
+          if (audioCtxRef.current) {
+            RetroChiptuneSynth.playHit(audioCtxRef.current);
+          }
         }
 
         if (step.playerDamaged > 0) {
-          shakeStateRef.current = addTrauma(shakeStateRef.current, 0.6);
+          addTrauma(0.65);
           MobileHapticsPro.heavy();
+          if (audioCtxRef.current) {
+            RetroChiptuneSynth.playHit(audioCtxRef.current);
+          }
         }
 
         setGame(step.game);
       } else if (current.status === "won" && !victoryHandledRef.current) {
         victoryHandledRef.current = true;
+        addTrauma(0.5);
         MobileHapticsPro.heavy();
+        if (audioCtxRef.current) {
+          RetroChiptuneSynth.playPowerup(audioCtxRef.current);
+        }
         celebrate(containerRef.current, { preset: "stardust" });
       } else if (current.status === "gameover" && !gameOverHandledRef.current) {
         gameOverHandledRef.current = true;
+        addTrauma(0.7);
         MobileHapticsPro.error();
+        if (audioCtxRef.current) {
+          RetroChiptuneSynth.playGameOver(audioCtxRef.current);
+        }
       }
 
       animId = requestAnimationFrame(loop);
@@ -188,7 +183,7 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, [shakeOffset.x, shakeOffset.y]);
+  }, [addTrauma]);
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     if (game.status !== "aiming") return;
@@ -209,7 +204,9 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
     if (game.status !== "aiming") return;
     const fired = firePeglinBall(game, aimAngle);
     setGame(fired);
-    playSyntheticTone(audioCtxRef.current, { freq: 240, duration: 0.1, type: "sine" });
+    if (audioCtxRef.current) {
+      RetroChiptuneSynth.playLaser(audioCtxRef.current);
+    }
     MobileHapticsPro.medium();
   };
 
@@ -250,16 +247,21 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
   const aimTargetX = CANNON_X + Math.cos(aimAngle) * 60;
   const aimTargetY = CANNON_Y + Math.sin(aimAngle) * 60;
 
+  const shakeX = shakeCssVars["--shake-x"];
+  const shakeY = shakeCssVars["--shake-y"];
+  const shakeRot = shakeCssVars["--shake-rot"];
+
   return (
     <div
       ref={containerRef}
       style={
         {
-          "--shake-x": `${shakeOffset.x}px`,
-          "--shake-y": `${shakeOffset.y}px`,
+          "--shake-x": shakeX,
+          "--shake-y": shakeY,
+          "--shake-rot": shakeRot,
         } as React.CSSProperties
       }
-      className={`select-none transition-colors duration-200 translate-x-(--shake-x) translate-y-(--shake-y) ${
+      className={`select-none transition-colors duration-200 translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
         isImmersive
           ? "fixed inset-0 z-50 bg-background flex flex-col justify-between p-3 sm:p-4 overflow-y-auto"
           : "mx-auto flex w-full max-w-xl flex-col items-center gap-4 p-3 sm:p-4"

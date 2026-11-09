@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ArcadeTouchControls } from "../ui/game/ArcadeTouchControls";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
-import { useCardTiltPro, MobileHapticsPro, playProceduralSfx, playComboSfx } from "../../lib/games/engine-suite-unified";
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from "../../lib/games/engine-suite-unified";
 import { SUBWAY_RUNNER_SPRITES } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { celebrate } from "../../lib/games/celebration";
@@ -19,7 +19,6 @@ import {
   stepSubwayRunner,
   type SubwayRunnerGame,
 } from "@/lib/games/subway-runner";
-import { addTrauma, createShakeState, triggerHaptic, updateShake } from "@/lib/games/juice-engine";
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
 
 function TiltRunnerButton({
@@ -49,13 +48,12 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
   const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const [game, setGame] = useState<SubwayRunnerGame>(() => createInitialSubwayRunnerGame());
   const [bestScore, setBestScore] = useState(() => loadHighScore('subway-runner', 0));
-  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
   const [isCopied, setIsCopied] = useState(false);
+  const { addTrauma, shakeCssVars } = useGameJuicePro();
 
   const gameRef = useRef<SubwayRunnerGame>(game);
   gameRef.current = game;
 
-  const shakeStateRef = useRef(createShakeState());
   const audioCtxRef = useRef<AudioContext | null>(null);
   const trainHornCooldownRef = useRef(0);
   const inputGenerosityRef = useRef(createInputGenerosity());
@@ -107,22 +105,15 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
       const dt = Math.min(0.04, (time - lastTime) / 1000);
       lastTime = time;
 
-      // Update screen shake
-      if (shakeStateRef.current.trauma > 0.001) {
-        const { state, offset } = updateShake(shakeStateRef.current, dt, time / 1000);
-        shakeStateRef.current = state;
-        setShakeOffset({ x: offset.x, y: offset.y });
-      } else if (shakeOffset.x !== 0 || shakeOffset.y !== 0) {
-        setShakeOffset({ x: 0, y: 0 });
-      }
-
       const current = gameRef.current;
       if (current.status === "running") {
         const step = stepSubwayRunner(current, dt);
 
         if (step.collectedCoinCount > 0) {
           MobileHapticsPro.light();
-          playComboSfx(audioCtxRef.current, "coin", step.game.coins);
+          if (audioCtxRef.current) {
+            RetroChiptuneSynth.playCoin(audioCtxRef.current);
+          }
         }
 
         // Dynamic train approach warning horn (game-ai / audio feel)
@@ -142,9 +133,11 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
         }
 
         if (step.crashed) {
-          shakeStateRef.current = addTrauma(shakeStateRef.current, 0.85);
+          addTrauma(0.85);
           MobileHapticsPro.heavy();
-          playProceduralSfx(audioCtxRef.current, "hit");
+          if (audioCtxRef.current) {
+            RetroChiptuneSynth.playHit(audioCtxRef.current);
+          }
           saveHighScore('subway-runner', step.game.score);
         }
 
@@ -163,7 +156,9 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
           inputGenerosityRef.current.startCoyote("ground", 0.14);
           if (inputGenerosityRef.current.consumeBufferedPress("jump")) {
             nextGame = jumpRunner(nextGame);
-            playProceduralSfx(audioCtxRef.current, "jump");
+            if (audioCtxRef.current) {
+              RetroChiptuneSynth.playJump(audioCtxRef.current);
+            }
             MobileHapticsPro.medium();
           }
         }
@@ -175,7 +170,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, [bestScore, shakeOffset.x, shakeOffset.y]);
+  }, [bestScore, addTrauma]);
 
   // Keyboard controls (A/D/W/S and Arrow keys)
   useEffect(() => {
@@ -185,17 +180,25 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
       if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
         e.preventDefault();
         setGame((prev) => changeRunnerLane(prev, -1));
+        if (audioCtxRef.current) {
+          RetroChiptuneSynth.playBlip(audioCtxRef.current, 380);
+        }
         MobileHapticsPro.light();
       } else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
         e.preventDefault();
         setGame((prev) => changeRunnerLane(prev, 1));
+        if (audioCtxRef.current) {
+          RetroChiptuneSynth.playBlip(audioCtxRef.current, 380);
+        }
         MobileHapticsPro.light();
       } else if (e.key === "ArrowUp" || e.key === "w" || e.key === "W" || e.key === " ") {
         e.preventDefault();
         inputGenerosityRef.current.bufferPress("jump", 0.16);
         setGame((prev) => {
           if (prev.player.y <= 0.05 || inputGenerosityRef.current.consumeCoyote("ground")) {
-            playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "triangle" });
+            if (audioCtxRef.current) {
+              RetroChiptuneSynth.playJump(audioCtxRef.current);
+            }
             MobileHapticsPro.medium();
             return jumpRunner(prev);
           }
@@ -204,7 +207,9 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
       } else if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
         e.preventDefault();
         setGame((prev) => slideRunner(prev));
-        playSyntheticTone(audioCtxRef.current, { freq: 220, duration: 0.08, type: "sawtooth" });
+        if (audioCtxRef.current) {
+          RetroChiptuneSynth.playBlip(audioCtxRef.current, 220);
+        }
         MobileHapticsPro.medium();
       }
     };
@@ -236,9 +241,15 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
     if (absDx > absDy) {
       if (dx < 0) {
         setGame((prev) => changeRunnerLane(prev, -1));
+        if (audioCtxRef.current) {
+          RetroChiptuneSynth.playBlip(audioCtxRef.current, 380);
+        }
         MobileHapticsPro.light();
       } else {
         setGame((prev) => changeRunnerLane(prev, 1));
+        if (audioCtxRef.current) {
+          RetroChiptuneSynth.playBlip(audioCtxRef.current, 380);
+        }
         MobileHapticsPro.light();
       }
     } else {
@@ -246,7 +257,9 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
         inputGenerosityRef.current.bufferPress("jump", 0.16);
         setGame((prev) => {
           if (prev.player.y <= 0.05 || inputGenerosityRef.current.consumeCoyote("ground")) {
-            playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "triangle" });
+            if (audioCtxRef.current) {
+              RetroChiptuneSynth.playJump(audioCtxRef.current);
+            }
             MobileHapticsPro.medium();
             return jumpRunner(prev);
           }
@@ -254,7 +267,9 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
         });
       } else {
         setGame((prev) => slideRunner(prev));
-        playSyntheticTone(audioCtxRef.current, { freq: 220, duration: 0.08, type: "sawtooth" });
+        if (audioCtxRef.current) {
+          RetroChiptuneSynth.playBlip(audioCtxRef.current, 220);
+        }
         MobileHapticsPro.medium();
       }
     }
@@ -266,17 +281,21 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
   };
 
   const { player, obstacles, score, coins, speed, distance } = game;
+  const shakeX = shakeCssVars["--shake-x"];
+  const shakeY = shakeCssVars["--shake-y"];
+  const shakeRot = shakeCssVars["--shake-rot"];
 
   return (
     <div
       ref={containerRef}
       style={
         {
-          "--shake-x": `${shakeOffset.x}px`,
-          "--shake-y": `${shakeOffset.y}px`,
+          "--shake-x": shakeX,
+          "--shake-y": shakeY,
+          "--shake-rot": shakeRot,
         } as React.CSSProperties
       }
-      className={`mx-auto flex w-full max-w-5xl translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center gap-2 sm:gap-4 p-0 sm:p-4 select-none transition-all ${
+      className={`mx-auto flex w-full max-w-5xl translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) flex-col items-center gap-2 sm:gap-4 p-0 sm:p-4 select-none transition-all ${
         isImmersive
           ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md max-w-none w-full h-full justify-center"
           : ""

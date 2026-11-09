@@ -4,6 +4,8 @@ import {
   useDynamicDifficultyPro,
   useCardTiltPro,
   MobileHapticsPro,
+  useGameJuicePro,
+  RetroChiptuneSynth,
 } from '@/lib/games/engine-suite-unified';
 import {
   VampireSurvivorEngine,
@@ -12,7 +14,7 @@ import {
   type VampireSurvivorState,
 } from '@/lib/games/vampire-survivor';
 import { FloatingJoystick } from '@/lib/games/floating-joystick';
-import { addTrauma, createShakeState, triggerHaptic, updateShake } from '@/lib/games/juice-engine';
+import { triggerHaptic } from '@/lib/games/juice-engine';
 import { GameJuice } from '@/lib/games/game-juice';
 import { playSyntheticTone } from '@/lib/games/audio-mixer';
 import { useArcadePortal } from '@/lib/games/arcade-portal';
@@ -122,8 +124,7 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
     cy: number;
   }>({ active: false, ox: 0, oy: 0, cx: 0, cy: 0 });
 
-  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
-  const shakeStateRef = useRef(createShakeState());
+  const { addTrauma, shakeCssVars } = useGameJuicePro();
   const juiceRef = useRef(new GameJuice(512));
   const lastKillsRef = useRef<number>(0);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -304,6 +305,7 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
           // HP 감소 감지 시 묵직한 타격감(피격 히트스톱, 셰이크, 파티클, 팝업)
           if (s.playerHp < lastHpRef.current) {
             reportHit();
+            addTrauma(0.35);
             MobileHapticsPro.heavyImpact();
             juiceRef.current.impact(s.playerX, s.playerY, 'heavy', '-HP');
           }
@@ -319,14 +321,18 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
           if (s.gameState !== gameState) {
             setGameState(s.gameState);
             if (s.gameState === 'level_up') {
+              addTrauma(0.3);
               if (audioCtxRef.current) {
-                playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.1, type: 'sine', gain: 0.2 });
+                RetroChiptuneSynth.playPowerup(audioCtxRef.current);
               }
               triggerHaptic('combo');
               MobileHapticsPro.heavyImpact();
               celebrate(containerRef.current, { preset: 'stardust' });
             } else if (s.gameState === 'game_over') {
-              addTrauma(shakeStateRef.current, 0.6);
+              addTrauma(0.75);
+              if (audioCtxRef.current) {
+                RetroChiptuneSynth.playGameOver(audioCtxRef.current);
+              }
               triggerHaptic('heavy');
               MobileHapticsPro.warningPattern();
               reportDeath();
@@ -534,7 +540,7 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, [gameState, shakeOffset]);
+  }, [gameState, addTrauma]);
 
   // Responsive canvas resize
   useEffect(() => {
@@ -560,6 +566,10 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
   const xpPercent = Math.min(100, Math.floor((hud.xp / hud.nextXp) * 100));
   const hpPercent = Math.max(0, Math.min(100, Math.floor((hud.hp / hud.maxHp) * 100)));
 
+  const shakeX = shakeCssVars['--shake-x'];
+  const shakeY = shakeCssVars['--shake-y'];
+  const shakeRot = shakeCssVars['--shake-rot'];
+
   return (
     <div
       ref={containerRef}
@@ -571,11 +581,12 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
         isImmersive
           ? 'fixed inset-0 z-50 w-screen h-screen rounded-none'
           : 'relative w-full h-150 rounded-xl shadow-2xl'
-      } translate-x-(--shake-x) translate-y-(--shake-y)`}
+      } translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)`}
       style={
         {
-          '--shake-x': `${shakeOffset.x}px`,
-          '--shake-y': `${shakeOffset.y}px`,
+          '--shake-x': shakeX,
+          '--shake-y': shakeY,
+          '--shake-rot': shakeRot,
         } as React.CSSProperties
       }
     >
