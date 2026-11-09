@@ -14,9 +14,11 @@ import {
   MobileHapticsPro,
   useGameJuicePro,
   RetroChiptuneSynth,
+  getRetroChiptuneBgm,
 } from "../../lib/games/engine-suite-unified";
 import { Button } from "../ui/button";
 import { BLOCK_BLAST_UI_SPRITES } from "../../lib/games/sprites";
+import { Volume2, VolumeX } from "lucide-react";
 
 interface BlockBlastProps {
   locale?: string;
@@ -87,6 +89,20 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
   const [hoverCoord, setHoverCoord] = useState<{ r: number; c: number } | null>(null);
   const { addTrauma, shakeCssVars } = useGameJuicePro();
   const [shareCopied, setShareCopied] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // Retro Chiptune BGM loop
+  useEffect(() => {
+    const bgm = getRetroChiptuneBgm();
+    if (soundEnabled && game.status === "playing") {
+      bgm.playTheme("retro-puzzle");
+    } else {
+      bgm.stop();
+    }
+    return () => {
+      bgm.stop();
+    };
+  }, [soundEnabled, game.status]);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
 
@@ -230,11 +246,21 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
           </div>
         )}
 
-        <div className="flex flex-col items-end">
-          <span className="text-xs font-bold text-muted-foreground">
-            {locale === "ko" ? "최고 기록" : "BEST"}
-          </span>
-          <span className="text-xl font-black font-mono text-warning">{game.highScore}</span>
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col items-end">
+            <span className="text-xs font-bold text-muted-foreground">
+              {locale === "ko" ? "최고 기록" : "BEST"}
+            </span>
+            <span className="text-xl font-black font-mono text-warning">{game.highScore}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSoundEnabled((prev) => !prev)}
+            title={soundEnabled ? (locale === "ko" ? "사운드 끄기" : "Mute Sound") : (locale === "ko" ? "사운드 켜기" : "Unmute Sound")}
+            className="flex items-center justify-center p-2 rounded-xl border border-border bg-muted/40 hover:bg-muted text-foreground transition-colors"
+          >
+            {soundEnabled ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4 text-muted-foreground" />}
+          </button>
         </div>
       </div>
 

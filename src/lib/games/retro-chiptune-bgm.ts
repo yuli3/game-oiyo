@@ -14,19 +14,28 @@
  *   - 'retro-dungeon': Tense, atmospheric minor-key dungeon crawl (112 BPM)
  */
 
-export type RetroBgmTheme = 'retro-jump' | 'retro-runner' | 'cozy-pet' | 'retro-dungeon' | 'retro-mining';
+export type RetroBgmTheme =
+  | 'retro-jump'
+  | 'retro-runner'
+  | 'cozy-pet'
+  | 'retro-dungeon'
+  | 'retro-mining'
+  | 'calm-sea'
+  | 'epic-defense'
+  | 'retro-puzzle'
+  | 'gothic-rogue';
 
 // Note frequencies in Hz
 const N = {
   REST: 0,
   // Octave 2
-  C2: 65.41, D2: 73.42, Eb2: 77.78, E2: 82.41, F2: 87.31, G2: 98.00, A2: 110.00, Bb2: 116.54, B2: 123.47,
+  C2: 65.41, Cs2: 69.30, D2: 73.42, Eb2: 77.78, E2: 82.41, F2: 87.31, Fs2: 92.50, G2: 98.00, Gs2: 103.83, A2: 110.00, Bb2: 116.54, B2: 123.47,
   // Octave 3
-  C3: 130.81, D3: 146.83, Eb3: 155.56, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, Bb3: 233.08, B3: 246.94,
+  C3: 130.81, Cs3: 138.59, D3: 146.83, Eb3: 155.56, E3: 164.81, F3: 174.61, Fs3: 185.00, G3: 196.00, Gs3: 207.65, A3: 220.00, Bb3: 233.08, B3: 246.94,
   // Octave 4
-  C4: 261.63, D4: 293.66, Eb4: 311.13, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, Bb4: 466.16, B4: 493.88,
+  C4: 261.63, Cs4: 277.18, D4: 293.66, Eb4: 311.13, E4: 329.63, F4: 349.23, Fs4: 369.99, G4: 392.00, Gs4: 415.30, A4: 440.00, Bb4: 466.16, B4: 493.88,
   // Octave 5
-  C5: 523.25, D5: 587.33, Eb5: 622.25, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00, Bb5: 932.33, B5: 987.77,
+  C5: 523.25, Cs5: 554.37, D5: 587.33, Eb5: 622.25, E5: 659.25, F5: 698.46, Fs5: 739.99, G5: 783.99, Gs5: 830.61, A5: 880.00, Bb5: 932.33, B5: 987.77,
 };
 
 // 16-step patterns for 4 bars (4 beats per bar, 16 steps total loop)
@@ -136,6 +145,90 @@ const THEME_PATTERNS: Record<RetroBgmTheme, { bpm: number; pattern: Pattern16 }>
       bass: [
         N.C2, N.REST, N.C2, N.Eb2, N.F2, N.REST, N.F2, N.REST,
         N.G2, N.REST, N.G2, N.Bb2, N.C2, N.REST, N.C2, N.REST,
+      ],
+      drum: [
+        'kick', 'hat', 'snare', 'hat', 'kick', 'kick', 'snare', 'hat',
+        'kick', 'hat', 'snare', 'hat', 'kick', 'hat', 'snare', 'snare',
+      ],
+    },
+  },
+  'calm-sea': {
+    bpm: 104,
+    pattern: {
+      lead: [
+        N.G4, N.REST, N.B4, N.D5, N.C5, N.E5, N.D5, N.B4,
+        N.A4, N.C5, N.B4, N.G4, N.A4, N.D4, N.G4, N.REST,
+      ],
+      arp: [
+        N.G3, N.B3, N.D4, N.G4, N.C4, N.E4, N.G4, N.C5,
+        N.D3, N.Fs3, N.A3, N.D4, N.G3, N.B3, N.D4, N.G3,
+      ],
+      bass: [
+        N.G2, N.REST, N.G2, N.REST, N.C3, N.REST, N.C3, N.REST,
+        N.D2, N.REST, N.D2, N.REST, N.G2, N.REST, N.G2, N.REST,
+      ],
+      drum: [
+        'hat', 'none', 'hat', 'none', 'hat', 'none', 'snare', 'none',
+        'hat', 'none', 'hat', 'none', 'hat', 'none', 'snare', 'none',
+      ],
+    },
+  },
+  'epic-defense': {
+    bpm: 128,
+    pattern: {
+      lead: [
+        N.D5, N.REST, N.D5, N.F5, N.E5, N.D5, N.Cs5, N.D5,
+        N.F5, N.G5, N.A5, N.F5, N.E5, N.D5, N.Cs5, N.REST,
+      ],
+      arp: [
+        N.D4, N.F4, N.A4, N.D5, N.Bb3, N.D4, N.F4, N.Bb4,
+        N.G3, N.Bb3, N.D4, N.G4, N.A3, N.Cs4, N.E4, N.A4,
+      ],
+      bass: [
+        N.D2, N.D2, N.D3, N.D2, N.Bb2, N.Bb2, N.Bb3, N.Bb2,
+        N.G2, N.G2, N.G3, N.G2, N.A2, N.A2, N.A3, N.A2,
+      ],
+      drum: [
+        'kick', 'hat', 'snare', 'hat', 'kick', 'kick', 'snare', 'hat',
+        'kick', 'hat', 'snare', 'hat', 'kick', 'hat', 'snare', 'snare',
+      ],
+    },
+  },
+  'retro-puzzle': {
+    bpm: 116,
+    pattern: {
+      lead: [
+        N.F4, N.A4, N.C5, N.A4, N.G4, N.Bb4, N.D5, N.Bb4,
+        N.A4, N.C5, N.F5, N.E5, N.D5, N.C5, N.Bb4, N.G4,
+      ],
+      arp: [
+        N.F3, N.A3, N.C4, N.A3, N.G3, N.Bb3, N.D4, N.Bb3,
+        N.A3, N.C4, N.E4, N.C4, N.Bb3, N.D4, N.F4, N.C4,
+      ],
+      bass: [
+        N.F2, N.REST, N.C3, N.REST, N.G2, N.REST, N.D3, N.REST,
+        N.A2, N.REST, N.E3, N.REST, N.Bb2, N.REST, N.C3, N.REST,
+      ],
+      drum: [
+        'kick', 'none', 'hat', 'none', 'snare', 'none', 'hat', 'none',
+        'kick', 'hat', 'hat', 'none', 'snare', 'none', 'hat', 'none',
+      ],
+    },
+  },
+  'gothic-rogue': {
+    bpm: 138,
+    pattern: {
+      lead: [
+        N.A4, N.C5, N.E5, N.D5, N.C5, N.B4, N.C5, N.A4,
+        N.B4, N.D5, N.F5, N.E5, N.D5, N.C5, N.B4, N.E5,
+      ],
+      arp: [
+        N.A3, N.E4, N.A4, N.C5, N.F3, N.C4, N.F4, N.A4,
+        N.D3, N.A3, N.D4, N.F4, N.E3, N.B3, N.E4, N.Gs4,
+      ],
+      bass: [
+        N.A2, N.A2, N.A3, N.A2, N.F2, N.F2, N.F3, N.F2,
+        N.D2, N.D2, N.D3, N.D2, N.E2, N.E2, N.E3, N.E2,
       ],
       drum: [
         'kick', 'hat', 'snare', 'hat', 'kick', 'kick', 'snare', 'hat',

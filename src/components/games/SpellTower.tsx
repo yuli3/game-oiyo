@@ -15,6 +15,7 @@ import {
   MobileHapticsPro,
   useGameJuicePro,
   RetroChiptuneSynth,
+  getRetroChiptuneBgm,
 } from "@/lib/games/engine-suite-unified";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
 import { celebrate } from "@/lib/games/celebration";
@@ -190,6 +191,19 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
   const [game, setGame] = useState<SpellTowerState>(() => initSpellTower());
   const [highScore, setHighScore] = useState(() => loadHighScore("spell-tower", 0));
   const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // Retro Chiptune BGM loop
+  useEffect(() => {
+    const bgm = getRetroChiptuneBgm();
+    if (soundEnabled && game.status === "playing") {
+      bgm.playTheme("retro-puzzle");
+    } else {
+      bgm.stop();
+    }
+    return () => {
+      bgm.stop();
+    };
+  }, [soundEnabled, game.status]);
 
   useEffect(() => {
     if (game.score > 0) {

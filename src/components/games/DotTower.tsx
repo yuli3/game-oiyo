@@ -268,7 +268,7 @@ export default function DotTower({ locale = "en" }: { locale?: string }) {
   useEffect(() => {
     const bgm = getRetroChiptuneBgm();
     if (soundEnabled && gameState.status === "wave_running") {
-      bgm.playTheme("retro-mining");
+      bgm.playTheme("epic-defense");
     } else {
       bgm.stop();
     }

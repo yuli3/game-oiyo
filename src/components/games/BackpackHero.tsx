@@ -6,7 +6,13 @@ import {
   type PlacedItem,
   type BackpackHeroState,
 } from '@/lib/games/backpack-hero';
-import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from '@/lib/games/engine-suite-unified';
+import {
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+  RetroChiptuneSynth,
+  getRetroChiptuneBgm,
+} from '@/lib/games/engine-suite-unified';
 import { BACKPACK_HERO_SPRITES } from '@/lib/games/sprites';
 import { celebrate } from '@/lib/games/celebration';
 import { loadHighScore, saveHighScore } from '@/lib/games/game-save';
@@ -146,6 +152,19 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
       audioCtxRef.current?.close().catch(() => {});
     };
   }, []);
+
+  // Retro Chiptune BGM loop
+  useEffect(() => {
+    const bgm = getRetroChiptuneBgm();
+    if (engineState.gameState === 'battle' || engineState.gameState === 'loot') {
+      bgm.playTheme('retro-dungeon');
+    } else {
+      bgm.stop();
+    }
+    return () => {
+      bgm.stop();
+    };
+  }, [engineState.gameState]);
 
   const syncState = () => {
     setEngineState({ ...engineRef.current.getState() });

@@ -14,7 +14,13 @@ import {
   Home,
   CheckCircle2,
 } from "lucide-react";
-import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from "../../lib/games/engine-suite-unified";
+import {
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+  RetroChiptuneSynth,
+  getRetroChiptuneBgm,
+} from "../../lib/games/engine-suite-unified";
 import { BAD_NORTH_SPRITES } from "../../lib/games/sprites";
 import { celebrate } from "../../lib/games/celebration";
 import {
@@ -82,6 +88,19 @@ export default function BadNorthTactics() {
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [gameSpeed, setGameSpeed] = useState<1 | 2>(1);
+
+  // Retro Chiptune BGM loop
+  useEffect(() => {
+    const bgm = getRetroChiptuneBgm();
+    if (!isMuted && !isPaused && gameState.gameStatus === "playing") {
+      bgm.playTheme("epic-defense");
+    } else {
+      bgm.stop();
+    }
+    return () => {
+      bgm.stop();
+    };
+  }, [isMuted, isPaused, gameState.gameStatus]);
 
   const { shakeCssVars, addTrauma } = useGameJuicePro();
   const containerRef = useRef<HTMLDivElement | null>(null);

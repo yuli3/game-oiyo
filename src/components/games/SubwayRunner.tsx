@@ -2,13 +2,19 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ArcadeTouchControls } from "../ui/game/ArcadeTouchControls";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
-import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from "../../lib/games/engine-suite-unified";
+import {
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+  RetroChiptuneSynth,
+  getRetroChiptuneBgm,
+} from "../../lib/games/engine-suite-unified";
 import { SUBWAY_RUNNER_SPRITES } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { celebrate } from "../../lib/games/celebration";
 import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import { createInputGenerosity } from "../../lib/games/input-generosity";
-import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
+import { Maximize2, Minimize2, Camera, Check, Volume2, VolumeX } from "lucide-react";
 import {
   changeRunnerLane,
   createInitialSubwayRunnerGame,
@@ -49,7 +55,21 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
   const [game, setGame] = useState<SubwayRunnerGame>(() => createInitialSubwayRunnerGame());
   const [bestScore, setBestScore] = useState(() => loadHighScore('subway-runner', 0));
   const [isCopied, setIsCopied] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const { addTrauma, shakeCssVars } = useGameJuicePro();
+
+  // Retro Chiptune BGM loop
+  useEffect(() => {
+    const bgm = getRetroChiptuneBgm();
+    if (soundEnabled && game.status === "running") {
+      bgm.playTheme("retro-runner");
+    } else {
+      bgm.stop();
+    }
+    return () => {
+      bgm.stop();
+    };
+  }, [soundEnabled, game.status]);
 
   const gameRef = useRef<SubwayRunnerGame>(game);
   gameRef.current = game;
@@ -339,6 +359,15 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
               <span>{coins}</span>
             </span>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setSoundEnabled((prev) => !prev)}
+            className="p-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-muted/80 transition-colors"
+            title={soundEnabled ? (locale === "ko" ? "사운드 끄기" : "Mute Sound") : (locale === "ko" ? "사운드 켜기" : "Unmute Sound")}
+          >
+            {soundEnabled ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
+          </button>
 
           <button
             type="button"

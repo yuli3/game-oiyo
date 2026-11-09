@@ -8,7 +8,13 @@ import {
   type Rule,
   type EntityType,
 } from '@/lib/games/baba-rule-shifter';
-import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from '@/lib/games/engine-suite-unified';
+import {
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+  RetroChiptuneSynth,
+  getRetroChiptuneBgm,
+} from '@/lib/games/engine-suite-unified';
 import { celebrate } from '@/lib/games/celebration';
 import { BABA_IS_YOU_SPRITES } from '@/lib/games/sprites';
 import {
@@ -95,6 +101,19 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
       audioCtxRef.current?.close().catch(() => {});
     };
   }, []);
+
+  // Retro Chiptune BGM loop
+  useEffect(() => {
+    const bgm = getRetroChiptuneBgm();
+    if (!isWon) {
+      bgm.playTheme('retro-puzzle');
+    } else {
+      bgm.stop();
+    }
+    return () => {
+      bgm.stop();
+    };
+  }, [isWon]);
 
   const syncState = useCallback(() => {
     const engine = engineRef.current;

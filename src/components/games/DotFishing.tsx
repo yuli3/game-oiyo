@@ -251,7 +251,7 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
   useEffect(() => {
     const bgm = getRetroChiptuneBgm();
     if (soundEnabled && gameState.status !== "victory") {
-      bgm.playTheme("cozy-pet");
+      bgm.playTheme("calm-sea");
     } else {
       bgm.stop();
     }

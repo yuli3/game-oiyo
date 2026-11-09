@@ -12,7 +12,13 @@ import {
   type UpgradeCard,
 } from "@/lib/games/shotgun-chess";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
-import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from "@/lib/games/engine-suite-unified";
+import {
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+  RetroChiptuneSynth,
+  getRetroChiptuneBgm,
+} from "@/lib/games/engine-suite-unified";
 import { getSpriteUrl, SHOTGUN_CHESS_SPRITES } from "@/lib/games/sprites";
 import { celebrate } from "@/lib/games/celebration";
 import {
@@ -201,6 +207,19 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
   const [game, setGame] = useState<ShotgunChessGame>(() => initShotgunChess(1));
   const [actionMode, setActionMode] = useState<"move" | "shoot">("move");
   const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // Retro Chiptune BGM loop
+  useEffect(() => {
+    const bgm = getRetroChiptuneBgm();
+    if (soundEnabled && game.status === "playing") {
+      bgm.playTheme("epic-defense");
+    } else {
+      bgm.stop();
+    }
+    return () => {
+      bgm.stop();
+    };
+  }, [soundEnabled, game.status]);
   const { shakeCssVars, addTrauma } = useGameJuicePro();
   const [shareCardCopied, setShareCardCopied] = useState(false);
 

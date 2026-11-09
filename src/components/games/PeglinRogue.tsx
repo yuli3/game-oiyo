@@ -17,9 +17,9 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "@/lib/games/share-card";
-import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from "@/lib/games/engine-suite-unified";
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth, getRetroChiptuneBgm } from "@/lib/games/engine-suite-unified";
 import { getSpriteUrl, PEGLIN_ROGUE_SPRITES } from "@/lib/games/sprites";
-import { Maximize2, Minimize2, Share2, Check, RotateCcw, Target } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Check, RotateCcw, Target, Volume2, VolumeX } from "lucide-react";
 
 function TiltPeglinButton({
   children,
@@ -85,6 +85,20 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
     }
   }, [game.status, game.stage, game.enemy.hp, game.enemy.maxHp]);
   const { addTrauma, shakeCssVars } = useGameJuicePro();
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // Retro Chiptune BGM loop
+  useEffect(() => {
+    const bgm = getRetroChiptuneBgm();
+    if (soundEnabled && game.status !== "gameover" && game.status !== "won") {
+      bgm.playTheme("gothic-rogue");
+    } else {
+      bgm.stop();
+    }
+    return () => {
+      bgm.stop();
+    };
+  }, [soundEnabled, game.status]);
 
   const gameRef = useRef<PeglinGame>(game);
   gameRef.current = game;
@@ -328,6 +342,14 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
         </div>
 
         <div className="flex items-center gap-1.5">
+          <TiltPeglinButton
+            onClick={() => setSoundEnabled((prev) => !prev)}
+            className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel={soundEnabled ? (locale === "ko" ? "사운드 끄기" : "Mute Sound") : (locale === "ko" ? "사운드 켜기" : "Unmute Sound")}
+          >
+            {soundEnabled ? <Volume2 className="size-4 text-primary" /> : <VolumeX className="size-4 text-muted-foreground" />}
+          </TiltPeglinButton>
+
           <TiltPeglinButton
             onClick={handleShare}
             className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground"

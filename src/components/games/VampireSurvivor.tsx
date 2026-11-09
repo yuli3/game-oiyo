@@ -6,6 +6,7 @@ import {
   MobileHapticsPro,
   useGameJuicePro,
   RetroChiptuneSynth,
+  getRetroChiptuneBgm,
 } from '@/lib/games/engine-suite-unified';
 import {
   VampireSurvivorEngine,
@@ -26,7 +27,7 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from '@/lib/games/share-card';
-import { Maximize2, Minimize2, Share2, Check } from 'lucide-react';
+import { Maximize2, Minimize2, Share2, Check, Volume2, VolumeX } from 'lucide-react';
 
 function TiltSurvivorButton({
   children,
@@ -125,6 +126,20 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
   }>({ active: false, ox: 0, oy: 0, cx: 0, cy: 0 });
 
   const { addTrauma, shakeCssVars } = useGameJuicePro();
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // Retro Chiptune BGM loop
+  useEffect(() => {
+    const bgm = getRetroChiptuneBgm();
+    if (soundEnabled && gameState === 'playing') {
+      bgm.playTheme('gothic-rogue');
+    } else {
+      bgm.stop();
+    }
+    return () => {
+      bgm.stop();
+    };
+  }, [soundEnabled, gameState]);
   const juiceRef = useRef(new GameJuice(512));
   const lastKillsRef = useRef<number>(0);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -646,6 +661,14 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
               />
             </div>
           </div>
+
+          <TiltSurvivorButton
+            onClick={() => setSoundEnabled((prev) => !prev)}
+            title={soundEnabled ? (locale === 'ko' ? '사운드 끄기' : 'Mute Sound') : (locale === 'ko' ? '사운드 켜기' : 'Unmute Sound')}
+            className="p-2 rounded-lg bg-card/85 backdrop-blur-sm border border-border text-foreground hover:text-primary hover:border-primary transition-colors"
+          >
+            {soundEnabled ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4" />}
+          </TiltSurvivorButton>
 
           <TiltSurvivorButton
             onClick={handleShareScore}
