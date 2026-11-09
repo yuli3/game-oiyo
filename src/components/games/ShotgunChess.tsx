@@ -11,16 +11,8 @@ import {
   type ShotgunChessGame,
   type UpgradeCard,
 } from "@/lib/games/shotgun-chess";
-import {
-  addTrauma,
-  createShakeState,
-  triggerHaptic,
-  updateShake,
-  type ScreenShakeState,
-} from "@/lib/games/juice-engine";
-import { playSyntheticTone } from "@/lib/games/audio-mixer";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
-import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from "@/lib/games/engine-suite-unified";
 import { getSpriteUrl, SHOTGUN_CHESS_SPRITES } from "@/lib/games/sprites";
 import { celebrate } from "@/lib/games/celebration";
 import {
@@ -209,8 +201,7 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
   const [game, setGame] = useState<ShotgunChessGame>(() => initShotgunChess(1));
   const [actionMode, setActionMode] = useState<"move" | "shoot">("move");
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [, setShakeState] = useState<ScreenShakeState>(() => createShakeState());
-  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
   const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -227,27 +218,10 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
     return audioCtxRef.current;
   }, []);
 
-  // Sync screen shake with juice engine
-  useEffect(() => {
-    let animId: number;
-    let lastTime = performance.now();
-    const loop = (time: number) => {
-      const dt = Math.min((time - lastTime) / 1000, 0.05);
-      lastTime = time;
-      setShakeState((prev) => {
-        const { state, offset } = updateShake(prev, dt);
-        setShakeOffset({ x: offset.x, y: offset.y });
-        return state;
-      });
-      animId = requestAnimationFrame(loop);
-    };
-    animId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animId);
-  }, []);
-
   // Stardust victory ceremony & arcade pass mission reporting
   useEffect(() => {
     if (game.status === "victory") {
+      addTrauma(0.5);
       MobileHapticsPro.success();
       if (containerRef.current) {
         celebrate(containerRef.current, { preset: "stardust" });
@@ -260,8 +234,11 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
       } catch {
         // arcade pass fallback
       }
+    } else if (game.status === "game_over") {
+      addTrauma(0.55);
+      MobileHapticsPro.error();
     }
-  }, [game.status, containerRef]);
+  }, [addTrauma, game.status, containerRef]);
 
   const validMoves = useMemo(() => {
     if (actionMode !== "move") return [];
@@ -277,9 +254,8 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
         if (!isValid) return;
 
         if (soundEnabled) {
-          playSyntheticTone(getAudioCtx(), { freq: 260, duration: 0.08, type: "triangle" });
+          RetroChiptuneSynth.playBlip(getAudioCtx());
         }
-        triggerHaptic("light");
         MobileHapticsPro.light();
 
         setGame((prev) => movePlayerKing(prev, { r, c }));
@@ -293,39 +269,37 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
       if (game.status !== "playing" || game.shotgun.ammo <= 0) return;
 
       if (soundEnabled) {
-        // Shotgun blast: Low bass punch followed by metallic noise
-        const ctx = getAudioCtx();
-        playSyntheticTone(ctx, { freq: 110, duration: 0.25, type: "sawtooth" });
-        setTimeout(() => playSyntheticTone(ctx, { freq: 520, duration: 0.06, type: "square" }), 100);
+        RetroChiptuneSynth.playExplosion(getAudioCtx(), 0.16);
       }
-      setShakeState((prev) => addTrauma(prev, 0.5));
-      triggerHaptic("heavy");
+      addTrauma(0.5);
       MobileHapticsPro.heavy();
 
       setGame((prev) => {
         const next = shootShotgun(prev, dr, dc);
         if (next.status === "wave_clear" || next.status === "victory") {
-          setShakeState((s) => addTrauma(s, 0.7));
-          triggerHaptic("heavy");
+          addTrauma(0.65);
           MobileHapticsPro.success();
           if (soundEnabled) {
-            playSyntheticTone(getAudioCtx(), { freq: 660, duration: 0.35, type: "sine" });
+            RetroChiptuneSynth.playPowerup(getAudioCtx(), 0.12);
           }
         } else if (next.status === "game_over") {
+          addTrauma(0.6);
           MobileHapticsPro.error();
+          if (soundEnabled) {
+            RetroChiptuneSynth.playGameOver(getAudioCtx(), 0.14);
+          }
         }
         return next;
       });
     },
-    [game.status, game.shotgun.ammo, soundEnabled, getAudioCtx]
+    [addTrauma, game.status, game.shotgun.ammo, soundEnabled, getAudioCtx]
   );
 
   const handleSelectUpgrade = useCallback(
     (card: UpgradeCard) => {
       if (soundEnabled) {
-        playSyntheticTone(getAudioCtx(), { freq: 440, duration: 0.15, type: "sine" });
+        RetroChiptuneSynth.playCoin(getAudioCtx());
       }
-      triggerHaptic("medium");
       MobileHapticsPro.medium();
       setGame((prev) => applyUpgrade(prev, card.id));
       setActionMode("move");
@@ -363,17 +337,18 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
   return (
     <div
       ref={containerRef}
+      style={
+        {
+          "--shake-x": shakeCssVars["--shake-x"] ?? "0px",
+          "--shake-y": shakeCssVars["--shake-y"] ?? "0px",
+          "--shake-rot": shakeCssVars["--shake-rot"] ?? "0deg",
+        } as React.CSSProperties
+      }
       className={`${
         isImmersive
           ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center overflow-y-auto bg-background p-4 sm:p-6"
           : "mx-auto flex max-w-2xl flex-col items-center gap-4 p-4 font-sans text-foreground"
-      } translate-x-(--shake-x) translate-y-(--shake-y)`}
-      style={
-        {
-          "--shake-x": `${shakeOffset.x}px`,
-          "--shake-y": `${shakeOffset.y}px`,
-        } as React.CSSProperties
-      }
+      } transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)`}
     >
       {/* Top Header & Stats */}
       <div className="flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">

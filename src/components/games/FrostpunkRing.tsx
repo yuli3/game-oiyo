@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { playSyntheticTone } from '../../lib/games/audio-mixer';
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -7,8 +6,7 @@ import {
 } from '../../lib/games/arcade-pass';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
-import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { triggerHaptic } from '../../lib/games/juice-engine';
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from '../../lib/games/engine-suite-unified';
 import { recordResult } from '../../lib/games/records';
 import { FROSTPUNK_RING_SPRITES } from '../../lib/games/sprites';
 
@@ -91,6 +89,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
   const spritesRef = useRef<Record<string, HTMLImageElement>>({});
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } =
     useArcadePortal({ locale });
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -131,14 +130,18 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
       }
       recordResult('frostpunk-ring', 'w');
       MobileHapticsPro.success();
+      addTrauma(0.5);
+      RetroChiptuneSynth.playPowerup(audioRef.current, 0.12);
       if (containerRef.current) {
         celebrate(containerRef.current, { preset: 'stardust' });
       }
     } else if (state.status === 'lost') {
       recordResult('frostpunk-ring', 'l');
-      MobileHapticsPro.heavy();
+      MobileHapticsPro.error();
+      addTrauma(0.6);
+      RetroChiptuneSynth.playGameOver(audioRef.current);
     }
-  }, [state.status]);
+  }, [addTrauma, state.status]);
 
   // Draw concentric Heat Ring city canvas
   useEffect(() => {
@@ -271,68 +274,48 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
 
   const onBuild = (building: Exclude<FrostBuildingType, 'empty'>) => {
     if (!selectedSlot) return;
-    triggerHaptic('medium');
     MobileHapticsPro.medium();
-    playSyntheticTone(ensureAudio(), {
-      freq: 360,
-      duration: 0.12,
-      type: 'triangle',
-      gain: 0.14,
-    });
+    RetroChiptuneSynth.playBlip(ensureAudio());
     setState((prev) => constructFrostBuilding(prev, selectedSlot.id, building));
   };
 
   const onAdvanceShift = () => {
-    triggerHaptic('light');
     MobileHapticsPro.light();
-    playSyntheticTone(ensureAudio(), {
-      freq: 220,
-      duration: 0.1,
-      type: 'sine',
-      gain: 0.12,
+    RetroChiptuneSynth.playBlip(ensureAudio());
+    setState((prev) => {
+      const next = stepFrostpunkHour(prev, 4);
+      if (next.ambientTempC < prev.ambientTempC || next.sickCitizens > prev.sickCitizens || next.citizens < prev.citizens) {
+        addTrauma(0.35);
+        MobileHapticsPro.error();
+      }
+      return next;
     });
-    setState((prev) => stepFrostpunkHour(prev, 4));
   };
 
   const onUpgradeGen = () => {
-    triggerHaptic('heavy');
     MobileHapticsPro.heavy();
-    playSyntheticTone(ensureAudio(), {
-      freq: 520,
-      duration: 0.16,
-      type: 'sawtooth',
-      gain: 0.14,
-    });
+    addTrauma(0.35);
+    RetroChiptuneSynth.playPowerup(ensureAudio());
     setState((prev) => upgradeSteamGenerator(prev));
   };
 
   const onToggleOverdrive = () => {
-    triggerHaptic('heavy');
     MobileHapticsPro.heavy();
-    playSyntheticTone(ensureAudio(), {
-      freq: 640,
-      duration: 0.14,
-      type: 'square',
-      gain: 0.14,
-    });
+    addTrauma(0.25);
+    RetroChiptuneSynth.playLaser(ensureAudio());
     setState((prev) => toggleGeneratorOverdrive(prev));
   };
 
   const onEnactLaw = (lawId: FrostLawId) => {
-    triggerHaptic('medium');
     MobileHapticsPro.impact();
-    playSyntheticTone(ensureAudio(), {
-      freq: 440,
-      duration: 0.12,
-      type: 'triangle',
-      gain: 0.14,
-    });
+    addTrauma(0.18);
+    RetroChiptuneSynth.playCoin(ensureAudio());
     setState((prev) => enactFrostLaw(prev, lawId));
   };
 
   const onQuickAutoSetup = () => {
-    triggerHaptic('success');
     MobileHapticsPro.impact();
+    addTrauma(0.15);
     setState((prev) => {
       let s = constructFrostBuilding(prev, 'r1-s1', 'coal-thumper');
       s = constructFrostBuilding(s, 'r1-s3', 'coal-thumper');
@@ -353,7 +336,12 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
   return (
     <div
       ref={containerRef}
-      className={`mx-auto max-w-4xl rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-xl md:p-6 ${
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`mx-auto max-w-4xl rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-xl md:p-6 transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
         isImmersive
           ? 'fixed inset-0 z-50 max-w-none overflow-y-auto rounded-none'
           : ''
