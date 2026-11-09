@@ -3,7 +3,8 @@ import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
 import { GameContainer, Die, type DieType } from '@/components/ui/game/GamePrimitives';
 import { useArcadePortal } from '@/lib/games/arcade-portal';
 import { usePrefersReducedMotion } from '@/lib/games/reduced-motion';
-import { useCardTiltPro, MobileHapticsPro } from '@/lib/games/engine-suite-unified';
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, getSharedAudioContext, playComboSfx } from '@/lib/games/engine-suite-unified';
+import { celebrate } from '@/lib/games/celebration';
 
 function TiltDiceButton({
   children,
@@ -118,6 +119,7 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
   const reducedMotion = usePrefersReducedMotion();
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const [throttled, setThrottled] = useState(false);
@@ -167,6 +169,7 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     if (throttled || state.rolling || state.selectedDice.length === 0) return;
     setThrottled(true);
     dispatch({ type: 'ROLL_START' });
+    addTrauma(0.12);
     playClack(280, 0.05);
     MobileHapticsPro.impact();
 
@@ -183,6 +186,7 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     if (tickRef.current) clearInterval(tickRef.current);
     tickRef.current = setInterval(() => {
       setPreview(state.selectedDice.map((die) => Math.floor(Math.random() * DICE_SIDES[die]) + 1));
+      addTrauma(0.03);
       playClack(260 + Math.random() * 120, 0.03);
       MobileHapticsPro.light();
     }, 70);
@@ -193,17 +197,29 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       const results = state.selectedDice.map((die) => Math.floor(Math.random() * DICE_SIDES[die]) + 1);
       dispatch({ type: 'ROLL_END', results });
       playClack(520, 0.09);
+      addTrauma(0.38);
 
       const isNat20 = results.some((val, idx) => state.selectedDice[idx] === 'D20' && val === 20);
-      if (isNat20) {
+      const maxPossible = state.selectedDice.reduce((acc, d) => acc + DICE_SIDES[d], 0);
+      const isMaxRoll = results.reduce((a, b) => a + b, 0) === maxPossible && maxPossible > 0;
+
+      if (isNat20 || isMaxRoll) {
+        addTrauma(0.65);
         MobileHapticsPro.success();
+        if (containerRef.current) {
+          celebrate(containerRef.current, { preset: 'sparks' });
+        }
+        const ctx = getSharedAudioContext();
+        if (ctx && !muted) {
+          playComboSfx(ctx, "powerup", 5);
+        }
       } else {
         MobileHapticsPro.heavy();
       }
 
       setTimeout(() => setThrottled(false), 400);
     }, 700);
-  }, [reducedMotion, state.selectedDice, state.rolling, throttled, playClack]);
+  }, [reducedMotion, state.selectedDice, state.rolling, throttled, playClack, addTrauma, containerRef, muted]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -228,7 +244,12 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   return (
     <div
       ref={containerRef}
-      className={`relative w-full transition-all duration-300 ${
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`relative w-full transition-all duration-300 transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
         isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
       }`}
     >

@@ -3,7 +3,7 @@ import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, getSharedAudioContext, playComboSfx } from "../../lib/games/engine-suite-unified";
 import { celebrate } from "../../lib/games/celebration";
 import { AJAE_PATTERN_SPRITES } from "../../lib/games/sprites";
 import {
@@ -19,9 +19,11 @@ import {
 function TiltAjaeKeyButton({
   label,
   onClick,
+  isTarget,
 }: {
   label: string;
   onClick: () => void;
+  isTarget?: boolean;
 }) {
   const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
   return (
@@ -30,12 +32,16 @@ function TiltAjaeKeyButton({
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
       onClick={() => {
-        triggerPop();
+        triggerPop(0.18);
         onClick();
       }}
       aria-label={label}
       style={{ '--card-tilt': transformCss } as React.CSSProperties}
-      className="h-12 w-12 rounded-lg border font-black will-change-transform transform-(--card-tilt) transition-transform duration-150"
+      className={`h-12 w-12 sm:h-14 sm:w-14 rounded-xl border-2 border-b-4 font-mono text-lg font-black shadow-sm will-change-transform transform-(--card-tilt) transition-all active:translate-y-1 active:border-b-2 ${
+        isTarget
+          ? "border-primary bg-primary/20 text-primary shadow-primary/20 ring-2 ring-primary/40"
+          : "border-border bg-card text-foreground hover:border-primary/50"
+      }`}
     >
       {label}
     </button>
@@ -352,6 +358,7 @@ type Tone = "" | "good" | "bad";
 const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
   const t = T[locale] ?? T.en;
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
+  const { shakeCssVars, addTrauma, triggerHitStop } = useGameJuicePro();
 
   const [pattern, setPattern] = useState<string[]>([]);
   const [cursor, setCursor] = useState(0);
@@ -432,6 +439,7 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
       const left = Math.max(0, deadline.current - now);
       setRemaining(left / total);
       if (left <= 0) {
+        addTrauma(0.55);
         MobileHapticsPro.heavy();
         playAjaeSound('timeout', mutedRef.current);
         setActive(false);
@@ -444,7 +452,7 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
       frame.current = requestAnimationFrame(tick);
     };
     frame.current = requestAnimationFrame(tick);
-  }, [clearTimers, persist, t]);
+  }, [clearTimers, persist, t, addTrauma]);
 
   const stop = useCallback(() => {
     clearTimers();
@@ -460,7 +468,9 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
     (key: string) => {
       if (!active) return;
       if (key !== pattern[cursor]) {
-        MobileHapticsPro.warning();
+        triggerHitStop(140);
+        addTrauma(0.7);
+        MobileHapticsPro.error();
         playAjaeSound('wrong', mutedRef.current);
         clearTimers();
         setActive(false);
@@ -474,8 +484,13 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
       const next = cursor + 1;
       setCursor(next);
       if (next < pattern.length) {
+        addTrauma(0.08);
         MobileHapticsPro.light();
         playAjaeSound('tap', mutedRef.current);
+        const ctx = getSharedAudioContext();
+        if (ctx && !mutedRef.current) {
+          playComboSfx(ctx, "laser", next);
+        }
         return;
       }
 
@@ -487,6 +502,7 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
       // be frozen while the clock kept running. Judge the round on elapsed time
       // rather than on whether the timer got a chance to fire.
       if (!isAjaeClear(elapsed, patternLen.current)) {
+        addTrauma(0.55);
         MobileHapticsPro.heavy();
         playAjaeSound('timeout', mutedRef.current);
         const cur = loadStats();
@@ -497,11 +513,16 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
         return;
       }
 
+      addTrauma(0.4);
       MobileHapticsPro.success();
       playAjaeSound('clear', mutedRef.current);
       celebrate(containerRef.current, { preset: "stardust" });
       const cur = loadStats();
       const streak = cur.streak + 1;
+      const ctx = getSharedAudioContext();
+      if (ctx && !mutedRef.current) {
+        playComboSfx(ctx, "powerup", Math.min(6, streak));
+      }
       persist({
         plays: cur.plays + 1,
         wins: cur.wins + 1,
@@ -567,7 +588,12 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
   return (
     <div
       ref={containerRef}
-      className={`not-prose relative select-none ${
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`not-prose relative select-none transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) transition-all ${
         isImmersive
           ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-4 sm:p-6"
           : "flex flex-col gap-6"
@@ -640,18 +666,19 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
           <div
             ref={arena}
             tabIndex={-1}
-            className="grid content-center gap-6 px-5 py-9 text-center outline-none"
-            style={{ minHeight: "22rem" }}
+            className="grid min-h-88 content-center gap-6 px-5 py-9 text-center outline-none"
           >
-            <div className="flex min-h-[4.5rem] flex-wrap justify-center gap-2 sm:gap-3">
+            <div className="flex min-h-18 flex-wrap justify-center gap-2 sm:gap-3">
               {pattern.map((key, index) => (
                 <span
                   key={`${index}-${key}`}
                   aria-label={t.keyAria(index + 1, key, index < cursor)}
-                  className={`grid h-14 w-12 place-items-center rounded-xl border border-b-4 text-2xl font-black sm:h-[4.5rem] sm:w-16 ${
+                  className={`grid h-14 w-12 place-items-center rounded-xl border border-b-4 text-2xl font-black sm:h-18 sm:w-16 transition-all ${
                     index < cursor
-                      ? "translate-y-[3px] border-b-2 border-success bg-success/15 text-success"
-                      : "bg-muted"
+                      ? "translate-y-0.5 border-b-2 border-success bg-success/15 text-success"
+                      : index === cursor && active
+                        ? "border-primary ring-2 ring-primary/40 bg-card text-foreground scale-105"
+                        : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {key}
@@ -661,8 +688,8 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
 
             <div className="mx-auto h-2 w-full max-w-xl overflow-hidden rounded-full bg-muted">
               <span
-                className="block h-full origin-left bg-primary transition-none"
-                style={{ transform: `scaleX(${active ? remaining : 0})` }}
+                className="block h-full origin-left bg-primary transition-none transform scale-x-(--time-scale)"
+                style={{ '--time-scale': String(active ? remaining : 0) } as React.CSSProperties}
               />
             </div>
 
@@ -679,14 +706,27 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
               )}
             </div>
 
-            <div className="flex flex-wrap justify-center gap-2">
-              {KEYS.map((key) => (
-                <TiltAjaeKeyButton
-                  key={key}
-                  label={key}
-                  onClick={() => press(key)}
-                />
-              ))}
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex justify-center gap-2">
+                {KEYS.slice(0, 4).map((key) => (
+                  <TiltAjaeKeyButton
+                    key={key}
+                    label={key}
+                    isTarget={active && pattern[cursor] === key}
+                    onClick={() => press(key)}
+                  />
+                ))}
+              </div>
+              <div className="flex justify-center gap-2">
+                {KEYS.slice(4, 8).map((key) => (
+                  <TiltAjaeKeyButton
+                    key={key}
+                    label={key}
+                    isTarget={active && pattern[cursor] === key}
+                    onClick={() => press(key)}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 
