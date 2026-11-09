@@ -4,7 +4,7 @@ import { celebrate } from "../../lib/games/celebration";
 import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
-import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from '../../lib/games/engine-suite-unified';
 import { GameJuice } from '../../lib/games/game-juice';
 import { frameScale } from '../../lib/games/time-contracts';
 
@@ -142,6 +142,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [hasGhost, setHasGhost] = useState(false);
     const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "downloaded">("idle");
     const prefersReducedMotion = usePrefersReducedMotion();
+    const { addTrauma, shakeCssVars } = useGameJuicePro();
     const mutedRef = useRef(false);
     mutedRef.current = muted;
     const audioContext = useRef<AudioContext | null>(null);
@@ -170,16 +171,19 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (!AudioContextClass) return;
         const context = audioContext.current ?? new AudioContextClass();
         audioContext.current = context;
-        const oscillator = context.createOscillator();
-        const gain = context.createGain();
-        oscillator.type = kind === 'crash' ? 'sawtooth' : 'sine';
-        oscillator.frequency.setValueAtTime(kind === 'jump' ? 360 : kind === 'coin' ? 760 : 120, context.currentTime);
-        if (kind === 'coin') oscillator.frequency.exponentialRampToValueAtTime(1080, context.currentTime + 0.1);
-        gain.gain.setValueAtTime(kind === 'crash' ? 0.07 : 0.04, context.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + (kind === 'crash' ? 0.25 : 0.12));
-        oscillator.connect(gain); gain.connect(context.destination);
-        oscillator.start(); oscillator.stop(context.currentTime + (kind === 'crash' ? 0.25 : 0.12));
-    }, []);
+        if (kind === 'jump') {
+            RetroChiptuneSynth.playJump(context);
+        } else if (kind === 'coin') {
+            RetroChiptuneSynth.playCoin(context);
+            addTrauma(0.08);
+        } else if (kind === 'crash') {
+            RetroChiptuneSynth.playHit(context);
+            setTimeout(() => {
+                if (audioContext.current) RetroChiptuneSynth.playGameOver(audioContext.current);
+            }, 80);
+            addTrauma(0.75);
+        }
+    }, [addTrauma]);
 
     useEffect(() => {
         const unified = getBest('dot-runner')?.value ?? 0;
@@ -516,15 +520,24 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         return () => window.removeEventListener('keydown', onKey);
     }, [jump, reset, togglePause, togglePortal]);
 
+    const shakeX = shakeCssVars['--shake-x'];
+    const shakeY = shakeCssVars['--shake-y'];
+    const shakeRot = shakeCssVars['--shake-rot'];
+
     return (
         <div
             ref={containerRef}
             data-game-surface
-            className={
+            style={{
+                '--shake-x': shakeX,
+                '--shake-y': shakeY,
+                '--shake-rot': shakeRot,
+            } as React.CSSProperties}
+            className={`translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
                 isImmersive
                     ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col justify-between m-0 select-none"
                     : "relative"
-            }
+            }`}
         >
             <GameContainer title={t.title} subtitle={t.subtitle} onReset={reset}>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-muted-foreground">
