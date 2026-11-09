@@ -14,19 +14,19 @@
  *   - 'retro-dungeon': Tense, atmospheric minor-key dungeon crawl (112 BPM)
  */
 
-export type RetroBgmTheme = 'retro-jump' | 'retro-runner' | 'cozy-pet' | 'retro-dungeon';
+export type RetroBgmTheme = 'retro-jump' | 'retro-runner' | 'cozy-pet' | 'retro-dungeon' | 'retro-mining';
 
 // Note frequencies in Hz
 const N = {
   REST: 0,
   // Octave 2
-  C2: 65.41, D2: 73.42, E2: 82.41, F2: 87.31, G2: 98.00, A2: 110.00, B2: 123.47,
+  C2: 65.41, D2: 73.42, Eb2: 77.78, E2: 82.41, F2: 87.31, G2: 98.00, A2: 110.00, Bb2: 116.54, B2: 123.47,
   // Octave 3
-  C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
+  C3: 130.81, D3: 146.83, Eb3: 155.56, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, Bb3: 233.08, B3: 246.94,
   // Octave 4
-  C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+  C4: 261.63, D4: 293.66, Eb4: 311.13, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, Bb4: 466.16, B4: 493.88,
   // Octave 5
-  C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00, B5: 987.77,
+  C5: 523.25, D5: 587.33, Eb5: 622.25, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00, Bb5: 932.33, B5: 987.77,
 };
 
 // 16-step patterns for 4 bars (4 beats per bar, 16 steps total loop)
@@ -119,6 +119,27 @@ const THEME_PATTERNS: Record<RetroBgmTheme, { bpm: number; pattern: Pattern16 }>
       drum: [
         'kick', 'none', 'hat', 'none', 'snare', 'none', 'hat', 'none',
         'kick', 'none', 'hat', 'none', 'snare', 'hat', 'kick', 'none',
+      ],
+    },
+  },
+  'retro-mining': {
+    bpm: 120,
+    pattern: {
+      lead: [
+        N.C4, N.REST, N.Eb4, N.REST, N.F4, N.REST, N.G4, N.Bb4,
+        N.C5, N.Bb4, N.G4, N.F4, N.Eb4, N.F4, N.C4, N.REST,
+      ],
+      arp: [
+        N.C3, N.G3, N.C4, N.Eb4, N.F3, N.C4, N.F4, N.G3,
+        N.G3, N.D4, N.G4, N.Bb4, N.C3, N.G3, N.Eb4, N.G4,
+      ],
+      bass: [
+        N.C2, N.REST, N.C2, N.Eb2, N.F2, N.REST, N.F2, N.REST,
+        N.G2, N.REST, N.G2, N.Bb2, N.C2, N.REST, N.C2, N.REST,
+      ],
+      drum: [
+        'kick', 'hat', 'snare', 'hat', 'kick', 'kick', 'snare', 'hat',
+        'kick', 'hat', 'snare', 'hat', 'kick', 'hat', 'snare', 'snare',
       ],
     },
   },

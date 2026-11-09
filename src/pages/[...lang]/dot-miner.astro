@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DotMinerComp from "../../components/games/DotMiner";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "도트 마이너 — 무료 지하 채굴 & 자원 업그레이드 어드벤처",
+    description: "지하 150m 심연을 향해 드릴을 가동하세요! 다양한 광물 채굴, 장비 업그레이드, 8비트 칩튠 사운드와 함께 고대 코어 스타를 발굴하세요.",
+  },
+  en: {
+    title: "Dot Miner — Free Subterranean Mining & Upgrade Adventure",
+    description: "Drill deep into the 150m subterranean abyss! Mine valuable ores, upgrade your drilling pod, and bring back the Ancient Core Star.",
+  },
+  ja: {
+    title: "ドットマイナー — 無料地下採掘＆装備アップグレード冒険ゲーム",
+    description: "地下150mの深淵を目指してドリルを発진！豊富な鉱物を採掘し、装備を強化して古代のコアスターを持ち帰ろう。",
+  },
+  fr: {
+    title: "Dot Miner — Aventure minière souterraine gratuite en ligne",
+    description: "Forez jusqu'à 150 m sous terre ! Extrayez des minerais précieux, améliorez votre foreuse et rapportez la légendaire Étoile du Cœur.",
+  },
+  es: {
+    title: "Dot Miner — Juego de minería subterránea y mejoras gratis",
+    description: "¡Perfora hasta 150 m en el abismo subterráneo! Extrae minerales valiosos, mejora tu cápsula y recupera la legendaria Estrella del Núcleo.",
+  },
+  zh: {
+    title: "点点采矿者 — 免费地下挖矿与装备升级冒险游戏",
+    description: "驾驶钻探机深入地下150米深渊！采集珍稀矿石、升级机舱装备，在8比特芯片音乐中挖掘远古核心之星。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["dot-miner"]}>
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
+    <DotMinerComp client:load locale={locale} />
+    <div class="mx-auto max-w-3xl px-4 mt-8">
+      <GameGuide slug="dot-miner" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    </div>
+  </div>
+</BaseLayout>

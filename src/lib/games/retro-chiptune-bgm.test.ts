@@ -42,7 +42,7 @@ describe('RetroChiptuneBgmPlayer', () => {
   });
 
   it('handles play and stop gracefully even without window Web Audio context in node', () => {
-    const themes: RetroBgmTheme[] = ['retro-jump', 'retro-runner', 'cozy-pet', 'retro-dungeon'];
+    const themes: RetroBgmTheme[] = ['retro-jump', 'retro-runner', 'cozy-pet', 'retro-dungeon', 'retro-mining'];
     for (const theme of themes) {
       player.playTheme(theme);
       player.stop();
