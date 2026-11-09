@@ -51,6 +51,11 @@ import {
   type PixelViewportFit,
   type RgbColor,
 } from "./pixel-engine";
+import {
+  RetroChiptuneBgmPlayer,
+  getRetroChiptuneBgm,
+  type RetroBgmTheme,
+} from "./retro-chiptune-bgm";
 
 export class MobileHapticsPro {
   public static lightImpact(): void {
@@ -496,5 +501,7 @@ export {
   GAMEBOY_PALETTE,
   NES_PALETTE,
   CYBERPUNK_PALETTE,
+  RetroChiptuneBgmPlayer,
+  getRetroChiptuneBgm,
 };
-export type { SfxCue, SfxOptions, HapticStyle, PixelSprite, PixelViewportFit, RgbColor };
+export type { SfxCue, SfxOptions, HapticStyle, PixelSprite, PixelViewportFit, RgbColor, RetroBgmTheme };

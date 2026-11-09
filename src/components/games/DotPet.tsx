@@ -3,7 +3,7 @@ import { Maximize2, Minimize2, Moon, Sun } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
-import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from '../../lib/games/engine-suite-unified';
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth, getRetroChiptuneBgm } from '../../lib/games/engine-suite-unified';
 import { useAudioContext } from '../../lib/games/use-audio-context';
 import { explainDotPetAction, type DotPetAction } from '../../lib/games/dot-pet';
 import { DOT_PET_SPRITES, DOT_PET_UI_SPRITES } from '../../lib/games/sprites';
@@ -192,6 +192,20 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     useEffect(() => { if (loaded) savePet(pet); }, [pet, loaded]);
 
+    // Retro Chiptune BGM loop
+    useEffect(() => {
+        const bgm = getRetroChiptuneBgm();
+        if (pet && !isSleeping) {
+            bgm.setMuted(false);
+            bgm.playTheme('cozy-pet');
+        } else {
+            bgm.stop();
+        }
+        return () => {
+            bgm.stop();
+        };
+    }, [pet, isSleeping]);
+
     // slow decay while the page is open (1 point / 30s)
     useEffect(() => {
         if (!pet) return;
@@ -205,7 +219,7 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             }));
         }, 30_000);
         return () => clearInterval(id);
-    }, [pet !== null]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [pet]);
 
     const update = useCallback((delta: Partial<Pet>, xp: number) => {
         setPet((p) => {

@@ -4,7 +4,7 @@ import { celebrate } from "../../lib/games/celebration";
 import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
-import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from '../../lib/games/engine-suite-unified';
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth, getRetroChiptuneBgm } from '../../lib/games/engine-suite-unified';
 import { GameJuice } from '../../lib/games/game-juice';
 import { frameScale } from '../../lib/games/time-contracts';
 
@@ -146,6 +146,20 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const mutedRef = useRef(false);
     mutedRef.current = muted;
     const audioContext = useRef<AudioContext | null>(null);
+
+    // Retro Chiptune BGM loop
+    useEffect(() => {
+        const bgm = getRetroChiptuneBgm();
+        if (status === 'playing' && !muted) {
+            bgm.setMuted(false);
+            bgm.playTheme('retro-runner');
+        } else {
+            bgm.stop();
+        }
+        return () => {
+            bgm.stop();
+        };
+    }, [status, muted]);
 
     const statusRef = useRef<Status>('idle');
     statusRef.current = status;

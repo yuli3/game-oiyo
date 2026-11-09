@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
-import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth, getSharedAudioContext } from "../../lib/games/engine-suite-unified";
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth, getSharedAudioContext, getRetroChiptuneBgm } from "../../lib/games/engine-suite-unified";
 import { frameScale } from "../../lib/games/time-contracts";
 import { GameJuice } from "../../lib/games/game-juice";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
@@ -245,6 +245,20 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
       setPhase("paused");
     }
   }, []);
+
+  // Retro Chiptune BGM loop
+  useEffect(() => {
+    const bgm = getRetroChiptuneBgm();
+    if (phase === "playing" && sound) {
+      bgm.setMuted(false);
+      bgm.playTheme("retro-jump");
+    } else {
+      bgm.stop();
+    }
+    return () => {
+      bgm.stop();
+    };
+  }, [phase, sound]);
   const start = useCallback((seedOverride?: number) => {
     const seed = new Uint32Array(1);
     if (seedOverride !== undefined) seed[0] = seedOverride >>> 0;
