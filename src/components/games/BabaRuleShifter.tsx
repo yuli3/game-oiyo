@@ -8,9 +8,7 @@ import {
   type Rule,
   type EntityType,
 } from '@/lib/games/baba-rule-shifter';
-import { addTrauma, createShakeState, triggerHaptic, updateShake } from '@/lib/games/juice-engine';
-import { playSyntheticTone } from '@/lib/games/audio-mixer';
-import { useCardTiltPro, MobileHapticsPro } from '@/lib/games/engine-suite-unified';
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from '@/lib/games/engine-suite-unified';
 import { celebrate } from '@/lib/games/celebration';
 import { BABA_IS_YOU_SPRITES } from '@/lib/games/sprites';
 import {
@@ -64,9 +62,7 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
   const [moveCount, setMoveCount] = useState(0);
   const [isWon, setIsWon] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
-
-  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
-  const shakeStateRef = useRef(createShakeState());
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   // Stardust celebration and arcade pass mission reporting on victory
@@ -116,49 +112,34 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
     const moved = engine.move(dir);
 
     if (moved) {
-      if (audioCtxRef.current) {
-        playSyntheticTone(audioCtxRef.current, { freq: 360, duration: 0.05, type: 'triangle', gain: 0.15 });
-      }
+      RetroChiptuneSynth.playBlip(audioCtxRef.current);
       MobileHapticsPro.light();
-      triggerHaptic('light');
 
       // Check if rules changed
       const currentRuleCount = engine.getActiveRules().length;
       if (currentRuleCount !== initialRuleCount) {
-        if (audioCtxRef.current) {
-          playSyntheticTone(audioCtxRef.current, { freq: 659.25, duration: 0.12, type: 'sine', gain: 0.25 });
-        }
-        addTrauma(shakeStateRef.current, 0.2);
+        RetroChiptuneSynth.playPowerup(audioCtxRef.current);
+        addTrauma(0.35);
         MobileHapticsPro.medium();
-        triggerHaptic('medium');
       }
 
       if (engine.getIsWon()) {
-        if (audioCtxRef.current) {
-          playSyntheticTone(audioCtxRef.current, { freq: 880, duration: 0.2, type: 'triangle', gain: 0.3 });
-          setTimeout(() => {
-            if (audioCtxRef.current) {
-              playSyntheticTone(audioCtxRef.current, { freq: 1174.66, duration: 0.3, type: 'sine', gain: 0.3 });
-            }
-          }, 150);
-        }
+        RetroChiptuneSynth.playPowerup(audioCtxRef.current, 0.12);
+        RetroChiptuneSynth.playCoin(audioCtxRef.current, 0.1);
+        addTrauma(0.45);
         MobileHapticsPro.success();
-        triggerHaptic('combo');
       }
 
       syncState();
     }
-  }, [syncState]);
+  }, [addTrauma, syncState]);
 
   // Handle Undo
   const handleUndo = useCallback(() => {
     const engine = engineRef.current;
     if (engine.undo()) {
-      if (audioCtxRef.current) {
-        playSyntheticTone(audioCtxRef.current, { freq: 280, duration: 0.06, type: 'sine', gain: 0.15 });
-      }
+      RetroChiptuneSynth.playBlip(audioCtxRef.current);
       MobileHapticsPro.click();
-      triggerHaptic('light');
       syncState();
     }
   }, [syncState]);
@@ -166,13 +147,11 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
   // Handle Reset
   const handleReset = useCallback(() => {
     engineRef.current.loadLevel(levelId);
-    if (audioCtxRef.current) {
-      playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: 'triangle', gain: 0.2 });
-    }
+    RetroChiptuneSynth.playHit(audioCtxRef.current);
+    addTrauma(0.2);
     MobileHapticsPro.light();
-    triggerHaptic('medium');
     syncState();
-  }, [levelId, syncState]);
+  }, [addTrauma, levelId, syncState]);
 
   // Handle Next Level
   const handleNextLevel = () => {
@@ -221,30 +200,6 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
       handleMove(dy > 0 ? 'down' : 'up');
     }
   };
-
-  // Screen shake animation loop
-  useEffect(() => {
-    let animId: number;
-    let lastTime = performance.now();
-
-    const loop = (time: number) => {
-      const dt = Math.min(0.05, (time - lastTime) / 1000);
-      lastTime = time;
-
-      if (shakeStateRef.current.trauma > 0.001) {
-        const { state, offset } = updateShake(shakeStateRef.current, dt, time / 1000);
-        shakeStateRef.current = state;
-        setShakeOffset({ x: offset.x, y: offset.y });
-      } else if (shakeOffset.x !== 0 || shakeOffset.y !== 0) {
-        setShakeOffset({ x: 0, y: 0 });
-      }
-
-      animId = requestAnimationFrame(loop);
-    };
-
-    animId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animId);
-  }, [shakeOffset]);
 
   const currentLevelDef = BABA_LEVELS.find((l) => l.id === levelId) ?? BABA_LEVELS[0];
 
@@ -317,13 +272,14 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
   return (
     <div
       ref={containerRef}
-      className="relative w-full select-none overflow-hidden rounded-xl border border-border bg-card p-4 space-y-4 translate-x-(--shake-x) translate-y-(--shake-y)"
       style={
         {
-          '--shake-x': `${shakeOffset.x}px`,
-          '--shake-y': `${shakeOffset.y}px`,
+          '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+          '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+          '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
         } as React.CSSProperties
       }
+      className="relative w-full select-none overflow-hidden rounded-xl border border-border bg-card p-4 space-y-4 transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)"
     >
       {/* Top Bar: Level, Steps, Active Rules */}
       <div className="flex items-center justify-between border-b border-border pb-3 text-xs font-mono">

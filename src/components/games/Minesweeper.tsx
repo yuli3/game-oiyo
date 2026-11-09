@@ -33,7 +33,7 @@ import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
-import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro } from '../../lib/games/engine-suite-unified';
 
 function TiltSweepButton({
   children,
@@ -158,6 +158,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const m3 = M3_COPY[(locale as keyof typeof M3_COPY)] ?? M3_COPY.en;
     const ob = ONBOARD_COPY[(locale as keyof typeof ONBOARD_COPY)] ?? ONBOARD_COPY.en;
     const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'en' });
+    const { shakeCssVars, addTrauma } = useGameJuicePro();
 
     const [mode, setMode] = useState<Mode>('daily');
     const difficultyId: MinesweeperDifficultyId = mode === 'daily' ? DAILY_DIFFICULTY_ID : mode;
@@ -368,17 +369,6 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         });
     }, [getAudioContext]);
 
-    const [shake, setShake] = useState(0);
-    const triggerShake = useCallback(() => {
-        let current = 12;
-        setShake(current);
-        const interval = setInterval(() => {
-            current = Math.max(0, current - 2);
-            setShake(current);
-            if (current <= 0) clearInterval(interval);
-        }, 30);
-    }, []);
-
     const recordConditions = useCallback((): BestConditions => ({
         seed: mode === 'daily' ? `daily-${dailyDate}` : `free-${generationSeed.current}`,
         difficulty: difficultyId,
@@ -538,12 +528,13 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             recordAchievementEvent('minesweeper', 'played');
         }
         if (result.status === 'lost') {
-            triggerShake();
+            addTrauma(0.65);
             playExplosionSound();
             MobileHapticsPro.heavy();
             vibrate([80, 40, 120]);
         }
         if (result.status === 'won' && firstTerminal) {
+            addTrauma(0.35);
             playWinFanfare();
             MobileHapticsPro.success();
             vibrate([40, 40, 40, 40, 100]);
@@ -590,6 +581,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     playChordSound();
                     MobileHapticsPro.impact();
                     vibrate([10, 30, 15]);
+                    addTrauma(0.12);
                 } else {
                     playDigSound();
                     MobileHapticsPro.light();
@@ -759,11 +751,16 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         <div
             ref={containerRef}
             data-game-surface
-            className={
+            style={{
+                '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+                '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+                '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+            } as React.CSSProperties}
+            className={`transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
                 isImmersive
                     ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
                     : "relative"
-            }
+            }`}
         >
             <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.reset} onReset={() => initBoard(mode)}>
                 <div className="mb-4 flex flex-wrap items-center gap-1.5">
@@ -867,9 +864,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
             <div className="overflow-x-auto pb-1 touch-none">
                 <div
-                    className={`grid gap-1 bg-muted/30 p-2 rounded-xl border border-border w-max mx-auto transition-transform ${
-                        shake && !reducedMotion ? (shake % 2 ? '-translate-x-2' : 'translate-x-2') : ''
-                    }`}
+                    className="grid gap-1 bg-muted/30 p-2 rounded-xl border border-border w-max mx-auto transition-transform"
                     style={{ gridTemplateColumns: `repeat(${width}, ${cellSize})` }}
                     role="grid"
                     aria-label={t.title}
