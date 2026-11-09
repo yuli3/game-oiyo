@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 157종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 157종." },
-  en: { title: "OIYO Arcade — 157 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 157 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム157種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム157種。" },
-  zh: { title: "OIYO 街机 — 无需安装的157款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，157款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 157 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 157 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 157 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 157 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 162종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 162종." },
+  en: { title: "OIYO Arcade — 162 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 162 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム162種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム162種。" },
+  zh: { title: "OIYO 街机 — 无需安装的162款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，162款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 162 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 162 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 162 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 162 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 157종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "157 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム157種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的157款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "157 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "157 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 162종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "162 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム162種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的162款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "162 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "162 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -224,6 +224,11 @@ const GAMES: Game[] = [
   { slug: "cat-fishing", emoji: "🐟", cat: "arcade", name: { ko: "고양이 낚시", en: "Cat Fishing", ja: "ねこ釣り", zh: "猫咪钓鱼", fr: "Pêche au chat", es: "Pesca gatuna" } },
   { slug: "dot-runner", emoji: "🏃", cat: "arcade", name: { ko: "점프 러너", en: "Dot Runner", ja: "ドットランナー", zh: "点点酷跑", fr: "Dot Runner", es: "Dot Runner" } },
   { slug: "dot-jumpking", emoji: "🦘", cat: "arcade", name: { ko: "점프 킹", en: "Jump King", ja: "ジャンプキング", zh: "跳跳王", fr: "Jump King", es: "Jump King" } },
+  { slug: "dot-dungeon-rogue", emoji: "🗡️", cat: "arcade", name: { ko: "도트 던전 로그", en: "Dot Dungeon Rogue", ja: "ドットダンジョンローグ", zh: "点点地牢肉鸽", fr: "Dot Dungeon Rogue", es: "Dot Dungeon Rogue" } },
+  { slug: "dot-miner", emoji: "⛏️", cat: "arcade", name: { ko: "도트 마이너", en: "Dot Miner", ja: "ドットマイナー", zh: "点点采矿者", fr: "Dot Miner", es: "Dot Miner" } },
+  { slug: "dot-farm", emoji: "🌾", cat: "arcade", name: { ko: "도트 팜", en: "Dot Farm", ja: "ドットファーム", zh: "点点农场", fr: "Dot Farm", es: "Dot Farm" } },
+  { slug: "dot-fishing", emoji: "🎣", cat: "arcade", name: { ko: "도트 피싱", en: "Dot Fishing", ja: "ドットフィッシング", zh: "点点钓鱼", fr: "Dot Fishing", es: "Dot Fishing" } },
+  { slug: "dot-tower", emoji: "🏰", cat: "arcade", name: { ko: "도트 타워", en: "Dot Tower", ja: "ドットタワー", zh: "点点塔防", fr: "Dot Tower", es: "Dot Tower" } },
   { slug: "animal-pop", emoji: "🐵", cat: "arcade", name: { ko: "애니멀 팝", en: "Animal Pop", ja: "アニマルポップ", zh: "动物消消乐", fr: "Animal Pop", es: "Animal Pop" } },
   { slug: "block-burst", emoji: "💎", cat: "arcade", name: { ko: "블록 버스트", en: "Block Burst", ja: "ブロックバースト", zh: "方块爆裂", fr: "Block Burst", es: "Block Burst" } },
   { slug: "dot-pet", kind: "casual", emoji: "🐣", cat: "arcade", name: { ko: "픽셀 펫", en: "Dot Pet", ja: "ドットペット", zh: "像素宠物", fr: "Dot Pet", es: "Dot Pet" } },
@@ -983,6 +988,122 @@ const studioFlagshipGames = STUDIO_FLAGSHIP_CONFIG
   })
   .filter((item): item is { game: Game; tag: Record<Locale, string> } => Boolean(item));
 
+const dotArcadeHubLabel: Record<Locale, { sectionTitle: string; badge: string; subtitle: string; playNow: string }> = {
+  ko: { sectionTitle: "🕹️ 도트 아케이드 콘솔 허브", badge: "8-BIT RETRO", subtitle: "절차적 엔진·순수 칩튠 사운드·무결점 손맛을 담은 PICO-8 스타일 레트로 명작 컬렉션", playNow: "플레이" },
+  en: { sectionTitle: "🕹️ Dot Arcade Console Hub", badge: "8-BIT RETRO", subtitle: "PICO-8 inspired retro masterpiece collection featuring pure chiptune audio and procedural engines", playNow: "Play" },
+  ja: { sectionTitle: "🕹️ ドットアーケード・コンソールハブ", badge: "8-BIT RETRO", subtitle: "手続き型生成・ピュアチップチューン・至高の手応えを誇るPICO-8風レトロ傑作選", playNow: "プレイ" },
+  zh: { sectionTitle: "🕹️ 点点像素街机复古主机馆", badge: "8-BIT RETRO", subtitle: "搭载过程化生成引擎与纯正8比特芯片音乐的PICO-8风复古掌机经典合集", playNow: "开玩" },
+  fr: { sectionTitle: "🕹️ Dot Arcade Hub Rétro", badge: "8-BIT RETRO", subtitle: "Collection de chefs-d'œuvre rétro PICO-8 avec audio chiptune et moteurs procéduraux", playNow: "Jouer" },
+  es: { sectionTitle: "🕹️ Dot Arcade Hub Retro", badge: "8-BIT RETRO", subtitle: "Colección retro estilo PICO-8 con audio chiptune puro y motores de juego procedimentales", playNow: "Jugar" },
+};
+const dotLabels = dotArcadeHubLabel[locale] ?? dotArcadeHubLabel.en;
+
+const DOT_ARCADE_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; desc: Record<Locale, string> }> = [
+  {
+    slug: "dot-dungeon-rogue",
+    tag: { ko: "턴제 던전 크롤러", en: "Turn-based Roguelike", ja: "ターン制ローグライク", zh: "回合制地牢肉鸽", fr: "Roguelike tour par tour", es: "Roguelike por turnos" },
+    desc: {
+      ko: "BSP 절차적 던전, 360도 시야 안개 탐험, 5층 고대 드래곤 보스전",
+      en: "Procedural BSP rooms, 360° fog-of-war FOV, Floor 5 dragon boss battle",
+      ja: "BSP手続き型迷宮、360度視界レイキャスト、5階の古代竜ボス戦",
+      zh: "BSP过程化地牢、360度战争迷雾射线视野、5层远古巨龙领主",
+      fr: "Salles procédurales BSP, brouillard de guerre à 360°, boss dragon",
+      es: "Salas procedimentales BSP, niebla de guerra a 360°, dragón jefe",
+    },
+  },
+  {
+    slug: "dot-miner",
+    tag: { ko: "지하 채굴 & 장비 강화", en: "Subterranean Mining", ja: "地下採掘＆装備強化", zh: "地下采矿与机甲强化", fr: "Minage souterrain", es: "Minería subterránea" },
+    desc: {
+      ko: "160m 지층 굴착, 8종 광물 경제, 낙석/용암 해저드 및 고대 코어 스타",
+      en: "160m strata drilling, 8 mineral ores, falling boulders and Core Star",
+      ja: "160m地層削岩、8種の鉱物経済、落石・溶岩危険と古代コアスター",
+      zh: "深入160米地层、8种矿石经济、落石与岩浆陷阱、发掘远古核心之星",
+      fr: "Forage à 160m, 8 minerais, éboulements, lave et Étoile du Cœur",
+      es: "Perforación a 160m, 8 minerales, desprendimientos y Estrella del Núcleo",
+    },
+  },
+  {
+    slug: "dot-farm",
+    tag: { ko: "코지 농장 & 작물 수확", en: "Cozy Farming Sim", ja: "癒し系農園タイクーン", zh: "治愈系农场与丰收", fr: "Ferme cozy & Récoltes", es: "Granja relajante" },
+    desc: {
+      ko: "14x10 그리드, 6종 작물 생장, 야간 일차/날씨 사이클, 자동 스프링클러",
+      en: "14x10 farm grid, 6 crops, overnight weather cycle, auto-sprinklers",
+      ja: "14x10グリッド、6種作物、夜間・天候サイクル、自動スプリンクラー",
+      zh: "14x10耕地、6种作物生长、夜间与天气循环、全自动洒水系统",
+      fr: "Grille 14x10, 6 cultures, météo jour/nuit, arroseurs automatiques",
+      es: "Cuadrícula 14x10, 6 cultivos, ciclo clima/día, aspersores automáticos",
+    },
+  },
+  {
+    slug: "dot-fishing",
+    tag: { ko: "바다 낚시 & 30종 도감", en: "Sea Fishing & 30 Fish", ja: "海洋釣り＆30種魚類図鑑", zh: "深海垂钓与30种图鉴", fr: "Pêche & 30 poissons", es: "Pesca y 30 peces" },
+    desc: {
+      ko: "4대 해역, 30종 전수 어류 도감, 낚싯줄 텐션 밀당 물리, 선박 개조",
+      en: "4 ocean zones, 30 fish catalog, line tension tug-of-war, boat tiers",
+      ja: "4大海域、30種全図鑑、リールテンション引き合い物理、船の強化",
+      zh: "4大海域、30种全鱼类图鉴、钓线张力拉扯博弈、探险渔船改装",
+      fr: "4 zones océaniques, 30 poissons, gestion de tension du fil",
+      es: "4 zonas marinas, 30 peces en enciclopedia, tensión de sedal",
+    },
+  },
+  {
+    slug: "dot-tower",
+    tag: { ko: "전술 타워 디펜스", en: "Tactical Tower Defense", ja: "戦術タワーディフェンス", zh: "极简战术塔防", fr: "Tower Defense", es: "Tower Defense" },
+    desc: {
+      ko: "16x10 그리드, 4대 타워 아키타입, 3단계 레벨업, 15웨이브 드래곤 보스",
+      en: "16x10 tactical grid, 4 tower archetypes, 3 upgrades, 15-wave dragon boss",
+      ja: "16x10グリッド、4大防衛塔、3段階強化、15ウェーブ暗黒竜ボス",
+      zh: "16x10战术网格、4大经典防御塔、3段升级、15波暗影巨龙领主",
+      fr: "Grille 16x10, 4 tours, 3 niveaux d'amélioration, boss dragon vague 15",
+      es: "Cuadrícula 16x10, 4 torres, 3 niveles de mejora, dragón jefe oleada 15",
+    },
+  },
+  {
+    slug: "dot-jumpking",
+    tag: { ko: "정밀 물리 점프 킹", en: "Precision Jump King", ja: "精密物理ジャンプ", zh: "高精度物理跳跃之王", fr: "Saut de Précision", es: "Salto de Precisión" },
+    desc: {
+      ko: "차징 물리 점프, 발판 충돌, 낙하 카메라 트라우마 쉐이크, 칩튠 사운드",
+      en: "Charge jump physics, platform bounce, drop trauma shake, chiptune sfx",
+      ja: "チャージ物理ジャンプ、足場バウンド、落下カメラトラウマ、チップチューン音",
+      zh: "蓄力物理跳跃、跳台边缘反弹碰撞、坠落屏幕震动冲击、正统芯片音效",
+      fr: "Physique de saut chargé, rebond de plateforme, secousse de chute",
+      es: "Física de salto cargado, rebote en plataformas, cámara sacudida",
+    },
+  },
+  {
+    slug: "dot-runner",
+    tag: { ko: "PB 고스트 레이스 러너", en: "PB Ghost Race Runner", ja: "PBゴーストレース", zh: "个人最佳鬼影竞速跑酷", fr: "Course Fantôme PB", es: "Carrera Fantasma Récord" },
+    desc: {
+      ko: "실시간 개인 최고기록(PB) 고스트 듀얼, 장애물 슬라이드, 3축 가속 쉐이크",
+      en: "Real-time personal best ghost racing, obstacle slides, 3-axis trauma",
+      ja: "リアルタイムPBゴースト対決、障害物スライディング、3軸カメラ振動",
+      zh: "实时个人最佳(PB)双重鬼影同屏对决、障碍滑铲越位、3轴加速度震颤",
+      fr: "Course contre son fantôme personnel en temps réel, glissades",
+      es: "Carrera contra tu fantasma récord en tiempo real, deslizamientos",
+    },
+  },
+  {
+    slug: "dot-pet",
+    tag: { ko: "픽셀 가상 펫 육성", en: "Pixel Virtual Pet Sim", ja: "ピクセル仮想ペット育成", zh: "像素虚拟宠物养成", fr: "Animal Virtuel Pixel", es: "Mascota Virtual Pixel" },
+    desc: {
+      ko: "다마고치 스타일 2D 캔버스, 먹이주기·놀아주기·청소, 4단계 진화 트리",
+      en: "Tamagotchi-style 2D canvas, feeding, playing, cleaning, 4-stage evolution",
+      ja: "たまごっち風2Dキャンバス、食事・遊び・清掃、4段階の進化ツリー",
+      zh: "拓麻歌子风2D画板、喂食互动清洁、4阶全分支成长进化树",
+      fr: "Style Tamagotchi sur toile 2D, nourrir, jouer, nettoyer, 4 stades",
+      es: "Estilo Tamagotchi en lienzo 2D, alimentar, jugar, limpiar, 4 fases",
+    },
+  },
+];
+
+const dotArcadeGames = DOT_ARCADE_CONFIG
+  .map((config) => {
+    const game = GAMES.find((g) => g.slug === config.slug);
+    return game ? { game, tag: config.tag, desc: config.desc } : null;
+  })
+  .filter((item): item is { game: Game; tag: Record<Locale, string>; desc: Record<Locale, string> } => Boolean(item));
+
 /** Entries without an explicit `kind` are games; only the exceptions are tagged. */
 const isGame = (g: Game) => (g.kind ?? "game") === "game";
 const gameCount = GAMES.filter(isGame).length;
@@ -1024,6 +1145,13 @@ const cardJsonLd = {
   <div class="mx-auto max-w-6xl px-4 pb-16">
     <nav aria-label={genreNavLabel[locale] ?? genreNavLabel.en} class="-mx-4 mt-6 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <ul class="flex w-max gap-2 sm:w-auto sm:flex-wrap">
+        <li>
+          <a href="#dot-arcade" class="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full border border-primary/40 bg-primary/10 px-4 text-sm font-bold text-primary shadow-sm transition-colors hover:border-primary hover:bg-primary/20">
+            <span aria-hidden="true">🕹️</span>
+            <span>{dotLabels.badge}</span>
+            <span class="text-xs font-bold text-primary/70">{dotArcadeGames.length}</span>
+          </a>
+        </li>
         {catOrder.filter((cat) => byCat(cat).length > 0).map((cat) => (
           <li>
             <a href={`#genre-${cat}`} class="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-card px-4 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:border-primary/50 hover:text-primary">
@@ -1089,6 +1217,67 @@ const cardJsonLd = {
               </p>
               <div class="mt-3 flex items-center gap-1 text-xs font-bold text-primary group-hover:underline">
                 <span>{newReleaseLabels.playNow}</span>
+                <span aria-hidden="true">→</span>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+    <section id="dot-arcade" class="mt-10">
+      <div class="mb-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1">
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-xl font-black text-foreground">{dotLabels.sectionTitle}</h2>
+            <span class="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/30 px-2 py-0.5 text-xs font-black tracking-wider text-primary">
+              {dotLabels.badge}
+            </span>
+          </div>
+          <p class="mt-0.5 text-xs font-medium text-muted-foreground">{dotLabels.subtitle}</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4">
+        {dotArcadeGames.map(({ game: g, tag, desc }) => (
+          <a
+            href={`/${locale}/${g.slug}/`}
+            data-game={g.slug}
+            class="group relative flex min-h-48 flex-col justify-between overflow-hidden rounded-2xl border-2 border-border/80 bg-card p-4 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-primary hover:shadow-lg ring-1 ring-border/50"
+          >
+            {cardHasArt(g) ? (
+              <Image
+                src={cardSource(gameArt[g.slug])}
+                alt={cardName(g)}
+                width={640}
+                widths={[320, 640]}
+                sizes="(min-width: 1024px) 250px, (min-width: 640px) 50vw, 50vw"
+                format="webp"
+                loading="lazy"
+                decoding="async"
+                class="absolute inset-0 h-full w-full object-cover opacity-25 transition-transform duration-500 group-hover:scale-105 group-hover:opacity-35"
+              />
+            ) : (
+              <span class="absolute right-3 bottom-3 text-6xl opacity-15 transition-transform duration-300 group-hover:scale-110" aria-hidden="true">
+                {g.emoji}
+              </span>
+            )}
+            <span class="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" aria-hidden="true" />
+
+            <div class="relative z-10 flex items-center justify-between">
+              <span class="inline-flex items-center gap-1 rounded-md bg-secondary border border-border px-1.5 py-0.5 text-xs font-bold text-foreground">
+                <span aria-hidden="true">{g.emoji}</span>
+                <span class="text-xs font-semibold text-muted-foreground">{tag[locale] ?? tag.en}</span>
+              </span>
+            </div>
+
+            <div class="relative z-10 mt-6">
+              <span class="block text-base font-black tracking-tight text-foreground group-hover:text-primary transition-colors">
+                {cardName(g)}
+              </span>
+              <p class="mt-1 text-xs font-medium leading-relaxed text-muted-foreground line-clamp-2">
+                {desc[locale] ?? desc.en}
+              </p>
+              <div class="mt-2.5 flex items-center gap-1 text-xs font-bold text-primary group-hover:underline">
+                <span>{dotLabels.playNow}</span>
                 <span aria-hidden="true">→</span>
               </div>
             </div>
