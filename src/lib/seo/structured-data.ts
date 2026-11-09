@@ -70,6 +70,56 @@ export function webApplicationJsonLd(opts: {
   };
 }
 
+export interface VideoGameJsonLdOpts {
+  name: string;
+  description: string;
+  url: string;
+  image?: string;
+  inLanguage?: string;
+  genre?: string | string[];
+  gamePlatform?: string | string[];
+  applicationCategory?: string;
+  operatingSystem?: string;
+  playMode?: "SinglePlayer" | "MultiPlayer" | "CoOp";
+  isAccessibleForFree?: boolean;
+  publisherId?: string;
+  publisherName?: string;
+}
+
+/**
+ * Enhanced Schema.org VideoGame & SoftwareApplication JSON-LD builder for
+ * Google Rich Results and AI search engines (Perplexity, ChatGPT Search, Claude).
+ */
+export function videoGameJsonLd(opts: VideoGameJsonLdOpts) {
+  return {
+    "@context": CTX,
+    "@type": ["VideoGame", "SoftwareApplication"],
+    name: opts.name,
+    description: opts.description,
+    url: opts.url,
+    ...(opts.image ? { image: opts.image } : {}),
+    ...(opts.inLanguage ? { inLanguage: opts.inLanguage } : {}),
+    ...(opts.genre ? { genre: opts.genre } : {}),
+    applicationCategory: opts.applicationCategory ?? "GameApplication",
+    operatingSystem: opts.operatingSystem ?? "Any",
+    gamePlatform: opts.gamePlatform ?? ["Web browser", "PC", "Mobile"],
+    playMode: opts.playMode ?? "SinglePlayer",
+    isAccessibleForFree: opts.isAccessibleForFree ?? true,
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+      category: "Free",
+    },
+    publisher: {
+      "@type": "Organization",
+      "@id": opts.publisherId ?? "https://oiyo.net/#organization",
+      name: opts.publisherName ?? "OIYO Arcade",
+      url: "https://oiyo.net",
+    },
+  };
+}
+
 export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
   return {
     "@context": CTX,
