@@ -31,11 +31,11 @@ import { ArcadePassModal } from "./ArcadePassModal";
 import { ArcadeTrophyModal } from "./ArcadeTrophyModal";
 import {
   loadArcadePassProgress,
-  reportMissionProgress,
-  saveArcadePassProgress,
+  calculateArcadeLevel,
+  processMatchCompletion,
   getEquippedTitleData,
 } from "../../../lib/games/arcade-pass";
-import { todayKey } from "../../../lib/games/daily";
+import { todayKey, previousDayKey } from "../../../lib/games/daily";
 import { getGlobalBgmController, type BgmTrack, BGM_TRACK_STORAGE_KEY, BGM_VOLUME_STORAGE_KEY } from "../../../lib/games/bgm";
 
 export interface GameShellProps {
@@ -149,9 +149,23 @@ export const GameShell: React.FC<GameShellProps> = ({
   const [showArcadePass, setShowArcadePass] = useState(false);
   const [showTrophyModal, setShowTrophyModal] = useState(false);
   const [missionToast, setMissionToast] = useState<{ title: string; xp: number } | null>(null);
+  const [liveOpsBanner, setLiveOpsBanner] = useState<{
+    streakBonusXp: number;
+    currentStreak: number;
+    levelUp: boolean;
+    newLevel: number;
+    newTier: string;
+    unlockedTitle: { badge: string; name: string } | null;
+  } | null>(null);
   const [colorblind, setColorblind] = useState<ColorblindMode>(getColorblindMode);
   const [playerTitle, setPlayerTitle] = useState(() =>
     getEquippedTitleData(loadArcadePassProgress(todayKey()), locale)
+  );
+  const [playerLevel, setPlayerLevel] = useState(() =>
+    calculateArcadeLevel(loadArcadePassProgress(todayKey()).xp).level
+  );
+  const [playerStreak, setPlayerStreak] = useState(
+    () => loadArcadePassProgress(todayKey()).streakCount ?? 0
   );
 
   const [isZenActive, setIsZenActive] = useState(false);
@@ -204,11 +218,18 @@ export const GameShell: React.FC<GameShellProps> = ({
   }, []);
 
   useEffect(() => {
-    const handleTitleChange = () => {
-      setPlayerTitle(getEquippedTitleData(loadArcadePassProgress(todayKey()), locale));
+    const syncPassHud = () => {
+      const p = loadArcadePassProgress(todayKey());
+      setPlayerTitle(getEquippedTitleData(p, locale));
+      setPlayerLevel(calculateArcadeLevel(p.xp).level);
+      setPlayerStreak(p.streakCount ?? 0);
     };
-    window.addEventListener("oiyo:title-changed", handleTitleChange);
-    return () => window.removeEventListener("oiyo:title-changed", handleTitleChange);
+    window.addEventListener("oiyo:title-changed", syncPassHud);
+    window.addEventListener("oiyo:arcade-pass-updated", syncPassHud);
+    return () => {
+      window.removeEventListener("oiyo:title-changed", syncPassHud);
+      window.removeEventListener("oiyo:arcade-pass-updated", syncPassHud);
+    };
   }, [locale]);
 
   const [bgmTrack, setBgmTrack] = useState<BgmTrack>(() => {
@@ -249,11 +270,10 @@ export const GameShell: React.FC<GameShellProps> = ({
     }
   };
 
-  // Auto-progress Arcade Pass Daily Missions on result phase
+  // Auto-progress Arcade Pass Daily Missions, Daily Streak & Match XP on result phase
   useEffect(() => {
     if (phase !== "result") return;
-    const targetSlug = gameSlug || challengeUrl?.match(/\/games\/([^?]+)/)?.[1];
-    if (!targetSlug) return;
+    const targetSlug = gameSlug || challengeUrl?.match(/\/games\/([^?]+)/)?.[1] || "arcade";
 
     const numScore =
       typeof score === "number"
@@ -263,23 +283,22 @@ export const GameShell: React.FC<GameShellProps> = ({
         : 1;
 
     const today = todayKey();
+    const prevDay = previousDayKey(today);
     const currentProgress = loadArcadePassProgress(today);
-    const pendingBefore = currentProgress.missions.filter(
-      (m) => m.gameSlug === targetSlug && !m.completed
-    );
-    if (pendingBefore.length === 0) return;
 
-    const nextProgress = reportMissionProgress(
-      currentProgress,
-      targetSlug,
-      Number.isFinite(numScore) && numScore > 0 ? numScore : 1
-    );
-    saveArcadePassProgress(nextProgress);
+    const completion = processMatchCompletion(currentProgress, {
+      gameSlug: targetSlug,
+      progressValue: Number.isFinite(numScore) && numScore > 0 ? numScore : 1,
+      won: challengeInfo?.outcome === "win",
+      today,
+      previousDay: prevDay,
+    });
 
-    const newlyCompleted = nextProgress.missions.find(
-      (m) => m.gameSlug === targetSlug && m.completed && pendingBefore.some((p) => p.id === m.id)
-    );
+    setPlayerLevel(completion.newLevel);
+    setPlayerStreak(completion.currentStreak);
+    setPlayerTitle(getEquippedTitleData(completion.updatedProgress, locale));
 
+    const newlyCompleted = completion.completedMissions[0];
     if (newlyCompleted) {
       const loc = locale in newlyCompleted.title ? locale : "ko";
       setMissionToast({
@@ -287,7 +306,24 @@ export const GameShell: React.FC<GameShellProps> = ({
         xp: newlyCompleted.xpReward,
       });
     }
-  }, [phase, gameSlug, challengeUrl, score, locale]);
+
+    const firstUnlocked = completion.newlyUnlockedTitles[0];
+    if (completion.streakCheckedInToday || completion.levelUp || firstUnlocked) {
+      setLiveOpsBanner({
+        streakBonusXp: completion.streakCheckedInToday ? completion.streakBonusXp : 0,
+        currentStreak: completion.currentStreak,
+        levelUp: completion.levelUp,
+        newLevel: completion.newLevel,
+        newTier: completion.newTier,
+        unlockedTitle: firstUnlocked
+          ? {
+              badge: firstUnlocked.badge,
+              name: firstUnlocked.name[locale] ?? firstUnlocked.name.en ?? firstUnlocked.name.ko,
+            }
+          : null,
+      });
+    }
+  }, [phase, gameSlug, challengeUrl, score, locale, challengeInfo?.outcome]);
 
   // Keyboard navigation for Pause/Mute/Fullscreen
   useEffect(() => {
@@ -578,7 +614,14 @@ export const GameShell: React.FC<GameShellProps> = ({
               className="flex min-h-11 items-center gap-1 rounded-xl border border-primary/40 bg-primary/10 px-2.5 py-2 text-xs font-black text-primary hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-primary"
             >
               <Award className="size-4" />
-              <span className="hidden sm:inline font-mono text-xs">PASS</span>
+              <span className="hidden sm:inline font-mono text-xs">
+                PASS · Lv.{playerLevel}
+              </span>
+              {playerStreak > 0 && (
+                <span className="inline-flex items-center rounded-full bg-warning/20 px-1.5 py-0.5 text-xs font-black text-warning">
+                  🔥{playerStreak}
+                </span>
+              )}
             </button>
           )}
 
@@ -740,6 +783,26 @@ export const GameShell: React.FC<GameShellProps> = ({
               {missionToast && (
                 <div className="rounded-xl border border-primary/40 bg-primary/10 p-2.5 text-center text-xs font-bold text-primary animate-in fade-in slide-in-from-top-2 duration-300">
                   🎯 데일리 미션 달성! <strong>{missionToast.title}</strong> (+{missionToast.xp} XP)
+                </div>
+              )}
+
+              {liveOpsBanner && (
+                <div className="space-y-1.5">
+                  {liveOpsBanner.streakBonusXp > 0 && (
+                    <div className="rounded-xl border border-warning/40 bg-warning/10 p-2 text-center text-xs font-black text-warning animate-in fade-in">
+                      🔥 {liveOpsBanner.currentStreak}일차 연속 출석 달성! (+{liveOpsBanner.streakBonusXp} XP)
+                    </div>
+                  )}
+                  {liveOpsBanner.levelUp && (
+                    <div className="rounded-xl border border-chart-2/40 bg-chart-2/10 p-2 text-center text-xs font-black text-chart-2 animate-in fade-in">
+                      🆙 스튜디오 레벨 업! Lv.{liveOpsBanner.newLevel} ({liveOpsBanner.newTier}) 달성!
+                    </div>
+                  )}
+                  {liveOpsBanner.unlockedTitle && (
+                    <div className="rounded-xl border border-chart-4/40 bg-chart-4/10 p-2 text-center text-xs font-black text-chart-4 animate-in fade-in">
+                      🏅 신규 칭호 해금: {liveOpsBanner.unlockedTitle.badge} {liveOpsBanner.unlockedTitle.name}
+                    </div>
+                  )}
                 </div>
               )}
 

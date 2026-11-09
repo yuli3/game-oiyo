@@ -9,6 +9,8 @@ import {
   getUnlockedTitles,
   equipArcadeTitle,
   getEquippedTitleData,
+  processMatchCompletion,
+  MISSION_CATALOG,
   type ArcadePassProgress,
 } from "./arcade-pass";
 
@@ -152,5 +154,69 @@ describe("ArcadePass Engine (M4 Meta-Progression)", () => {
     expect(lossRes.gainedXp).toBe(10);
     expect(lossRes.nextProgress.xp).toBe(90);
     expect(lossRes.levelUp).toBe(false); // 80 -> 90 (still lvl 1)
+  });
+
+  it("includes all 5 Dot Arcade games in MISSION_CATALOG with 6-locale titles", () => {
+    const dotSlugs = [
+      "dot-dungeon-rogue",
+      "dot-miner",
+      "dot-farm",
+      "dot-fishing",
+      "dot-tower",
+    ];
+    for (const slug of dotSlugs) {
+      const entries = MISSION_CATALOG.filter((m) => m.gameSlug === slug);
+      expect(entries.length).toBeGreaterThanOrEqual(2);
+      for (const entry of entries) {
+        expect(entry.title.ko).toBeTruthy();
+        expect(entry.title.en).toBeTruthy();
+        expect(entry.title.ja).toBeTruthy();
+        expect(entry.title.zh).toBeTruthy();
+        expect(entry.title.fr).toBeTruthy();
+        expect(entry.title.es).toBeTruthy();
+      }
+    }
+  });
+
+  it("processes unified match completion (streak check-in, match XP, mission completion, level/tier/title unlocks)", () => {
+    const initial: ArcadePassProgress = {
+      xp: 35,
+      completedMissionIds: [],
+      missions: [
+        {
+          id: "dot-fishing-catch-3",
+          gameSlug: "dot-fishing",
+          title: { ko: "도트 낚시에서 물고기 3마리 이상 낚아 올리기", en: "Catch 3+ fish" },
+          goal: 3,
+          current: 0,
+          xpReward: 50,
+          completed: false,
+        },
+      ],
+      lastActiveDate: "2026-11-10",
+    };
+
+    const result = processMatchCompletion(initial, {
+      gameSlug: "dot-fishing",
+      progressValue: 4,
+      won: true,
+      today: "2026-11-10",
+      previousDay: "2026-11-09",
+    });
+
+    // 35 initial + 20 streak (Day 1) + 25 win + 50 mission = 130 XP
+    expect(result.streakCheckedInToday).toBe(true);
+    expect(result.streakBonusXp).toBe(20);
+    expect(result.matchXpGained).toBe(25);
+    expect(result.completedMissions).toHaveLength(1);
+    expect(result.totalXpGained).toBe(95);
+    expect(result.updatedProgress.xp).toBe(130);
+    expect(result.levelUp).toBe(true);
+    expect(result.prevLevel).toBe(1);
+    expect(result.newLevel).toBe(2);
+    expect(result.tierUp).toBe(true);
+    expect(result.prevTier).toBe("RECRUIT");
+    expect(result.newTier).toBe("CHALLENGER");
+    expect(result.newlyUnlockedTitles.map((t) => t.id)).toContain("puzzler");
   });
 });

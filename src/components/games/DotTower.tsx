@@ -41,6 +41,12 @@ import {
   useGameJuicePro,
 } from "../../lib/games/engine-suite-unified";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import {
+  loadArcadePassProgress,
+  reportMissionProgress,
+  saveArcadePassProgress,
+} from "../../lib/games/arcade-pass";
+import { todayKey } from "../../lib/games/daily";
 
 const COPY = {
   ko: {
@@ -276,6 +282,20 @@ export default function DotTower({ locale = "en" }: { locale?: string }) {
       bgm.stop();
     };
   }, [soundEnabled, gameState.status]);
+
+  // Arcade Pass Daily Mission tracking
+  useEffect(() => {
+    if (gameState.wave <= 1 && gameState.totalKills <= 0) return;
+    const today = todayKey();
+    let current = loadArcadePassProgress(today);
+    if (gameState.wave > 1) {
+      current = reportMissionProgress(current, "dot-tower", gameState.wave);
+    }
+    if (gameState.totalKills > 0) {
+      current = reportMissionProgress(current, "dot-tower", gameState.totalKills);
+    }
+    saveArcadePassProgress(current);
+  }, [gameState.wave, gameState.totalKills]);
 
   // Main game tick RAF loop
   useEffect(() => {

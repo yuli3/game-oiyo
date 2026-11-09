@@ -35,6 +35,12 @@ import {
   useGameJuicePro,
 } from "../../lib/games/engine-suite-unified";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import {
+  loadArcadePassProgress,
+  reportMissionProgress,
+  saveArcadePassProgress,
+} from "../../lib/games/arcade-pass";
+import { todayKey } from "../../lib/games/daily";
 
 const COPY = {
   ko: {
@@ -222,6 +228,20 @@ export default function DotFarm({ locale = "en" }: { locale?: string }) {
       }
     } catch {}
   }, [soundEnabled]);
+
+  // Arcade Pass Daily Mission tracking
+  useEffect(() => {
+    if (gameState.totalHarvested <= 0 && gameState.money <= 100) return;
+    const today = todayKey();
+    let current = loadArcadePassProgress(today);
+    if (gameState.totalHarvested > 0) {
+      current = reportMissionProgress(current, "dot-farm", gameState.totalHarvested);
+    }
+    if (gameState.money > 100) {
+      current = reportMissionProgress(current, "dot-farm", gameState.money);
+    }
+    saveArcadePassProgress(current);
+  }, [gameState.totalHarvested, gameState.money]);
 
   const handleAction = useCallback(
     (

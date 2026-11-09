@@ -39,6 +39,12 @@ import {
   useGameJuicePro,
 } from "../../lib/games/engine-suite-unified";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import {
+  loadArcadePassProgress,
+  reportMissionProgress,
+  saveArcadePassProgress,
+} from "../../lib/games/arcade-pass";
+import { todayKey } from "../../lib/games/daily";
 
 const COPY = {
   ko: {
@@ -259,6 +265,20 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
       bgm.stop();
     };
   }, [soundEnabled, gameState.status]);
+
+  // Arcade Pass Daily Mission tracking
+  useEffect(() => {
+    if (gameState.totalCatches <= 0 && gameState.gold <= 0) return;
+    const today = todayKey();
+    let current = loadArcadePassProgress(today);
+    if (gameState.totalCatches > 0) {
+      current = reportMissionProgress(current, "dot-fishing", gameState.totalCatches);
+    }
+    if (gameState.gold > 0) {
+      current = reportMissionProgress(current, "dot-fishing", gameState.gold);
+    }
+    saveArcadePassProgress(current);
+  }, [gameState.totalCatches, gameState.gold]);
 
   // Main game tick loop
   useEffect(() => {

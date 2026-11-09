@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { X, Award, CheckCircle2, Sparkles } from "lucide-react";
 import {
+  calculateArcadeLevel,
   calculateArcadeTier,
   checkInDailyStreak,
   loadArcadePassProgress,
@@ -89,6 +90,7 @@ export const ArcadePassModal: React.FC<ArcadePassModalProps> = ({
   if (!isOpen || !progress) return null;
 
   const currentTier = calculateArcadeTier(progress.xp);
+  const levelInfo = calculateArcadeLevel(progress.xp);
   const tierStyle = TIER_STYLES[currentTier];
   const nextGoal = NEXT_TIER_GOAL[currentTier];
   const pct =
@@ -97,6 +99,18 @@ export const ArcadePassModal: React.FC<ArcadePassModalProps> = ({
       : Math.min(100, Math.round((progress.xp / nextGoal) * 100));
 
   const titleCopy = TITLE_COPY[locale] ?? TITLE_COPY.en;
+  const playLabel =
+    locale === "ko"
+      ? "플레이 →"
+      : locale === "ja"
+      ? "プレイ →"
+      : locale === "zh"
+      ? "去玩 →"
+      : locale === "fr"
+      ? "Jouer →"
+      : locale === "es"
+      ? "Jugar →"
+      : "Play →";
   const equippedId = progress.equippedTitleId ?? "novice";
   const weekKey = getWeeklyLeagueKey();
   const weeklySeed = weeklySeedFromKey(weekKey);
@@ -143,7 +157,7 @@ export const ArcadePassModal: React.FC<ArcadePassModalProps> = ({
         <div className="rounded-2xl border border-border bg-muted/40 p-4 mb-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              스튜디오 랭크
+              스튜디오 랭크 · Lv.{levelInfo.level}
             </span>
             <span
               className={`rounded-full border px-2.5 py-0.5 text-xs font-black tracking-wider ${tierStyle.badge}`}
@@ -287,7 +301,17 @@ export const ArcadePassModal: React.FC<ArcadePassModalProps> = ({
                   </div>
 
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5 font-medium">
-                    <span className="capitalize">{mission.gameSlug}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="capitalize">{mission.gameSlug}</span>
+                      {!mission.completed && (
+                        <a
+                          href={`/${locale}/${mission.gameSlug}/`}
+                          className="rounded-md bg-primary/15 px-1.5 py-0.5 text-xs font-black text-primary hover:bg-primary/25"
+                        >
+                          {playLabel}
+                        </a>
+                      )}
+                    </div>
                     <span>
                       {mission.current} / {mission.goal}
                     </span>

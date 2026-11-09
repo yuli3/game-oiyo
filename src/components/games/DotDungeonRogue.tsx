@@ -32,6 +32,12 @@ import {
   useGameJuicePro,
 } from "../../lib/games/engine-suite-unified";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import {
+  loadArcadePassProgress,
+  reportMissionProgress,
+  saveArcadePassProgress,
+} from "../../lib/games/arcade-pass";
+import { todayKey } from "../../lib/games/daily";
 
 const COPY = {
   ko: {
@@ -212,6 +218,18 @@ export default function DotDungeonRogue({ locale = "en" }: { locale?: string }) 
       }
     } catch {}
   }, [soundEnabled]);
+
+  // Arcade Pass Daily Mission tracking
+  useEffect(() => {
+    const val = Math.max(gameState.player.depth, gameState.player.gold);
+    if (val <= 1) return;
+    const today = todayKey();
+    const current = loadArcadePassProgress(today);
+    const updated = reportMissionProgress(current, "dot-dungeon-rogue", val);
+    if (updated.xp !== current.xp || updated.completedMissionIds.length !== current.completedMissionIds.length) {
+      saveArcadePassProgress(updated);
+    }
+  }, [gameState.player.depth, gameState.player.gold]);
 
   const handleAction = useCallback(
     (action: { type: "move"; dir: Direction } | { type: "use_item"; itemIndex: number }) => {

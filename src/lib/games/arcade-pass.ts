@@ -1168,6 +1168,146 @@ export const MISSION_CATALOG: Array<{
     goal: 15,
     xpReward: 50,
   },
+  {
+    id: "dot-dungeon-rogue-floor-2",
+    gameSlug: "dot-dungeon-rogue",
+    title: {
+      ko: "도트 던전 로그에서 지하 2층 도달 및 몬스터 격파",
+      en: "Reach Floor 2 and defeat monsters in Dot Dungeon Rogue",
+      ja: "ドット・ダンジョン・ローグで地下2階に到達しモンスターを撃破",
+      zh: "在像素地牢肉鸽中抵达地下2层并击败怪物",
+      fr: "Atteignez l'étage 2 et battez les monstres dans Dot Dungeon Rogue",
+      es: "Alcanza el piso 2 y derrota monstruos en Dot Dungeon Rogue",
+    },
+    goal: 2,
+    xpReward: 50,
+  },
+  {
+    id: "dot-dungeon-rogue-gold-50",
+    gameSlug: "dot-dungeon-rogue",
+    title: {
+      ko: "도트 던전 로그에서 골드 50G 이상 수집",
+      en: "Collect 50+ Gold in Dot Dungeon Rogue",
+      ja: "ドット・ダンジョン・ローグで50G以上を獲得",
+      zh: "在像素地牢肉鸽中收集50金币以上",
+      fr: "Collectez 50 pièces d'or ou plus dans Dot Dungeon Rogue",
+      es: "Reúne 50 de oro o más en Dot Dungeon Rogue",
+    },
+    goal: 50,
+    xpReward: 50,
+  },
+  {
+    id: "dot-miner-depth-30",
+    gameSlug: "dot-miner",
+    title: {
+      ko: "도트 광부에서 지하 30m 깊이까지 채굴 도달",
+      en: "Mine down to 30m depth in Dot Miner",
+      ja: "ドット・マイナーで地下30mの深さまで採掘到達",
+      zh: "在像素矿工中向下挖掘达到30米深度",
+      fr: "Creusez jusqu'à 30 m de profondeur dans Dot Miner",
+      es: "Excava hasta 30 m de profundidad en Dot Miner",
+    },
+    goal: 30,
+    xpReward: 50,
+  },
+  {
+    id: "dot-miner-gold-100",
+    gameSlug: "dot-miner",
+    title: {
+      ko: "도트 광부에서 광물 판매로 100G 이상 획득",
+      en: "Earn 100+ Gold from selling ores in Dot Miner",
+      ja: "ドット・マイナーで鉱石を売却し100G以上を獲得",
+      zh: "在像素矿工中出售矿石获得100金币以上",
+      fr: "Gagnez 100 d'or ou plus en vendant du minerai dans Dot Miner",
+      es: "Gana 100 de oro o más vendiendo minerales en Dot Miner",
+    },
+    goal: 100,
+    xpReward: 50,
+  },
+  {
+    id: "dot-farm-harvest-5",
+    gameSlug: "dot-farm",
+    title: {
+      ko: "도트 농장에서 다 자란 작물 5회 이상 수확",
+      en: "Harvest 5+ ripe crops in Dot Farm",
+      ja: "ドット・ファームで育った作物を5回以上収穫",
+      zh: "在像素农场中收获5株以上成熟作物",
+      fr: "Récoltez 5 cultures mûres ou plus dans Dot Farm",
+      es: "Cosecha 5 o más cultivos maduros en Dot Farm",
+    },
+    goal: 5,
+    xpReward: 50,
+  },
+  {
+    id: "dot-farm-gold-500",
+    gameSlug: "dot-farm",
+    title: {
+      ko: "도트 농장에서 자산 500G 달성",
+      en: "Reach 500 Gold in Dot Farm",
+      ja: "ドット・ファームで所持金500Gを達成",
+      zh: "在像素农场中积累达到500金币",
+      fr: "Atteignez 500 pièces d'or dans Dot Farm",
+      es: "Alcanza 500 de oro en Dot Farm",
+    },
+    goal: 500,
+    xpReward: 50,
+  },
+  {
+    id: "dot-fishing-catch-3",
+    gameSlug: "dot-fishing",
+    title: {
+      ko: "도트 낚시에서 물고기 3마리 이상 낚아 올리기",
+      en: "Catch 3+ fish in Dot Fishing",
+      ja: "ドット・フィッシングで魚を3匹以上釣り上げる",
+      zh: "在像素钓鱼中成功钓起3条以上鱼类",
+      fr: "Pêchez 3 poissons ou plus dans Dot Fishing",
+      es: "Pesca 3 o más peces en Dot Fishing",
+    },
+    goal: 3,
+    xpReward: 50,
+  },
+  {
+    id: "dot-fishing-gold-200",
+    gameSlug: "dot-fishing",
+    title: {
+      ko: "도트 낚시에서 어획 수익으로 200G 달성",
+      en: "Reach 200 Gold from catches in Dot Fishing",
+      ja: "ドット・フィッシングで釣果報酬200Gを達成",
+      zh: "在像素钓鱼中累计获得200金币",
+      fr: "Atteignez 200 d'or grâce à vos prises dans Dot Fishing",
+      es: "Alcanza 200 de oro con tus capturas en Dot Fishing",
+    },
+    goal: 200,
+    xpReward: 50,
+  },
+  {
+    id: "dot-tower-wave-3",
+    gameSlug: "dot-tower",
+    title: {
+      ko: "도트 타워 디펜스에서 웨이브 3 이상 방어 성공",
+      en: "Survive Wave 3+ in Dot Tower Defense",
+      ja: "ドット・タワーディフェンスでウェーブ3以上を防衛",
+      zh: "在像素塔防中成功防守第3波以上进攻",
+      fr: "Survivez à la vague 3 ou plus dans Dot Tower Defense",
+      es: "Sobrevive a la oleada 3 o más en Dot Tower Defense",
+    },
+    goal: 3,
+    xpReward: 50,
+  },
+  {
+    id: "dot-tower-kills-15",
+    gameSlug: "dot-tower",
+    title: {
+      ko: "도트 타워 디펜스에서 침공 몬스터 15마리 처치",
+      en: "Defeat 15 invading monsters in Dot Tower Defense",
+      ja: "ドット・タワーディフェンスでモンスターを15体撃破",
+      zh: "在像素塔防中消灭15只入侵怪物",
+      fr: "Éliminez 15 monstres envahisseurs dans Dot Tower Defense",
+      es: "Derrota a 15 monstruos invasores en Dot Tower Defense",
+    },
+    goal: 15,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
@@ -1341,7 +1481,94 @@ export function saveArcadePassProgress(progress: ArcadePassProgress): void {
   if (typeof window === "undefined" || !window.localStorage) return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    window.dispatchEvent(new CustomEvent("oiyo:arcade-pass-updated"));
   } catch {
     // Ignore storage quota
   }
+}
+
+export interface MatchCompletionResult {
+  updatedProgress: ArcadePassProgress;
+  matchXpGained: number;
+  streakBonusXp: number;
+  currentStreak: number;
+  streakCheckedInToday: boolean;
+  completedMissions: DailyMission[];
+  levelUp: boolean;
+  prevLevel: number;
+  newLevel: number;
+  tierUp: boolean;
+  prevTier: ArcadeRankTier;
+  newTier: ArcadeRankTier;
+  newlyUnlockedTitles: ArcadeTitle[];
+  totalXpGained: number;
+}
+
+/**
+ * Unified Live-Ops progression pipeline triggered when a game run finishes.
+ * Automatically checks in daily attendance streak, awards match XP, advances
+ * matching daily missions, and computes level/tier/title unlock deltas for UI toasts.
+ */
+export function processMatchCompletion(
+  initialProgress: ArcadePassProgress,
+  opts: {
+    gameSlug: string;
+    progressValue: number;
+    won?: boolean;
+    today: string;
+    previousDay: string;
+  }
+): MatchCompletionResult {
+  const startXp = initialProgress.xp;
+  const prevLevel = calculateArcadeLevel(startXp).level;
+  const prevTier = calculateArcadeTier(startXp);
+  const prevTitleIds = new Set(getUnlockedTitles(startXp).map((t) => t.id));
+  const pendingMissionIdsBefore = new Set(
+    initialProgress.missions
+      .filter((m) => m.gameSlug === opts.gameSlug && !m.completed)
+      .map((m) => m.id)
+  );
+
+  // 1. Daily streak check-in
+  const streakRes = checkInDailyStreak(initialProgress, opts.today, opts.previousDay);
+  const streakCheckedInToday = !streakRes.alreadyCheckedIn && streakRes.bonusXp > 0;
+
+  // 2. Match play XP (+25 on win, +10 on play)
+  const matchRes = awardMatchPlayXp(streakRes.updatedProgress, Boolean(opts.won));
+
+  // 3. Daily mission progress
+  const afterMission = reportMissionProgress(
+    matchRes.nextProgress,
+    opts.gameSlug,
+    opts.progressValue
+  );
+
+  saveArcadePassProgress(afterMission);
+
+  const endXp = afterMission.xp;
+  const newLevel = calculateArcadeLevel(endXp).level;
+  const newTier = calculateArcadeTier(endXp);
+  const newlyUnlockedTitles = getUnlockedTitles(endXp).filter(
+    (t) => !prevTitleIds.has(t.id)
+  );
+  const completedMissions = afterMission.missions.filter(
+    (m) => m.completed && pendingMissionIdsBefore.has(m.id)
+  );
+
+  return {
+    updatedProgress: afterMission,
+    matchXpGained: matchRes.gainedXp,
+    streakBonusXp: streakRes.bonusXp,
+    currentStreak: streakRes.currentStreak,
+    streakCheckedInToday,
+    completedMissions,
+    levelUp: newLevel > prevLevel,
+    prevLevel,
+    newLevel,
+    tierUp: newTier !== prevTier,
+    prevTier,
+    newTier,
+    newlyUnlockedTitles,
+    totalXpGained: endXp - startXp,
+  };
 }
