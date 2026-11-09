@@ -14,13 +14,11 @@ import {
   swapWaffleCells,
 } from "../../lib/games/word-waffle";
 import {
-  createShakeState,
-  addTrauma,
-  updateShake,
-  triggerHaptic,
-} from "../../lib/games/juice-engine";
-import { playSyntheticTone } from "../../lib/games/audio-mixer";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+  RetroChiptuneSynth,
+} from "../../lib/games/engine-suite-unified";
 import { Button } from "../ui/button";
 import { GameStatTile } from "../ui/game/GameStatTile";
 
@@ -93,7 +91,7 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
   const [puzzle] = useState<WafflePuzzleDefinition>(initData.puzzle);
   const [game, setGame] = useState<WaffleGameState>(initData.game);
   const [selectedCoord, setSelectedCoord] = useState<{ r: number; c: number } | null>(null);
-  const [highScore, setHighScore] = useState(() => loadHighScore("word-waffle", 0));
+  const [, setHighScore] = useState(() => loadHighScore("word-waffle", 0));
 
   useEffect(() => {
     if (game.status === "won") {
@@ -106,8 +104,7 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
     }
   }, [game.status, game.stars, game.swapsRemaining]);
 
-  const shakeStateRef = useRef(createShakeState());
-  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+  const { addTrauma, shakeCssVars } = useGameJuicePro();
   const [isCopied, setIsCopied] = useState(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -124,47 +121,22 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
     };
   }, []);
 
-  // Frame animation loop for screen shake
-  useEffect(() => {
-    let animId: number;
-    let lastTime = performance.now();
-
-    const loop = (time: number) => {
-      const dt = Math.min(0.05, (time - lastTime) / 1000);
-      lastTime = time;
-
-      if (shakeStateRef.current.trauma > 0.001) {
-        const { state, offset } = updateShake(shakeStateRef.current, dt, time / 1000);
-        shakeStateRef.current = state;
-        setShakeOffset({ x: offset.x, y: offset.y });
-      } else if (shakeOffset.x !== 0 || shakeOffset.y !== 0) {
-        setShakeOffset({ x: 0, y: 0 });
-      }
-
-      animId = requestAnimationFrame(loop);
-    };
-
-    animId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animId);
-  }, [shakeOffset.x, shakeOffset.y]);
-
   const handleCellClick = (r: number, c: number) => {
     if (game.status !== "playing") return;
     if (IS_WAFFLE_HOLE(r, c)) return;
 
     const cell = game.grid[r][c];
     if (!cell || cell.isLocked) {
-      playSyntheticTone(audioCtxRef.current, { freq: 240, duration: 0.1, type: "sawtooth" });
+      RetroChiptuneSynth.playHit(audioCtxRef.current);
       MobileHapticsPro.warning();
-      triggerHaptic("warning");
+      addTrauma(0.1);
       return;
     }
 
     if (!selectedCoord) {
       setSelectedCoord({ r, c });
-      playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "sine" });
+      RetroChiptuneSynth.playBlip(audioCtxRef.current);
       MobileHapticsPro.light();
-      triggerHaptic("light");
       return;
     }
 
@@ -177,25 +149,21 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
 
     setGame(nextGame);
     setSelectedCoord(null);
-    playSyntheticTone(audioCtxRef.current, { freq: 520, duration: 0.1, type: "triangle" });
+    RetroChiptuneSynth.playPowerup(audioCtxRef.current);
     MobileHapticsPro.impact();
-    triggerHaptic("medium");
+    addTrauma(0.15);
 
     if (nextGame.status === "won") {
-      shakeStateRef.current = addTrauma(shakeStateRef.current, 0.5);
+      addTrauma(0.55);
       MobileHapticsPro.success();
-      triggerHaptic("combo");
-
-      // Celebratory melody
-      playSyntheticTone(audioCtxRef.current, { freq: 523.25, duration: 0.25, type: "sine" });
-      setTimeout(() => {
-        playSyntheticTone(audioCtxRef.current, { freq: 659.25, duration: 0.3, type: "sine" });
-      }, 70);
-      setTimeout(() => {
-        playSyntheticTone(audioCtxRef.current, { freq: 783.99, duration: 0.35, type: "sine" });
-      }, 140);
+      RetroChiptuneSynth.playCoin(audioCtxRef.current);
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: "stardust" });
+      }
     } else if (nextGame.status === "lost") {
-      MobileHapticsPro.heavy();
+      addTrauma(0.5);
+      MobileHapticsPro.error();
+      RetroChiptuneSynth.playGameOver(audioCtxRef.current);
     }
   };
 
@@ -206,34 +174,9 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
     setSelectedCoord(null);
   };
 
-  const handleShare = () => {
-    let waffleEmoji = "";
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
-        if (IS_WAFFLE_HOLE(r, c)) {
-          waffleEmoji += "⬜";
-        } else {
-          const st = game.grid[r][c]?.state;
-          waffleEmoji += st === "green" ? "🟩" : st === "yellow" ? "🟨" : "⬛";
-        }
-      }
-      waffleEmoji += "\n";
-    }
-
-    const text =
-      locale === "ko"
-        ? `🧇 단어 와플 - ${game.status === "won" ? `성공! 남은 스왑: ${game.swapsRemaining}` : "실패"} (별 ${game.stars}개)\n${waffleEmoji}https://game.oiyo.net/word-waffle`
-        : `🧇 Word Waffle - ${game.status === "won" ? `Solved! Swaps left: ${game.swapsRemaining}` : "Failed"} (${game.stars} stars)\n${waffleEmoji}https://game.oiyo.net/word-waffle`;
-
-    navigator.clipboard?.writeText(text).then(() => {
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    });
-  };
-
   const handleShareCard = useCallback(async () => {
     MobileHapticsPro.click();
-    const canvas = await createShareCardCanvas({
+    const canvas = createShareCardCanvas({
       title: "WORD WAFFLE",
       subtitle: game.status === "won" ? "와플 퍼즐 완성!" : "단어 와플 도전 기록",
       score: `${game.stars}★ (${game.swapsRemaining} 남음)`,
@@ -255,27 +198,17 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
     }
   }, [game.maxSwaps, game.stars, game.status, game.swapsRemaining]);
 
-  useEffect(() => {
-    if (game.status === "won") {
-      MobileHapticsPro.success();
-      if (containerRef.current) {
-        celebrate(containerRef.current, { preset: "stardust" });
-      }
-    } else if (game.status === "lost") {
-      MobileHapticsPro.heavy();
-    }
-  }, [game.status]);
-
   return (
     <div
       ref={containerRef}
       style={
         {
-          "--shake-x": `${shakeOffset.x}px`,
-          "--shake-y": `${shakeOffset.y}px`,
+          "--shake-x": shakeCssVars["--shake-x"],
+          "--shake-y": shakeCssVars["--shake-y"],
+          "--shake-rot": shakeCssVars["--shake-rot"],
         } as React.CSSProperties
       }
-      className={`relative mx-auto flex w-full max-w-md translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center justify-between rounded-3xl border border-border bg-card p-4 shadow-xl sm:p-6 transition-all ${
+      className={`relative mx-auto flex w-full max-w-md translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) flex-col items-center justify-between rounded-3xl border border-border bg-card p-4 shadow-xl sm:p-6 transition-all ${
         isImmersive
           ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md max-w-none w-full h-full justify-center"
           : ""

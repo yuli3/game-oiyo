@@ -10,13 +10,11 @@ import {
   triggerReviveBomb,
 } from "../../lib/games/block-blast";
 import {
-  createShakeState,
-  addTrauma,
-  updateShake,
-  triggerHaptic,
-} from "../../lib/games/juice-engine";
-import { playSyntheticTone } from "../../lib/games/audio-mixer";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+  RetroChiptuneSynth,
+} from "../../lib/games/engine-suite-unified";
 import { Button } from "../ui/button";
 import { BLOCK_BLAST_UI_SPRITES } from "../../lib/games/sprites";
 
@@ -87,8 +85,7 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
   const [game, setGame] = useState<BlockBlastGameState>(() => createInitialBlockBlastGame());
   const [selectedHandIdx, setSelectedHandIdx] = useState<number | null>(null);
   const [hoverCoord, setHoverCoord] = useState<{ r: number; c: number } | null>(null);
-  const [shakeState, setShakeState] = useState(() => createShakeState());
-  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+  const { addTrauma, shakeCssVars } = useGameJuicePro();
   const [shareCopied, setShareCopied] = useState(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -105,35 +102,21 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
     };
   }, []);
 
-  // Frame animation loop for screen shake
+  const prevStatusRef = useRef(game.status);
   useEffect(() => {
-    let animId: number;
-    let lastTime = performance.now();
-
-    const loop = (time: number) => {
-      const dt = Math.min(0.05, (time - lastTime) / 1000);
-      lastTime = time;
-
-      setShakeState((prev) => {
-        if (prev.trauma <= 0.001) return prev;
-        const { state, offset } = updateShake(prev, dt, time / 1000);
-        setShakeOffset({ x: offset.x, y: offset.y });
-        return state;
-      });
-
-      animId = requestAnimationFrame(loop);
-    };
-
-    animId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animId);
-  }, []);
+    if (prevStatusRef.current !== "game_over" && game.status === "game_over") {
+      addTrauma(0.6);
+      MobileHapticsPro.error();
+      RetroChiptuneSynth.playGameOver(audioCtxRef.current);
+    }
+    prevStatusRef.current = game.status;
+  }, [game.status, addTrauma]);
 
   const handleSelectHand = (idx: number) => {
     if (!game.hand[idx]) return;
     setSelectedHandIdx((prev) => (prev === idx ? null : idx));
-    playSyntheticTone(audioCtxRef.current, { freq: 460, duration: 0.08, type: "sine" });
+    RetroChiptuneSynth.playBlip(audioCtxRef.current);
     MobileHapticsPro.light();
-    triggerHaptic("light");
   };
 
   const handleCellClick = (r: number, c: number) => {
@@ -141,9 +124,9 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
 
     const result = placeShapeAndClear(game, selectedHandIdx, r, c);
     if (!result) {
-      playSyntheticTone(audioCtxRef.current, { freq: 220, duration: 0.12, type: "sawtooth" });
+      RetroChiptuneSynth.playHit(audioCtxRef.current);
       MobileHapticsPro.warning();
-      triggerHaptic("warning");
+      addTrauma(0.12);
       return;
     }
 
@@ -151,30 +134,22 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
     setGame(result.nextState);
     setSelectedHandIdx(null);
     setHoverCoord(null);
-    playSyntheticTone(audioCtxRef.current, { freq: 540, duration: 0.1, type: "triangle" });
-    MobileHapticsPro.light();
-    triggerHaptic("medium");
 
     const lines = result.clearedRows.length + result.clearedCols.length;
     if (lines > 0) {
-      const traumaAmount = Math.min(0.8, 0.35 + lines * 0.15 + result.nextState.comboCount * 0.1);
-      setShakeState((prev) => addTrauma(prev, traumaAmount));
+      const traumaAmount = Math.min(0.85, 0.4 + lines * 0.15 + result.nextState.comboCount * 0.1);
+      addTrauma(traumaAmount);
+      RetroChiptuneSynth.playCoin(audioCtxRef.current);
       if (lines >= 2 || result.nextState.comboCount > 1) {
+        RetroChiptuneSynth.playPowerup(audioCtxRef.current);
         MobileHapticsPro.success();
       } else {
         MobileHapticsPro.impact();
       }
-      triggerHaptic("combo");
-
-      // Ascending blast chime
-      const baseFreq = 523.25 * (1 + result.nextState.comboCount * 0.15);
-      playSyntheticTone(audioCtxRef.current, { freq: baseFreq, duration: 0.25, type: "sine" });
-      setTimeout(() => {
-        playSyntheticTone(audioCtxRef.current, { freq: baseFreq * 1.25, duration: 0.3, type: "sine" });
-      }, 70);
-      setTimeout(() => {
-        playSyntheticTone(audioCtxRef.current, { freq: baseFreq * 1.5, duration: 0.35, type: "sine" });
-      }, 140);
+    } else {
+      RetroChiptuneSynth.playPowerup(audioCtxRef.current);
+      MobileHapticsPro.light();
+      addTrauma(0.06);
     }
   };
 
@@ -182,10 +157,9 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
     const revived = triggerReviveBomb(game);
     if (revived) {
       setGame(revived);
-      setShakeState((prev) => addTrauma(prev, 0.6));
+      addTrauma(0.65);
       MobileHapticsPro.heavy();
-      triggerHaptic("heavy");
-      playSyntheticTone(audioCtxRef.current, { freq: 300, duration: 0.4, type: "triangle" });
+      RetroChiptuneSynth.playExplosion(audioCtxRef.current);
     }
   };
 
@@ -230,11 +204,12 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
     <div
       style={
         {
-          "--shake-x": `${shakeOffset.x}px`,
-          "--shake-y": `${shakeOffset.y}px`,
+          "--shake-x": shakeCssVars["--shake-x"],
+          "--shake-y": shakeCssVars["--shake-y"],
+          "--shake-rot": shakeCssVars["--shake-rot"],
         } as React.CSSProperties
       }
-      className="relative mx-auto flex w-full max-w-xl translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center justify-between rounded-3xl border border-border bg-card p-4 shadow-xl sm:p-6"
+      className="relative mx-auto flex w-full max-w-xl translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) flex-col items-center justify-between rounded-3xl border border-border bg-card p-4 shadow-xl sm:p-6"
     >
       {/* Top Header: Score, High Score, Combo Banner */}
       <div className="flex w-full items-center justify-between border-b border-border pb-3">
