@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   initWaterSort,
@@ -9,17 +9,14 @@ import {
   type LiquidColor,
 } from "@/lib/games/water-sort-3d";
 import {
-  addTrauma,
-  createShakeState,
-  triggerHaptic,
-  updateShake,
-  type ScreenShakeState,
-} from "@/lib/games/juice-engine";
-import { playSyntheticTone } from "@/lib/games/audio-mixer";
-import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+  RetroChiptuneSynth,
+} from "@/lib/games/engine-suite-unified";
 import { WATER_SORT_3D_SPRITES } from "@/lib/games/sprites";
 import { celebrate } from "@/lib/games/celebration";
-import { RotateCcw, Undo2, Volume2, VolumeX, Sparkles, Trophy } from "lucide-react";
+import { RotateCcw, Undo2, Volume2, VolumeX, Sparkles } from "lucide-react";
 
 const COLOR_CLASS_MAP: Record<LiquidColor, string> = {
   crimson: "bg-destructive",
@@ -193,8 +190,7 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
 
   const [game, setGame] = useState<WaterSortState>(() => initWaterSort(1));
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [, setShakeState] = useState<ScreenShakeState>(() => createShakeState());
-  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+  const { addTrauma, shakeCssVars } = useGameJuicePro();
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -211,24 +207,6 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
     return audioCtxRef.current;
   }, []);
 
-  // Screen shake loop
-  useEffect(() => {
-    let animId: number;
-    let lastTime = performance.now();
-    const loop = (time: number) => {
-      const dt = Math.min((time - lastTime) / 1000, 0.05);
-      lastTime = time;
-      setShakeState((prev) => {
-        const { state, offset } = updateShake(prev, dt);
-        setShakeOffset({ x: offset.x, y: offset.y });
-        return state;
-      });
-      animId = requestAnimationFrame(loop);
-    };
-    animId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animId);
-  }, []);
-
   const handleTubeClick = useCallback(
     (index: number) => {
       const res = selectTube(game, index);
@@ -236,44 +214,34 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
 
       if (res.action === "selected") {
         MobileHapticsPro.light();
-        triggerHaptic("light");
         if (soundEnabled) {
-          playSyntheticTone(getAudioCtx(), { freq: 440, duration: 0.06, type: "sine" });
+          RetroChiptuneSynth.playBlip(getAudioCtx());
         }
       } else if (res.action === "poured") {
         MobileHapticsPro.impact();
-        triggerHaptic("medium");
+        addTrauma(0.08);
         if (soundEnabled) {
-          // ASMR water trickling modulation: 320Hz -> 540Hz
-          const ctx = getAudioCtx();
-          playSyntheticTone(ctx, { freq: 320, duration: 0.12, type: "triangle" });
-          setTimeout(() => playSyntheticTone(ctx, { freq: 540, duration: 0.15, type: "sine" }), 60);
+          RetroChiptuneSynth.playPowerup(getAudioCtx());
         }
 
         if (res.state.status === "level_cleared") {
-          setShakeState((s) => addTrauma(s, 0.4));
+          addTrauma(0.5);
           MobileHapticsPro.success();
-          triggerHaptic("heavy");
           if (containerRef.current) {
             celebrate(containerRef.current, { preset: "stardust" });
           }
           if (soundEnabled) {
-            // Level cleared chord fanfare (E5 -> G#5 -> B5)
-            const ctx = getAudioCtx();
-            setTimeout(() => playSyntheticTone(ctx, { freq: 659.25, duration: 0.2, type: "sine" }), 100);
-            setTimeout(() => playSyntheticTone(ctx, { freq: 830.61, duration: 0.2, type: "sine" }), 220);
-            setTimeout(() => playSyntheticTone(ctx, { freq: 987.77, duration: 0.4, type: "triangle" }), 340);
+            RetroChiptuneSynth.playCoin(getAudioCtx());
           }
         }
       }
     },
-    [game, soundEnabled, getAudioCtx]
+    [game, soundEnabled, getAudioCtx, addTrauma]
   );
 
   const handleUndo = useCallback(() => {
     setGame((prev) => undoMove(prev));
     MobileHapticsPro.click();
-    triggerHaptic("light");
   }, []);
 
   const handleRestart = useCallback(() => {
@@ -289,11 +257,12 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
   return (
     <div
       ref={containerRef}
-      className="mx-auto flex max-w-xl flex-col items-center gap-6 p-4 font-sans text-foreground translate-x-(--shake-x) translate-y-(--shake-y)"
+      className="mx-auto flex w-full max-w-xl flex-col items-center gap-6 p-4 font-sans text-foreground transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)"
       style={
         {
-          "--shake-x": `${shakeOffset.x}px`,
-          "--shake-y": `${shakeOffset.y}px`,
+          "--shake-x": shakeCssVars["--shake-x"],
+          "--shake-y": shakeCssVars["--shake-y"],
+          "--shake-rot": shakeCssVars["--shake-rot"],
         } as React.CSSProperties
       }
     >

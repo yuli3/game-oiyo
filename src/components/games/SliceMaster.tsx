@@ -8,8 +8,7 @@ import {
   stepSliceMaster,
   tapFlipKnife,
 } from "@/lib/games/slice-master";
-import { addTrauma, createShakeState, updateShake } from "@/lib/games/juice-engine";
-import { useDynamicDifficultyPro } from "@/lib/games/engine-suite-unified";
+import { useGameJuicePro, useDynamicDifficultyPro } from "@/lib/games/engine-suite-unified";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
 import { SLICE_MASTER_SPRITES } from "@/lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "@/lib/games/share-card";
@@ -208,14 +207,13 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
   const modifiers = buildSliceMetaModifiers(metaState);
   const [game, setGame] = useState<SliceMasterGame>(() => createSliceMasterLevel(1, modifiers));
   const [bestScore, setBestScore] = useState(0);
-  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+  const { addTrauma, shakeCssVars } = useGameJuicePro();
   const [shareCardCopied, setShareCardCopied] = useState(false);
   const { reportSuccess, reportFailure } = useDynamicDifficultyPro();
 
   const gameRef = useRef<SliceMasterGame>(game);
   gameRef.current = game;
 
-  const shakeStateRef = useRef(createShakeState());
   const audioRef = useRef<SliceMasterAudio | null>(null);
 
   // Sync quest progress on score/slice/center/finish
@@ -306,7 +304,7 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
         if (step.slicedObstacles.length > 0) {
           audioRef.current?.playSlice(step.state.combo);
           nativeHaptics.trigger(step.state.combo >= 3 ? "heavy" : "medium");
-          addTrauma(shakeStateRef.current, 0.28);
+          addTrauma(0.28);
         }
 
         if (step.stuckFloor) {
@@ -317,14 +315,14 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
         if (step.hitHazard) {
           audioRef.current?.playHazardClank();
           nativeHaptics.trigger("error");
-          addTrauma(shakeStateRef.current, 0.6);
+          addTrauma(0.6);
           reportFailure();
         }
 
         if (step.hitTarget) {
           audioRef.current?.playVictory();
           nativeHaptics.trigger("success");
-          addTrauma(shakeStateRef.current, 0.45);
+          addTrauma(0.45);
           reportSuccess();
 
           // Sync earned stones to player meta state
@@ -339,17 +337,12 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
         setGame(step.state);
       }
 
-      // Update Screen Shake trauma
-      const shake = updateShake(shakeStateRef.current, dt);
-      shakeStateRef.current = shake.state;
-      setShakeOffset({ x: shake.offset.x, y: shake.offset.y });
-
       animId = requestAnimationFrame(loop);
     };
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, [reportSuccess, reportFailure, checkQuests]);
+  }, [reportSuccess, reportFailure, checkQuests, addTrauma]);
 
   // Update best score
   useEffect(() => {
@@ -481,10 +474,11 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
           handleFlip();
         }}
         style={{
-          "--shake-x": `${shakeOffset.x}px`,
-          "--shake-y": `${shakeOffset.y}px`,
+          "--shake-x": shakeCssVars["--shake-x"],
+          "--shake-y": shakeCssVars["--shake-y"],
+          "--shake-rot": shakeCssVars["--shake-rot"],
         } as React.CSSProperties}
-        className="relative w-full flex-1 cursor-pointer overflow-hidden flex items-center justify-center bg-muted/5 select-none touch-none translate-x-(--shake-x) translate-y-(--shake-y)"
+        className="relative w-full flex-1 cursor-pointer overflow-hidden flex items-center justify-center bg-muted/5 select-none touch-none transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)"
       >
         <svg
           viewBox={`${game.cameraX} 0 800 450`}
