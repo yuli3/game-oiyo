@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react'
 import { useArcadePortal } from '../../lib/games/arcade-portal'
 import { celebrate } from '../../lib/games/celebration'
-import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified'
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, getSharedAudioContext, playComboSfx } from '../../lib/games/engine-suite-unified'
 import { HANJA_QUIZ_UI_SPRITES } from '../../lib/games/sprites'
 
 type Locale = 'ko' | 'en' | 'ja' | 'fr' | 'es' | 'zh'
@@ -191,6 +191,7 @@ function TiltHanjaButton({
 export default function HanjaQuiz({ locale }: Props) {
   const l = LABELS[locale] ?? LABELS.en
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal()
+  const { shakeCssVars, addTrauma } = useGameJuicePro()
   const [questions, setQuestions] = useState<Question[]>([])
   const [started, setStarted] = useState(false)
   const [current, setCurrent] = useState(0)
@@ -240,9 +241,17 @@ export default function HanjaQuiz({ locale }: Props) {
     const correct = opt === questions[current].idiom
     playQuizSound(correct ? 'correct' : 'wrong', mutedRef.current)
     if (correct) {
+      addTrauma(0.15)
       MobileHapticsPro.success()
+      try {
+        const ctx = getSharedAudioContext()
+        if (ctx) playComboSfx(ctx, 'gem', Math.min(score + 1, 8))
+      } catch {
+        /* audio disabled */
+      }
     } else {
-      MobileHapticsPro.warning()
+      addTrauma(0.55)
+      MobileHapticsPro.error()
     }
     const newScore = correct ? score + 1 : score
     const newHistory = [...history, correct]
@@ -252,6 +261,7 @@ export default function HanjaQuiz({ locale }: Props) {
       setTimeout(() => {
         playQuizSound('finish', mutedRef.current)
         setFinished(true)
+        addTrauma(0.4)
         if (newScore >= 8) {
           MobileHapticsPro.success()
           if (containerRef.current) {
@@ -260,7 +270,7 @@ export default function HanjaQuiz({ locale }: Props) {
         }
       }, 800)
     }
-  }, [containerRef, current, history, questions, score, selected])
+  }, [addTrauma, containerRef, current, history, questions, score, selected])
 
   const next = useCallback(() => {
     MobileHapticsPro.selection()
@@ -342,7 +352,12 @@ export default function HanjaQuiz({ locale }: Props) {
     return (
       <div
         ref={containerRef}
-        className={`relative select-none ${
+        style={{
+          '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+          '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+          '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+        } as React.CSSProperties}
+        className={`relative select-none transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
           isImmersive
             ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto overscroll-none bg-background p-4 sm:p-6"
             : "space-y-6 py-5 sm:py-8"
@@ -368,7 +383,12 @@ export default function HanjaQuiz({ locale }: Props) {
     return (
       <div
         ref={containerRef}
-        className={`relative select-none ${
+        style={{
+          '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+          '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+          '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+        } as React.CSSProperties}
+        className={`relative select-none transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
           isImmersive
             ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto overscroll-none bg-background p-4 sm:p-6"
             : "space-y-6 py-4 text-center"
@@ -402,7 +422,12 @@ export default function HanjaQuiz({ locale }: Props) {
   return (
     <div
       ref={containerRef}
-      className={`relative select-none ${
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`relative select-none transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
         isImmersive
           ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto overscroll-none bg-background p-4 sm:p-6"
           : "space-y-5 py-4"

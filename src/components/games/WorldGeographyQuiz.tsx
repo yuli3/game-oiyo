@@ -2,8 +2,40 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react'
 import { useArcadePortal } from '../../lib/games/arcade-portal'
 import { WORLD_GEOGRAPHY_QUIZ_UI_SPRITES } from '../../lib/games/sprites'
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, getSharedAudioContext, playComboSfx } from '../../lib/games/engine-suite-unified'
+import { celebrate } from '../../lib/games/celebration'
 
 const SOUND_STORAGE_KEY = 'world_geography_quiz_sound_muted'
+
+function TiltGeoChoiceButton({
+  children,
+  onClick,
+  className,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+  disabled?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.18);
+        onClick();
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`will-change-transform transform-(--card-tilt) transition-all ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 function playQuizSound(type: 'select' | 'correct' | 'wrong' | 'finish', muted: boolean) {
   if (muted || typeof window === 'undefined') return
@@ -140,6 +172,7 @@ interface Props { locale: Locale }
 export default function WorldGeographyQuiz({ locale }: Props) {
   const l = LABELS[locale] ?? LABELS.en
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal()
+  const { shakeCssVars, addTrauma } = useGameJuicePro()
   const [questions, setQuestions] = useState<GeoQuestion[]>([])
   const [started, setStarted] = useState(false)
   const [current, setCurrent] = useState(0)
@@ -187,6 +220,19 @@ export default function WorldGeographyQuiz({ locale }: Props) {
     setSelected(opt)
     const correct = opt === questions[current].answer
     playQuizSound(correct ? 'correct' : 'wrong', mutedRef.current)
+    if (correct) {
+      addTrauma(0.15)
+      MobileHapticsPro.success()
+      try {
+        const ctx = getSharedAudioContext()
+        if (ctx) playComboSfx(ctx, 'gem', Math.min(score + 1, 8))
+      } catch {
+        /* audio disabled */
+      }
+    } else {
+      addTrauma(0.55)
+      MobileHapticsPro.error()
+    }
     const newScore = correct ? score + 1 : score
     setScore(newScore)
     setHistory(prev => [...prev, correct])
@@ -194,11 +240,16 @@ export default function WorldGeographyQuiz({ locale }: Props) {
       setTimeout(() => {
         playQuizSound('finish', mutedRef.current)
         setFinished(true)
+        addTrauma(0.4)
+        if (containerRef.current) {
+          celebrate(containerRef.current, { preset: 'stardust' })
+        }
       }, 900)
     }
-  }, [current, questions, score, selected])
+  }, [addTrauma, containerRef, current, questions, score, selected])
 
   const next = useCallback(() => {
+    MobileHapticsPro.selection()
     playQuizSound('select', mutedRef.current)
     setCurrent(c => c + 1)
     setSelected(null)
@@ -273,7 +324,12 @@ export default function WorldGeographyQuiz({ locale }: Props) {
     return (
       <div
         ref={containerRef}
-        className={`relative select-none ${
+        style={{
+          '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+          '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+          '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+        } as React.CSSProperties}
+        className={`relative select-none transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
           isImmersive
             ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-4 sm:p-6"
             : "space-y-6 py-5 sm:py-8"
@@ -288,7 +344,7 @@ export default function WorldGeographyQuiz({ locale }: Props) {
           <h2 className="text-2xl font-bold">{l.title}</h2>
           <p className="text-muted-foreground">{l.subtitle}</p>
           <p className="text-sm text-muted-foreground">10문제 · 무작위 출제</p>
-          <button onClick={start} className="px-4 sm:px-8 py-3 bg-primary text-primary-foreground rounded-full font-semibold hover:bg-primary/90 transition-colors">{l.start}</button>
+          <TiltGeoChoiceButton onClick={start} className="px-6 sm:px-8 py-3 bg-primary text-primary-foreground rounded-full font-semibold hover:bg-primary/90 transition-colors shadow-md">{l.start}</TiltGeoChoiceButton>
         </div>
       </div>
     )
@@ -299,7 +355,12 @@ export default function WorldGeographyQuiz({ locale }: Props) {
     return (
       <div
         ref={containerRef}
-        className={`relative select-none ${
+        style={{
+          '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+          '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+          '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+        } as React.CSSProperties}
+        className={`relative select-none transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
           isImmersive
             ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-4 sm:p-6"
             : "space-y-6 py-4 text-center"
@@ -322,7 +383,7 @@ export default function WorldGeographyQuiz({ locale }: Props) {
           <div className="flex gap-1.5 justify-center flex-wrap">
             {history.map((h, i) => <span key={i} className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${h ? 'bg-primary/15 text-primary' : 'bg-destructive/15 text-destructive'}`}>{i + 1}</span>)}
           </div>
-          <button onClick={restart} className="px-4 sm:px-8 py-3 border rounded-full text-sm font-medium hover:bg-accent transition-colors">{l.restart}</button>
+          <TiltGeoChoiceButton onClick={restart} className="px-6 sm:px-8 py-3 border border-border/80 bg-card rounded-full text-sm font-semibold hover:bg-accent transition-colors shadow-sm">{l.restart}</TiltGeoChoiceButton>
         </div>
       </div>
     )
@@ -333,7 +394,12 @@ export default function WorldGeographyQuiz({ locale }: Props) {
   return (
     <div
       ref={containerRef}
-      className={`relative select-none ${
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`relative select-none transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
         isImmersive
           ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-4 sm:p-6"
           : "space-y-5 py-4"
@@ -350,16 +416,16 @@ export default function WorldGeographyQuiz({ locale }: Props) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           {q.options.map((opt, idx) => {
-            let cls = 'relative border rounded-xl p-4 text-center font-medium text-sm transition-all'
-            if (selected === null) cls += ' hover:bg-accent hover:border-primary cursor-pointer'
-            else if (opt === q.answer) cls += ' bg-primary/10 border-primary/50 text-primary font-bold'
-            else if (opt === selected) cls += ' bg-destructive/10 border-destructive/50 text-destructive line-through'
-            else cls += ' opacity-50'
+            let cls = 'relative border-2 rounded-xl p-4 text-center font-medium text-sm transition-all shadow-sm'
+            if (selected === null) cls += ' border-border/80 bg-card hover:bg-accent hover:border-primary cursor-pointer'
+            else if (opt === q.answer) cls += ' bg-primary/10 border-primary text-primary font-bold'
+            else if (opt === selected) cls += ' bg-destructive/10 border-destructive text-destructive line-through'
+            else cls += ' opacity-50 border-border/40'
             return (
-              <button key={opt} onClick={() => choose(opt)} className={cls}>
+              <TiltGeoChoiceButton key={opt} disabled={selected !== null} onClick={() => choose(opt)} className={cls}>
                 <span className="absolute top-1.5 left-2 text-xs font-mono text-muted-foreground/60">{idx + 1}</span>
                 {opt}
-              </button>
+              </TiltGeoChoiceButton>
             )
           })}
         </div>
@@ -372,7 +438,7 @@ export default function WorldGeographyQuiz({ locale }: Props) {
           </div>
         )}
         {selected && current + 1 < questions.length && (
-          <button onClick={next} className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors">{l.next} →</button>
+          <TiltGeoChoiceButton onClick={next} className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors shadow-md">{l.next} →</TiltGeoChoiceButton>
         )}
       </div>
     </div>
