@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DotTowerComp from "../../components/games/DotTower";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "도트 타워 — 무료 픽셀 타워 디펜스 & 미니멀 웨이브 전략 시뮬레이션",
+    description: "궁수·대포·서리·테슬라 타워를 전장에 전략적으로 배치하고 15웨이브 그림자 군단을 막아내세요! 타워 강화, 칩튠 전투 사운드, 박진감 넘치는 픽셀 타워 디펜스.",
+  },
+  en: {
+    title: "Dot Tower — Free Pixel Tower Defense & Minimal Wave Strategy Sim",
+    description: "Strategically deploy Archer, Cannon, Frost, and Tesla towers across 16x10 battlefields to repel 15 waves of shadow monsters! Upgrade defenses and defeat the Shadow Dragon Boss.",
+  },
+  ja: {
+    title: "ドットタワー — 無料ピクセルタワーディフェンス＆戦術ウェーブ防衛ゲーム",
+    description: "弓兵・大砲・氷結・テスラ塔を戦略的に配置し、15ウェーブの影の軍勢から王国を守り抜こう！タワー強化、8ビット戦闘BGM、爽快なドット絵タワーディフェンス。",
+  },
+  fr: {
+    title: "Dot Tower — Tower Defense rétro en pixel art et stratégie de vagues",
+    description: "Placez stratégiquement vos tours d'archer, de canon, de givre et tesla pour repousser 15 vagues d'ennemis ! Améliorez vos défenses et triomphez du Dragon Sombre.",
+  },
+  es: {
+    title: "Dot Tower — Defensa de torres pixel art y estrategia de oleadas gratis",
+    description: "¡Despliega torres de arqueros, cañones, escarcha y tesla para repeler 15 oleadas de monstruos! Mejora tus defensas y vence al Dragón Sombrío en este clásico juego retro.",
+  },
+  zh: {
+    title: "点点塔防 — 免费复古像素经典塔防与极简波次战术策略模拟",
+    description: "在16x10战场中战略部署弓手、重炮、寒冰与特斯拉电塔，抵御15波暗影军团的猛攻！升级防御工事，在8比特芯片战斗音乐中决战暗影巨龙领主。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["dot-tower"]}>
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
+    <DotTowerComp client:load locale={locale} />
+    <div class="mx-auto max-w-3xl px-4 mt-8">
+      <GameGuide slug="dot-tower" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    </div>
+  </div>
+</BaseLayout>
