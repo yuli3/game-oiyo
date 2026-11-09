@@ -6,9 +6,7 @@ import {
   type PlacedItem,
   type BackpackHeroState,
 } from '@/lib/games/backpack-hero';
-import { addTrauma, createShakeState, triggerHaptic, updateShake } from '@/lib/games/juice-engine';
-import { playSyntheticTone } from '@/lib/games/audio-mixer';
-import { useCardTiltPro, MobileHapticsPro } from '@/lib/games/engine-suite-unified';
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from '@/lib/games/engine-suite-unified';
 import { BACKPACK_HERO_SPRITES } from '@/lib/games/sprites';
 import { celebrate } from '@/lib/games/celebration';
 import { loadHighScore, saveHighScore } from '@/lib/games/game-save';
@@ -110,8 +108,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
   const [highScore, setHighScore] = useState(() => loadHighScore('backpack-hero', 0));
 
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
-  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
-  const shakeStateRef = useRef(createShakeState());
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   // Trigger celebration and save on victory or game over
@@ -123,11 +120,19 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'backpack-hero', score } }));
       }
-      if (engineState.gameState === 'victory' && containerRef.current) {
-        celebrate(containerRef.current, { preset: 'stardust' });
+      if (engineState.gameState === 'victory') {
+        addTrauma(0.5);
+        RetroChiptuneSynth.playPowerup(audioCtxRef.current, 0.12);
+        if (containerRef.current) {
+          celebrate(containerRef.current, { preset: 'stardust' });
+        }
+      } else if (engineState.gameState === 'game_over') {
+        addTrauma(0.6);
+        RetroChiptuneSynth.playGameOver(audioCtxRef.current);
+        MobileHapticsPro.error();
       }
     }
-  }, [engineState.gameState, engineState.floor, engineState.gold]);
+  }, [addTrauma, engineState.gameState, engineState.floor, engineState.gold]);
 
   // Initialize Web Audio
   useEffect(() => {
@@ -157,29 +162,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   });
 
-  // Screen shake animation loop
-  useEffect(() => {
-    let animId: number;
-    let lastTime = performance.now();
 
-    const loop = (time: number) => {
-      const dt = Math.min(0.05, (time - lastTime) / 1000);
-      lastTime = time;
-
-      if (shakeStateRef.current.trauma > 0.001) {
-        const { state, offset } = updateShake(shakeStateRef.current, dt, time / 1000);
-        shakeStateRef.current = state;
-        setShakeOffset({ x: offset.x, y: offset.y });
-      } else if (shakeOffset.x !== 0 || shakeOffset.y !== 0) {
-        setShakeOffset({ x: 0, y: 0 });
-      }
-
-      animId = requestAnimationFrame(loop);
-    };
-
-    animId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animId);
-  }, [shakeOffset]);
 
   // Map each grid cell to its occupying item if any
   const cellOccupationMap = useMemo(() => {
@@ -202,24 +185,15 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
       if (res.success) {
         const def = ITEM_CATALOG[item.defId];
         if (def?.type === 'weapon') {
-          if (audioCtxRef.current) {
-            playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.1, type: 'sawtooth', gain: 0.25 });
-          }
-          addTrauma(shakeStateRef.current, 0.25);
+          RetroChiptuneSynth.playLaser(audioCtxRef.current);
+          addTrauma(0.3);
           MobileHapticsPro.heavy();
-          triggerHaptic('medium');
         } else if (def?.type === 'shield') {
-          if (audioCtxRef.current) {
-            playSyntheticTone(audioCtxRef.current, { freq: 300, duration: 0.12, type: 'triangle', gain: 0.2 });
-          }
+          RetroChiptuneSynth.playBlip(audioCtxRef.current);
           MobileHapticsPro.medium();
-          triggerHaptic('light');
         } else if (def?.type === 'potion') {
-          if (audioCtxRef.current) {
-            playSyntheticTone(audioCtxRef.current, { freq: 660, duration: 0.15, type: 'sine', gain: 0.2 });
-          }
+          RetroChiptuneSynth.playPowerup(audioCtxRef.current);
           MobileHapticsPro.success();
-          triggerHaptic('success');
         }
       }
       syncState();
@@ -239,11 +213,8 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
     const nextRot = ((item.rotation + 90) % 360) as 0 | 90 | 180 | 270;
     const success = engineRef.current.moveItem(item.instanceId, item.r, item.c, nextRot);
     if (success) {
-      if (audioCtxRef.current) {
-        playSyntheticTone(audioCtxRef.current, { freq: 520, duration: 0.08, type: 'sine', gain: 0.15 });
-      }
+      RetroChiptuneSynth.playBlip(audioCtxRef.current);
       MobileHapticsPro.light();
-      triggerHaptic('light');
       syncState();
     }
   };
@@ -254,11 +225,8 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
       if (!engineState.unlockedSlots[r][c]) {
         const unlocked = engineRef.current.unlockSlot(r, c);
         if (unlocked) {
-          if (audioCtxRef.current) {
-            playSyntheticTone(audioCtxRef.current, { freq: 784, duration: 0.15, type: 'triangle', gain: 0.25 });
-          }
+          RetroChiptuneSynth.playCoin(audioCtxRef.current);
           MobileHapticsPro.success();
-          triggerHaptic('success');
           syncState();
         }
         return;
@@ -270,11 +238,8 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
       if (item) {
         const moved = engineRef.current.moveItem(item.instanceId, r, c);
         if (moved) {
-          if (audioCtxRef.current) {
-            playSyntheticTone(audioCtxRef.current, { freq: 480, duration: 0.06, type: 'triangle', gain: 0.15 });
-          }
+          RetroChiptuneSynth.playBlip(audioCtxRef.current);
           MobileHapticsPro.impact();
-          triggerHaptic('light');
           setSelectedInstanceId(null);
           syncState();
         }
@@ -284,34 +249,34 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
 
   const handleEndTurn = () => {
     if (engineState.gameState !== 'battle') return;
+    const prevHp = engineState.playerHp;
     engineRef.current.endTurn();
-    if (audioCtxRef.current) {
-      playSyntheticTone(audioCtxRef.current, { freq: 330, duration: 0.1, type: 'sawtooth', gain: 0.2 });
+    const nextState = engineRef.current.getState();
+    if (nextState.playerHp < prevHp) {
+      RetroChiptuneSynth.playHit(audioCtxRef.current);
+      addTrauma(0.4);
+      MobileHapticsPro.error();
+    } else {
+      RetroChiptuneSynth.playBlip(audioCtxRef.current);
+      MobileHapticsPro.click();
     }
-    MobileHapticsPro.click();
-    triggerHaptic('medium');
     syncState();
   };
 
   const handleTakeLoot = (defId: string) => {
     const success = engineRef.current.takeLootItem(defId);
     if (success) {
-      if (audioCtxRef.current) {
-        playSyntheticTone(audioCtxRef.current, { freq: 880, duration: 0.12, type: 'triangle', gain: 0.2 });
-      }
+      RetroChiptuneSynth.playCoin(audioCtxRef.current);
       MobileHapticsPro.impact();
-      triggerHaptic('success');
       syncState();
     }
   };
 
   const handleNextFloor = () => {
     engineRef.current.proceedToNextFloor();
-    if (audioCtxRef.current) {
-      playSyntheticTone(audioCtxRef.current, { freq: 587, duration: 0.15, type: 'sine', gain: 0.2 });
-    }
+    RetroChiptuneSynth.playPowerup(audioCtxRef.current);
+    addTrauma(0.25);
     MobileHapticsPro.success();
-    triggerHaptic('combo');
     syncState();
   };
 
@@ -329,13 +294,14 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
   return (
     <div
       ref={containerRef}
-      className="relative w-full select-none overflow-hidden rounded-xl border border-border bg-card p-4 space-y-4 translate-x-(--shake-x) translate-y-(--shake-y)"
       style={
         {
-          '--shake-x': `${shakeOffset.x}px`,
-          '--shake-y': `${shakeOffset.y}px`,
+          '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+          '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+          '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
         } as React.CSSProperties
       }
+      className="relative w-full select-none overflow-hidden rounded-xl border border-border bg-card p-4 space-y-4 transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)"
     >
       {/* Top Banner: Floor, Gold, Status */}
       <div className="flex items-center justify-between border-b border-border pb-3 text-xs font-mono">

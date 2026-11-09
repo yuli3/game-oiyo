@@ -14,7 +14,7 @@ import {
   Home,
   CheckCircle2,
 } from "lucide-react";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth } from "../../lib/games/engine-suite-unified";
 import { BAD_NORTH_SPRITES } from "../../lib/games/sprites";
 import { celebrate } from "../../lib/games/celebration";
 import {
@@ -83,6 +83,7 @@ export default function BadNorthTactics() {
   const [isMuted, setIsMuted] = useState(false);
   const [gameSpeed, setGameSpeed] = useState<1 | 2>(1);
 
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -96,6 +97,7 @@ export default function BadNorthTactics() {
   // Stardust celebration and mission report on victory
   useEffect(() => {
     if (gameState.gameStatus === "victory") {
+      addTrauma(0.45);
       MobileHapticsPro.success();
       if (containerRef.current) {
         celebrate(containerRef.current, { preset: "stardust" });
@@ -108,8 +110,11 @@ export default function BadNorthTactics() {
       } catch {
         // arcade pass fallback
       }
+    } else if (gameState.gameStatus === "defeat") {
+      addTrauma(0.55);
+      MobileHapticsPro.error();
     }
-  }, [gameState.gameStatus]);
+  }, [addTrauma, gameState.gameStatus]);
 
   // Sound synthesis
   const playSound = useCallback((type: "horn" | "sword" | "bow" | "fire" | "win" | "splash") => {
@@ -221,6 +226,7 @@ export default function BadNorthTactics() {
     setGameState({ ...engine.getState() });
     particlesRef.current = [];
     playSound("horn");
+    addTrauma(0.15);
   };
 
   // Select Squad
@@ -270,6 +276,7 @@ export default function BadNorthTactics() {
       if (moved) {
         MobileHapticsPro.impact();
         playSound("bow");
+        addTrauma(0.08);
         setGameState({ ...engine.getState() });
         // Target flag particle
         particlesRef.current.push({
@@ -645,7 +652,17 @@ export default function BadNorthTactics() {
   }, [gameState, isPaused, gameSpeed]);
 
   return (
-    <div ref={containerRef} className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-6 text-card-foreground shadow-lg">
+    <div
+      ref={containerRef}
+      style={
+        {
+          "--shake-x": shakeCssVars["--shake-x"] ?? "0px",
+          "--shake-y": shakeCssVars["--shake-y"] ?? "0px",
+          "--shake-rot": shakeCssVars["--shake-rot"] ?? "0deg",
+        } as React.CSSProperties
+      }
+      className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-6 text-card-foreground shadow-lg transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)"
+    >
       {/* Top Header & Wave Controls */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div className="flex items-center gap-2">
