@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro } from "../../lib/games/engine-suite-unified";
 import { useAudioContext } from "../../lib/games/use-audio-context";
 import { playProceduralSfx } from "../../lib/games/audio-mixer";
 import { TIER_LIST_SPRITES } from "../../lib/games/sprites";
@@ -410,6 +410,7 @@ function newId(prefix: string) {
 
 export default function TierListStudio({ locale = "ko" as Locale }: { locale?: Locale }) {
   const { isImmersive, containerRef, togglePortal } = useArcadePortal();
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
   const copy = copyFor(locale);
   const loc = (["ko", "en", "ja", "zh", "fr", "es"].includes(locale) ? locale : "en") as "ko" | "en" | "ja" | "zh" | "fr" | "es";
   const [doc, setDoc] = useState<TierListDocument>(() => emptyDocument());
@@ -494,10 +495,27 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
 
   const moveItem = useCallback((itemId: string, tierId: TierId, index = Number.MAX_SAFE_INTEGER) => {
     MobileHapticsPro.light();
-    playSfx('place');
-    setDoc((prev) => moveTierItem(prev, itemId, tierId, index));
+    if (tierId === "s") {
+      addTrauma(0.25);
+      MobileHapticsPro.success();
+      playSfx("win");
+    } else {
+      playSfx("place");
+    }
+    setDoc((prev) => {
+      const nextDoc = moveTierItem(prev, itemId, tierId, index);
+      const unranked = nextDoc.tiers.find((t) => t.id === "unranked");
+      const prevUnranked = prev.tiers.find((t) => t.id === "unranked");
+      if (unranked && unranked.items.length === 0 && (prevUnranked?.items.length ?? 0) > 0) {
+        addTrauma(0.3);
+        if (containerRef.current) {
+          celebrate(containerRef.current, { preset: "stardust" });
+        }
+      }
+      return nextDoc;
+    });
     setSelected(null);
-  }, [playSfx]);
+  }, [addTrauma, containerRef, playSfx]);
 
   const moveTo = useCallback((tierId: TierId) => {
     if (selected) moveItem(selected, tierId);
@@ -689,6 +707,11 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
   return (
     <section
       ref={containerRef}
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
       onPointerMove={(event) => followDrag(event.clientX, event.clientY)}
       onPointerUp={finishPointerDrag}
       onPointerCancel={clearDrag}
@@ -701,7 +724,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
         const images = Array.from(event.clipboardData.files).filter((file) => file.type.startsWith("image/"));
         if (images.length) { event.preventDefault(); void addImages(images, images.map((file) => file.name)); }
       }}
-      className={`mx-auto max-w-6xl space-y-4 px-1 transition-all ${
+      className={`mx-auto max-w-6xl space-y-4 px-1 transition-all transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
         isImmersive
           ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md max-w-none w-full h-full p-6"
           : ""

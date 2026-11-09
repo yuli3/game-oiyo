@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback, type ReactElement } from "react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro } from "../../lib/games/engine-suite-unified";
 import { getSpriteUrl } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { celebrate } from "../../lib/games/celebration";
@@ -139,6 +139,7 @@ function lineText(t: VillageCopy, line: ReportLine): string {
 
 export default function Village({ locale = "ko" }: { locale?: Locale }) {
   const { isImmersive, containerRef, togglePortal } = useArcadePortal();
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
   const t = VILLAGE_COPY[locale] ?? VILLAGE_COPY.en;
   // The first render must match the server's, so the real village (a saved one or a fresh seed) arrives in the effect.
   const [state, setState] = useState<VillageState>(() => createVillage(1));
@@ -322,14 +323,49 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
     }
   }, [state, t.date, t.grades]);
 
+  const handleChooseEvent = (choice: number) => {
+    MobileHapticsPro.medium();
+    const nextState = chooseEvent(state, choice);
+    if (nextState.fatigue > state.fatigue || nextState.food < state.food || villageSafety(nextState) < villageSafety(state)) {
+      addTrauma(0.35);
+      MobileHapticsPro.error();
+      playVillageSound("alert");
+    } else {
+      MobileHapticsPro.success();
+      playVillageSound("harvest");
+    }
+    setState(nextState);
+  };
+
+  const handleEndMonth = () => {
+    MobileHapticsPro.impact();
+    const nextState = endMonth(state);
+    if (nextState.fatigue >= 70 || nextState.food <= 0) {
+      addTrauma(0.45);
+      MobileHapticsPro.error();
+      playVillageSound("alert");
+    } else {
+      playVillageSound("harvest");
+    }
+    if (state.project && !nextState.project) {
+      addTrauma(0.2);
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: "shards" });
+      }
+    }
+    setPicking(false);
+    setState(nextState);
+  };
+
   useEffect(() => {
     if (done) {
+      addTrauma(0.5);
       MobileHapticsPro.success();
       if (containerRef.current) {
         celebrate(containerRef.current, { preset: "stardust" });
       }
     }
-  }, [done]);
+  }, [addTrauma, containerRef, done]);
   const copyCode = async () => {
     const code = villageSaveCode(state);
     try { await navigator.clipboard.writeText(code); say(t.save.copied); }
@@ -360,7 +396,12 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
   return (
     <div
       ref={containerRef}
-      className={`transition-all ${
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`transition-all transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
         isImmersive
           ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md p-6 w-full h-full"
           : ""
@@ -523,7 +564,7 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
                 const bad = info.bad ? `${t.outcome.otherwise}: ${effectText(info.bad)}` : "";
                 const detail = [rule, good, bad].filter(Boolean).join(" · ");
                 return (
-                  <button key={choice} type="button" disabled={!canChoose(state, choice)} onClick={() => setState(chooseEvent(state, choice))} className={`${btn} border-warning`}>
+                  <button key={choice} type="button" disabled={!canChoose(state, choice)} onClick={() => handleChooseEvent(choice)} className={`${btn} border-warning`}>
                     <span className="block">{t.events[state.event!].choices[choice]}</span>
                     {detail ? <span className="block text-xs font-medium text-muted-foreground">{detail}</span> : null}
                   </button>
@@ -571,12 +612,7 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
                 <button
                   type="button"
                   disabled={waiting}
-                  onClick={() => {
-                    MobileHapticsPro.impact();
-                    playVillageSound("harvest");
-                    setPicking(false);
-                    setState(endMonth(state));
-                  }}
+                  onClick={handleEndMonth}
                   className="col-span-2 min-h-11 rounded-xl bg-primary px-3 py-2 text-sm font-black text-primary-foreground disabled:opacity-40 hover:bg-primary/90 transition-colors shadow-md"
                 >
                   {t.endMonth}
