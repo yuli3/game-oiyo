@@ -324,6 +324,48 @@
       "path": "/games/grok-20261106/game-keyart-word-waffle.webp",
       "bytes": 25680,
       "sha256": "e1024db660f07d2a9661919c54e76707f56ebe41a8a7e1b3b3ae57186e32a2e4"
+    },
+    {
+      "id": "game-keyart-dot-dungeon-rogue",
+      "path": "/games/grok-20261106/game-keyart-dot-dungeon-rogue.webp",
+      "bytes": 67338,
+      "sha256": "c7079025ee06bcaa0659a56943aae5cc72b7c6c61a38fc28473414a66eb744b9"
+    },
+    {
+      "id": "game-keyart-dot-farm",
+      "path": "/games/grok-20261106/game-keyart-dot-farm.webp",
+      "bytes": 124506,
+      "sha256": "403431506bddf17f80682b5b5c136a9fd10c66c297f177968ff59258a99f1ded"
+    },
+    {
+      "id": "game-keyart-dot-fishing",
+      "path": "/games/grok-20261106/game-keyart-dot-fishing.webp",
+      "bytes": 77342,
+      "sha256": "1ffc5fac426a0fafad324c765513a42f086c6413264822a3694f496dcb21fdbd"
+    },
+    {
+      "id": "game-keyart-dot-miner",
+      "path": "/games/grok-20261106/game-keyart-dot-miner.webp",
+      "bytes": 120072,
+      "sha256": "6f460ec42d738baacf0e2a833adb1a07d58211fc247fd8054e854db21551b328"
+    },
+    {
+      "id": "game-keyart-dot-tower",
+      "path": "/games/grok-20261106/game-keyart-dot-tower.webp",
+      "bytes": 158924,
+      "sha256": "cd2272030db741a0976fc41b40c6a83a71934d45d604b422323a808b4995fd1f"
+    },
+    {
+      "id": "game-keyart-neon-katana",
+      "path": "/games/grok-20261106/game-keyart-neon-katana.webp",
+      "bytes": 75884,
+      "sha256": "68f9d91d262762ccb453f12ffa431994d09ee97807015bbe89f244a3214747ca"
+    },
+    {
+      "id": "game-keyart-shadow-dodge",
+      "path": "/games/grok-20261106/game-keyart-shadow-dodge.webp",
+      "bytes": 47514,
+      "sha256": "0457e2083711d491b48ef4ee303429146e720e667023150206a6ce3bd974bacc"
     }
   ]
 }
