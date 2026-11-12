@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Check, Sparkles, Shield, Zap, Target, Rocket } from 'lucide-react';
+import { Check, Sparkles, Shield, Zap, Target, Rocket, Pause, Play } from 'lucide-react';
 import { celebrate } from "../../lib/games/celebration";
 import {
   type NeonSurvivorState,
@@ -38,6 +38,8 @@ import {
 } from '../../lib/games/engine-suite-unified';
 import type { Locale } from '../../lib/i18n';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { useAutoPause } from '../../lib/games/game-flow';
+import { Button } from '../ui/button';
 import { ArcadeTouchControls } from '../ui/game/ArcadeTouchControls';
 
 export interface JoystickVector {
@@ -84,6 +86,9 @@ const drawRoundRect = (
 
 const COPY = {
   ko: {
+    pause: '일시정지',
+    resume: '계속하기',
+    pausedNote: '잠시 멈췄습니다. 준비되면 계속하세요.',
     title: '네온 서바이버',
     subtitle: '100% 캔버스 기반 네온 로그라이크 서바이벌',
     time: '생존 시간',
@@ -111,6 +116,9 @@ const COPY = {
     cost: '비용',
   },
   en: {
+    pause: 'Pause',
+    resume: 'Resume',
+    pausedNote: 'Paused. Continue when you are ready.',
     title: 'Neon Survivor',
     subtitle: '100% Canvas Horde Survival Roguelite',
     time: 'Time',
@@ -138,6 +146,9 @@ const COPY = {
     cost: 'Cost',
   },
   ja: {
+    pause: '一時停止',
+    resume: '再開',
+    pausedNote: '一時停止中です。準備ができたら再開してください。',
     title: 'ネオン・サバイバー',
     subtitle: '100%キャンバス高速ローグライクサバイバル',
     time: '生存時間',
@@ -165,6 +176,9 @@ const COPY = {
     cost: '費用',
   },
   zh: {
+    pause: '暂停',
+    resume: '继续',
+    pausedNote: '已暂停。准备好后继续。',
     title: '霓虹幸存者',
     subtitle: '100% Canvas 无限割草肉鸽幸存者',
     time: '存活时间',
@@ -192,6 +206,9 @@ const COPY = {
     cost: '消耗',
   },
   fr: {
+    pause: 'Pause',
+    resume: 'Reprendre',
+    pausedNote: 'En pause. Reprenez quand vous êtes prêt.',
     title: 'Neon Survivor',
     subtitle: 'Jeu de survie en horde 100 % Canvas',
     time: 'Temps',
@@ -219,6 +236,9 @@ const COPY = {
     cost: 'Coût',
   },
   es: {
+    pause: 'Pausa',
+    resume: 'Continuar',
+    pausedNote: 'En pausa. Continúa cuando estés listo.',
     title: 'Neon Survivor',
     subtitle: 'Juego de supervivencia de hordas 100% Canvas',
     time: 'Tiempo',
@@ -251,6 +271,10 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   const t = COPY[locale] ?? COPY.en;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [phase, setPhase] = useState<'briefing' | 'playing'>('briefing');
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(false);
+  const pauseDialogRef = useRef<HTMLDialogElement | null>(null);
+  const pauseButtonRef = useRef<HTMLButtonElement | null>(null);
   const touchOriginRef = useRef<{ id: number; x: number; y: number } | null>(null);
 
   // Meta Progression State
@@ -400,9 +424,49 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   const hitStopRef = useRef(new HitStopController());
   const keysDownRef = useRef<Record<string, boolean>>({});
 
+  const clearInput = useCallback(() => {
+    keysDownRef.current = {};
+    inputVectorRef.current = { x: 0, y: 0 };
+    joystickVectorRef.current = { x: 0, y: 0, magnitude: 0, angle: 0, knobDistance: 0 };
+    const pointerId = touchOriginRef.current?.id;
+    if (pointerId !== undefined && canvasRef.current?.hasPointerCapture(pointerId)) {
+      canvasRef.current.releasePointerCapture(pointerId);
+    }
+    touchOriginRef.current = null;
+  }, []);
+
+  const pauseGame = useCallback(() => {
+    // WHY (2026-11-13): Stop the loop synchronously before React commits the overlay.
+    pausedRef.current = true;
+    clearInput();
+    setPaused(true);
+  }, [clearInput]);
+
+  const resumeGame = useCallback(() => {
+    clearInput();
+    pausedRef.current = false;
+    setPaused(false);
+  }, [clearInput]);
+
+  useAutoPause(phase === 'playing' && !paused && !gameState.gameOver, pauseGame);
+  useEffect(() => {
+    const dialog = pauseDialogRef.current;
+    if (paused && dialog && !dialog.open) dialog.showModal();
+    if (!paused && dialog?.open) dialog.close();
+  }, [paused]);
+
+  const menuOpenRef = useRef(false);
+  menuOpenRef.current = showHangar || showQuests || showEvoGuide;
+  useEffect(() => {
+    if (showHangar || showQuests || showEvoGuide) clearInput();
+  }, [showHangar, showQuests, showEvoGuide, clearInput]);
+
   // Keyboard handling
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (phase !== 'playing' || pausedRef.current || menuOpenRef.current) return;
+      if (e.key === 'Escape') { pauseGame(); return; }
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
       keysDownRef.current[e.key.toLowerCase()] = true;
     };
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -414,7 +478,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [phase, pauseGame]);
 
   // Level Up sound and vibration
   const prevLevelRef = useRef(gameState.player.level);
@@ -426,7 +490,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     prevLevelRef.current = gameState.player.level;
   }, [gameState.player.level, playLevelUpSound, vibrate]);
 
-  // Main 120fps Game & Canvas Render Loop
+  // Simulation and rendering follow the display clock; performance is measured per device.
   useEffect(() => {
     let animId: number;
     let lastTime = performance.now();
@@ -436,7 +500,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       const rawDt = Math.min(0.05, (now - lastTime) / 1000);
       lastTime = now;
 
-      if (phase !== 'playing') {
+      if (phase !== 'playing' || pausedRef.current || menuOpenRef.current) {
         animId = requestAnimationFrame(loop);
         return;
       }
@@ -1047,8 +1111,9 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   };
 
   const handleRestart = useCallback(() => {
+    resumeGame();
     setGameState(createInitialNeonSurvivorState(metaState.upgrades));
-  }, [metaState.upgrades]);
+  }, [metaState.upgrades, resumeGame]);
 
   const handleBuyUpgrade = (upgradeId: keyof PlayerMetaState['upgrades']) => {
     const res = purchaseMetaUpgrade(metaState, upgradeId);
@@ -1106,7 +1171,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   }, [formatTime, gameState.kills, gameState.player.level, gameState.score, gameState.survivalTime, t.title]);
 
   const handleCanvasPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (touchOriginRef.current !== null) return;
+    if (pausedRef.current || menuOpenRef.current || touchOriginRef.current !== null) return;
     e.preventDefault();
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
@@ -1315,7 +1380,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       />
 
       {/* Emberdeep-Grade In-Viewport Mobile Touch Controls */}
-      {!gameState.levelUpPending && !gameState.gameOver && (
+      {!paused && !showHangar && !showQuests && !showEvoGuide && !gameState.levelUpPending && !gameState.gameOver && (
         <ArcadeTouchControls
           showDPad={true}
           onDirection={(dir, active) => {
@@ -1364,6 +1429,23 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
           ]}
         />
       )}
+
+      {!gameState.gameOver && !paused && (
+        <div className="absolute bottom-40 right-4 z-20">
+          <Button variant="secondary" size="lg" ref={pauseButtonRef} onClick={pauseGame} aria-label={t.pause}>
+            <Pause aria-hidden="true" />{t.pause}
+          </Button>
+        </div>
+      )}
+      <dialog ref={pauseDialogRef} aria-label={t.pause}
+        onCancel={(event) => event.preventDefault()}
+        className="m-auto max-w-sm rounded-xl border border-border bg-background p-6 text-foreground shadow-xl backdrop:bg-background/80">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <h2 className="text-xl font-bold">{t.pause}</h2>
+          <p>{t.pausedNote}</p>
+          <Button size="lg" onClick={resumeGame}><Play aria-hidden="true" />{t.resume}</Button>
+        </div>
+      </dialog>
 
       {/* Hologram Storyline Operator Lore Banner */}
       {activeLore && (

@@ -1,9 +1,11 @@
+import { execFileSync } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { certificationStage, validateReleaseEvidenceDocument } from "./lib/game-release-evidence.mjs";
 
 const root = resolve(new URL("..", import.meta.url).pathname);
+const currentCommit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
 const catalogPath = resolve(root, "src/pages/[...lang]/index.astro");
 const outputPath = resolve(root, "config/game-modernization-inventory-v1.json");
 const releaseEvidencePath = resolve(root, "config/game-release-evidence-v1.json");
@@ -161,7 +163,7 @@ async function inspect(entry) {
   const implementationComplete = Boolean(component && signals.engine && signals.tests);
   const wave = wave3.has(entry.slug) ? "3" : wave4.has(entry.slug) ? "4" : implementationComplete ? (entry.slug === "star-blaster" || entry.slug === "chess" || entry.slug === "minesweeper" ? "pilot" : "2") : "5";
   const evidence = releaseEvidence[entry.slug] ?? null;
-  const stage = certificationStage(implementationComplete, evidence);
+  const stage = certificationStage(implementationComplete, evidence, currentCommit);
   const technicalGatesPassed = ["technical-gates-passed", "playtested", "craft-reviewed", "release-certified"].includes(stage);
   const playtested = ["playtested", "craft-reviewed", "release-certified"].includes(stage);
   const craftReviewed = ["craft-reviewed", "release-certified"].includes(stage);

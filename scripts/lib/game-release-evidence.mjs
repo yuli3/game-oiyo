@@ -56,21 +56,26 @@ export function validateReleaseEvidenceDocument(document, knownSlugs) {
       continue;
     }
     if (evidence.technicalGates && !validTechnicalGates(evidence.technicalGates)) errors.push(`${slug}: invalid technical gates`);
-    if (evidence.playtest && (!evidence.technicalGates || !validPlaytest(evidence.playtest))) errors.push(`${slug}: invalid or out-of-order playtest`);
-    if (evidence.craftReview && (!evidence.playtest || !validCraftReview(evidence.craftReview))) errors.push(`${slug}: invalid or out-of-order craft review`);
-    if (evidence.releaseApproval && (!evidence.craftReview || !validReleaseApproval(evidence.releaseApproval))) errors.push(`${slug}: invalid or out-of-order release approval`);
+    if (evidence.playtest && (!validTechnicalGates(evidence.technicalGates) || !validPlaytest(evidence.playtest))) errors.push(`${slug}: invalid or out-of-order playtest`);
+    if (evidence.craftReview && (!validTechnicalGates(evidence.technicalGates) || !validPlaytest(evidence.playtest) || !validCraftReview(evidence.craftReview))) errors.push(`${slug}: invalid or out-of-order craft review`);
+    if (evidence.releaseApproval && (!validTechnicalGates(evidence.technicalGates) || !validPlaytest(evidence.playtest) || !validCraftReview(evidence.craftReview) || !validReleaseApproval(evidence.releaseApproval))) errors.push(`${slug}: invalid or out-of-order release approval`);
   }
   return errors;
 }
 
-export function certificationStage(implementationComplete, evidence) {
-  const technicalGatesPassed = Boolean(evidence?.technicalGates);
-  const playtested = technicalGatesPassed && Boolean(evidence?.playtest);
-  const craftReviewed = playtested && Boolean(evidence?.craftReview);
-  const releaseCertified = craftReviewed && evidence?.releaseApproval?.decision === "approved";
+// WHY (2026-11-13): Historical evidence remains readable, but cannot certify a
+// different build. Callers must supply the exact commit they are assessing.
+export function certificationStage(implementationComplete, evidence, currentCommit) {
+  const fallback = implementationComplete ? "implementation-complete" : "static-assessed";
+  if (!/^[0-9a-f]{40}$/.test(currentCommit ?? "")
+    || evidence?.technicalGates?.commit !== currentCommit) return fallback;
+  const technicalGatesPassed = validTechnicalGates(evidence?.technicalGates);
+  const playtested = technicalGatesPassed && validPlaytest(evidence?.playtest);
+  const craftReviewed = playtested && validCraftReview(evidence?.craftReview);
+  const releaseCertified = craftReviewed && validReleaseApproval(evidence?.releaseApproval);
   if (releaseCertified) return "release-certified";
   if (craftReviewed) return "craft-reviewed";
   if (playtested) return "playtested";
   if (technicalGatesPassed) return "technical-gates-passed";
-  return implementationComplete ? "implementation-complete" : "static-assessed";
+  return fallback;
 }
