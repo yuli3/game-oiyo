@@ -406,3 +406,35 @@ describe('NeonSurvivor Engine', () => {
     });
   });
 });
+
+
+describe('Neon dash gameplay contract', () => {
+  it('bursts in facing direction without mutating base speed and rejects spam', () => {
+    const initial = createInitialNeonSurvivorState();
+    const next = updateNeonSurvivor(initial, 0.05, { x: 0, y: 0, dash: true });
+    expect(next.player.x - initial.player.x).toBeCloseTo(initial.player.speed * 0.05 * 2.6);
+    expect(next.player.speed).toBe(initial.player.speed);
+    expect(next.player.invulnTimer).toBeGreaterThan(0);
+    const spam = updateNeonSurvivor(next, 0.05, { x: 1, y: 0, dash: true });
+    expect(spam.dashCooldown).toBeLessThan(next.dashCooldown!);
+    expect(spam.dashRemaining).toBeLessThan(next.dashRemaining!);
+  });
+
+  it('freezes recharge at upgrade selection and resets cleanly on a new run', () => {
+    const next = updateNeonSurvivor(createInitialNeonSurvivorState(), 0.05, { x: 1, y: 0, dash: true });
+    const frozen = { ...next, levelUpPending: true };
+    expect(updateNeonSurvivor(frozen, 0.05, { x: 1, y: 0 })).toBe(frozen);
+    expect(createInitialNeonSurvivorState().dashCooldown ?? 0).toBe(0);
+  });
+
+  it('returns to normal travel and preserves a speed upgrade during the burst', () => {
+    let state = updateNeonSurvivor(createInitialNeonSurvivorState(), 0.05, { x: 1, y: 0, dash: true });
+    state = { ...state, player: { ...state.player, speed: 300 } };
+    for (let i = 0; i < 4; i++) state = updateNeonSurvivor(state, 0.05, { x: 1, y: 0 });
+    const before = state.player.x;
+    state = updateNeonSurvivor(state, 0.05, { x: 1, y: 0 });
+    expect(state.player.x - before).toBeCloseTo(15);
+    expect(state.player.speed).toBe(300);
+    expect(state.dashRemaining).toBe(0);
+  });
+});

@@ -196,7 +196,11 @@ export function getAvailableEvolutions(
   });
 }
 
+export const NEON_DASH = { duration: 0.18, cooldown: 2, speedMultiplier: 2.6 } as const;
+
 export interface NeonSurvivorState {
+  dashRemaining?: number;
+  dashCooldown?: number;
   arenaWidth: number;
   arenaHeight: number;
   player: Player;
@@ -531,13 +535,25 @@ export function selectUpgrade(
 export function updateNeonSurvivor(
   state: NeonSurvivorState,
   dt: number,
-  inputVector: { x: number; y: number }
+  inputVector: { x: number; y: number; dash?: boolean }
 ): NeonSurvivorState {
   if (state.gameOver || state.levelUpPending) {
     return state;
   }
 
-  const boundedDt = Math.min(dt, 0.05);
+  const boundedDt = Number.isFinite(dt) ? Math.max(0, Math.min(dt, 0.05)) : 0;
+  if (boundedDt === 0) return state;
+  let dashRemaining = state.dashRemaining ?? 0;
+  let dashCooldown = state.dashCooldown ?? 0;
+  const dashStarted = inputVector.dash && dashCooldown <= 0;
+  if (dashStarted) {
+    dashRemaining = NEON_DASH.duration;
+    dashCooldown = NEON_DASH.cooldown;
+  }
+  // WHY (2026-11-13): Simulation time preserves pause and prevents timer callbacks
+  // from changing a restarted run or overwriting a speed upgrade.
+  const dashStep = Math.min(boundedDt, dashRemaining);
+  const moveDt = boundedDt + dashStep * (NEON_DASH.speedMultiplier - 1);
   let nextEntityId = state.nextEntityId;
 
   // 1. Move Player
@@ -557,8 +573,15 @@ export function updateNeonSurvivor(
     player.vy = 0;
   }
 
-  player.x = Math.max(30, Math.min(state.arenaWidth - 30, player.x + player.vx * boundedDt));
-  player.y = Math.max(30, Math.min(state.arenaHeight - 30, player.y + player.vy * boundedDt));
+  if (dashRemaining > 0 && inputMagnitude <= 0.05) {
+    player.vx = Math.cos(player.facing) * player.speed;
+    player.vy = Math.sin(player.facing) * player.speed;
+  }
+  if (dashStarted) player.invulnTimer = Math.max(player.invulnTimer, NEON_DASH.duration);
+  dashRemaining = Math.max(0, dashRemaining - boundedDt);
+  dashCooldown = Math.max(0, dashCooldown - boundedDt);
+  player.x = Math.max(30, Math.min(state.arenaWidth - 30, player.x + player.vx * moveDt));
+  player.y = Math.max(30, Math.min(state.arenaHeight - 30, player.y + player.vy * moveDt));
   player.invulnTimer = Math.max(0, player.invulnTimer - boundedDt);
 
   // 2. Weapon logic
@@ -1072,6 +1095,8 @@ export function updateNeonSurvivor(
     player,
     weapons: state.weapons,
     evolutions: state.evolutions,
+    dashRemaining,
+    dashCooldown,
     blasterTimer,
     novaTimer,
     orbitAngle,

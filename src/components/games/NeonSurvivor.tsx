@@ -5,6 +5,7 @@ import {
   type NeonSurvivorState,
   type UpgradeCard,
   EVOLUTION_RECIPES,
+  NEON_DASH,
   UPGRADE_CATALOG,
   createInitialNeonSurvivorState,
   updateNeonSurvivor,
@@ -86,6 +87,8 @@ const drawRoundRect = (
 
 const COPY = {
   ko: {
+    dash: '대시',
+    dashReady: '준비',
     pause: '일시정지',
     resume: '계속하기',
     pausedNote: '잠시 멈췄습니다. 준비되면 계속하세요.',
@@ -116,6 +119,8 @@ const COPY = {
     cost: '비용',
   },
   en: {
+    dash: 'Dash',
+    dashReady: 'Ready',
     pause: 'Pause',
     resume: 'Resume',
     pausedNote: 'Paused. Continue when you are ready.',
@@ -146,6 +151,8 @@ const COPY = {
     cost: 'Cost',
   },
   ja: {
+    dash: 'ダッシュ',
+    dashReady: '準備完了',
     pause: '一時停止',
     resume: '再開',
     pausedNote: '一時停止中です。準備ができたら再開してください。',
@@ -176,6 +183,8 @@ const COPY = {
     cost: '費用',
   },
   zh: {
+    dash: '冲刺',
+    dashReady: '就绪',
     pause: '暂停',
     resume: '继续',
     pausedNote: '已暂停。准备好后继续。',
@@ -206,6 +215,8 @@ const COPY = {
     cost: '消耗',
   },
   fr: {
+    dash: 'Ruée',
+    dashReady: 'Prêt',
     pause: 'Pause',
     resume: 'Reprendre',
     pausedNote: 'En pause. Reprenez quand vous êtes prêt.',
@@ -236,6 +247,8 @@ const COPY = {
     cost: 'Coût',
   },
   es: {
+    dash: 'Impulso',
+    dashReady: 'Listo',
     pause: 'Pausa',
     resume: 'Continuar',
     pausedNote: 'En pausa. Continúa cuando estés listo.',
@@ -423,9 +436,11 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   const cameraShakeRef = useRef(new CameraShake2D());
   const hitStopRef = useRef(new HitStopController());
   const keysDownRef = useRef<Record<string, boolean>>({});
+  const dashRequestedRef = useRef(false);
 
   const clearInput = useCallback(() => {
     keysDownRef.current = {};
+    dashRequestedRef.current = false;
     inputVectorRef.current = { x: 0, y: 0 };
     joystickVectorRef.current = { x: 0, y: 0, magnitude: 0, angle: 0, knobDistance: 0 };
     const pointerId = touchOriginRef.current?.id;
@@ -467,6 +482,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       if (phase !== 'playing' || pausedRef.current || menuOpenRef.current) return;
       if (e.key === 'Escape') { pauseGame(); return; }
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
+      if (e.code === 'Space' && !e.repeat) dashRequestedRef.current = true;
       keysDownRef.current[e.key.toLowerCase()] = true;
     };
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -536,7 +552,11 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
         const prevLevelUp = stateRef.current.levelUpPending;
         const prevGameOver = stateRef.current.gameOver;
         const prevKills = stateRef.current.kills;
-        const next = updateNeonSurvivor(stateRef.current, effectiveDt, inputVectorRef.current);
+        const next = updateNeonSurvivor(stateRef.current, effectiveDt, { ...inputVectorRef.current, dash: dashRequestedRef.current });
+        dashRequestedRef.current = false;
+        if ((next.dashCooldown ?? 0) > (stateRef.current.dashCooldown ?? 0)) {
+          nativeHaptics.trigger('light');
+        }
 
         // Sound & FX triggers & CoreHaptics
         if (next.player.hp < prevHp) {
@@ -1069,26 +1089,20 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     drawRoundRect(ctx, hpX, hpY, hpW * hpRatio, hpH, 4);
     ctx.fill();
 
-    // 3. Time & Kills (Top Center / Right)
-    const infoW = 150;
-    const infoH = 34;
-    const infoX = displayW - 16 - infoW - 56; // leave room for sound button
-    if (infoX > 190) {
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
-      ctx.beginPath();
-      drawRoundRect(ctx, infoX, hudY, infoW, infoH, 8);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.font = 'bold 12px ui-monospace, monospace';
-      ctx.fillStyle = '#ffffff';
-      const timeStr = formatTime(state.survivalTime);
-      ctx.fillText(`⏱ ${timeStr}`, infoX + 10, hudY + 22);
-      ctx.fillStyle = '#f43f5e';
-      ctx.fillText(`💀 ${state.kills}`, infoX + 88, hudY + 22);
-    }
+    // WHY (2026-11-13): The second row stays visible at 320px; toolbar sits below it.
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+    ctx.beginPath();
+    drawRoundRect(ctx, 16, 58, Math.max(0, displayW - 32), 42, 8);
+    ctx.fill();
+    ctx.font = 'bold 12px ui-monospace, monospace';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(`${t.time} ${formatTime(state.survivalTime)}`, 24, 75);
+    const recharge = state.dashCooldown ?? 0;
+    ctx.fillStyle = recharge > 0 ? '#94a3b8' : '#38bdf8';
+    ctx.fillText(`${t.dash} · ${recharge > 0 ? recharge.toFixed(1) + 's' : t.dashReady}`, 24, 91);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(16, 98, (displayW - 32) * (1 - Math.min(1, recharge / NEON_DASH.cooldown)), 2);
     ctx.restore();
 
     // 4. Elite Boss Warning Siren Overlay & HUD
@@ -1406,23 +1420,14 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
           actions={[
             {
               id: 'dash',
-              label: 'DASH',
+              label: (gameState.dashCooldown ?? 0) > 0 ? `${t.dash} ${Math.ceil(gameState.dashCooldown ?? 0)}` : t.dash,
               variant: 'primary',
               icon: <Zap className="size-4" />,
-              onPress: () => {
-                nativeHaptics.trigger('medium');
-                if (stateRef.current) {
-                  const baseSpeed = stateRef.current.player.speed;
-                  stateRef.current.player.speed = baseSpeed * 1.75;
-                  setTimeout(() => {
-                    if (stateRef.current) stateRef.current.player.speed = baseSpeed;
-                  }, 350);
-                }
-              },
+              onPress: () => { dashRequestedRef.current = true; },
             },
             {
               id: 'evo',
-              label: 'EVO',
+              label: t.evoGuide,
               variant: 'info',
               onPress: () => setShowEvoGuide(true),
             },
@@ -1449,7 +1454,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
 
       {/* Hologram Storyline Operator Lore Banner */}
       {activeLore && (
-        <div className="absolute top-16 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md z-20 pointer-events-none animate-in fade-in slide-in-from-top-3 duration-200">
+        <div className="absolute top-44 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md z-20 pointer-events-none animate-in fade-in slide-in-from-top-3 duration-200">
           <div className="rounded-xl border border-primary/50 bg-background/90 backdrop-blur-md p-3 shadow-xl flex items-start gap-2.5">
             <span className="text-xl shrink-0 p-1 rounded-lg bg-primary/20">📡</span>
             <div className="min-w-0 flex-1">
@@ -1466,7 +1471,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       )}
 
       {/* Top Controls: Immersion Portal & Sound Mute Toggle */}
-      <div className="absolute top-4 right-4 z-10 pointer-events-auto flex items-center gap-1.5">
+      <div className="absolute top-28 right-4 left-4 z-10 pointer-events-auto flex flex-wrap justify-end items-center gap-1.5">
         {/* Crystal Inventory Badge */}
         <button
           type="button"
