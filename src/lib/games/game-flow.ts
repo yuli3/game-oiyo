@@ -66,10 +66,13 @@ export function subscribeAutoPause(
   // WHY (2026-11-13): Losing focus can swallow keyup without hiding the tab.
   // Never resume automatically: the player must explicitly regain control.
   focus.addEventListener("blur", onPause);
+  // WHY (2026-11-13): BFCache navigation must preserve a paused run, not held input.
+  focus.addEventListener("pagehide", onPause);
   listener();
   return () => {
     visibility.removeEventListener("visibilitychange", listener);
     focus.removeEventListener("blur", onPause);
+    focus.removeEventListener("pagehide", onPause);
   };
 }
 

@@ -43,13 +43,7 @@ import { useAutoPause } from '../../lib/games/game-flow';
 import { Button } from '../ui/button';
 import { ArcadeTouchControls } from '../ui/game/ArcadeTouchControls';
 
-export interface JoystickVector {
-  x: number;
-  y: number;
-  magnitude: number;
-  angle: number;
-  knobDistance: number;
-}
+import { neonJoystick, neonCanvasSize, type JoystickVector } from '../../lib/games/neon-survivor-input';
 import { CameraShake2D, HitStopController } from '../../lib/games/game-juice';
 import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 import {
@@ -657,17 +651,17 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
 
   // Canvas drawing function
   const renderCanvas = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, state: NeonSurvivorState) => {
-    const dpr = window.devicePixelRatio || 1;
     const displayW = canvas.clientWidth;
     const displayH = canvas.clientHeight;
 
-    if (canvas.width !== displayW * dpr || canvas.height !== displayH * dpr) {
-      canvas.width = displayW * dpr;
-      canvas.height = displayH * dpr;
+    const size = neonCanvasSize(displayW, displayH, window.devicePixelRatio);
+    if (canvas.width !== size.width || canvas.height !== size.height) {
+      canvas.width = size.width;
+      canvas.height = size.height;
     }
 
     ctx.save();
-    ctx.scale(dpr, dpr);
+    ctx.scale(size.ratio, size.ratio);
 
     // Camera follow player
     const camX = Math.round(state.player.x - displayW / 2);
@@ -1209,19 +1203,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     const curY = e.clientY - rect.top;
     const dx = curX - touchOriginRef.current.x;
     const dy = curY - touchOriginRef.current.y;
-    const dist = Math.hypot(dx, dy);
-    if (dist > 8) {
-      const maxRadius = 60;
-      const norm = Math.min(1.0, dist / maxRadius);
-      const angle = Math.atan2(dy, dx);
-      joystickVectorRef.current = {
-        x: Math.cos(angle) * norm,
-        y: Math.sin(angle) * norm,
-        magnitude: norm,
-        angle,
-        knobDistance: Math.min(dist, maxRadius),
-      };
-    }
+    joystickVectorRef.current = neonJoystick(dx, dy);
   };
 
   const handleCanvasPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -1382,7 +1364,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
           </div>
         </div>
       ) : (
-        <>
+        <div className="neon-playfield">
       {/* 100% Canvas Surface with direct touch & pointer tracking */}
       <canvas
         ref={canvasRef}
@@ -1390,6 +1372,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
         onPointerMove={handleCanvasPointerMove}
         onPointerUp={handleCanvasPointerUp}
         onPointerCancel={handleCanvasPointerUp}
+        onLostPointerCapture={handleCanvasPointerUp}
         className="w-full h-full block cursor-crosshair touch-none select-none"
       />
 
@@ -1699,7 +1682,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
           </div>
         </div>
       )}
-        </>
+        </div>
       )}
 
       {/* Evolution Guide Modal */}

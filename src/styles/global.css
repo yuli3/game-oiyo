@@ -437,3 +437,14 @@ main .aspect-square { max-width: min(100%, 92vw); }
   .oiyo-piece-slide, .oiyo-disc-flip, .oiyo-whack-pop, .oiyo-wordle-flip, .oiyo-2048-spawn, .oiyo-2048-merge, .oiyo-card-deal, .oiyo-tile-land, .oiyo-pour { animation: none; }
   .oiyo-memory-inner, .oiyo-card-inner { transition: none; }
 }
+
+/* WHY (2026-11-13): In-page immersion must protect HUD and controls from
+   notches/home indicators even when native fullscreen is unavailable. */
+.neon-playfield {
+  position: absolute;
+  top: env(safe-area-inset-top, 0px);
+  right: env(safe-area-inset-right, 0px);
+  bottom: env(safe-area-inset-bottom, 0px);
+  left: env(safe-area-inset-left, 0px);
+  overflow: hidden;
+}

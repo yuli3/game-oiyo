@@ -31,3 +31,15 @@ describe('live game interruption', () => {
     dispose();
   });
 });
+
+
+it('pauses BFCache departures and never resumes on pageshow', () => {
+  const doc = new Visibility(); const win = new EventTarget(); const pause = vi.fn();
+  const dispose = subscribeAutoPause(doc, win, pause);
+  win.dispatchEvent(new Event('pagehide'));
+  win.dispatchEvent(new Event('pageshow'));
+  expect(pause).toHaveBeenCalledOnce();
+  dispose();
+  win.dispatchEvent(new Event('pagehide'));
+  expect(pause).toHaveBeenCalledOnce();
+});
