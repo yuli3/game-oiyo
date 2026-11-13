@@ -1,0 +1,10 @@
+Library/
+Temp/
+Obj/
+Logs/
+UserSettings/
+Builds/
+Verification/bin/
+Verification/obj/
+*.csproj.user
+*.sln

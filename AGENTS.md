@@ -34,3 +34,11 @@
 - 명령은 package.json, 저장 키는 records.ts를 조회한다. 게임 수·테스트 수·과거 진행 상태를 여기에 복제하지 않는다.
 
 - `public/_headers`를 건드리면 `npm run audit:headers-collision`을 함께 돌린다. **Cloudflare Pages는 매칭되는 규칙을 전부 적용하고 같은 헤더를 이어 붙인다**(교체가 아니다). 넓은 규칙(`/*`)에 Cache-Control을 두면 자산별 정책과 충돌해 `max-age`가 두 개인 헤더가 나가고, RFC 9111이 반복 지시어 처리를 구현에 맡기므로 실효 정책이 모호해진다. 2026-09-01에 다섯 사이트 전부 그 상태였고 해시 자산의 1년 불변 캐시가 무효화돼 있었다. 캐시 정책은 좁은 경로에만 건다. 스크립트 정본은 `shared/scripts/`다.
+
+## Unity 시험 제작 (2026-11-13)
+
+- `prototypes/neon-unity/`는 검증용이며 웹 코드에서 import하지 않는다. 기존 기록 이관 없음.
+- 규칙 검증: `DOTNET_BIN=/path/to/dotnet prototypes/neon-unity/scripts/slice.sh core` (.NET10 SDK).
+- Editor 확인/씬 생성/Android 개발 빌드: `UNITY_EDITOR=/path/to/Unity prototypes/neon-unity/scripts/slice.sh probe|prepare|android`에서 명령 하나 선택.
+- Editor 버전: ProjectSettings/ProjectVersion.txt. 순수 C# 검증 통과는 Unity 컴파일·실기기·시각·게임성 검수 통과가 아니다.
+- 계획 정본: company-brain/projects/game/plans/neon-unity-slice-20261113.md.
