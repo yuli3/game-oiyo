@@ -371,6 +371,13 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
           <p className="mt-1 text-xs text-muted-foreground md:text-sm">{t.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/prototypes/dome-keeper-unity/index.html"
+            className="inline-flex items-center gap-1 rounded-xl border border-primary/50 bg-primary/15 px-3 py-1.5 text-xs font-black text-primary shadow hover:bg-primary/25 transition-colors"
+          >
+            <span>🛰️</span>
+            <span>{locale === 'ko' ? 'Unity 실시간 에디션' : 'Play Unity Edition'}</span>
+          </a>
           <TiltDomeButton
             onClick={onPreset}
             className="rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow hover:opacity-90"
