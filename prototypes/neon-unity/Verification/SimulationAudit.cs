@@ -4,21 +4,24 @@ using Oiyo.Neon;
 static class SimulationAudit
 {
     const int Samples=1000;
-    enum Strategy { FirstOffered, GreedySalvage, BossHunter, MobilityShield }
+    enum Strategy { FirstOffered, GreedySalvage, BossHunter, MobilityShield, OrbitalFortress }
     static void Main()
     {
-        Audit("hold",false,Strategy.FirstOffered);
-        Audit("evade-and-extract",true,Strategy.FirstOffered);
-        Audit("greedy-salvage",true,Strategy.GreedySalvage);
-        Audit("boss-hunter",true,Strategy.BossHunter);
-        Audit("mobility-shield",true,Strategy.MobilityShield);
+        Audit("hold",false,Strategy.FirstOffered,ChassisId.AegisProbe);
+        Audit("evade-and-extract",true,Strategy.FirstOffered,ChassisId.AegisProbe);
+        Audit("greedy-salvage",true,Strategy.GreedySalvage,ChassisId.AegisProbe);
+        Audit("boss-hunter",true,Strategy.BossHunter,ChassisId.AegisProbe);
+        Audit("mobility-shield",true,Strategy.MobilityShield,ChassisId.AegisProbe);
+        Audit("orbital-fortress",true,Strategy.OrbitalFortress,ChassisId.AegisProbe);
+        Audit("chassis-lancer",true,Strategy.BossHunter,ChassisId.LancerDart);
+        Audit("chassis-carrier",true,Strategy.OrbitalFortress,ChassisId.BastionCarrier);
     }
-    static void Audit(string label,bool active,Strategy strategy)
+    static void Audit(string label,bool active,Strategy strategy,ChassisId chassis)
     {
         var survival=new List<float>(Samples);int extracted=0,bosses=0,totalKills=0;
         for(uint seed=1;seed<=Samples;seed++)
         {
-            var r=new Run(seed);r.Start();int index=0;
+            var r=new Run(seed,chassis);r.Start();int index=0;
             while(r.Phase==Phase.Playing&&index<10850)
             {
                 Vec move=new Vec();bool dash=false;
@@ -44,9 +47,10 @@ static class SimulationAudit
     }
     static Upgrade PickUpgrade(Run r,Strategy strategy)
     {
-        Upgrade[] pref=strategy==Strategy.GreedySalvage?new[]{Upgrade.Magnet,Upgrade.Cadence,Upgrade.SplitCharge,Upgrade.VectorDrive}:
-            strategy==Strategy.BossHunter?new[]{Upgrade.EventHorizon,Upgrade.Power,Upgrade.Cadence,Upgrade.SplitCharge}:
-            strategy==Strategy.MobilityShield?new[]{Upgrade.VectorDrive,Upgrade.PhaseReturn,Upgrade.Hull,Upgrade.Cadence}:Array.Empty<Upgrade>();
+        Upgrade[] pref=strategy==Strategy.GreedySalvage?new[]{Upgrade.Magnet,Upgrade.GravityWell,Upgrade.Cadence,Upgrade.SplitCharge}:
+            strategy==Strategy.BossHunter?new[]{Upgrade.EventHorizon,Upgrade.Power,Upgrade.ArmorBreaker,Upgrade.Cadence}:
+            strategy==Strategy.MobilityShield?new[]{Upgrade.VectorDrive,Upgrade.PhaseReturn,Upgrade.ChronoStep,Upgrade.Hull}:
+            strategy==Strategy.OrbitalFortress?new[]{Upgrade.OrbitalPrism,Upgrade.GravityWell,Upgrade.Hull,Upgrade.Magnet}:Array.Empty<Upgrade>();
         foreach(var p in pref)for(int i=0;i<r.Choices.Count;i++)if(r.Choices[i]==p)return p;
         return r.Choices[0];
     }

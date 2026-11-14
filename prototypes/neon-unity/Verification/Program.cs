@@ -5,7 +5,7 @@ static class Checks
 {
     static int count;
     static void Check(bool value,string title){if(!value)throw new Exception("FAIL "+title);count++;Console.WriteLine("PASS "+title);}
-    static Run Started(uint seed=123){var r=new Run(seed);r.Start();return r;}
+    static Run Started(uint seed=123, ChassisId chassis=ChassisId.AegisProbe, bool daily=false){var r=new Run(seed,chassis,daily);r.Start();return r;}
     static void TickTo(Run r,float time){while(r.Time<time&&r.Phase==Phase.Playing){for(int i=r.Enemies.Count-1;i>=0;i--)if(r.Enemies[i].Kind!=EnemyKind.Warden)r.Enemies.RemoveAt(i);r.Gems.Clear();r.Step(new Vec(),false);}}
     static void Main()
     {
@@ -16,13 +16,21 @@ static class Checks
         float t=dash.Time;var p=dash.Position;dash.Pause();for(int i=0;i<600;i++)dash.Step(new Vec(1,0),true);Check(dash.Time==t&&dash.Position.X==p.X,"pause freezes simulation and input");dash.Resume();
         var xp=Started();xp.Gems.Add(new Vec());xp.Gems.Add(new Vec());xp.Gems.Add(new Vec());xp.Step(new Vec(),false);Check(xp.Phase==Phase.Upgrade&&xp.Choices.Count==3&&xp.Choices.Distinct().Count()==3,"level grants three distinct choices");
         var offer=xp.Choices[0];Upgrade notOffered=Enum.GetValues(typeof(Upgrade)).Cast<Upgrade>().First(u=>!xp.Choices.Contains(u));xp.Choose((Upgrade)99);Check(xp.Phase==Phase.Upgrade,"invalid enum rejected");xp.Choose(notOffered);Check(xp.Phase==Phase.Upgrade,"valid but unoffered choice rejected");xp.Choose(offer);Check(xp.Phase==Phase.Playing&&xp.UpgradeStacks(offer)==1,"offered choice applies exactly once");
-        var build=Started(441);Upgrade[] targetBuild={Upgrade.VectorDrive,Upgrade.PhaseReturn,Upgrade.Cadence,Upgrade.SplitCharge};
-        for(int n=0;n<24&&build.Phase==Phase.Playing;n++){build.Enemies.Clear();for(int i=0;i<build.XpNeeded;i++)build.Gems.Add(build.Position);build.Step(new Vec(),false);if(build.Phase==Phase.Upgrade){Upgrade desired=targetBuild.FirstOrDefault(u=>build.UpgradeStacks(u)==0&&build.Choices.Contains(u));build.Choose(targetBuild.Contains(desired)?desired:build.Choices[0]);}}
-        Check(Math.Abs(build.PhaseReturnRadius-3.25f)<.001f&&Math.Abs(build.SplitChargeMultiplier-.72f)<.001f,"Vector + Phase and Cadence + Split synergies match authored values");
+        var build=Started(441);Upgrade[] targetBuild={Upgrade.VectorDrive,Upgrade.PhaseReturn,Upgrade.Cadence,Upgrade.SplitCharge,Upgrade.Magnet,Upgrade.GravityWell,Upgrade.Power,Upgrade.ArmorBreaker};
+        for(int n=0;n<36&&build.Phase==Phase.Playing;n++){build.Enemies.Clear();for(int i=0;i<build.XpNeeded;i++)build.Gems.Add(build.Position);build.Step(new Vec(),false);if(build.Phase==Phase.Upgrade){Upgrade desired=targetBuild.FirstOrDefault(u=>build.UpgradeStacks(u)==0&&build.Choices.Contains(u));build.Choose(targetBuild.Contains(desired)&&build.Choices.Contains(desired)?desired:build.Choices[0]);}}
+        Check(build.AwakenedPhaseNova&&Math.Abs(build.PhaseReturnRadius-3.25f)<.001f&&build.AwakenedArcTempest&&Math.Abs(build.SplitChargeMultiplier-.72f)<.001f,"Vector + Phase and Cadence + Split synergies match authored values");
+        Check(build.AwakenedSingularity&&Math.Abs(build.GravityWellRadius-BalanceConfig.GravityWellBaseRadius*1.25f)<.001f&&build.AwakenedThermalLance&&build.PiercingActive,"Singularity and Thermal Lance awakenings activate");
         Check(build.DashCooldownDuration<BalanceConfig.DashCooldown,"Vector upgrade improves every future dash recharge");
         Check(build.Phase==Phase.Playing,"empty upgrade pool does not strand the run");
         for(int i=0;i<UpgradeCatalog.Entries.Count;i++)Check(UpgradeCatalog.Get(UpgradeCatalog.Entries[i].Id)!=null,"catalog entry resolves "+i);
-        var catalogs=UpgradeCatalog.Entries;Check(catalogs.Count==8&&catalogs.Count(x=>x.Tier==UpgradeTier.Silver)==4&&catalogs.Count(x=>x.Tier==UpgradeTier.Gold)==3&&catalogs.Count(x=>x.Tier==UpgradeTier.Prismatic)==1,"catalog has intended 4/3/1 tier structure");
+        var catalogs=UpgradeCatalog.Entries;Check(catalogs.Count==12&&catalogs.Count(x=>x.Tier==UpgradeTier.Silver)==5&&catalogs.Count(x=>x.Tier==UpgradeTier.Gold)==6&&catalogs.Count(x=>x.Tier==UpgradeTier.Prismatic)==1,"catalog has intended 5/6/1 tier structure (12 upgrades)");
+        var lancer=Started(77,ChassisId.LancerDart);Check(lancer.MaxHp==82f&&lancer.PiercingActive&&lancer.MoveSpeed>BalanceConfig.PlayerSpeed,"Lancer Dart chassis initializes piercing and high speed");
+        var carrier=Started(77,ChassisId.BastionCarrier);Check(carrier.MaxHp==122f&&carrier.ActiveOrbitals==1,"Bastion Carrier chassis starts with 1 orbital prism and 122 hull");
+        carrier.Enemies.Clear();var orbTarget=new Enemy{Id=99,Kind=EnemyKind.Drone,Position=carrier.GetOrbitalPosition(0,1),Hp=30f,Speed=0f,Radius=.38f,Telegraph=0f};carrier.Enemies.Add(orbTarget);
+        carrier.Step(new Vec(),false);
+        Check(!carrier.Enemies.Contains(orbTarget)||orbTarget.Hp<30f,"Orbital prism damages nearby hostiles");
+        uint daily1=Run.ComputeDailySeed(2026,11,14);uint daily2=Run.ComputeDailySeed(2026,11,14);uint dailyNext=Run.ComputeDailySeed(2026,11,15);
+        Check(daily1==daily2&&daily1!=dailyNext&&daily1!=0,"Daily observatory seed is deterministic per calendar date");
         Check(WaveDirector.SpawnInterval(130)<WaveDirector.SpawnInterval(115)&&WaveDirector.ActiveCap(130)>0,"boss phase retains a paced wave budget");
         var w=Started(987);TickTo(w,126);Check(w.WardenSpawned&&w.WardenHp==BalanceConfig.WardenHealth,"warden spawns at authored time");TickTo(w,126.9f);Check(w.BossAttackSerial==1&&w.HostileShots.Count==BalanceConfig.WardenVolleyCount-1,"warden radial volley preserves one readable safe gap");
         var firstGap=new Vec((float)Math.Cos(Math.PI/8),(float)Math.Sin(Math.PI/8));Check(w.HostileShots.All(s=>{float dot=(s.Velocity.X*firstGap.X+s.Velocity.Y*firstGap.Y)/s.Velocity.Length;return dot<.72f;}),"first volley leaves its previewed 90-degree lane clear");

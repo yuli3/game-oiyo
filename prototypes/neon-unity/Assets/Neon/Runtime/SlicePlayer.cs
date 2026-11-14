@@ -21,11 +21,14 @@ public sealed class SlicePlayer : MonoBehaviour
 
     Run run = new Run(20261113);
     static uint nextRunSeed = 20261113;
+    ChassisId selectedChassis = ChassisId.AegisProbe;
+    bool dailyModeSelected;
     readonly List<Transform> enemies = new List<Transform>();
     readonly List<SpriteRenderer> enemyRenderers = new List<SpriteRenderer>();
     readonly List<Transform> gems = new List<Transform>();
     readonly List<Transform> hostileShots = new List<Transform>();
-    Transform ship, engineGlow, dashRing, background;
+    readonly List<Transform> orbitalBlades = new List<Transform>();
+    Transform ship, engineGlow, dashRing, gravityWellRing, background;
     SpriteRenderer shipRenderer;
     Transform extractionMarker, safeLane;
     Transform bossTellRing;
@@ -43,12 +46,12 @@ public sealed class SlicePlayer : MonoBehaviour
     Canvas canvas;
     RectTransform safeRoot;
     Text timerText, healthText, levelText, killsText, bossText, warningText, objectiveText, menuTitleText, menuSubtitleText, controlsText, resultTitleText, resultStatsText, bestText;
-    Text launchLabelText, languageLabelText, pauseTitleText, continueLabelText, retryLabelText, soundLabelText, musicLabelText, motionLabelText, choiceEyebrowText, choiceHeadingText, choiceFooterText, playAgainLabelText;
+    Text launchLabelText, languageLabelText, chassisLabelText, modeLabelText, pauseTitleText, continueLabelText, retryLabelText, soundLabelText, musicLabelText, motionLabelText, choiceEyebrowText, choiceHeadingText, choiceFooterText, playAgainLabelText;
     Image healthFill, bossFill, beamImage, xpFill, titleArtImage, resultArtImage;
     GameObject titleScreen, hudScreen, pauseScreen, upgradeScreen, resultScreen, wardenHealthPanel;
     readonly Button[] upgradeButtons = new Button[3];
     readonly Text[] upgradeTitles = new Text[3];
-    Button dashButton, pauseButton, launchButton, continueButton, playAgainButton;
+    Button dashButton, pauseButton, launchButton, chassisButton, modeButton, continueButton, playAgainButton;
     Text dashLabel;
     StickControl stickControl;
     Font fontKo, fontJa, fontZh;
@@ -185,6 +188,8 @@ public sealed class SlicePlayer : MonoBehaviour
         engineGlow = Make("Ion wake", circleSprite, new Color32(76, 239, 218, 175), .35f);
         dashRing = Make("Dash wake", fxDashRingSprite, new Color(Cyan.r, Cyan.g, Cyan.b, .72f), .9f);
         dashRing.gameObject.SetActive(false);
+        gravityWellRing = Make("Gravity well aura", fxDashRingSprite, new Color(Violet.r, Violet.g, Violet.b, .28f), 2.5f);
+        gravityWellRing.gameObject.SetActive(false);
         extractionMarker = Make("Extraction beacon", fxExtractionGateSprite, Color.white, 2.8f);
         extractionMarker.position = new Vector3(0, 17, 0);
         extractionMarker.gameObject.SetActive(false);
@@ -261,11 +266,17 @@ public sealed class SlicePlayer : MonoBehaviour
             var backdrop = PanelObject("Title KeyArt", titleScreen.transform, new Color(1, 1, 1, .88f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             titleArtImage = backdrop.GetComponent<Image>(); titleArtImage.sprite = titleKeyArtSprite; titleArtImage.type = Image.Type.Simple; titleArtImage.preserveAspect = false;
         }
-        var card = PanelObject("Title card", titleScreen.transform, new Color(Panel.r, Panel.g, Panel.b, .88f), new Vector2(.08f, .22f), new Vector2(.92f, .82f), Vector2.zero, Vector2.zero);
-        menuTitleText = TextObject("Title", card.transform, "NEON\nSURVIVOR", 76, Ivory, TextAnchor.MiddleCenter, new Vector2(.08f, .58f), new Vector2(.92f, .9f)); menuTitleText.fontStyle = FontStyle.Bold;
-        menuSubtitleText = TextObject("Subtitle", card.transform, "", 25, Cyan, TextAnchor.MiddleCenter, new Vector2(.08f, .47f), new Vector2(.92f, .59f));
-        controlsText = TextObject("Controls", card.transform, "", 23, new Color32(185, 203, 220, 255), TextAnchor.MiddleCenter, new Vector2(.08f, .26f), new Vector2(.92f, .46f));
-        launchButton = MakeButton("Launch", card.transform, "", new Vector2(.12f, .1f), new Vector2(.88f, .23f), Cyan, () => { Play(audioBank.UiClick); ResetRun(); run.Start(); UpdateMusic(0); Play(audioBank.Dash); ShowPhase(true); });
+        var card = PanelObject("Title card", titleScreen.transform, new Color(Panel.r, Panel.g, Panel.b, .88f), new Vector2(.07f, .16f), new Vector2(.93f, .86f), Vector2.zero, Vector2.zero);
+        menuTitleText = TextObject("Title", card.transform, "NEON\nSURVIVOR", 70, Ivory, TextAnchor.MiddleCenter, new Vector2(.08f, .67f), new Vector2(.92f, .94f)); menuTitleText.fontStyle = FontStyle.Bold;
+        menuSubtitleText = TextObject("Subtitle", card.transform, "", 22, Cyan, TextAnchor.MiddleCenter, new Vector2(.06f, .54f), new Vector2(.94f, .66f));
+        chassisButton = MakeButton("Chassis selector", card.transform, "", new Vector2(.10f, .41f), new Vector2(.90f, .51f), new Color32(28, 52, 76, 255), () => { Play(audioBank.UiClick); CycleChassis(); });
+        chassisLabelText = chassisButton.GetComponentInChildren<Text>();
+        chassisLabelText.color = Cyan;
+        modeButton = MakeButton("Mode selector", card.transform, "", new Vector2(.10f, .29f), new Vector2(.90f, .39f), new Color32(34, 48, 70, 255), () => { Play(audioBank.UiClick); ToggleDailyMode(); });
+        modeLabelText = modeButton.GetComponentInChildren<Text>();
+        modeLabelText.color = Amber;
+        controlsText = TextObject("Controls", card.transform, "", 19, new Color32(185, 203, 220, 255), TextAnchor.MiddleCenter, new Vector2(.08f, .19f), new Vector2(.92f, .28f));
+        launchButton = MakeButton("Launch", card.transform, "", new Vector2(.10f, .05f), new Vector2(.90f, .17f), Cyan, () => { Play(audioBank.UiClick); ResetRun(); run.Start(); UpdateMusic(0); Play(audioBank.Dash); ShowPhase(true); });
         launchLabelText = launchButton.GetComponentInChildren<Text>();
         launchLabelText.color = Ink;
         var settings = MakeButton("Language", titleScreen.transform, "EN · SETTINGS", new Vector2(.62f, .91f), new Vector2(.94f, .98f), Panel, () => { Play(audioBank.UiClick); CycleLanguage(); });
@@ -460,6 +471,28 @@ public sealed class SlicePlayer : MonoBehaviour
         dashRing.position = ship.position;
         dashRing.localScale = Vector3.one * (1.25f + run.DashTime * 3.2f);
 
+        bool wellOn = run.GravityWellStacks > 0 && run.Phase == Phase.Playing;
+        gravityWellRing.gameObject.SetActive(wellOn);
+        if (wellOn)
+        {
+            gravityWellRing.position = ship.position + Vector3.forward * .08f;
+            float wellScale = run.GravityWellRadius * .58f + (reducedMotion ? 0 : Mathf.Sin(Time.unscaledTime * 3.5f) * .08f);
+            gravityWellRing.localScale = Vector3.one * wellScale;
+        }
+
+        int orbCount = run.ActiveOrbitals;
+        for (int i = 0; i < orbCount; i++)
+        {
+            if (i == orbitalBlades.Count)
+                orbitalBlades.Add(Make("Orbital prism", coreSprite, Cyan, .55f));
+            var orb = orbitalBlades[i];
+            orb.gameObject.SetActive(true);
+            Vec pos = run.GetOrbitalPosition(i, orbCount);
+            orb.position = new Vector3(pos.X, pos.Y, -.06f);
+            if (!reducedMotion) orb.Rotate(0, 0, 210f * Time.unscaledDeltaTime);
+        }
+        for (int i = orbCount; i < orbitalBlades.Count; i++) orbitalBlades[i].gameObject.SetActive(false);
+
         for (int i = 0; i < run.Enemies.Count; i++)
         {
             var e = run.Enemies[i];
@@ -590,7 +623,7 @@ public sealed class SlicePlayer : MonoBehaviour
         healthFill.color = run.Hp < 35 ? Coral : Cyan;
         xpFill.fillAmount = run.XpNeeded > 0 ? (float)run.XpProgress / run.XpNeeded : 0;
         levelText.text = $"LV  {run.Level:00}";
-        killsText.text = $"{L("격추", "ELIMINATIONS", "撃破", "击破", "ÉLIMINATIONS", "ELIMINACIONES")}  {run.Kills:00}     ·     {run.Time:000}s";
+        killsText.text = $"{BalanceConfig.GetChassis(run.Chassis).Names[language]}  ·  {L("격추", "ELIMINATIONS", "撃破", "击破", "ÉLIMINATIONS", "ELIMINACIONES")} {run.Kills:00}  ·  {run.Time:000}s{AwakeningSummary()}";
         bool boss = run.WardenSpawned && !run.WardenDefeated && run.Phase == Phase.Playing;
         if (wardenHealthPanel) wardenHealthPanel.SetActive(boss);
         if (boss)
@@ -606,6 +639,16 @@ public sealed class SlicePlayer : MonoBehaviour
         dashLabel.text = run.DashCooldown <= 0 ? L("대시", "DASH", "ダッシュ", "冲刺", "DASH", "IMPULSO") : run.DashCooldown.ToString("0.0") + "s";
     }
 
+    string AwakeningSummary()
+    {
+        var list = new List<string>();
+        if (run.AwakenedPhaseNova) list.Add(L("★페이즈 노바", "★PHASE NOVA", "★フェーズノヴァ", "★相位新星", "★NOVA DE PHASE", "★NOVA DE FASE"));
+        if (run.AwakenedArcTempest) list.Add(L("★아크 템페스트", "★ARC TEMPEST", "★アークテンペスト", "★电弧风暴", "★TEMPÊTE D’ARC", "★TORMENTA DE ARCO"));
+        if (run.AwakenedSingularity) list.Add(L("★싱귤래리티", "★SINGULARITY", "★シンギュラリティ", "★奇点引力", "★SINGULARITÉ", "★SINGULARIDAD"));
+        if (run.AwakenedThermalLance) list.Add(L("★초열 랜스", "★THERMAL LANCE", "★サーマルランス", "★超热长枪", "★LANCE THERMIQUE", "★LANZA TÉRMICA"));
+        return list.Count > 0 ? "  ·  " + string.Join(" ", list) : "";
+    }
+
     string BuildSummary()
     {
         var parts = new List<string>();
@@ -614,7 +657,8 @@ public sealed class SlicePlayer : MonoBehaviour
             int count = run.UpgradeStacks(spec.Id);
             if (count > 0) parts.Add($"{spec.Names[language]} ×{count}");
         }
-        return parts.Count > 0 ? string.Join(" · ", parts) : L("기본 장비", "BASE LOADOUT", "初期装備", "基础装备", "ÉQUIPEMENT DE BASE", "EQUIPO BASE");
+        string baseLoadout = parts.Count > 0 ? string.Join(" · ", parts) : L("기본 장비", "BASE LOADOUT", "初期装備", "基础装备", "ÉQUIPEMENT DE BASE", "EQUIPO BASE");
+        return baseLoadout + AwakeningSummary();
     }
 
     string SurvivalGrade(bool win)
@@ -683,7 +727,10 @@ public sealed class SlicePlayer : MonoBehaviour
             resultStatsText.text = $"{run.Time:0}s   ·   {run.Kills:00} {L("격추", "HOSTILES", "撃破", "击破", "ENNEMIS", "ENEMIGOS")}   ·   LV {run.Level:00}\n{cause}  ·  {bossResult}\n{BuildSummary()}";
             int best = Mathf.Max(PlayerPrefs.GetInt(SaveKey + ".best", 0), Mathf.RoundToInt(run.Time));
             PlayerPrefs.SetInt(SaveKey + ".best", best); PlayerPrefs.Save();
-            bestText.text = $"{L("최고 생존", "BEST SURVIVAL", "最高生存", "最佳生存", "RECORD", "MEJOR MARCA")} {best}s   ·   SEED #{run.Seed}";
+            string modeBadge = run.IsDailyRun
+                ? L("오늘의 시드", "DAILY SEED", "本日シード", "今日种子", "GRAINE DU JOUR", "SEMILLA DIARIA")
+                : L("표준 시드", "SEED", "シード", "种子", "GRAINE", "SEMILLA");
+            bestText.text = $"{L("최고 생존", "BEST SURVIVAL", "最高生存", "最佳生存", "RECORD", "MEJOR MARCA")} {best}s   ·   {BalanceConfig.GetChassis(run.Chassis).Names[language]}   ·   {modeBadge} #{run.Seed}";
             if (playAgainLabelText) playAgainLabelText.text = L("다시 출격", "PLAY AGAIN", "もう一度出撃", "再次出发", "REJOUER", "JUGAR DE NUEVO");
             FocusControl(playAgainButton);
         }
@@ -704,9 +751,16 @@ public sealed class SlicePlayer : MonoBehaviour
         resultScreen.SetActive(run.Phase == Phase.Won || run.Phase == Phase.Lost);
         if (run.Phase == Phase.Briefing)
         {
+            var chassisSpec = BalanceConfig.GetChassis(selectedChassis);
             menuTitleText.text = "NEON\nSURVIVOR";
-            menuSubtitleText.text = L("어둠 속 마지막 불빛", "A LAST LIGHT IN THE DARK", "闇に残る、最後の光", "黑暗中的最后一道光", "UNE DERNIÈRE LUEUR", "LA ÚLTIMA LUZ EN LA OSCURIDAD");
-            controlsText.text = L("이동  왼쪽 스틱 / WASD\n대시  오른쪽 버튼 / Space\n주포는 자동으로 발사됩니다", "MOVE   LEFT STICK / WASD\nDASH   RIGHT BUTTON / SPACE\nYOUR CANNON FIRES AUTOMATICALLY", "移動   左スティック / WASD\nダッシュ   右ボタン / Space\n主砲は自動発射", "移动   左侧摇杆 / WASD\n冲刺   右侧按钮 / Space\n主炮自动发射", "BOUGER   STICK GAUCHE / WASD\nDASH   BOUTON DROIT / ESPACE", "MOVER   CONTROL IZQUIERDO / WASD\nIMPULSO   BOTÓN DERECHO / ESPACIO");
+            menuSubtitleText.text = chassisSpec.Subtitles[language];
+            if (chassisLabelText) chassisLabelText.text = $"{L("기체 선택", "CHASSIS", "機体選択", "机体选择", "CHÂSSIS", "CHASIS")} : {chassisSpec.Names[language]} ▸";
+            DateTime kstNow = DateTime.UtcNow.AddHours(9);
+            uint dailySeed = Run.ComputeDailySeed(kstNow.Year, kstNow.Month, kstNow.Day);
+            if (modeLabelText) modeLabelText.text = dailyModeSelected
+                ? $"{L("오늘의 관측 시드", "DAILY OBSERVATORY SEED", "本日の観測シード", "今日观测种子", "GRAINE DU JOUR", "SEMILLA DIARIA")} #{dailySeed} ({kstNow:MM-dd}) ▸"
+                : $"{L("표준 작전 (매 출격 무작위 시드)", "STANDARD OPS (RANDOM SEED)", "標準作戦（ランダムシード）", "标准行动（随机种子）", "OPÉRATION STANDARD", "OPERACIÓN ESTÁNDAR")} ▸";
+            controlsText.text = L("이동 왼쪽 스틱/WASD · 대시 오른쪽 버튼/Space · 주포 자동 발사", "MOVE LEFT STICK/WASD · DASH RIGHT BUTTON/SPACE · AUTO FIRE", "移動 左スティック/WASD · ダッシュ 右ボタン/Space · 自動射撃", "移动 左摇杆/WASD · 冲刺 右按钮/Space · 自动射击", "BOUGER STICK/WASD · DASH BOUTON/ESPACE · TIR AUTO", "MOVER STICK/WASD · IMPULSO BOTÓN/ESPACIO · TIRO AUTO");
             if (launchLabelText) launchLabelText.text = L("출격 시작", "BEGIN DESCENT", "出撃する", "开始行动", "DÉMARRER", "INICIAR DESCENSO");
             if (languageLabelText) languageLabelText.text = new[] { "한국어 · 설정", "EN · SETTINGS", "日本語 · 設定", "简体中文 · 设置", "FR · OPTIONS", "ES · OPCIONES" }[language];
             FocusControl(launchButton);
@@ -737,7 +791,17 @@ public sealed class SlicePlayer : MonoBehaviour
     string L(string ko, string en, string ja, string zh, string fr, string es) => language == 1 ? en : language == 2 ? ja : language == 3 ? zh : language == 4 ? fr : language == 5 ? es : ko;
 
     void ChooseUpgrade(int index) { if (index < 0 || index >= run.Choices.Count) return; run.Choose(run.Choices[index]); Play(audioBank.Upgrade); ShowPhase(true); }
-    void ResetRun() { nextRunSeed = nextRunSeed * 1664525 + 1013904223; run = new Run(nextRunSeed); ClearInput(); accumulator = 0; hitStop = 0; seenPhase = -1; seenKills = 0; seenShots = 0; seenPickups = 0; seenBossAttack = 0; seenDash = 0; seenBossWarning = false; seenBossDown = false; }
+    void CycleChassis() { selectedChassis = (ChassisId)(((int)selectedChassis + 1) % 3); ShowPhase(true); }
+    void ToggleDailyMode() { dailyModeSelected = !dailyModeSelected; ShowPhase(true); }
+    void ResetRun()
+    {
+        DateTime kstNow = DateTime.UtcNow.AddHours(9);
+        uint seed = dailyModeSelected
+            ? Run.ComputeDailySeed(kstNow.Year, kstNow.Month, kstNow.Day)
+            : (nextRunSeed = nextRunSeed * 1664525 + 1013904223);
+        run = new Run(seed, selectedChassis, dailyModeSelected);
+        ClearInput(); accumulator = 0; hitStop = 0; seenPhase = -1; seenKills = 0; seenShots = 0; seenPickups = 0; seenBossAttack = 0; seenDash = 0; seenBossWarning = false; seenBossDown = false;
+    }
     void ClearInput() { pointer = -1; stick = Vector2.zero; dashQueued = false; accumulator = 0; if (stickControl) stickControl.ResetStick(); }
     void CycleLanguage() { language = (language + 1) % 6; PlayerPrefs.SetInt(SaveKey + ".language", language); foreach (var text in safeRoot.GetComponentsInChildren<Text>(true)) text.font = LocaleFont(); ShowPhase(true); }
     void ToggleSfx() { sfxOn = !sfxOn; PlayerPrefs.SetInt(SaveKey + ".sfx", sfxOn ? 1 : 0); ShowPhase(true); }
