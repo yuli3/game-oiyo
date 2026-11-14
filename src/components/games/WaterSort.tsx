@@ -62,7 +62,23 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [muted, setMuted] = useState(false);
     const [best, setBest] = useState<ConditionalBestRecord | null>(null);
     const [lastPour, setLastPour] = useState<{ to: number; count: number } | null>(null);
-    const [pouringAnim, setPouringAnim] = useState<{ from: number; to: number; color: number } | null>(null);
+    const [pouringAnim, setPouringAnim] = useState<{
+        from: number;
+        to: number;
+        color: number;
+        dx: number;
+        dy: number;
+        dir: 1 | -1;
+    } | null>(null);
+    const [dragState, setDragState] = useState<{
+        index: number;
+        pointerId: number;
+        startX: number;
+        startY: number;
+        dx: number;
+        dy: number;
+        active: boolean;
+    } | null>(null);
     const [dragOverTube, setDragOverTube] = useState<number | null>(null);
     const [showQrModal, setShowQrModal] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -99,6 +115,29 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const hapticsRef = useRef(createHaptics());
     const recordedSeedRef = useRef<number | null>(null);
     const tubeRefs = useRef<Array<HTMLButtonElement | null>>([]);
+    const boardWrapRef = useRef<HTMLDivElement | null>(null);
+    const fluidCanvasRef = useRef<HTMLCanvasElement | null>(null);
+    const particlesRef = useRef<Array<{
+        x: number;
+        y: number;
+        vx: number;
+        vy: number;
+        r: number;
+        color: string;
+        alpha: number;
+        life: number;
+        maxLife: number;
+        kind: 'drop' | 'bubble' | 'spark';
+    }>>([]);
+    const activeStreamRef = useRef<{
+        sx: number;
+        sy: number;
+        ex: number;
+        ey: number;
+        color: string;
+        start: number;
+        duration: number;
+    } | null>(null);
 
     const cue = useCallback((kind: CoreCue) => {
         if (muted || reducedMotion) return;
@@ -145,13 +184,195 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (containerRef.current) celebrate(containerRef.current, { preset: 'shards' });
     }, [game, elapsedSeconds, assist, cue, containerRef]);
 
+    useEffect(() => {
+        if (reducedMotion) return;
+        let rafId = 0;
+        let lastTime = performance.now();
+
+        const renderFrame = (now: number) => {
+            const dt = Math.min(0.05, (now - lastTime) / 1000);
+            lastTime = now;
+
+            const canvas = fluidCanvasRef.current;
+            const wrap = boardWrapRef.current;
+            if (canvas && wrap) {
+                const rect = wrap.getBoundingClientRect();
+                const dpr = Math.min(2, window.devicePixelRatio || 1);
+                const targetW = Math.max(1, Math.round(rect.width * dpr));
+                const targetH = Math.max(1, Math.round(rect.height * dpr));
+                if (canvas.width !== targetW || canvas.height !== targetH) {
+                    canvas.width = targetW;
+                    canvas.height = targetH;
+                }
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                    ctx.clearRect(0, 0, rect.width, rect.height);
+
+                    const stream = activeStreamRef.current;
+                    if (stream) {
+                        const progress = (now - stream.start) / stream.duration;
+                        if (progress >= 1) {
+                            activeStreamRef.current = null;
+                        } else {
+                            const headT = Math.min(1, progress / 0.35);
+                            const tailT = progress > 0.7 ? (progress - 0.7) / 0.3 : 0;
+                            const midX = (stream.sx + stream.ex) * 0.5;
+                            const midY = Math.min(stream.sy, stream.ey) + 18;
+
+                            const quadAt = (t: number) => {
+                                const inv = 1 - t;
+                                return {
+                                    x: inv * inv * stream.sx + 2 * inv * t * midX + t * t * stream.ex,
+                                    y: inv * inv * stream.sy + 2 * inv * t * midY + t * t * stream.ey,
+                                };
+                            };
+
+                            const steps = 14;
+                            ctx.save();
+                            ctx.lineCap = 'round';
+                            ctx.strokeStyle = stream.color;
+                            ctx.lineWidth = Math.max(3, 8 * (1 - progress * 0.35));
+                            ctx.globalAlpha = 0.92;
+                            ctx.beginPath();
+                            for (let s = 0; s <= steps; s++) {
+                                const t = tailT + (headT - tailT) * (s / steps);
+                                const pt = quadAt(t);
+                                if (s === 0) ctx.moveTo(pt.x, pt.y);
+                                else ctx.lineTo(pt.x, pt.y);
+                            }
+                            ctx.stroke();
+
+                            ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+                            ctx.lineWidth = 2;
+                            ctx.stroke();
+                            ctx.restore();
+                        }
+                    }
+
+                    const nextParticles: typeof particlesRef.current = [];
+                    for (const p of particlesRef.current) {
+                        p.life += dt;
+                        if (p.life >= p.maxLife) continue;
+                        if (p.kind === 'drop') {
+                            p.vy += 680 * dt;
+                        } else if (p.kind === 'bubble') {
+                            p.vy -= 120 * dt;
+                            p.vx += Math.sin(p.life * 16) * 20 * dt;
+                        } else {
+                            p.vx *= 0.94;
+                            p.vy *= 0.94;
+                        }
+                        p.x += p.vx * dt;
+                        p.y += p.vy * dt;
+                        const fade = 1 - p.life / p.maxLife;
+                        ctx.save();
+                        ctx.globalAlpha = p.alpha * fade;
+                        ctx.fillStyle = p.color;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.r * (p.kind === 'spark' ? fade + 0.3 : 1), 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                        nextParticles.push(p);
+                    }
+                    particlesRef.current = nextParticles;
+                }
+            }
+
+            if (activeStreamRef.current || particlesRef.current.length > 0) {
+                rafId = window.requestAnimationFrame(renderFrame);
+            } else {
+                rafId = 0;
+            }
+        };
+
+        const kickoff = () => {
+            if (!rafId && (activeStreamRef.current || particlesRef.current.length > 0)) {
+                lastTime = performance.now();
+                rafId = window.requestAnimationFrame(renderFrame);
+            }
+        };
+
+        const interval = window.setInterval(kickoff, 32);
+        return () => {
+            window.clearInterval(interval);
+            if (rafId) window.cancelAnimationFrame(rafId);
+        };
+    }, [reducedMotion]);
+
     const executeMove = (fromIndex: number, toIndex: number) => {
         if (!game || game.status === 'solved' || fromIndex === toIndex) return;
         const next = moveWaterSort(game, { from: fromIndex, to: toIndex });
         if (next !== game) {
             const topColor = game.tubes[fromIndex][game.tubes[fromIndex].length - 1];
-            setPouringAnim({ from: fromIndex, to: toIndex, color: topColor });
-            setTimeout(() => setPouringAnim(null), 360);
+            const colorHex = COLORS[topColor] ?? '#3b82f6';
+            const fromEl = tubeRefs.current[fromIndex];
+            const toEl = tubeRefs.current[toIndex];
+            const wrapEl = boardWrapRef.current;
+
+            let dx = 0;
+            let dy = -20;
+            const dir: 1 | -1 = fromIndex <= toIndex ? 1 : -1;
+
+            if (fromEl && toEl && wrapEl && !reducedMotion) {
+                const wrapRect = wrapEl.getBoundingClientRect();
+                const fromRect = fromEl.getBoundingClientRect();
+                const toRect = toEl.getBoundingClientRect();
+
+                const sideOffset = dir === 1 ? -toRect.width * 0.55 : toRect.width * 0.55;
+                dx = (toRect.left + toRect.width / 2 + sideOffset) - (fromRect.left + fromRect.width / 2);
+                dy = (toRect.top - 26) - fromRect.top;
+
+                const sx = (toRect.left - wrapRect.left) + toRect.width / 2 + (dir === 1 ? -10 : 10);
+                const sy = (toRect.top - wrapRect.top) - 8;
+                const fillRatio = Math.max(0.15, Math.min(0.95, next.tubes[toIndex].length / 4));
+                const ex = (toRect.left - wrapRect.left) + toRect.width / 2;
+                const ey = (toRect.top - wrapRect.top) + toRect.height * (1 - fillRatio * 0.82);
+
+                activeStreamRef.current = {
+                    sx,
+                    sy,
+                    ex,
+                    ey,
+                    color: colorHex,
+                    start: performance.now(),
+                    duration: 360,
+                };
+
+                for (let k = 0; k < 12; k++) {
+                    const angle = -Math.PI * 0.85 + Math.random() * Math.PI * 0.7;
+                    const speed = 70 + Math.random() * 140;
+                    particlesRef.current.push({
+                        x: ex + (Math.random() - 0.5) * 10,
+                        y: ey,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed - 40,
+                        r: 2 + Math.random() * 2.6,
+                        color: k % 3 === 0 ? '#ffffff' : colorHex,
+                        alpha: 0.9,
+                        life: 0,
+                        maxLife: 0.35 + Math.random() * 0.25,
+                        kind: 'drop',
+                    });
+                }
+                for (let b = 0; b < 5; b++) {
+                    particlesRef.current.push({
+                        x: ex + (Math.random() - 0.5) * 18,
+                        y: ey + 10 + Math.random() * 18,
+                        vx: (Math.random() - 0.5) * 18,
+                        vy: -25 - Math.random() * 30,
+                        r: 1.5 + Math.random() * 2,
+                        color: '#ffffff',
+                        alpha: 0.7,
+                        life: 0,
+                        maxLife: 0.4 + Math.random() * 0.25,
+                        kind: 'bubble',
+                    });
+                }
+            }
+
+            setPouringAnim({ from: fromIndex, to: toIndex, color: topColor, dx, dy, dir });
+            setTimeout(() => setPouringAnim(null), 380);
 
             setUndo((history) => [...history.slice(-49), game]);
             setLastPour({ to: toIndex, count: pouredLayerCount(game.tubes, next.tubes, toIndex) });
@@ -164,6 +385,28 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             if (isCompleted) {
                 addTrauma(0.25);
                 MobileHapticsPro.heavy();
+                if (toEl && wrapEl && !reducedMotion) {
+                    const wrapRect = wrapEl.getBoundingClientRect();
+                    const toRect = toEl.getBoundingClientRect();
+                    const cx = toRect.left - wrapRect.left + toRect.width / 2;
+                    const cy = toRect.top - wrapRect.top + toRect.height * 0.35;
+                    for (let sp = 0; sp < 18; sp++) {
+                        const a = (Math.PI * 2 * sp) / 18;
+                        const spd = 90 + Math.random() * 120;
+                        particlesRef.current.push({
+                            x: cx,
+                            y: cy,
+                            vx: Math.cos(a) * spd,
+                            vy: Math.sin(a) * spd,
+                            r: 2.5 + Math.random() * 2,
+                            color: sp % 2 === 0 ? '#fde047' : colorHex,
+                            alpha: 1,
+                            life: 0,
+                            maxLife: 0.45 + Math.random() * 0.25,
+                            kind: 'spark',
+                        });
+                    }
+                }
             } else {
                 addTrauma(0.08);
             }
@@ -176,7 +419,81 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setDragOverTube(null);
     };
 
+    const wasDraggedRef = useRef(false);
+
+    const findTubeAtPoint = (clientX: number, clientY: number, excludeIndex: number): number | null => {
+        for (let idx = 0; idx < tubeRefs.current.length; idx++) {
+            if (idx === excludeIndex) continue;
+            const el = tubeRefs.current[idx];
+            if (!el) continue;
+            const r = el.getBoundingClientRect();
+            const pad = 10;
+            if (clientX >= r.left - pad && clientX <= r.right + pad && clientY >= r.top - pad && clientY <= r.bottom + pad) {
+                return idx;
+            }
+        }
+        return null;
+    };
+
+    const handleTubePointerDown = (e: React.PointerEvent<HTMLButtonElement>, index: number) => {
+        if (!game || game.status === 'solved' || game.tubes[index].length === 0) return;
+        if (e.button !== 0 && e.pointerType === 'mouse') return;
+        wasDraggedRef.current = false;
+        e.currentTarget.setPointerCapture(e.pointerId);
+        setDragState({
+            index,
+            pointerId: e.pointerId,
+            startX: e.clientX,
+            startY: e.clientY,
+            dx: 0,
+            dy: 0,
+            active: false,
+        });
+    };
+
+    const handleTubePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+        if (!dragState || dragState.pointerId !== e.pointerId) return;
+        const dx = e.clientX - dragState.startX;
+        const dy = e.clientY - dragState.startY;
+        const distSq = dx * dx + dy * dy;
+        const isActive = dragState.active || distSq > 64;
+        if (isActive && !dragState.active) {
+            wasDraggedRef.current = true;
+            setSelectedTube(dragState.index);
+            MobileHapticsPro.selection();
+        }
+        if (isActive) {
+            setDragState({ ...dragState, dx, dy, active: true });
+            const hit = findTubeAtPoint(e.clientX, e.clientY, dragState.index);
+            if (hit !== dragOverTube) setDragOverTube(hit);
+        }
+    };
+
+    const handleTubePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+        if (!dragState || dragState.pointerId !== e.pointerId) return;
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+            e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+        if (dragState.active) {
+            const target = findTubeAtPoint(e.clientX, e.clientY, dragState.index);
+            const fromIndex = dragState.index;
+            setDragState(null);
+            setDragOverTube(null);
+            if (target !== null) {
+                executeMove(fromIndex, target);
+            } else {
+                setSelectedTube(null);
+            }
+        } else {
+            setDragState(null);
+        }
+    };
+
     const handleTubeClick = (index: number) => {
+        if (wasDraggedRef.current) {
+            wasDraggedRef.current = false;
+            return;
+        }
         if (!game || game.status === 'solved') return;
         if (selectedTube === null) {
             if (game.tubes[index].length > 0) {
@@ -321,76 +638,95 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     </div>
                     {hint && <p className="mb-5 text-xs font-bold text-primary" role="status">{t.hintMove(hint.from + 1, hint.to + 1)}</p>}
                     {deadEnd && <p className="mb-5 max-w-sm text-center text-xs font-bold text-destructive" role="alert">{t.deadEnd}</p>}
-                    <div className="mb-8 grid grid-cols-4 gap-3 sm:grid-cols-8 sm:gap-4 justify-items-center" role="group" aria-label={t.title}>
-                        {tubes.map((tube, i) => {
-                            const isCompleted = tube.length === 4 && tube.every((c) => c === tube[0]);
-                            const isPouringSource = pouringAnim?.from === i;
-                            const isDragTarget = dragOverTube === i;
-                            const pourAngle = isPouringSource
-                                ? pouringAnim.from < pouringAnim.to
-                                    ? '35deg'
-                                    : '-35deg'
-                                : '0deg';
+                    <div ref={boardWrapRef} className="relative mb-8 w-full flex justify-center">
+                        <canvas
+                            ref={fluidCanvasRef}
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-0 z-40 h-full w-full"
+                        />
+                        <div className="grid grid-cols-4 gap-3 sm:grid-cols-8 sm:gap-4 justify-items-center" role="group" aria-label={t.title}>
+                            {tubes.map((tube, i) => {
+                                const isCompleted = tube.length === 4 && tube.every((c) => c === tube[0]);
+                                const isPouringSource = pouringAnim?.from === i;
+                                const isDraggingThis = dragState?.active && dragState.index === i;
+                                const isDragTarget = dragOverTube === i;
 
-                            return (
-                                <button
-                                    type="button"
-                                    key={i}
-                                    draggable={tube.length > 0 && !isWon}
-                                    onDragStart={(e) => {
-                                        e.dataTransfer.setData('text/plain', String(i));
-                                        setSelectedTube(i);
-                                        MobileHapticsPro.selection();
-                                    }}
-                                    onDragOver={(e) => {
-                                        e.preventDefault();
-                                        if (dragOverTube !== i) setDragOverTube(i);
-                                    }}
-                                    onDragLeave={() => {
-                                        if (dragOverTube === i) setDragOverTube(null);
-                                    }}
-                                    onDrop={(e) => {
-                                        e.preventDefault();
-                                        const from = Number(e.dataTransfer.getData('text/plain'));
-                                        if (!isNaN(from) && from !== i) {
-                                            executeMove(from, i);
-                                        }
-                                        setDragOverTube(null);
-                                    }}
-                                    ref={(element) => { tubeRefs.current[i] = element; }}
-                                    tabIndex={focusedTube === i ? 0 : -1}
-                                    onFocus={() => setFocusedTube(i)}
-                                    onKeyDown={(event) => { if (event.key === 'ArrowRight' || event.key === 'ArrowDown') { event.preventDefault(); focusTube(i + 1); } if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') { event.preventDefault(); focusTube(i - 1); } if (event.key === 'Home') { event.preventDefault(); focusTube(0); } if (event.key === 'End') { event.preventDefault(); focusTube(tubes.length - 1); } }}
-                                    onClick={() => handleTubeClick(i)}
-                                    aria-pressed={selectedTube === i}
-                                    aria-label={`${t.tube(i + 1, tube.length, tube.map((color) => String(color + 1)).join('-'))}${selectedTube === i ? `, ${t.selected}` : ''}${isCompleted ? ', 완료' : ''}`}
-                                    style={{
-                                        '--pour-rot': pourAngle,
-                                    } as React.CSSProperties}
-                                    className={`relative h-32 w-12 cursor-pointer overflow-hidden rounded-b-3xl border-4 ${isCompleted ? 'border-primary ring-2 ring-primary/40 shadow-md shadow-primary/20' : 'border-muted'} sm:h-40 sm:w-14 ${!reducedMotion ? 'transition-all duration-300' : ''} focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-4 ${isDragTarget ? 'scale-105 border-primary ring-2 ring-primary' : ''} ${selectedTube === i ? `ring-4 ring-primary ring-offset-4 ${!reducedMotion ? '-translate-y-3' : ''}` : (!reducedMotion ? 'hover:-translate-y-1' : '')} ${isPouringSource ? 'transform rotate-(--pour-rot) -translate-y-4 z-30' : ''}`}
-                                >
-                                    {isCompleted && (
-                                        <span className="absolute top-1 right-1 z-10 size-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
-                                    )}
-                                    <span className="absolute inset-0 flex flex-col-reverse">{tube.map((color, idx) => {
-                                        const poured = Boolean(lastPour && lastPour.to === i && lastPour.count > 0 && idx >= tube.length - lastPour.count);
-                                        return (
-                                            <span
-                                                key={idx}
-                                                style={{ backgroundColor: COLORS[color], backgroundImage: PATTERNS[color], backgroundSize: color === 1 ? '12px 12px' : undefined }}
-                                                className={`h-1/4 w-full relative flex items-center justify-center border-t border-white/25 ${idx === tube.length - 1 ? 'rounded-t-sm shadow-xs' : ''} ${poured && !reducedMotion ? 'oiyo-pour' : ''}`}
-                                            >
-                                                {colorblind !== 'none' && (
-                                                    <span className="text-xs font-black text-white drop-shadow-xs select-none">
-                                                        {getColorblindSymbol(color)}
-                                                    </span>
-                                                )}
-                                            </span>
-                                        );
-                                    })}</span>
-                                </button>
-                            );
-                        })}
+                                let tubeTx = '0px';
+                                let tubeTy = '0px';
+                                let tubeRot = '0deg';
+                                let tubeScale = '1';
+                                if (isDraggingThis && dragState) {
+                                    const tilt = Math.max(-22, Math.min(22, dragState.dx * 0.14));
+                                    tubeTx = `${dragState.dx}px`;
+                                    tubeTy = `${dragState.dy - 14}px`;
+                                    tubeRot = `${tilt}deg`;
+                                    tubeScale = '1.06';
+                                } else if (isPouringSource && pouringAnim) {
+                                    tubeTx = `${pouringAnim.dx}px`;
+                                    tubeTy = `${pouringAnim.dy}px`;
+                                    tubeRot = `${pouringAnim.dir * 42}deg`;
+                                } else if (isDragTarget) {
+                                    tubeTy = '-8px';
+                                    tubeScale = '1.05';
+                                } else if (selectedTube === i) {
+                                    tubeTy = reducedMotion ? '0px' : '-12px';
+                                }
+
+                                return (
+                                    <button
+                                        type="button"
+                                        key={i}
+                                        ref={(element) => { tubeRefs.current[i] = element; }}
+                                        tabIndex={focusedTube === i ? 0 : -1}
+                                        onFocus={() => setFocusedTube(i)}
+                                        onKeyDown={(event) => { if (event.key === 'ArrowRight' || event.key === 'ArrowDown') { event.preventDefault(); focusTube(i + 1); } if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') { event.preventDefault(); focusTube(i - 1); } if (event.key === 'Home') { event.preventDefault(); focusTube(0); } if (event.key === 'End') { event.preventDefault(); focusTube(tubes.length - 1); } }}
+                                        onPointerDown={(e) => handleTubePointerDown(e, i)}
+                                        onPointerMove={handleTubePointerMove}
+                                        onPointerUp={handleTubePointerUp}
+                                        onPointerCancel={handleTubePointerUp}
+                                        onClick={() => handleTubeClick(i)}
+                                        aria-pressed={selectedTube === i}
+                                        aria-label={`${t.tube(i + 1, tube.length, tube.map((color) => String(color + 1)).join('-'))}${selectedTube === i ? `, ${t.selected}` : ''}${isCompleted ? ', 완료' : ''}`}
+                                        style={{
+                                            '--tube-tx': tubeTx,
+                                            '--tube-ty': tubeTy,
+                                            '--tube-rot': tubeRot,
+                                            '--tube-scale': tubeScale,
+                                        } as React.CSSProperties}
+                                        className={`relative h-32 w-12 touch-none select-none cursor-grab active:cursor-grabbing overflow-hidden rounded-b-3xl border-4 ${isCompleted ? 'border-primary ring-2 ring-primary/40 shadow-md shadow-primary/20' : 'border-muted'} sm:h-40 sm:w-14 ${!reducedMotion && !isDraggingThis ? 'transition-all duration-300' : ''} focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-4 translate-x-(--tube-tx) translate-y-(--tube-ty) rotate-(--tube-rot) scale-(--tube-scale) ${isDragTarget ? 'border-primary ring-2 ring-primary' : ''} ${selectedTube === i && !isDraggingThis && !isPouringSource ? 'ring-4 ring-primary ring-offset-4' : (!reducedMotion && !isDraggingThis && !isPouringSource ? 'hover:-translate-y-1' : '')} ${isDraggingThis || isPouringSource ? 'z-30 shadow-xl' : ''}`}
+                                    >
+                                        <span className="pointer-events-none absolute inset-y-2 left-1 z-20 w-1 rounded-full bg-white/30" aria-hidden="true" />
+                                        {isCompleted && (
+                                            <span className="pointer-events-none absolute top-1 right-1 z-20 size-2.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
+                                        )}
+                                        <span className="absolute inset-0 flex flex-col-reverse">{tube.map((color, idx) => {
+                                            const poured = Boolean(lastPour && lastPour.to === i && lastPour.count > 0 && idx >= tube.length - lastPour.count);
+                                            const isTop = idx === tube.length - 1;
+                                            return (
+                                                <span
+                                                    key={idx}
+                                                    style={{
+                                                        '--layer-bg': COLORS[color],
+                                                        '--layer-img': PATTERNS[color],
+                                                        '--layer-size': color === 1 ? '12px 12px' : 'auto',
+                                                    } as React.CSSProperties}
+                                                    className={`h-1/4 w-full relative flex items-center justify-center border-t border-white/25 bg-(--layer-bg) bg-(image:--layer-img) bg-(length:--layer-size) ${isTop ? 'rounded-t-sm shadow-xs' : ''} ${poured && !reducedMotion ? 'oiyo-pour' : ''}`}
+                                                >
+                                                    {isTop && (
+                                                        <span className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-white/35" aria-hidden="true" />
+                                                    )}
+                                                    {colorblind !== 'none' && (
+                                                        <span className="text-xs font-black text-white drop-shadow-xs select-none">
+                                                            {getColorblindSymbol(color)}
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            );
+                                        })}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                     {isWon && game && <div className={`w-full max-w-md rounded-3xl border border-primary/30 bg-primary/5 p-6 text-center ${!reducedMotion ? 'animate-in zoom-in-95' : ''}`} role="status">
                         <div className="flex justify-center mb-3">
