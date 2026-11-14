@@ -508,6 +508,12 @@ export default function DotDungeonRogue({ locale = "en" }: { locale?: string }) 
         </div>
 
         <div className="flex items-center gap-2">
+          <a
+            href="/prototypes/dot-dungeon-rogue-unity/index.html"
+            className="flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-lg border border-primary/50 bg-primary/15 text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
+          >
+            🛰️ Unity 3D 10개 층 던전 탐험 에디션
+          </a>
           <button
             type="button"
             onClick={() => setSoundEnabled(!soundEnabled)}
