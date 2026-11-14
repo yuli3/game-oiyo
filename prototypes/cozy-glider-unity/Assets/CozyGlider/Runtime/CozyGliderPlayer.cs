@@ -396,7 +396,7 @@ public sealed class CozyGliderPlayer : MonoBehaviour
         GUI.Label(new Rect(26, 16, 620, 24),
             $"COZY GLIDER 3D UNITY  |  STAGE {_stage}/{TotalStages} ({_stageNames[_stage - 1]})  |  RINGS: {_ringsCleared}/{_rings.Count}  |  SHELLS: {_shells} 🐚", bold);
         GUI.Label(new Rect(26, 38, 620, 20),
-            $"Speed: {_speed:0.0} m/s  •  Alt: {_gliderPos.y:0} m  •  Feathers: {'🪶'.ToString()}{_feathers}/{_maxFeathers}  •  Time: {_stageTimer:0.0}s");
+            $"Speed: {_speed:0.0} m/s  •  Alt: {_gliderPos.y:0} m  •  Feathers: 🪶 {_feathers}/{_maxFeathers}  •  Time: {_stageTimer:0.0}s");
 
         if (GUI.Button(new Rect(Screen.width - 170, 16, 144, 38), _showStageMap ? "Close Stages" : "12 Stages Map"))
         {

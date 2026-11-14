@@ -232,7 +232,13 @@ export default function CozyGlider({ locale }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/prototypes/cozy-glider-unity/index.html"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/15 px-3 py-2 text-xs font-black text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
+          >
+            🛰️ Unity 3D 실시간 활공 에디션 (12스테이지)
+          </a>
           <TiltGliderActionButton
             onClick={() => {
               MobileHapticsPro.click();
