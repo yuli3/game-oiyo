@@ -316,6 +316,86 @@ export default function PotionCraft() {
     syncState();
   };
 
+  // Tactile rotary gesture state for Mortar & Cauldron
+  const [pestleDeg, setPestleDeg] = useState(0);
+  const [ladleDeg, setLadleDeg] = useState(0);
+  const mortarGestureRef = useRef<{ active: boolean; prevAngle: number; accum: number }>({
+    active: false,
+    prevAngle: 0,
+    accum: 0,
+  });
+  const cauldronGestureRef = useRef<{ active: boolean; prevAngle: number; accum: number }>({
+    active: false,
+    prevAngle: 0,
+    accum: 0,
+  });
+
+  const stepAngleDelta = (prev: number, next: number) => {
+    let delta = next - prev;
+    if (delta > Math.PI) delta -= Math.PI * 2;
+    if (delta < -Math.PI) delta += Math.PI * 2;
+    return delta;
+  };
+
+  const getPointerAngle = (e: React.PointerEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2));
+  };
+
+  const handleMortarPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!activeIngredient || grindProgress >= 1) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    mortarGestureRef.current = { active: true, prevAngle: getPointerAngle(e), accum: 0 };
+  };
+
+  const handleMortarPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const g = mortarGestureRef.current;
+    if (!g.active || !activeIngredient || grindProgress >= 1) return;
+    const angle = getPointerAngle(e);
+    const delta = stepAngleDelta(g.prevAngle, angle);
+    g.prevAngle = angle;
+    g.accum += Math.abs(delta);
+    setPestleDeg((d) => (d + (delta * 180) / Math.PI) % 360);
+    if (g.accum >= 0.85) {
+      g.accum = 0;
+      handleGrind();
+    }
+  };
+
+  const handleMortarPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    mortarGestureRef.current.active = false;
+  };
+
+  const handleCauldronPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isFailed) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    cauldronGestureRef.current = { active: true, prevAngle: getPointerAngle(e), accum: 0 };
+  };
+
+  const handleCauldronPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const g = cauldronGestureRef.current;
+    if (!g.active || isFailed) return;
+    const angle = getPointerAngle(e);
+    const delta = stepAngleDelta(g.prevAngle, angle);
+    g.prevAngle = angle;
+    g.accum += Math.abs(delta);
+    setLadleDeg((d) => (d + (delta * 180) / Math.PI) % 360);
+    if (g.accum >= 1.55) {
+      g.accum = 0;
+      handleStir();
+    }
+  };
+
+  const handleCauldronPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    cauldronGestureRef.current.active = false;
+  };
+
   // Brew & Serve Customer
   const handleBrewAndServe = () => {
     initAudio();
@@ -692,7 +772,7 @@ export default function PotionCraft() {
 
       {/* Laboratory Workbench Controls */}
       <div className="w-full max-w-2xl mt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
-        {/* 1. Mortar & Pestle (약초 빻기) */}
+        {/* 1. Mortar & Pestle (약초 빻기 — 원형 드래그 다이얼 + 보조 버튼) */}
         <div className="bg-card/90 border border-border rounded-xl p-3 flex flex-col justify-between shadow-md">
           <div>
             <div className="flex items-center justify-between mb-1.5">
@@ -702,8 +782,32 @@ export default function PotionCraft() {
               </span>
             </div>
             <p className="text-xs text-muted-foreground mb-2">
-              {activeIngredient ? `${inventory[activeIngredient].name}` : '약초를 선택하세요'}
+              {activeIngredient ? `${inventory[activeIngredient].name} · 원을 그려 빻기` : '약초를 선택하세요'}
             </p>
+            <div
+              onPointerDown={handleMortarPointerDown}
+              onPointerMove={handleMortarPointerMove}
+              onPointerUp={handleMortarPointerUp}
+              onPointerCancel={handleMortarPointerUp}
+              role="slider"
+              aria-label="절구통 회전 분쇄"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(grindProgress * 100)}
+              tabIndex={0}
+              className={`mx-auto mb-2.5 flex size-16 touch-none select-none items-center justify-center rounded-full border-2 border-dashed ${
+                activeIngredient && grindProgress < 1
+                  ? 'border-primary bg-primary/10 cursor-grab active:cursor-grabbing'
+                  : 'border-border bg-muted/40 opacity-50'
+              }`}
+            >
+              <span
+                style={{ '--pestle-rot': `${pestleDeg}deg` } as React.CSSProperties}
+                className="text-2xl rotate-(--pestle-rot) pointer-events-none"
+              >
+                🪨
+              </span>
+            </div>
             {/* Grind Progress Bar */}
             <div className="w-full bg-muted h-2 rounded-full overflow-hidden mb-3">
               <div
@@ -719,7 +823,7 @@ export default function PotionCraft() {
               disabled={!activeIngredient || grindProgress >= 1}
               className="flex-1 py-1.5 bg-muted hover:bg-muted/80 text-foreground font-bold text-xs rounded border border-border disabled:opacity-40"
             >
-              🔨 빻기 (Grind)
+              🔨 빻기
             </TiltPotionButton>
             <TiltPotionButton
               onClick={handleAddToCauldron}
@@ -731,7 +835,7 @@ export default function PotionCraft() {
           </div>
         </div>
 
-        {/* 2. Cauldron & Ladle (가마솥 젓기 및 희석) */}
+        {/* 2. Cauldron & Ladle (가마솥 원형 젓기 + 희석) */}
         <div className="bg-card/90 border border-border rounded-xl p-3 flex flex-col justify-between shadow-md">
           <div>
             <div className="flex items-center justify-between mb-1.5">
@@ -747,9 +851,28 @@ export default function PotionCraft() {
                 {isFailed ? '⚠️ 파괴됨' : '정상 가동'}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground mb-3">
-              국자를 저어 궤적을 전진시키고, 물을 부어 중심 원점으로 미세 조정하세요.
+            <p className="text-xs text-muted-foreground mb-2">
+              국자를 빙글빙글 돌려 궤적을 전진시키고 물로 희석하세요.
             </p>
+            <div
+              onPointerDown={handleCauldronPointerDown}
+              onPointerMove={handleCauldronPointerMove}
+              onPointerUp={handleCauldronPointerUp}
+              onPointerCancel={handleCauldronPointerUp}
+              aria-label="가마솥 국자 회전 젓기"
+              className={`mx-auto mb-2.5 flex size-16 touch-none select-none items-center justify-center rounded-full border-2 border-dashed ${
+                !isFailed
+                  ? 'border-warning bg-warning/10 cursor-grab active:cursor-grabbing'
+                  : 'border-destructive/40 bg-destructive/10 opacity-50'
+              }`}
+            >
+              <span
+                style={{ '--ladle-rot': `${ladleDeg}deg` } as React.CSSProperties}
+                className="text-2xl rotate-(--ladle-rot) pointer-events-none"
+              >
+                🥄
+              </span>
+            </div>
           </div>
 
           <div className="flex gap-1.5">
@@ -758,7 +881,7 @@ export default function PotionCraft() {
               disabled={isFailed}
               className="flex-1 py-1.5 bg-muted hover:bg-muted/80 text-foreground font-bold text-xs rounded border border-border disabled:opacity-40"
             >
-              🥄 젓기 (Stir)
+              🥄 젓기
             </TiltPotionButton>
             <TiltPotionButton
               onClick={handleAddWater}
