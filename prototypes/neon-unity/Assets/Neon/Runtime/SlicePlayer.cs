@@ -24,11 +24,15 @@ public sealed class SlicePlayer : MonoBehaviour
     ChassisId selectedChassis = ChassisId.AegisProbe;
     bool dailyModeSelected;
     ObservatoryCodex codex = new ObservatoryCodex();
-    readonly List<Transform> enemies = new List<Transform>();
-    readonly List<SpriteRenderer> enemyRenderers = new List<SpriteRenderer>();
-    readonly List<Transform> gems = new List<Transform>();
-    readonly List<Transform> hostileShots = new List<Transform>();
-    readonly List<Transform> orbitalBlades = new List<Transform>();
+    readonly List<Transform> enemies = new List<Transform>(32);
+    readonly List<SpriteRenderer> enemyRenderers = new List<SpriteRenderer>(32);
+    readonly List<Transform> gems = new List<Transform>(64);
+    readonly List<SpriteRenderer> gemRenderers = new List<SpriteRenderer>(64);
+    readonly List<Transform> hostileShots = new List<Transform>(32);
+    readonly List<Transform> orbitalBlades = new List<Transform>(6);
+    int lastScreenWidth, lastScreenHeight;
+    Rect lastSafeArea;
+    bool copiedFeedback;
     Transform ship, engineGlow, dashRing, gravityWellRing, tetherBeam, background;
     SpriteRenderer shipRenderer;
     Transform extractionMarker, safeLane;
@@ -50,12 +54,12 @@ public sealed class SlicePlayer : MonoBehaviour
     Canvas canvas;
     RectTransform safeRoot;
     Text timerText, healthText, levelText, killsText, bossText, warningText, objectiveText, menuTitleText, menuSubtitleText, controlsText, resultTitleText, resultStatsText, bestText;
-    Text launchLabelText, languageLabelText, chassisLabelText, modeLabelText, pauseTitleText, continueLabelText, retryLabelText, soundLabelText, musicLabelText, motionLabelText, choiceEyebrowText, choiceHeadingText, choiceFooterText, playAgainLabelText;
+    Text launchLabelText, languageLabelText, chassisLabelText, modeLabelText, pauseTitleText, continueLabelText, retryLabelText, soundLabelText, musicLabelText, motionLabelText, choiceEyebrowText, choiceHeadingText, choiceFooterText, playAgainLabelText, shareLabelText;
     Image healthFill, bossFill, beamImage, xpFill, titleArtImage, resultArtImage;
     GameObject titleScreen, hudScreen, pauseScreen, upgradeScreen, resultScreen, wardenHealthPanel;
     readonly Button[] upgradeButtons = new Button[3];
     readonly Text[] upgradeTitles = new Text[3];
-    Button dashButton, pauseButton, launchButton, chassisButton, modeButton, continueButton, playAgainButton;
+    Button dashButton, pauseButton, launchButton, chassisButton, modeButton, continueButton, playAgainButton, shareButton;
     Text dashLabel;
     StickControl stickControl;
     Font fontKo, fontJa, fontZh;
@@ -353,11 +357,14 @@ public sealed class SlicePlayer : MonoBehaviour
             var backdrop = PanelObject("Report KeyArt", veil.transform, new Color(1, 1, 1, .35f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             resultArtImage = backdrop.GetComponent<Image>(); resultArtImage.sprite = titleKeyArtSprite; resultArtImage.type = Image.Type.Simple;
         }
-        var card = PanelObject("Report card", veil.transform, Panel, new Vector2(.07f, .18f), new Vector2(.93f, .82f), Vector2.zero, Vector2.zero);
-        resultTitleText = TextObject("Report title", card.transform, "", 52, Ivory, TextAnchor.MiddleCenter, new Vector2(.08f, .74f), new Vector2(.92f, .92f)); resultTitleText.fontStyle = FontStyle.Bold;
-        resultStatsText = TextObject("Report stats", card.transform, "", 23, Cyan, TextAnchor.MiddleCenter, new Vector2(.06f, .4f), new Vector2(.94f, .72f));
-        bestText = TextObject("Best record", card.transform, "", 19, new Color32(180, 200, 218, 255), TextAnchor.MiddleCenter, new Vector2(.08f, .28f), new Vector2(.92f, .39f));
-        playAgainButton = MakeButton("Play again", card.transform, "", new Vector2(.1f, .1f), new Vector2(.9f, .24f), Cyan, () => { Play(audioBank.UiClick); ResetRun(); run.Start(); UpdateMusic(0); ShowPhase(true); });
+        var card = PanelObject("Report card", veil.transform, Panel, new Vector2(.07f, .16f), new Vector2(.93f, .84f), Vector2.zero, Vector2.zero);
+        resultTitleText = TextObject("Report title", card.transform, "", 50, Ivory, TextAnchor.MiddleCenter, new Vector2(.08f, .76f), new Vector2(.92f, .93f)); resultTitleText.fontStyle = FontStyle.Bold;
+        resultStatsText = TextObject("Report stats", card.transform, "", 22, Cyan, TextAnchor.MiddleCenter, new Vector2(.06f, .44f), new Vector2(.94f, .75f));
+        bestText = TextObject("Best record", card.transform, "", 18, new Color32(180, 200, 218, 255), TextAnchor.MiddleCenter, new Vector2(.08f, .33f), new Vector2(.92f, .43f));
+        shareButton = MakeButton("Share telemetry", card.transform, "", new Vector2(.1f, .20f), new Vector2(.9f, .31f), new Color32(31, 55, 79, 255), () => { Play(audioBank.UiClick); CopyTelemetry(); });
+        shareLabelText = shareButton.GetComponentInChildren<Text>();
+        shareLabelText.color = Amber;
+        playAgainButton = MakeButton("Play again", card.transform, "", new Vector2(.1f, .06f), new Vector2(.9f, .18f), Cyan, () => { Play(audioBank.UiClick); ResetRun(); run.Start(); UpdateMusic(0); ShowPhase(true); });
         playAgainLabelText = playAgainButton.GetComponentInChildren<Text>();
         playAgainLabelText.color = Ink;
     }
@@ -395,10 +402,12 @@ public sealed class SlicePlayer : MonoBehaviour
     void SetButtonCaption(Button b, string value) { var t = b.GetComponentInChildren<Text>(); if (t) t.text = value; }
     void Stretch(RectTransform t) { t.anchorMin = Vector2.zero; t.anchorMax = Vector2.one; t.offsetMin = Vector2.zero; t.offsetMax = Vector2.zero; }
 
-    void ApplySafeArea()
+    void ApplySafeArea(bool force = false)
     {
         if (!safeRoot || Screen.width == 0 || Screen.height == 0) return;
         Rect safe = Screen.safeArea;
+        if (!force && Screen.width == lastScreenWidth && Screen.height == lastScreenHeight && safe == lastSafeArea) return;
+        lastScreenWidth = Screen.width; lastScreenHeight = Screen.height; lastSafeArea = safe;
         float frameWidth = Mathf.Min(safe.width, safe.height * 9f / 16f);
         float left = safe.xMin + (safe.width - frameWidth) * .5f;
         safeRoot.anchorMin = new Vector2(left / Screen.width, safe.yMin / Screen.height);
@@ -547,10 +556,14 @@ public sealed class SlicePlayer : MonoBehaviour
 
         for (int i = 0; i < run.Gems.Count; i++)
         {
-            if (i == gems.Count) gems.Add(Make("Lumen shard", gemSprite, Color.white, .44f));
+            if (i == gems.Count)
+            {
+                var g = Make("Lumen shard", gemSprite, Color.white, .44f);
+                gems.Add(g); gemRenderers.Add(g.GetComponent<SpriteRenderer>());
+            }
             var gem = gems[i]; gem.gameObject.SetActive(true);
             gem.position = new Vector3(run.Gems[i].X, run.Gems[i].Y, 0);
-            var sr = gem.GetComponent<SpriteRenderer>();
+            var sr = gemRenderers[i];
             sr.sprite = (i == run.Gems.Count - 1 && run.WardenDefeated) ? coreSprite : gemSprite;
             if (!reducedMotion) gem.Rotate(0, 0, 90 * Time.unscaledDeltaTime);
         }
@@ -569,7 +582,8 @@ public sealed class SlicePlayer : MonoBehaviour
         extractionMarker.gameObject.SetActive(run.ExtractionActive);
         extractionMarker.localScale = Vector3.one * (2.6f + (reducedMotion ? 0 : Mathf.Sin(Time.unscaledTime * 4) * .22f));
 
-        var warden = run.Enemies.Find(e => Run.IsBoss(e.Kind));
+        Enemy warden = null;
+        for (int i = 0; i < run.Enemies.Count; i++) if (Run.IsBoss(run.Enemies[i].Kind)) { warden = run.Enemies[i]; break; }
         bossTellRing.gameObject.SetActive(warden != null && run.WardenAttackTelegraph);
         safeLane.gameObject.SetActive(warden != null && run.WardenAttackTelegraph);
         if (warden != null && run.WardenAttackTelegraph)
@@ -758,13 +772,30 @@ public sealed class SlicePlayer : MonoBehaviour
             PlayerPrefs.SetString(SaveKey + ".codex", codex.Serialize());
             int best = Mathf.Max(PlayerPrefs.GetInt(SaveKey + ".best", 0), codex.BestSurvivalSeconds);
             PlayerPrefs.SetInt(SaveKey + ".best", best); PlayerPrefs.Save();
+            copiedFeedback = false;
             string modeBadge = run.IsDailyRun
                 ? L("오늘의 시드", "DAILY SEED", "本日シード", "今日种子", "GRAINE DU JOUR", "SEMILLA DIARIA")
                 : L("표준 시드", "SEED", "シード", "种子", "GRAINE", "SEMILLA");
             bestText.text = $"{L("최고 생존", "BEST SURVIVAL", "最高生存", "最佳生存", "RECORD", "MEJOR MARCA")} {best}s   ·   {L("관측 도감", "CODEX", "観測図鑑", "观测图鉴", "CODEX", "CÓDICE")} {codex.UnlockedMilestones}/6   ·   {modeBadge} #{run.Seed}";
+            UpdateShareCaption();
             if (playAgainLabelText) playAgainLabelText.text = L("다시 출격", "PLAY AGAIN", "もう一度出撃", "再次出发", "REJOUER", "JUGAR DE NUEVO");
             FocusControl(playAgainButton);
         }
+    }
+
+    void CopyTelemetry()
+    {
+        GUIUtility.systemCopyBuffer = run.BuildTelemetryCode();
+        copiedFeedback = true;
+        UpdateShareCaption();
+    }
+
+    void UpdateShareCaption()
+    {
+        if (!shareLabelText) return;
+        shareLabelText.text = copiedFeedback
+            ? L("✓ 관측 코드 복사됨", "✓ TELEMETRY COPIED", "✓ 観測コードをコピー", "✓ 已复制观测代码", "✓ CODE COPIÉ", "✓ CÓDIGO COPIADO")
+            : L("관측 코드 복사 · 공유", "COPY TELEMETRY CODE", "観測コードをコピー", "复制观测代码", "COPIER LE CODE", "COPIAR CÓDIGO");
     }
 
     void FocusControl(Selectable s)
@@ -830,7 +861,8 @@ public sealed class SlicePlayer : MonoBehaviour
         uint seed = dailyModeSelected
             ? Run.ComputeDailySeed(kstNow.Year, kstNow.Month, kstNow.Day)
             : (nextRunSeed = nextRunSeed * 1664525 + 1013904223);
-        run = new Run(seed, selectedChassis, dailyModeSelected);
+        run.Reset(seed, selectedChassis, dailyModeSelected);
+        copiedFeedback = false;
         ClearInput(); accumulator = 0; hitStop = 0; seenPhase = -1; seenKills = 0; seenShots = 0; seenPickups = 0; seenBossAttack = 0; seenDash = 0; seenBossWarning = false; seenBossDown = false;
     }
     void ClearInput() { pointer = -1; stick = Vector2.zero; dashQueued = false; accumulator = 0; if (stickControl) stickControl.ResetStick(); }

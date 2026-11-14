@@ -67,6 +67,35 @@ static class Checks
         codex.RecordRun(win);
         var roundTrip=ObservatoryCodex.Deserialize(codex.Serialize());
         Check(roundTrip.TotalRuns==1&&roundTrip.TotalExtractions==1&&roundTrip.UnlockedMilestones>=1,"ObservatoryCodex serializes and restores milestone state");
+        string telemetry=win.BuildTelemetryCode();
+        Check(telemetry.StartsWith("NEON-v1|")&&telemetry.Contains("|AEG|"),"BuildTelemetryCode formats deterministic share code");
+        var poolRun=new Run(9001);
+        for(int r=0;r<20;r++)
+        {
+            poolRun.Reset((uint)(9001+r), (ChassisId)(r%3), r%2==0);
+            poolRun.Start();
+            for(int s=0;s<600&&poolRun.Phase==Phase.Playing;s++)
+            {
+                poolRun.Step(new Vec(1,0), s%120==0);
+                if(poolRun.Phase==Phase.Upgrade)poolRun.Choose(poolRun.Choices[0]);
+            }
+        }
+        GC.Collect();GC.WaitForPendingFinalizers();GC.Collect();
+        long memStart=GC.GetTotalMemory(true);
+        for(int r=0;r<20;r++)
+        {
+            poolRun.Reset((uint)(9500+r), (ChassisId)(r%3), r%2==0);
+            poolRun.Start();
+            for(int s=0;s<600&&poolRun.Phase==Phase.Playing;s++)
+            {
+                poolRun.Step(new Vec(0,1), s%120==0);
+                if(poolRun.Phase==Phase.Upgrade)poolRun.Choose(poolRun.Choices[0]);
+            }
+        }
+        GC.Collect();GC.WaitForPendingFinalizers();GC.Collect();
+        long memEnd=GC.GetTotalMemory(true);
+        double memDriftRatio = memStart > 0 ? Math.Abs(memEnd - memStart) / (double)memStart : 0;
+        Check(memDriftRatio <= 0.02 || Math.Abs(memEnd - memStart) < 32768,"20 consecutive Run.Reset cycles keep managed heap growth within 2% budget");
         var invalid=Started();invalid.Step(new Vec(float.NaN,float.PositiveInfinity),false);Check(!float.IsNaN(invalid.Position.X),"non-finite input is sanitized");
         Console.WriteLine("CORE CHECKS: "+count+" passed. Unity rendering/device certification NOT assessed.");
     }

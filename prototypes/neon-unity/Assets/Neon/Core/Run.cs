@@ -29,8 +29,8 @@ namespace Oiyo.Neon
         public const float StepSeconds=BalanceConfig.StepSeconds, Duration=BalanceConfig.RunDuration;
         public const float HalfWidth=BalanceConfig.HalfWidth, HalfHeight=BalanceConfig.HalfHeight;
         public Phase Phase { get; private set; }=Phase.Briefing;
-        public ChassisId Chassis { get; }
-        public bool IsDailyRun { get; }
+        public ChassisId Chassis { get; private set; }
+        public bool IsDailyRun { get; private set; }
         public EnemyKind ActiveBossKind => (Seed & 1u) == 0u ? EnemyKind.SolarArchitect : EnemyKind.Warden;
         public float ActiveBossMaxHp => ActiveBossKind == EnemyKind.SolarArchitect ? BalanceConfig.ArchitectHealth : BalanceConfig.WardenHealth;
         public Vec Position { get; private set; } public Vec Facing { get; private set; }=new Vec(1,0);
@@ -54,7 +54,7 @@ namespace Oiyo.Neon
         public float ExtractionDistance => (Position-ExtractionPosition).Length;
         public bool IsBonusChoice { get; private set; }
         public string FailureReason { get; private set; }
-        public uint Seed { get; }
+        public uint Seed { get; private set; }
         public EnemyKind LastHitTargetKind { get; private set; }
         public int Shots { get; private set; } public int XpProgress => xp;
         public int XpNeeded => BalanceConfig.XpForNextLevel(Level);
@@ -81,22 +81,56 @@ namespace Oiyo.Neon
         public float GravityWellRadius => BalanceConfig.GravityWellBaseRadius*(AwakenedSingularity ? 1.25f : 1f);
         public bool HasEventHorizon => Stack(Upgrade.EventHorizon)>0;
         public bool WardenAttackTelegraph => WardenSpawned&&!WardenDefeated&&wardenAttackClock>0&&wardenAttackClock<=BalanceConfig.WardenAttackTell;
-        public readonly List<Enemy> Enemies=new List<Enemy>();
-        public readonly List<Vec> Gems=new List<Vec>();
-        public readonly List<HostileShot> HostileShots=new List<HostileShot>();
+        public readonly List<Enemy> Enemies=new List<Enemy>(32);
+        public readonly List<Vec> Gems=new List<Vec>(64);
+        public readonly List<HostileShot> HostileShots=new List<HostileShot>(32);
         readonly List<Upgrade> choices=new List<Upgrade>(3);
-        readonly Dictionary<Upgrade,int> stacks=new Dictionary<Upgrade,int>();
+        readonly List<Upgrade> choicePool=new List<Upgrade>(12);
+        readonly Dictionary<Upgrade,int> stacks=new Dictionary<Upgrade,int>(12);
         uint random; int nextId,xp; float spawnClock,fireClock,hurtClock,wardenContactClock,wardenAttackClock,orbitalClock;
         public IReadOnlyList<Upgrade> Choices=>choices;
 
         public Run(uint seed, ChassisId chassis = ChassisId.AegisProbe, bool isDailyRun = false)
         {
+            Reset(seed, chassis, isDailyRun);
+        }
+
+        // WHY (2026-11-14): Reset in-place so 20+ consecutive restarts reuse existing Enemy/Gem/HostileShot list buffers without GC heap churn.
+        public void Reset(uint seed, ChassisId chassis = ChassisId.AegisProbe, bool isDailyRun = false)
+        {
             Seed=seed==0?1u:seed; random=Seed;
             Chassis=chassis; IsDailyRun=isDailyRun;
+            Phase=Phase.Briefing;
+            Position=new Vec(0,0); Facing=new Vec(1,0);
+            Time=0; DashTime=0; DashCooldown=0;
+            Kills=0; Level=1; xp=0; nextId=0;
+            MagnetRange=BalanceConfig.PickupMagnetRange;
+            WardenHp=0; WardenSpawned=false; WardenDefeated=false; WardenWarning=false;
+            WardenSafeLaneDirection=new Vec(.94f,.34f);
+            HasActiveTether=false; TetherStart=new Vec(); TetherEnd=new Vec();
+            IsBonusChoice=false; FailureReason=null;
+            LastHitTargetKind=EnemyKind.Drone;
+            Shots=0; LastShotTarget=new Vec();
+            ShotSerial=0; DashSerial=0; BossAttackSerial=0;
+            LastHitSerial=0; LastPickupSerial=0; LastKillSerial=0;
+            OrbitalAngle=0;
+            spawnClock=0; fireClock=0; hurtClock=0; wardenContactClock=0; wardenAttackClock=0; orbitalClock=0;
+            Enemies.Clear(); Gems.Clear(); HostileShots.Clear(); choices.Clear(); stacks.Clear();
             var spec=BalanceConfig.GetChassis(chassis);
             MaxHp=spec.MaxHp; Hp=spec.MaxHp;
             MoveSpeed=spec.MoveSpeed; DashCooldownDuration=spec.DashCooldown;
             Damage=spec.Damage; FireInterval=spec.FireInterval;
+        }
+
+        public string BuildTelemetryCode()
+        {
+            string grade = (Phase == Phase.Won && WardenDefeated) ? "S"
+                : Phase == Phase.Won ? "A"
+                : (WardenDefeated || Time >= 150f) ? "B"
+                : Time >= 90f ? "C" : "D";
+            string ch = Chassis == ChassisId.LancerDart ? "LAN" : Chassis == ChassisId.BastionCarrier ? "CAR" : "AEG";
+            string mode = IsDailyRun ? "D" : "S";
+            return $"NEON-v1|{mode}{Seed}|{ch}|{grade}|{(int)Time}s|K{Kills}|L{Level}|W{AwakeningCount}";
         }
 
         public static uint ComputeDailySeed(int year, int month, int day)
@@ -332,7 +366,8 @@ namespace Oiyo.Neon
             wardenAttackClock-=dt;
             if(wardenAttackClock<=0)
             {
-                var boss=Enemies.Find(e=>IsBoss(e.Kind));if(boss==null)return;
+                Enemy boss=null;for(int i=0;i<Enemies.Count;i++)if(IsBoss(Enemies[i].Kind)){boss=Enemies[i];break;}
+                if(boss==null)return;
                 // WHY (2026-11-14): both Warden and Solar Architect preserve a deterministic 90-degree safe lane while rotating their volley pattern.
                 WardenSafeLaneDirection=SafeLaneFor(BossAttackSerial);
                 float safeAngle=(float)Math.Atan2(WardenSafeLaneDirection.Y,WardenSafeLaneDirection.X);
@@ -348,14 +383,14 @@ namespace Oiyo.Neon
         }
         void RollChoices(bool bonus)
         {
-            choices.Clear();IsBonusChoice=bonus;var pool=new List<Upgrade>();
-            foreach(var spec in UpgradeCatalog.Entries)if(Stack(spec.Id)<spec.MaxStacks)pool.Add(spec.Id);
-            while(choices.Count<BalanceConfig.UpgradeChoices&&pool.Count>0)
+            choices.Clear();IsBonusChoice=bonus;choicePool.Clear();
+            foreach(var spec in UpgradeCatalog.Entries)if(Stack(spec.Id)<spec.MaxStacks)choicePool.Add(spec.Id);
+            while(choices.Count<BalanceConfig.UpgradeChoices&&choicePool.Count>0)
             {
-                int total=0;foreach(var id in pool)total+=UpgradeCatalog.Get(id).Tier==UpgradeTier.Silver?4:UpgradeCatalog.Get(id).Tier==UpgradeTier.Gold?3:1;
-                int ticket=(int)(Random01()*total);Upgrade selected=pool[pool.Count-1];
-                foreach(var id in pool){ticket-=UpgradeCatalog.Get(id).Tier==UpgradeTier.Silver?4:UpgradeCatalog.Get(id).Tier==UpgradeTier.Gold?3:1;if(ticket<0){selected=id;break;}}
-                choices.Add(selected);pool.Remove(selected);
+                int total=0;foreach(var id in choicePool)total+=UpgradeCatalog.Get(id).Tier==UpgradeTier.Silver?4:UpgradeCatalog.Get(id).Tier==UpgradeTier.Gold?3:1;
+                int ticket=(int)(Random01()*total);Upgrade selected=choicePool[choicePool.Count-1];
+                foreach(var id in choicePool){ticket-=UpgradeCatalog.Get(id).Tier==UpgradeTier.Silver?4:UpgradeCatalog.Get(id).Tier==UpgradeTier.Gold?3:1;if(ticket<0){selected=id;break;}}
+                choices.Add(selected);choicePool.Remove(selected);
             }
             if(bonus){MaxHp+=BalanceConfig.CoreBonusMaxHp;Hp=Math.Min(MaxHp,Hp+BalanceConfig.CoreBonusHeal);}
         }
