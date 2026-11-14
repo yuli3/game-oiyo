@@ -475,7 +475,13 @@ export function SushiConveyor() {
         </div>
 
         {/* Wasabi Cores & Directives / Research Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/prototypes/sushi-conveyor-unity/index.html"
+            className="flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-lg border border-primary/50 bg-primary/15 text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
+          >
+            🛰️ Unity 3D 실시간 에디션 (12스테이지)
+          </a>
           <button
             type="button"
             onClick={() => setShowQuestModal(true)}
