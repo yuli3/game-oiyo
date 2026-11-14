@@ -472,6 +472,32 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
 
   return (
     <div className="not-prose my-10 mx-auto max-w-sm select-none rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm sm:p-5">
+      {/* Unity 6 3D WebGL Edition Banner */}
+      <div className="mb-4 flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-3 shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-lg">
+            🔨
+          </span>
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-foreground">
+              Unity 6 3D 12스테이지 두더지 잡기 4개국어 에디션
+            </span>
+            <span className="text-xs text-muted-foreground">
+              3D 아케이드 해머 • 황금 두더지 & 다이너마이트 • 4개국어(KO/EN/JA/ES)
+            </span>
+          </div>
+        </div>
+        <a
+          href="/prototypes/whack-a-mole-unity/index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
+        >
+          <span>3D 실행</span>
+          <span className="text-xs">↗</span>
+        </a>
+      </div>
+
       <header className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</h2>
