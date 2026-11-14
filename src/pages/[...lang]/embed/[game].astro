@@ -1,0 +1,53 @@
+---
+// Embeddable puzzle — a chrome-less page other sites can iframe.
+// Always noindex (the canonical game page carries the SEO), no ads (AdSense
+// must not run inside third-party frames). Framing is enabled by the
+// `! X-Frame-Options` exception for /:lang/embed/* in public/_headers.
+import "../../../styles/global.css";
+import TentsAndTreesComp from "../../../components/games/TentsAndTrees";
+import SudokuComp from "../../../components/games/Sudoku";
+import MinesweeperComp from "../../../components/games/Minesweeper";
+import Game2048Comp from "../../../components/games/Game2048";
+import DominoesComp from "../../../components/games/Dominoes";
+import { locales } from "../../../lib/i18n";
+import type { Locale } from "../../../lib/i18n";
+import { CATALOG_GAMES } from "../../../lib/games/game-recommendations";
+import { EMBED_COPY, EMBEDDABLE_GAMES, gamePageUrl, type EmbeddableGame } from "../../../data/embeddable-games";
+
+export async function getStaticPaths() {
+  return locales.flatMap((lang) =>
+    EMBEDDABLE_GAMES.map((game) => ({ params: { lang, game }, props: { locale: lang, game } })),
+  );
+}
+
+const { locale, game } = Astro.props as { locale: Locale; game: EmbeddableGame };
+const name = CATALOG_GAMES[game]?.name[locale] ?? CATALOG_GAMES[game]?.name.en ?? game;
+const c = EMBED_COPY[locale];
+const fullUrl = gamePageUrl(locale, game);
+const homeUrl = `https://game.oiyo.net/${locale}/`;
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href={fullUrl} />
+    <title>{name} — OIYO Games</title>
+  </head>
+  <body class="bg-background text-foreground">
+    <main class="p-2">
+      {game === "tents-and-trees" && <TentsAndTreesComp client:only="react" locale={locale} />}
+      {game === "sudoku" && <SudokuComp client:only="react" locale={locale} />}
+      {game === "minesweeper" && <MinesweeperComp client:only="react" locale={locale} />}
+      {game === "game-2048" && <Game2048Comp client:only="react" locale={locale} />}
+      {game === "dominoes" && <DominoesComp client:only="react" locale={locale} />}
+      <p class="mt-3 text-center text-xs text-muted-foreground">
+        <a href={fullUrl} target="_blank" rel="noopener" class="font-semibold text-primary hover:underline">{name} · {c.credit} ↗</a>
+        <span aria-hidden="true"> · </span>
+        <a href={homeUrl} target="_blank" rel="noopener" class="hover:underline">{c.more}</a>
+      </p>
+    </main>
+  </body>
+</html>

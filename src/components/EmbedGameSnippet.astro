@@ -1,0 +1,26 @@
+---
+// "Embed this game" box for the game page: a copyable iframe snippet whose
+// credit link is the natural backlink. Renders nothing for non-embeddable games.
+import type { Locale } from "../lib/i18n";
+import { CATALOG_GAMES } from "../lib/games/game-recommendations";
+import { EMBED_COPY, embedSnippet, isEmbeddableGame } from "../data/embeddable-games";
+
+interface Props {
+  slug: string;
+  locale: Locale;
+}
+
+const { slug, locale } = Astro.props;
+const ok = isEmbeddableGame(slug);
+const name = CATALOG_GAMES[slug]?.name[locale] ?? CATALOG_GAMES[slug]?.name.en ?? slug;
+const c = EMBED_COPY[locale];
+const snippet = ok ? embedSnippet(locale, slug, name) : "";
+---
+
+{ok && (
+  <section class="mx-auto mt-8 max-w-3xl px-4">
+    <h2 class="text-lg font-black text-foreground">{c.title}</h2>
+    <p class="mt-2 text-sm leading-6 text-muted-foreground">{c.desc}</p>
+    <pre class="mt-3 overflow-x-auto rounded-lg border border-border bg-card p-4 text-xs leading-6 text-foreground"><code>{snippet}</code></pre>
+  </section>
+)}
