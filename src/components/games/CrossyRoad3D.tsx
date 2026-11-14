@@ -496,6 +496,32 @@ export default function CrossyRoad3D() {
 
   return (
     <div className="flex flex-col items-center justify-center p-3 text-foreground max-w-4xl mx-auto select-none">
+      {/* Unity 6 3D WebGL Edition Banner */}
+      <div className="mb-2 flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-3 shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-lg">
+            🐔
+          </span>
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-foreground">
+              Unity 6 3D 12스테이지 복셀 길 건너기 4개국어 에디션
+            </span>
+            <span className="text-xs text-muted-foreground">
+              3D 복셀 치킨 • 통나무 뗏목 표류 & 고속열차 회피 • 4개국어(KO/EN/JA/ES)
+            </span>
+          </div>
+        </div>
+        <a
+          href="/prototypes/crossy-road-unity/index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
+        >
+          <span>3D 실행</span>
+          <span className="text-xs">↗</span>
+        </a>
+      </div>
+
       {/* Top Header: Score HUD & Highest Record */}
       <div className="w-full bg-card/90 border border-border rounded-xl p-3 mb-2 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">
