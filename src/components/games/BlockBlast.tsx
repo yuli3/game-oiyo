@@ -227,6 +227,36 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
       }
       className="relative mx-auto flex w-full max-w-xl translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) flex-col items-center justify-between rounded-3xl border border-border bg-card p-4 shadow-xl sm:p-6"
     >
+      {/* Unity 6 3D WebGL Edition Banner */}
+      <div className="mb-4 flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-3 shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-lg">
+            💎
+          </span>
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-foreground">
+              {locale === "ko"
+                ? "Unity 6 3D 12스테이지 블록 블래스트 4개국어 에디션"
+                : "Unity 6 3D 12-Stage Block Blast Multi-Language Edition"}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {locale === "ko"
+                ? "3D 크리스탈 네온 • 실시간 콤보 폭파 & 12스테이지 도전 • 4개국어(KO/EN/JA/ES)"
+                : "3D Crystal Neon • Real-time Combo Shatter & 12 Challenges • Multi-Language"}
+            </span>
+          </div>
+        </div>
+        <a
+          href="/prototypes/block-blast-unity/index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
+        >
+          <span>{locale === "ko" ? "3D 실행" : "Play 3D"}</span>
+          <span className="text-xs">↗</span>
+        </a>
+      </div>
+
       {/* Top Header: Score, High Score, Combo Banner */}
       <div className="flex w-full items-center justify-between border-b border-border pb-3">
         <div className="flex flex-col">
