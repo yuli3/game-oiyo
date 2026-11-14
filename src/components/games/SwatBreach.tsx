@@ -760,6 +760,42 @@ export default function SwatBreach({ locale = "ko" }: Props) {
         isImmersive ? "fixed inset-0 z-50 rounded-none border-none max-w-none justify-center" : "my-4"
       }`}
     >
+      {/* Unity 6 3D 12-Mission Tactical Breach Launch Banner */}
+      <div className="w-full border-b border-primary/30 bg-primary/10 p-3 px-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="text-xl">🛡️</span>
+          <div className="flex flex-col text-left">
+            <span className="text-xs font-bold text-foreground">
+              {lang === "ko"
+                ? "Unity 6 3D 12개 작전 CQB 전술 돌파 에디션"
+                : lang === "ja"
+                ? "Unity 6 3D 12作戦 CQB戦術突入エディション"
+                : lang === "es"
+                ? "Edición Unity 6 3D 12 Misiones Asalto Táctico CQB"
+                : "Unity 6 3D 12-Mission Tactical CQB Breach Edition"}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {lang === "ko"
+                ? "3D 방패/돌격 오퍼레이터 • 섬광탄/도어 브리칭 • 다국어 현지화(KO/EN/JA/ES)"
+                : lang === "ja"
+                ? "3D盾/突撃隊員 • 閃光弾/ドア突入 • 多言語対応(KO/EN/JA/ES)"
+                : lang === "es"
+                ? "Agentes 3D con Escudo y Asalto • Cegadoras y Brecha • Multilingüe(KO/EN/JA/ES)"
+                : "3D Shield & Assault Squad • Flashbang & Door Breach • Multi-Language Support(KO/EN/JA/ES)"}
+            </span>
+          </div>
+        </div>
+        <a
+          href="/prototypes/swat-breach-unity/index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors shrink-0"
+        >
+          <span>{lang === "ko" ? "3D 작전 개시" : lang === "ja" ? "3D作戦開始" : lang === "es" ? "Desplegar 3D" : "Deploy 3D"}</span>
+          <span className="text-xs">↗</span>
+        </a>
+      </div>
+
       {/* Top Header Bar */}
       <div className="w-full flex items-center justify-between px-4 py-2.5 bg-muted/40 border-b border-border">
         <div className="flex items-center gap-2">
