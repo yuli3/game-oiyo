@@ -362,6 +362,12 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/prototypes/frostpunk-ring-unity/index.html"
+            className="rounded-xl border border-primary/50 bg-primary/15 px-3 py-1.5 text-xs font-black text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
+          >
+            🛰️ Unity 3D 실시간 에디션
+          </a>
           <TiltFrostButton
             onClick={onQuickAutoSetup}
             className="rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow hover:opacity-90"
