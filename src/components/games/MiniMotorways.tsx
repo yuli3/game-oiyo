@@ -288,7 +288,13 @@ export default function MiniMotorways({ locale }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/prototypes/mini-motorways-unity/index.html"
+            className="rounded-xl border border-primary/50 bg-primary/15 px-3 py-2 text-xs font-black text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
+          >
+            🛰️ Unity 실시간 에디션
+          </a>
           <TiltMotorButton
             onClick={handlePreset}
             className="rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground hover:bg-accent"
