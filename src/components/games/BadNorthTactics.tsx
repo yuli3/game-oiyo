@@ -682,6 +682,32 @@ export default function BadNorthTactics() {
       }
       className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-6 text-card-foreground shadow-lg transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)"
     >
+      {/* Unity 6 3D WebGL Edition Banner */}
+      <div className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-3 shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-lg">
+            🛡️
+          </span>
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-foreground">
+              Unity 6 3D 12개 섬 군도 방어 전술 RTS 에디션
+            </span>
+            <span className="text-xs text-muted-foreground">
+              3D 섬 디오라마 • 바이킹 상륙선 접안 & 3대 병과 방진 • 4개국어(KO/EN/JA/ES)
+            </span>
+          </div>
+        </div>
+        <a
+          href="/prototypes/bad-north-tactics-unity/index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
+        >
+          <span>3D 실행</span>
+          <span className="text-xs">↗</span>
+        </a>
+      </div>
+
       {/* Top Header & Wave Controls */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div className="flex items-center gap-2">
