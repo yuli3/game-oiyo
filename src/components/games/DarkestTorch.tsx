@@ -231,6 +231,12 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/prototypes/darkest-torch-unity/index.html"
+            className="rounded-xl border border-primary/50 bg-primary/15 px-3 py-1.5 text-xs font-black text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
+          >
+            🛰️ Unity 3D 실시간 에디션
+          </a>
           <TiltTorchButton
             disabled={state.torchesInPack <= 0}
             onClick={onRelightTorch}
