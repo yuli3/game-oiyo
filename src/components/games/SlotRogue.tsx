@@ -248,6 +248,12 @@ export default function SlotRogue({ locale }: Props) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/prototypes/slot-rogue-unity/index.html"
+            className="flex items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/15 px-3 py-2 text-xs font-black text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
+          >
+            🎰 Unity 3D 10스테이지 슬롯머신
+          </a>
           <button
             type="button"
             onClick={handleShareCard}
