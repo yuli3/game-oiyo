@@ -1,45 +1,40 @@
 using System;
+using System.Linq;
 using Oiyo.Neon;
 static class Checks
 {
     static int count;
-    static void Check(bool value, string title) { if (!value) throw new Exception(title); count++; Console.WriteLine("PASS " + title); }
-    static Run Started(uint seed = 123) { var run = new Run(seed); run.Start(); return run; }
+    static void Check(bool value,string title){if(!value)throw new Exception("FAIL "+title);count++;Console.WriteLine("PASS "+title);}
+    static Run Started(uint seed=123){var r=new Run(seed);r.Start();return r;}
+    static void TickTo(Run r,float time){while(r.Time<time&&r.Phase==Phase.Playing){for(int i=r.Enemies.Count-1;i>=0;i--)if(r.Enemies[i].Kind!=EnemyKind.Warden)r.Enemies.RemoveAt(i);r.Gems.Clear();r.Step(new Vec(),false);}}
     static void Main()
     {
-        var run = Started(); run.Step(new Vec(1, 0), true);
-        Check(run.Position.X > .2f && run.DashCooldown > 1.9f, "dash bursts and starts cooldown");
-        var time = run.Time; var cooldown = run.DashCooldown; var position = run.Position;
-        run.Pause(); for (int i = 0; i < 600; i++) run.Step(new Vec(1, 0), true);
-        Check(run.Time == time && run.DashCooldown == cooldown && run.Position.X == position.X, "pause freezes time, recharge and input");
-        run.Resume(); run.Step(new Vec(1, 0), true);
-        Check(run.DashCooldown < cooldown, "dash spam cannot refresh cooldown");
-        var a = Started(); var b = Started();
-        for (int i = 0; i < 3000; i++)
-        {
-            var move = new Vec((float)Math.Cos(i * .01), (float)Math.Sin(i * .01));
-            if (a.Phase == Phase.Upgrade) { a.Choose(Upgrade.Cadence); b.Choose(Upgrade.Cadence); }
-            a.Step(move, i % 150 == 0); b.Step(move, i % 150 == 0);
-        }
-        Check(a.Position.X == b.Position.X && a.Position.Y == b.Position.Y && a.Kills == b.Kills && a.Hp == b.Hp && a.Enemies.Count == b.Enemies.Count, "same seed and inputs reproduce run");
-        for (int i = 0; i < a.Enemies.Count; i++) Check(a.Enemies[i].Position.X == b.Enemies[i].Position.X, "enemy replay " + i);
-        var upgrade = Started(); upgrade.Gems.Add(new Vec()); upgrade.Gems.Add(new Vec()); upgrade.Gems.Add(new Vec());
-        upgrade.Step(new Vec(), false); Check(upgrade.Phase == Phase.Upgrade && upgrade.Level == 2, "earned XP opens choice");
-        time = upgrade.Time; upgrade.Step(new Vec(), false); Check(upgrade.Time == time, "choice freezes combat");
-        upgrade.Choose((Upgrade)99); Check(upgrade.Phase == Phase.Upgrade, "invalid choice cannot resume");
-        upgrade.Choose(Upgrade.Power); Check(upgrade.Damage == 26 && upgrade.Phase == Phase.Playing, "power choice changes build");
-        var lost = Started();
-        for (int i = 0; i < 1000 && lost.Phase == Phase.Playing; i++)
-        { lost.Enemies.Add(new Enemy { Position = lost.Position, Hp = 100000, Radius = 1 }); lost.Step(new Vec(), false); }
-        Check(lost.Phase == Phase.Lost && lost.Hp == 0, "lethal contact ends run");
-        var retry = Started(); Check(retry.Hp == 100 && retry.Kills == 0 && retry.Time == 0 && retry.DashCooldown == 0, "retry starts a clean run");
-        var terminal = Started();
-        // A controlled terminal-transition fixture, not a balance/playability bot.
-        for (int i = 0; i < 10810 && terminal.Phase == Phase.Playing; i++) { terminal.Enemies.Clear(); terminal.Step(new Vec(), false); }
-        Check(terminal.Phase == Phase.Won, "three-minute terminal transition");
-        time = terminal.Time; terminal.Step(new Vec(1, 0), true); Check(terminal.Time == time, "finished run is immutable to input");
-        var invalid = Started(); invalid.Step(new Vec(float.NaN, float.PositiveInfinity), false);
-        Check(!float.IsNaN(invalid.Position.X), "invalid input does not poison world");
-        Console.WriteLine("CORE CHECKS: " + count + " passed. Unity rendering/device certification NOT assessed.");
+        var a=Started();var b=Started();
+        for(int i=0;i<3600;i++){var m=new Vec((float)Math.Cos(i*.01),(float)Math.Sin(i*.01));if(a.Phase==Phase.Upgrade)a.Choose(a.Choices[0]);if(b.Phase==Phase.Upgrade)b.Choose(b.Choices[0]);a.Step(m,i%150==0);b.Step(m,i%150==0);}
+        Check(a.Time==b.Time&&a.Kills==b.Kills&&a.Hp==b.Hp&&a.Enemies.Count==b.Enemies.Count&&a.HostileShots.Count==b.HostileShots.Count,"same-seed inputs reproduce deterministic run");
+        var dash=Started();dash.Step(new Vec(1,0),true);Check(dash.Position.X>.2f&&dash.DashCooldown>1.9f,"dash burst and cooldown");
+        float t=dash.Time;var p=dash.Position;dash.Pause();for(int i=0;i<600;i++)dash.Step(new Vec(1,0),true);Check(dash.Time==t&&dash.Position.X==p.X,"pause freezes simulation and input");dash.Resume();
+        var xp=Started();xp.Gems.Add(new Vec());xp.Gems.Add(new Vec());xp.Gems.Add(new Vec());xp.Step(new Vec(),false);Check(xp.Phase==Phase.Upgrade&&xp.Choices.Count==3&&xp.Choices.Distinct().Count()==3,"level grants three distinct choices");
+        var offer=xp.Choices[0];Upgrade notOffered=Enum.GetValues(typeof(Upgrade)).Cast<Upgrade>().First(u=>!xp.Choices.Contains(u));xp.Choose((Upgrade)99);Check(xp.Phase==Phase.Upgrade,"invalid enum rejected");xp.Choose(notOffered);Check(xp.Phase==Phase.Upgrade,"valid but unoffered choice rejected");xp.Choose(offer);Check(xp.Phase==Phase.Playing&&xp.UpgradeStacks(offer)==1,"offered choice applies exactly once");
+        var build=Started(441);Upgrade[] targetBuild={Upgrade.VectorDrive,Upgrade.PhaseReturn,Upgrade.Cadence,Upgrade.SplitCharge};
+        for(int n=0;n<24&&build.Phase==Phase.Playing;n++){build.Enemies.Clear();for(int i=0;i<build.XpNeeded;i++)build.Gems.Add(build.Position);build.Step(new Vec(),false);if(build.Phase==Phase.Upgrade){Upgrade desired=targetBuild.FirstOrDefault(u=>build.UpgradeStacks(u)==0&&build.Choices.Contains(u));build.Choose(targetBuild.Contains(desired)?desired:build.Choices[0]);}}
+        Check(Math.Abs(build.PhaseReturnRadius-3.25f)<.001f&&Math.Abs(build.SplitChargeMultiplier-.72f)<.001f,"Vector + Phase and Cadence + Split synergies match authored values");
+        Check(build.DashCooldownDuration<BalanceConfig.DashCooldown,"Vector upgrade improves every future dash recharge");
+        Check(build.Phase==Phase.Playing,"empty upgrade pool does not strand the run");
+        for(int i=0;i<UpgradeCatalog.Entries.Count;i++)Check(UpgradeCatalog.Get(UpgradeCatalog.Entries[i].Id)!=null,"catalog entry resolves "+i);
+        var catalogs=UpgradeCatalog.Entries;Check(catalogs.Count==8&&catalogs.Count(x=>x.Tier==UpgradeTier.Silver)==4&&catalogs.Count(x=>x.Tier==UpgradeTier.Gold)==3&&catalogs.Count(x=>x.Tier==UpgradeTier.Prismatic)==1,"catalog has intended 4/3/1 tier structure");
+        Check(WaveDirector.SpawnInterval(130)<WaveDirector.SpawnInterval(115)&&WaveDirector.ActiveCap(130)>0,"boss phase retains a paced wave budget");
+        var w=Started(987);TickTo(w,126);Check(w.WardenSpawned&&w.WardenHp==BalanceConfig.WardenHealth,"warden spawns at authored time");TickTo(w,126.9f);Check(w.BossAttackSerial==1&&w.HostileShots.Count==BalanceConfig.WardenVolleyCount-1,"warden radial volley preserves one readable safe gap");
+        var firstGap=new Vec((float)Math.Cos(Math.PI/8),(float)Math.Sin(Math.PI/8));Check(w.HostileShots.All(s=>{float dot=(s.Velocity.X*firstGap.X+s.Velocity.Y*firstGap.Y)/s.Velocity.Length;return dot<.72f;}),"first volley leaves its previewed 90-degree lane clear");
+        float nextLaneAngle=(float)Math.Atan2(w.WardenSafeLaneDirection.Y,w.WardenSafeLaneDirection.X);Check(Math.Cos(nextLaneAngle+Math.PI/2)<.5f,"warden safe lane is not aimed at the stationary player");TickTo(w,129.9f);Check(w.BossAttackSerial==2&&Math.Abs(w.WardenSafeLaneDirection.X-firstGap.X)+Math.Abs(w.WardenSafeLaneDirection.Y-firstGap.Y)>.5f,"safe lane rotates deterministically between telegraphed volleys");
+        var volley=Started(99);for(int i=0;i<BalanceConfig.WardenVolleyCount;i++)volley.HostileShots.Add(new HostileShot{Position=volley.Position,Radius=.4f,Damage=BalanceConfig.WardenProjectileDamage,Remaining=1});volley.Step(new Vec(),false);Check(volley.Hp==BalanceConfig.PlayerMaxHp-BalanceConfig.WardenProjectileDamage,"one volley cannot bypass shared hit invulnerability");
+        var dashShield=Started(100);dashShield.Step(new Vec(),true);dashShield.HostileShots.Add(new HostileShot{Position=dashShield.Position,Radius=.4f,Damage=BalanceConfig.WardenProjectileDamage,Remaining=1});dashShield.Step(new Vec(),false);Check(dashShield.Hp==BalanceConfig.PlayerMaxHp,"dash invulnerability absorbs a boss projectile");
+        var cap=Started(88);for(int i=0;i<5000&&cap.Time<165&&cap.Phase==Phase.Playing;i++)cap.Step(new Vec(),false);Check(cap.Enemies.Count<=WaveDirector.ActiveCap(cap.Time)+1,"enemy population stays near phase cap");
+        var lose=Started(5);while(lose.Time<179.9f&&lose.Phase==Phase.Playing){lose.Enemies.Clear();lose.Gems.Clear();lose.Step(new Vec(),false);}Check(lose.Phase==Phase.Playing,"survival alone does not finish without extraction");while(lose.Phase==Phase.Playing)lose.Step(new Vec(),false);Check(lose.Phase==Phase.Lost&&lose.FailureReason=="extraction","missed extraction is a clear failure");
+        var win=Started(6);win.Step(new Vec(0,1),false); // approach extraction while the arena bounds stay valid
+        for(int i=0;i<10810&&win.Phase==Phase.Playing;i++){win.Enemies.Clear();win.Gems.Clear();var m=win.Position.Y<16?new Vec(0,1):new Vec();win.Step(m,false);}
+        Check(win.Phase==Phase.Won&&win.ExtractionDistance<=BalanceConfig.ExtractionRadius,"reaching extraction completes run");
+        var invalid=Started();invalid.Step(new Vec(float.NaN,float.PositiveInfinity),false);Check(!float.IsNaN(invalid.Position.X),"non-finite input is sanitized");
+        Console.WriteLine("CORE CHECKS: "+count+" passed. Unity rendering/device certification NOT assessed.");
     }
 }

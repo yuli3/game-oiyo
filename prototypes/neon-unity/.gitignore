@@ -6,5 +6,6 @@ UserSettings/
 Builds/
 Verification/bin/
 Verification/obj/
+Verification/.local/
 *.csproj.user
 *.sln

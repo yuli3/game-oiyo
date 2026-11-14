@@ -1,127 +1,198 @@
-// PROTOTYPE ONLY — validates a three-minute loop; not a production port.
+// PROTOTYPE ONLY — validates the three-minute Neon Survivor loop.
 using System;
 using System.Collections.Generic;
 
 namespace Oiyo.Neon
 {
     public enum Phase { Briefing, Playing, Paused, Upgrade, Won, Lost }
-    public enum Upgrade { Power, Cadence, Hull }
+    public enum Upgrade { Power, Cadence, Hull, Magnet, VectorDrive, PhaseReturn, SplitCharge, EventHorizon }
+    public enum EnemyKind { Drone, Skitter, Bastion, Warden }
     public struct Vec
     {
         public float X, Y;
-        public Vec(float x, float y) { X = x; Y = y; }
-        public float Length => (float)Math.Sqrt(X * X + Y * Y);
-        public Vec Unit => Length > 0.0001f ? this * (1 / Length) : new Vec(1, 0);
-        public static Vec operator +(Vec a, Vec b) => new Vec(a.X + b.X, a.Y + b.Y);
-        public static Vec operator -(Vec a, Vec b) => new Vec(a.X - b.X, a.Y - b.Y);
-        public static Vec operator *(Vec a, float b) => new Vec(a.X * b, a.Y * b);
+        public Vec(float x, float y) { X=x; Y=y; }
+        public float Length => (float)Math.Sqrt(X*X+Y*Y);
+        public Vec Unit => Length>.0001f ? this*(1/Length) : new Vec(1,0);
+        public static Vec operator +(Vec a,Vec b)=>new Vec(a.X+b.X,a.Y+b.Y);
+        public static Vec operator -(Vec a,Vec b)=>new Vec(a.X-b.X,a.Y-b.Y);
+        public static Vec operator *(Vec a,float b)=>new Vec(a.X*b,a.Y*b);
     }
     public sealed class Enemy
     {
-        public int Id;
-        public Vec Position;
-        public float Hp, Speed, Radius, Telegraph;
+        public int Id; public EnemyKind Kind; public Vec Position; public float Hp,Speed,Radius,Telegraph,HitFlash;
+        internal float StrafePhase;
     }
+    public sealed class HostileShot { public Vec Position, Velocity; public float Radius, Damage, Remaining; }
     public sealed class Run
     {
-        public const float StepSeconds = 1f / 60f;
-        public const float Duration = 180;
-        public const float HalfWidth = 15, HalfHeight = 20;
-        public Phase Phase { get; private set; } = Phase.Briefing;
-        public Vec Position { get; private set; }
-        public Vec Facing { get; private set; } = new Vec(1, 0);
-        public float Time { get; private set; }
-        public float Hp { get; private set; } = 100;
-        public float MaxHp { get; private set; } = 100;
-        public float DashTime { get; private set; }
-        public float DashCooldown { get; private set; }
-        public int Kills { get; private set; }
-        public int Level { get; private set; } = 1;
-        public float Damage { get; private set; } = 18;
-        public float FireInterval { get; private set; } = 0.45f;
-        public int Shots { get; private set; }
-        public Vec LastShotTarget { get; private set; }
-        public readonly List<Enemy> Enemies = new List<Enemy>();
-        public readonly List<Vec> Gems = new List<Vec>();
-        uint random;
-        int nextId, xp;
-        float spawnClock, fireClock, hurtClock;
-        public Run(uint seed) { random = seed == 0 ? 1u : seed; }
-        public void Start() { if (Phase == Phase.Briefing) Phase = Phase.Playing; }
-        public void Pause() { if (Phase == Phase.Playing) Phase = Phase.Paused; }
-        public void Resume() { if (Phase == Phase.Paused) Phase = Phase.Playing; }
+        public const float StepSeconds=BalanceConfig.StepSeconds, Duration=BalanceConfig.RunDuration;
+        public const float HalfWidth=BalanceConfig.HalfWidth, HalfHeight=BalanceConfig.HalfHeight;
+        public Phase Phase { get; private set; }=Phase.Briefing;
+        public Vec Position { get; private set; } public Vec Facing { get; private set; }=new Vec(1,0);
+        public float Time { get; private set; } public float Hp { get; private set; }=BalanceConfig.PlayerMaxHp;
+        public float MaxHp { get; private set; }=BalanceConfig.PlayerMaxHp;
+        public float DashTime { get; private set; } public float DashCooldown { get; private set; }
+        public int Kills { get; private set; } public int Level { get; private set; }=1;
+        public float Damage { get; private set; }=BalanceConfig.PlayerDamage;
+        public float FireInterval { get; private set; }=BalanceConfig.FireInterval;
+        public float MoveSpeed { get; private set; }=BalanceConfig.PlayerSpeed;
+        public float DashCooldownDuration { get; private set; }=BalanceConfig.DashCooldown;
+        public float MagnetRange { get; private set; }=BalanceConfig.PickupMagnetRange;
+        public float WardenHp { get; private set; } public bool WardenSpawned { get; private set; }
+        public bool WardenDefeated { get; private set; } public bool WardenWarning { get; private set; }
+        public Vec WardenSafeLaneDirection { get; private set; }=new Vec(.94f,.34f);
+        public bool ExtractionActive => Time>=BalanceConfig.ExtractionStart && Phase==Phase.Playing;
+        public Vec ExtractionPosition => new Vec(0,HalfHeight-3);
+        public float ExtractionDistance => (Position-ExtractionPosition).Length;
+        public bool IsBonusChoice { get; private set; }
+        public string FailureReason { get; private set; }
+        public uint Seed { get; }
+        public EnemyKind LastHitTargetKind { get; private set; }
+        public int Shots { get; private set; } public int XpProgress => xp;
+        public int XpNeeded => BalanceConfig.XpForNextLevel(Level);
+        public Vec LastShotTarget { get; private set; } public int ShotSerial { get; private set; }
+        public int DashSerial { get; private set; } public int BossAttackSerial { get; private set; }
+        public int LastHitSerial { get; private set; } public int LastPickupSerial { get; private set; }
+        public int LastKillSerial { get; private set; }
+        public int PhaseReturnStacks => Stack(Upgrade.PhaseReturn);
+        public int SplitChargeStacks => Stack(Upgrade.SplitCharge);
+        public float PhaseReturnRadius => 2.6f*((Stack(Upgrade.VectorDrive)>0&&Stack(Upgrade.PhaseReturn)>0) ? 1.25f : 1f);
+        public float SplitChargeMultiplier => .6f*((Stack(Upgrade.Cadence)>0&&Stack(Upgrade.SplitCharge)>0) ? 1.2f : 1f);
+        public bool HasEventHorizon => Stack(Upgrade.EventHorizon)>0;
+        public bool WardenAttackTelegraph => WardenSpawned&&!WardenDefeated&&wardenAttackClock>0&&wardenAttackClock<=BalanceConfig.WardenAttackTell;
+        public readonly List<Enemy> Enemies=new List<Enemy>();
+        public readonly List<Vec> Gems=new List<Vec>();
+        public readonly List<HostileShot> HostileShots=new List<HostileShot>();
+        readonly List<Upgrade> choices=new List<Upgrade>(3);
+        readonly Dictionary<Upgrade,int> stacks=new Dictionary<Upgrade,int>();
+        uint random; int nextId,xp; float spawnClock,fireClock,hurtClock,wardenContactClock,wardenAttackClock;
+        public IReadOnlyList<Upgrade> Choices=>choices;
+        public Run(uint seed) { Seed=seed==0?1u:seed; random=Seed; }
+        public void Start(){if(Phase==Phase.Briefing)Phase=Phase.Playing;}
+        public void Pause(){if(Phase==Phase.Playing)Phase=Phase.Paused;}
+        public void Resume(){if(Phase==Phase.Paused)Phase=Phase.Playing;}
+        int Stack(Upgrade id)=>stacks.TryGetValue(id,out int n)?n:0;
+        public int UpgradeStacks(Upgrade id)=>Stack(id);
         public void Choose(Upgrade upgrade)
         {
-            if (Phase != Phase.Upgrade || !Enum.IsDefined(typeof(Upgrade), upgrade)) return;
-            if (upgrade == Upgrade.Power) Damage += 8;
-            if (upgrade == Upgrade.Cadence) FireInterval = Math.Max(0.15f, FireInterval * 0.85f);
-            if (upgrade == Upgrade.Hull) { MaxHp += 20; Hp = Math.Min(MaxHp, Hp + 35); }
-            Phase = Phase.Playing;
+            if(Phase!=Phase.Upgrade||!choices.Contains(upgrade))return;
+            var spec=UpgradeCatalog.Get(upgrade); if(spec==null||Stack(upgrade)>=spec.MaxStacks)return;
+            stacks[upgrade]=Stack(upgrade)+1;
+            switch(upgrade)
+            {
+                case Upgrade.Power: Damage*=1+spec.Magnitude; break;
+                case Upgrade.Cadence: FireInterval=Math.Max(.15f,FireInterval*(1-spec.Magnitude)); break;
+                case Upgrade.Hull: MaxHp+=spec.Magnitude; Hp=Math.Min(MaxHp,Hp+26); break;
+                case Upgrade.Magnet: MagnetRange+=spec.Magnitude; FireInterval=Math.Max(.15f,FireInterval*.92f); MoveSpeed*=1.03f; break;
+                case Upgrade.VectorDrive: MoveSpeed*=1+spec.Magnitude; DashCooldownDuration*=.92f; break;
+                case Upgrade.PhaseReturn: DashCooldownDuration*=.97f; break;
+                case Upgrade.EventHorizon: Damage*=1+spec.Magnitude; FireInterval*=.93f; MoveSpeed*=.76f; DashCooldownDuration*=1.10f; break;
+            }
+            choices.Clear(); IsBonusChoice=false; Phase=Phase.Playing;
         }
-        float Random01()
+        float Random01(){random^=random<<13;random^=random>>17;random^=random<<5;return(random>>8)/16777216f;}
+        Enemy MakeEnemy(EnemyKind kind,Vec position)
         {
-            // WHY (2026-11-13): Own the PRNG so engine/runtime changes cannot alter a replay.
-            random ^= random << 13; random ^= random >> 17; random ^= random << 5;
-            return (random >> 8) / 16777216f;
+            float hp=kind==EnemyKind.Bastion?BalanceConfig.BastionHp:kind==EnemyKind.Skitter?BalanceConfig.SkitterHp:kind==EnemyKind.Warden?BalanceConfig.WardenHealth:BalanceConfig.DroneHp;
+            float speed=kind==EnemyKind.Bastion?BalanceConfig.BastionSpeed:kind==EnemyKind.Skitter?BalanceConfig.SkitterSpeed:kind==EnemyKind.Warden?BalanceConfig.WardenSpeed:BalanceConfig.DroneSpeed;
+            float radius=kind==EnemyKind.Bastion?BalanceConfig.BastionRadius:kind==EnemyKind.Skitter?BalanceConfig.SkitterRadius:kind==EnemyKind.Warden?BalanceConfig.WardenRadius:BalanceConfig.DroneRadius;
+            return new Enemy{Id=++nextId,Kind=kind,Position=position,Hp=hp,Speed=speed,Radius=radius,Telegraph=.6f};
         }
-        public void Step(Vec move, bool dash)
+        public void Step(Vec move,bool dash)
         {
-            if (Phase != Phase.Playing) return;
-            if (float.IsNaN(move.X) || float.IsInfinity(move.X) || float.IsNaN(move.Y) || float.IsInfinity(move.Y)) move = new Vec();
-            const float dt = StepSeconds;
-            var length = move.Length;
-            if (length > 1) move = move.Unit;
-            if (move.Length > 0.05f) Facing = move.Unit;
-            if (dash && DashCooldown <= 0) { DashTime = 0.18f; DashCooldown = 2; }
-            float burst = Math.Min(dt, DashTime);
-            var direction = DashTime > 0 ? Facing : move;
-            var position = Position + direction * (5 * (dt + burst * 1.6f));
-            Position = new Vec(Math.Max(-HalfWidth, Math.Min(HalfWidth, position.X)), Math.Max(-HalfHeight, Math.Min(HalfHeight, position.Y)));
-            bool invulnerable = DashTime > 0;
-            DashTime = Math.Max(0, DashTime - dt);
-            DashCooldown = Math.Max(0, DashCooldown - dt);
-            hurtClock = Math.Max(0, hurtClock - dt);
-            Time += dt;
-            spawnClock -= dt;
-            if (spawnClock <= 0 && Enemies.Count < 120)
+            if(Phase!=Phase.Playing)return;
+            if(!Finite(move.X)||!Finite(move.Y))move=new Vec();
+            const float dt=StepSeconds; if(move.Length>1)move=move.Unit;
+            if(move.Length>.05f)Facing=move.Unit;
+            bool dashStarted=dash&&DashCooldown<=0;
+            if(dashStarted){DashTime=BalanceConfig.DashDuration;DashCooldown=DashCooldownDuration;DashSerial++;}
+            float burst=Math.Min(dt,DashTime);Vec direction=DashTime>0?Facing:move;
+            Vec p=Position+direction*(MoveSpeed*(dt+burst*1.6f));
+            Position=new Vec(Clamp(p.X,-HalfWidth,HalfWidth),Clamp(p.Y,-HalfHeight,HalfHeight));
+            bool invulnerable=DashTime>0;DashTime=Math.Max(0,DashTime-dt);DashCooldown=Math.Max(0,DashCooldown-dt);
+            hurtClock=Math.Max(0,hurtClock-dt);wardenContactClock=Math.Max(0,wardenContactClock-dt);Time+=dt;
+            WardenWarning=Time>=BalanceConfig.WardenWarningAt&&!WardenSpawned;
+            spawnClock-=dt;
+            bool wardenJustSpawned=false;
+            if(!WardenSpawned&&Time>=BalanceConfig.WardenSpawnAt)
+            {WardenSpawned=true;wardenJustSpawned=true;WardenHp=BalanceConfig.WardenHealth;wardenAttackClock=BalanceConfig.WardenAttackTell;WardenSafeLaneDirection=SafeLaneFor(BossAttackSerial);Enemies.Add(MakeEnemy(EnemyKind.Warden,new Vec(0,HalfHeight+5)));}
+            if(spawnClock<=0&&Enemies.Count<WaveDirector.ActiveCap(Time)&&Time<Duration)
+            {float a=Random01()*(float)Math.PI*2;var kind=WaveDirector.Choose(Time,Random01());Enemies.Add(MakeEnemy(kind,new Vec((float)Math.Cos(a)*(HalfWidth+3),(float)Math.Sin(a)*(HalfHeight+3))));spawnClock=WaveDirector.SpawnInterval(Time);}
+            Enemy nearest=null;float nearestDistance=float.MaxValue;
+            for(int i=0;i<Enemies.Count;i++)
             {
-                float angle = Random01() * (float)Math.PI * 2;
-                bool tank = Time > 60 && Random01() > 0.75f;
-                Enemies.Add(new Enemy { Id = ++nextId,
-                    Position = new Vec((float)Math.Cos(angle) * 18, (float)Math.Sin(angle) * 23),
-                    Hp = tank ? 90 : 26, Speed = tank ? 1.4f : 2.2f,
-                    Radius = tank ? 0.65f : 0.35f, Telegraph = 0.6f });
-                spawnClock = Math.Max(0.22f, 1.1f - Time / 220);
+                var e=Enemies[i];e.Telegraph=Math.Max(0,e.Telegraph-dt);e.HitFlash=Math.Max(0,e.HitFlash-dt);
+                Vec delta=Position-e.Position;float d=delta.Length;
+                if(e.Telegraph<=0)
+                {
+                    if(e.Kind==EnemyKind.Skitter)
+                    {Vec lateral=new Vec(-delta.Unit.Y,delta.Unit.X);e.StrafePhase+=dt*3.8f;e.Position+=delta.Unit*(e.Speed*.72f*dt)+lateral*((float)Math.Sin(e.StrafePhase)*e.Speed*.42f*dt);}
+                    else e.Position+=delta.Unit*(e.Speed*dt);
+                    d=(Position-e.Position).Length;
+                    if(d<nearestDistance){nearest=e;nearestDistance=d;}
+                    if(d<e.Radius+.35f)
+                    {
+                        float damage=e.Kind==EnemyKind.Warden?BalanceConfig.WardenContactDamage:BalanceConfig.ContactDamage;
+                        if((e.Kind==EnemyKind.Warden?wardenContactClock:hurtClock)<=0&&!invulnerable)
+                        {Hp=Math.Max(0,Hp-damage);if(e.Kind==EnemyKind.Warden)wardenContactClock=BalanceConfig.WardenContactCooldown;else hurtClock=BalanceConfig.ContactInvulnerability;LastHitSerial++;}
+                    }
+                }
             }
-            Enemy nearest = null; float distance = 100000;
-            foreach (var enemy in Enemies)
+            if(dashStarted&&PhaseReturnStacks>0)
+                foreach(var e in Enemies)if((e.Position-Position).Length<PhaseReturnRadius){e.Hp-=22*PhaseReturnStacks;e.HitFlash=.12f;e.Position=e.Position+(e.Position-Position).Unit*(1.05f*PhaseReturnStacks);}
+            if(!wardenJustSpawned)UpdateWardenVolley(dt);
+            for(int i=HostileShots.Count-1;i>=0;i--)
+            {var s=HostileShots[i];s.Position+=s.Velocity*dt;s.Remaining-=dt;if((s.Position-Position).Length<s.Radius+.3f){if(!invulnerable&&hurtClock<=0){Hp=Math.Max(0,Hp-s.Damage);LastHitSerial++;hurtClock=BalanceConfig.ContactInvulnerability;}HostileShots.RemoveAt(i);}else if(s.Remaining<=0)HostileShots.RemoveAt(i);}
+            fireClock=Math.Max(0,fireClock-dt);
+            if(nearest!=null&&nearestDistance<(nearest.Kind==EnemyKind.Warden?16:10)&&fireClock<=0)
             {
-                enemy.Telegraph = Math.Max(0, enemy.Telegraph - dt);
-                var delta = Position - enemy.Position;
-                if (enemy.Telegraph <= 0) enemy.Position += delta.Unit * (enemy.Speed * dt);
-                float d = (Position - enemy.Position).Length;
-                if (d < distance && enemy.Telegraph <= 0) { nearest = enemy; distance = d; }
-                if (enemy.Telegraph <= 0 && d < enemy.Radius + 0.35f && hurtClock <= 0 && !invulnerable)
-                { Hp = Math.Max(0, Hp - 12); hurtClock = 0.7f; }
+                nearest.Hp-=Damage;nearest.HitFlash=.1f;LastHitTargetKind=nearest.Kind;
+                LastShotTarget=nearest.Position;Shots++;ShotSerial++;fireClock=FireInterval;
+                if(nearest.Kind==EnemyKind.Warden)WardenHp=Math.Max(0,nearest.Hp);
+                if(SplitChargeStacks>0&&Shots%(SplitChargeStacks==1?4:3)==0)
+                {Enemy other=null;float d0=4.5f;foreach(var e in Enemies)if(e!=nearest&&e.Hp>0){float d1=(e.Position-nearest.Position).Length;if(d1<d0){other=e;d0=d1;}}if(other!=null){other.Hp-=Damage*SplitChargeMultiplier;other.HitFlash=.1f;}}
             }
-            fireClock = Math.Max(0, fireClock - dt);
-            if (nearest != null && distance < 10 && fireClock <= 0)
-            {
-                nearest.Hp -= Damage; LastShotTarget = nearest.Position; Shots++;
-                fireClock = FireInterval;
-            }
-            for (int i = Enemies.Count - 1; i >= 0; i--)
-                if (Enemies[i].Hp <= 0) { Gems.Add(Enemies[i].Position); Enemies.RemoveAt(i); Kills++; }
-            for (int i = Gems.Count - 1; i >= 0; i--)
-            {
-                var delta = Position - Gems[i];
-                if (delta.Length < 0.6f) { xp++; Gems.RemoveAt(i); }
-                else if (delta.Length < 3) Gems[i] += delta.Unit * (8 * dt);
-            }
-            // WHY: death/win owns the terminal frame; an upgrade must not hide the result.
-            if (Hp <= 0) Phase = Phase.Lost;
-            else if (Time >= Duration) Phase = Phase.Won;
-            else if (xp >= Level * 3) { xp -= Level * 3; Level++; Phase = Phase.Upgrade; }
+            for(int i=Enemies.Count-1;i>=0;i--)if(Enemies[i].Hp<=0)
+            {var e=Enemies[i];bool boss=e.Kind==EnemyKind.Warden;Gems.Add(e.Position);Enemies.RemoveAt(i);Kills++;LastKillSerial++;if(boss){WardenHp=0;WardenDefeated=true;HostileShots.Clear();RollChoices(true);if(choices.Count>0)Phase=Phase.Upgrade;}}
+            for(int i=Gems.Count-1;i>=0;i--)
+            {Vec delta=Position-Gems[i];if(delta.Length<BalanceConfig.PickupCollectRange){xp++;Gems.RemoveAt(i);LastPickupSerial++;}else if(delta.Length<MagnetRange)Gems[i]+=delta.Unit*(BalanceConfig.PickupSpeed*dt);}
+            if(Hp<=0){FailureReason="hull";Phase=Phase.Lost;}
+            else if(Time>=Duration){if(ExtractionDistance<=BalanceConfig.ExtractionRadius)Phase=Phase.Won;else{FailureReason="extraction";Phase=Phase.Lost;}}
+            else if(Phase==Phase.Playing&&xp>=XpNeeded){xp-=XpNeeded;Level++;RollChoices(false);if(choices.Count>0)Phase=Phase.Upgrade;}
         }
+        void UpdateWardenVolley(float dt)
+        {
+            if(!WardenSpawned||WardenDefeated)return;
+            wardenAttackClock-=dt;
+            if(wardenAttackClock<=0)
+            {
+                var boss=Enemies.Find(e=>e.Kind==EnemyKind.Warden);if(boss==null)return;
+                // WHY (2026-11-14): a player-aimed opening rewarded standing still; rotate a telegraphed lane so dodging is an intentional action.
+                WardenSafeLaneDirection=SafeLaneFor(BossAttackSerial);
+                float safeAngle=(float)Math.Atan2(WardenSafeLaneDirection.Y,WardenSafeLaneDirection.X);
+                for(int i=1;i<BalanceConfig.WardenVolleyCount;i++){float a=safeAngle+(float)(Math.PI*2*i/BalanceConfig.WardenVolleyCount);HostileShots.Add(new HostileShot{Position=boss.Position,Velocity=new Vec((float)Math.Cos(a)*BalanceConfig.WardenProjectileSpeed,(float)Math.Sin(a)*BalanceConfig.WardenProjectileSpeed),Radius=BalanceConfig.WardenProjectileRadius,Damage=BalanceConfig.WardenProjectileDamage,Remaining=BalanceConfig.WardenProjectileLifetime});}
+                BossAttackSerial++;WardenSafeLaneDirection=SafeLaneFor(BossAttackSerial);wardenAttackClock=BalanceConfig.WardenAttackInterval;
+            }
+        }
+        static Vec SafeLaneFor(int volley)
+        {
+            float angle=(float)(Math.PI/8+Math.PI*2*volley/BalanceConfig.WardenVolleyCount);
+            return new Vec((float)Math.Cos(angle),(float)Math.Sin(angle));
+        }
+        void RollChoices(bool bonus)
+        {
+            choices.Clear();IsBonusChoice=bonus;var pool=new List<Upgrade>();
+            foreach(var spec in UpgradeCatalog.Entries)if(Stack(spec.Id)<spec.MaxStacks)pool.Add(spec.Id);
+            while(choices.Count<BalanceConfig.UpgradeChoices&&pool.Count>0)
+            {
+                int total=0;foreach(var id in pool)total+=UpgradeCatalog.Get(id).Tier==UpgradeTier.Silver?4:UpgradeCatalog.Get(id).Tier==UpgradeTier.Gold?3:1;
+                int ticket=(int)(Random01()*total);Upgrade selected=pool[pool.Count-1];
+                foreach(var id in pool){ticket-=UpgradeCatalog.Get(id).Tier==UpgradeTier.Silver?4:UpgradeCatalog.Get(id).Tier==UpgradeTier.Gold?3:1;if(ticket<0){selected=id;break;}}
+                choices.Add(selected);pool.Remove(selected);
+            }
+            if(bonus){MaxHp+=BalanceConfig.CoreBonusMaxHp;Hp=Math.Min(MaxHp,Hp+BalanceConfig.CoreBonusHeal);}
+        }
+        static bool Finite(float n)=>!float.IsNaN(n)&&!float.IsInfinity(n);
+        static float Clamp(float n,float min,float max)=>n<min?min:n>max?max:n;
     }
 }
