@@ -380,6 +380,30 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
         </div>
       </div>
 
+      {/* 3D Unity 6 WebGL Launcher Banner */}
+      <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 w-full">
+        <div className="flex items-center gap-2.5">
+          <span className="text-2xl select-none" aria-hidden="true">🚇</span>
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-foreground">
+              Unity 6 3D 12스테이지 지하철 러너 4개국어 에디션
+            </span>
+            <span className="text-xs text-muted-foreground">
+              3D 레일 파쿠르 • 열차 회피 & 제트팩 비행 • 4개국어(KO/EN/JA/ES)
+            </span>
+          </div>
+        </div>
+        <a
+          href="/prototypes/subway-runner-unity/index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
+        >
+          <span>3D 실행</span>
+          <span className="text-xs">↗</span>
+        </a>
+      </div>
+
       {/* Main 3D Runner SVG Viewport */}
       <div
         className="relative w-full overflow-hidden rounded-none sm:rounded-2xl border-x-0 sm:border border-border bg-card shadow-lg select-none touch-none"
