@@ -73,7 +73,7 @@ interface Particle {
   maxLife: number;
 }
 
-export default function SandBalls() {
+export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
   const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: "ko" });
   const [engine] = useState(() => new SandBallsEngine(400, 600, 8));
   const [gameState, setGameState] = useState<SandBallsState>(() => engine.getState());
@@ -488,6 +488,32 @@ export default function SandBalls() {
         isImmersive ? "fixed inset-0 z-50 overflow-y-auto rounded-none w-screen h-screen bg-background" : ""
       }`}
     >
+      {/* Unity 6 3D 12-Stage Sand Balls Physics Launch Banner */}
+      <div className="w-full rounded-xl border border-primary/40 bg-primary/10 p-3 px-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="text-xl">🏖️</span>
+          <div className="flex flex-col text-left">
+            <span className="text-xs font-bold text-foreground">
+              {locale === "ko" ? "Unity 6 3D 12스테이지 모래 조각 물리 에디션" : "Unity 6 3D 12-Stage Sand Balls Physics Edition"}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {locale === "ko"
+                ? "실시간 3D 모래 절삭 • 컬러 감염 • x2/x3 증폭 게이트 • 4개국어(KO/EN/JA/ES)"
+                : "Real-time 3D Sand Carving • Color Awakening • x2/x3 Multipliers • Multi-Language"}
+            </span>
+          </div>
+        </div>
+        <a
+          href="/prototypes/sand-balls-unity/index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors shrink-0"
+        >
+          <span>{locale === "ko" ? "3D 실행" : "Play 3D"}</span>
+          <span className="text-xs">↗</span>
+        </a>
+      </div>
+
       {/* Top Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div className="flex items-center gap-2">
