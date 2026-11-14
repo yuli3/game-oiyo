@@ -1049,6 +1049,30 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
         </div>
       </div>
 
+      {/* 3D Unity 6 WebGL Launcher Banner */}
+      <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 w-full">
+        <div className="flex items-center gap-2.5">
+          <span className="text-2xl select-none" aria-hidden="true">🎯</span>
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-foreground">
+              Unity 6 3D 12스테이지 에임 트레이너 4개국어 에디션
+            </span>
+            <span className="text-xs text-muted-foreground">
+              3D 슈팅 레인지 • 클레이 사격 & 폭탄 디코이 & 보스 코어 • 4개국어(KO/EN/JA/ES)
+            </span>
+          </div>
+        </div>
+        <a
+          href="/prototypes/aim-trainer-unity/index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
+        >
+          <span>3D 실행</span>
+          <span className="text-xs">↗</span>
+        </a>
+      </div>
+
       {/* ── MENU ── */}
       {phase === "menu" && (
         <div className={`space-y-5 py-2 ${isImmersive ? "my-auto w-full max-w-md mx-auto overflow-y-auto max-h-full" : ""}`}>
