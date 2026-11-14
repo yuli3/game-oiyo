@@ -1,4 +1,5 @@
 ---
+import EmbedGameSnippet from "../../components/EmbedGameSnippet.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import gameArtDocument from "../../../config/game-art-v1.json";
 import SudokuComp from "../../components/games/Sudoku";
@@ -49,4 +50,5 @@ const m = meta[locale] ?? meta.en;
       <GameGuide slug="sudoku" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
     </div>
   </div>
+  <EmbedGameSnippet slug="sudoku" locale={locale} />
 </BaseLayout>
