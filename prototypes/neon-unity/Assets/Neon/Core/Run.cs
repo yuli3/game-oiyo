@@ -140,6 +140,21 @@ namespace Oiyo.Neon
             return h == 0 ? 20261114u : h;
         }
 
+        // WHY (2026-11-14): Parse custom seed strings or NEON-v1 telemetry codes so players can replay any shared seed deterministically.
+        public static bool TryParseCustomSeed(string raw, out uint seed)
+        {
+            seed = 0;
+            if (string.IsNullOrWhiteSpace(raw)) return false;
+            string s = raw.Trim();
+            if (s.StartsWith("NEON-v1|", StringComparison.OrdinalIgnoreCase))
+            {
+                string[] parts = s.Split('|');
+                if (parts.Length >= 2 && parts[1].Length > 1) s = parts[1].Substring(1);
+            }
+            if (s.StartsWith("#")) s = s.Substring(1).Trim();
+            return uint.TryParse(s, out seed) && seed > 0;
+        }
+
         public static bool IsBoss(EnemyKind kind) => kind == EnemyKind.Warden || kind == EnemyKind.SolarArchitect;
         public static bool IsArmored(EnemyKind kind) => kind == EnemyKind.Bastion || IsBoss(kind);
 

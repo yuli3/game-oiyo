@@ -69,6 +69,9 @@ static class Checks
         Check(roundTrip.TotalRuns==1&&roundTrip.TotalExtractions==1&&roundTrip.UnlockedMilestones>=1,"ObservatoryCodex serializes and restores milestone state");
         string telemetry=win.BuildTelemetryCode();
         Check(telemetry.StartsWith("NEON-v1|")&&telemetry.Contains("|AEG|"),"BuildTelemetryCode formats deterministic share code");
+        Check(Run.TryParseCustomSeed(telemetry,out uint parsedFromTelemetry)&&parsedFromTelemetry==win.Seed,"TryParseCustomSeed extracts seed from NEON-v1 telemetry string");
+        Check(Run.TryParseCustomSeed("#778899",out uint parsedFromHash)&&parsedFromHash==778899u,"TryParseCustomSeed extracts seed from #hash number");
+        Check(roundTrip.IsMilestoneUnlocked(0)&&!roundTrip.IsMilestoneUnlocked(5),"ObservatoryCodex IsMilestoneUnlocked evaluates individual milestone flags");
         var poolRun=new Run(9001);
         for(int r=0;r<20;r++)
         {

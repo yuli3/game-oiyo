@@ -22,7 +22,9 @@ public sealed class SlicePlayer : MonoBehaviour
     Run run = new Run(20261113);
     static uint nextRunSeed = 20261113;
     ChassisId selectedChassis = ChassisId.AegisProbe;
-    bool dailyModeSelected;
+    int seedModeSelected; // 0 = Standard Random, 1 = Daily Seed, 2 = Custom/Clipboard Seed
+    uint customSeedValue = 20261114;
+    bool codexModalOpen;
     ObservatoryCodex codex = new ObservatoryCodex();
     readonly List<Transform> enemies = new List<Transform>(32);
     readonly List<SpriteRenderer> enemyRenderers = new List<SpriteRenderer>(32);
@@ -54,12 +56,12 @@ public sealed class SlicePlayer : MonoBehaviour
     Canvas canvas;
     RectTransform safeRoot;
     Text timerText, healthText, levelText, killsText, bossText, warningText, objectiveText, menuTitleText, menuSubtitleText, controlsText, resultTitleText, resultStatsText, bestText;
-    Text launchLabelText, languageLabelText, chassisLabelText, modeLabelText, pauseTitleText, continueLabelText, retryLabelText, soundLabelText, musicLabelText, motionLabelText, choiceEyebrowText, choiceHeadingText, choiceFooterText, playAgainLabelText, shareLabelText;
+    Text launchLabelText, languageLabelText, chassisLabelText, modeLabelText, codexButtonLabelText, codexModalTitleText, codexModalBodyText, codexCloseLabelText, pauseTitleText, continueLabelText, retryLabelText, soundLabelText, musicLabelText, motionLabelText, choiceEyebrowText, choiceHeadingText, choiceFooterText, playAgainLabelText, shareLabelText;
     Image healthFill, bossFill, beamImage, xpFill, titleArtImage, resultArtImage;
-    GameObject titleScreen, hudScreen, pauseScreen, upgradeScreen, resultScreen, wardenHealthPanel;
+    GameObject titleScreen, hudScreen, pauseScreen, upgradeScreen, resultScreen, wardenHealthPanel, codexModal;
     readonly Button[] upgradeButtons = new Button[3];
     readonly Text[] upgradeTitles = new Text[3];
-    Button dashButton, pauseButton, launchButton, chassisButton, modeButton, continueButton, playAgainButton, shareButton;
+    Button dashButton, pauseButton, launchButton, chassisButton, modeButton, codexButton, codexCloseButton, continueButton, playAgainButton, shareButton;
     Text dashLabel;
     StickControl stickControl;
     Font fontKo, fontJa, fontZh;
@@ -281,21 +283,34 @@ public sealed class SlicePlayer : MonoBehaviour
             var backdrop = PanelObject("Title KeyArt", titleScreen.transform, new Color(1, 1, 1, .88f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             titleArtImage = backdrop.GetComponent<Image>(); titleArtImage.sprite = titleKeyArtSprite; titleArtImage.type = Image.Type.Simple; titleArtImage.preserveAspect = false;
         }
-        var card = PanelObject("Title card", titleScreen.transform, new Color(Panel.r, Panel.g, Panel.b, .88f), new Vector2(.07f, .16f), new Vector2(.93f, .86f), Vector2.zero, Vector2.zero);
-        menuTitleText = TextObject("Title", card.transform, "NEON\nSURVIVOR", 70, Ivory, TextAnchor.MiddleCenter, new Vector2(.08f, .67f), new Vector2(.92f, .94f)); menuTitleText.fontStyle = FontStyle.Bold;
-        menuSubtitleText = TextObject("Subtitle", card.transform, "", 22, Cyan, TextAnchor.MiddleCenter, new Vector2(.06f, .54f), new Vector2(.94f, .66f));
-        chassisButton = MakeButton("Chassis selector", card.transform, "", new Vector2(.10f, .41f), new Vector2(.90f, .51f), new Color32(28, 52, 76, 255), () => { Play(audioBank.UiClick); CycleChassis(); });
+        var card = PanelObject("Title card", titleScreen.transform, new Color(Panel.r, Panel.g, Panel.b, .88f), new Vector2(.07f, .14f), new Vector2(.93f, .87f), Vector2.zero, Vector2.zero);
+        menuTitleText = TextObject("Title", card.transform, "NEON\nSURVIVOR", 68, Ivory, TextAnchor.MiddleCenter, new Vector2(.08f, .70f), new Vector2(.92f, .95f)); menuTitleText.fontStyle = FontStyle.Bold;
+        menuSubtitleText = TextObject("Subtitle", card.transform, "", 21, Cyan, TextAnchor.MiddleCenter, new Vector2(.06f, .58f), new Vector2(.94f, .69f));
+        chassisButton = MakeButton("Chassis selector", card.transform, "", new Vector2(.10f, .46f), new Vector2(.90f, .55f), new Color32(28, 52, 76, 255), () => { Play(audioBank.UiClick); CycleChassis(); });
         chassisLabelText = chassisButton.GetComponentInChildren<Text>();
         chassisLabelText.color = Cyan;
-        modeButton = MakeButton("Mode selector", card.transform, "", new Vector2(.10f, .29f), new Vector2(.90f, .39f), new Color32(34, 48, 70, 255), () => { Play(audioBank.UiClick); ToggleDailyMode(); });
+        modeButton = MakeButton("Mode selector", card.transform, "", new Vector2(.10f, .35f), new Vector2(.90f, .44f), new Color32(34, 48, 70, 255), () => { Play(audioBank.UiClick); CycleSeedMode(); });
         modeLabelText = modeButton.GetComponentInChildren<Text>();
         modeLabelText.color = Amber;
-        controlsText = TextObject("Controls", card.transform, "", 19, new Color32(185, 203, 220, 255), TextAnchor.MiddleCenter, new Vector2(.08f, .19f), new Vector2(.92f, .28f));
-        launchButton = MakeButton("Launch", card.transform, "", new Vector2(.10f, .05f), new Vector2(.90f, .17f), Cyan, () => { Play(audioBank.UiClick); ResetRun(); run.Start(); UpdateMusic(0); Play(audioBank.Dash); ShowPhase(true); });
+        codexButton = MakeButton("Codex viewer", card.transform, "", new Vector2(.10f, .24f), new Vector2(.90f, .33f), new Color32(38, 36, 72, 255), () => { Play(audioBank.UiClick); codexModalOpen = true; ShowPhase(true); });
+        codexButtonLabelText = codexButton.GetComponentInChildren<Text>();
+        codexButtonLabelText.color = Violet;
+        controlsText = TextObject("Controls", card.transform, "", 18, new Color32(185, 203, 220, 255), TextAnchor.MiddleCenter, new Vector2(.08f, .16f), new Vector2(.92f, .23f));
+        launchButton = MakeButton("Launch", card.transform, "", new Vector2(.10f, .04f), new Vector2(.90f, .15f), Cyan, () => { Play(audioBank.UiClick); ResetRun(); run.Start(); UpdateMusic(0); Play(audioBank.Dash); ShowPhase(true); });
         launchLabelText = launchButton.GetComponentInChildren<Text>();
         launchLabelText.color = Ink;
         var settings = MakeButton("Language", titleScreen.transform, "EN · SETTINGS", new Vector2(.62f, .91f), new Vector2(.94f, .98f), Panel, () => { Play(audioBank.UiClick); CycleLanguage(); });
         languageLabelText = settings.GetComponentInChildren<Text>();
+
+        codexModal = PanelObject("Codex veil", titleScreen.transform, new Color(0, 0, 0, .82f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+        codexModal.GetComponent<Image>().raycastTarget = true;
+        var mcard = PanelObject("Codex card", codexModal.transform, Panel, new Vector2(.06f, .14f), new Vector2(.94f, .86f), Vector2.zero, Vector2.zero);
+        codexModalTitleText = TextObject("Codex title", mcard.transform, "", 38, Violet, TextAnchor.MiddleCenter, new Vector2(.08f, .84f), new Vector2(.92f, .95f)); codexModalTitleText.fontStyle = FontStyle.Bold;
+        codexModalBodyText = TextObject("Codex body", mcard.transform, "", 20, Ivory, TextAnchor.MiddleLeft, new Vector2(.08f, .20f), new Vector2(.92f, .82f));
+        codexCloseButton = MakeButton("Close codex", mcard.transform, "", new Vector2(.15f, .05f), new Vector2(.85f, .16f), Cyan, () => { Play(audioBank.UiClick); codexModalOpen = false; ShowPhase(true); });
+        codexCloseLabelText = codexCloseButton.GetComponentInChildren<Text>();
+        codexCloseLabelText.color = Ink;
+        codexModal.SetActive(false);
     }
 
     void BuildHud()
@@ -819,13 +834,33 @@ public sealed class SlicePlayer : MonoBehaviour
             if (chassisLabelText) chassisLabelText.text = $"{L("기체 선택", "CHASSIS", "機体選択", "机体选择", "CHÂSSIS", "CHASIS")} : {chassisSpec.Names[language]} ▸";
             DateTime kstNow = DateTime.UtcNow.AddHours(9);
             uint dailySeed = Run.ComputeDailySeed(kstNow.Year, kstNow.Month, kstNow.Day);
-            if (modeLabelText) modeLabelText.text = dailyModeSelected
-                ? $"{L("오늘의 관측 시드", "DAILY OBSERVATORY SEED", "本日の観測シード", "今日观测种子", "GRAINE DU JOUR", "SEMILLA DIARIA")} #{dailySeed} ({kstNow:MM-dd}) ▸"
-                : $"{L("표준 작전 (매 출격 무작위 시드)", "STANDARD OPS (RANDOM SEED)", "標準作戦（ランダムシード）", "标准行动（随机种子）", "OPÉRATION STANDARD", "OPERACIÓN ESTÁNDAR")} ▸";
-            controlsText.text = $"{L("이동 왼쪽 스틱/WASD · 대시 오른쪽 버튼/Space · 관측 도감", "MOVE STICK/WASD · DASH BUTTON/SPACE · CODEX", "移動 左スティック/WASD · ダッシュ 右ボタン/Space · 図鑑", "移动 左摇杆/WASD · 冲刺 右按钮/Space · 图鉴", "BOUGER STICK/WASD · DASH BOUTON/ESPACE · CODEX", "MOVER STICK/WASD · IMPULSO BOTÓN/ESPACIO · CÓDICE")} {codex.UnlockedMilestones}/6 ({L("탈출", "WINS", "脱出", "撤离", "VICTOIRES", "VICTORIAS")} {codex.TotalExtractions})";
+            if (modeLabelText)
+            {
+                if (seedModeSelected == 1)
+                    modeLabelText.text = $"{L("오늘의 관측 시드", "DAILY OBSERVATORY SEED", "本日の観測シード", "今日观测种子", "GRAINE DU JOUR", "SEMILLA DIARIA")} #{dailySeed} ({kstNow:MM-dd}) ▸";
+                else if (seedModeSelected == 2)
+                    modeLabelText.text = $"{L("커스텀 시드 (클립보드)", "CUSTOM SEED (CLIPBOARD)", "カスタムシード", "自定义种子", "GRAINE PERSONNALISÉE", "SEMILLA PERSONALIZADA")} #{customSeedValue} ▸";
+                else
+                    modeLabelText.text = $"{L("표준 작전 (매 출격 무작위 시드)", "STANDARD OPS (RANDOM SEED)", "標準作戦（ランダムシード）", "标准行动（随机种子）", "OPÉRATION STANDARD", "OPERACIÓN ESTÁNDAR")} ▸";
+            }
+            if (codexButtonLabelText)
+                codexButtonLabelText.text = $"{L("관측 도감 열기", "OBSERVATORY CODEX", "観測図鑑を開く", "观测图鉴", "OUVRIR LE CODEX", "ABRIR CÓDICE")} ({codex.UnlockedMilestones}/6) ▸";
+            controlsText.text = $"{L("이동 왼쪽 스틱/WASD · 대시 오른쪽 버튼/Space · 출격", "MOVE STICK/WASD · DASH BUTTON/SPACE · RUNS", "移動 左スティック/WASD · ダッシュ 右ボタン/Space · 出撃", "移动 左摇杆/WASD · 冲刺 右按钮/Space · 出击", "BOUGER STICK/WASD · DASH BOUTON/ESPACE · SORTIES", "MOVER STICK/WASD · IMPULSO BOTÓN/ESPACIO · SALIDAS")} {codex.TotalRuns} ({L("탈출", "WINS", "脱出", "撤离", "VICTOIRES", "VICTORIAS")} {codex.TotalExtractions})";
             if (launchLabelText) launchLabelText.text = L("출격 시작", "BEGIN DESCENT", "出撃する", "开始行动", "DÉMARRER", "INICIAR DESCENSO");
             if (languageLabelText) languageLabelText.text = new[] { "한국어 · 설정", "EN · SETTINGS", "日本語 · 設定", "简体中文 · 设置", "FR · OPTIONS", "ES · OPCIONES" }[language];
-            FocusControl(launchButton);
+            if (codexModal)
+            {
+                codexModal.SetActive(codexModalOpen);
+                if (codexModalOpen)
+                {
+                    if (codexModalTitleText) codexModalTitleText.text = $"{L("관측 도감", "OBSERVATORY CODEX", "観測図鑑", "观测图鉴", "CODEX DE L’OBSERVATOIRE", "CÓDICE DEL OBSERVATORIO")}  {codex.UnlockedMilestones}/6";
+                    if (codexModalBodyText) codexModalBodyText.text = BuildCodexModalBody();
+                    if (codexCloseLabelText) codexCloseLabelText.text = L("닫기", "CLOSE", "閉じる", "关闭", "FERMER", "CERRAR");
+                    FocusControl(codexCloseButton);
+                }
+                else FocusControl(launchButton);
+            }
+            else FocusControl(launchButton);
         }
         if (run.Phase == Phase.Paused)
         {
@@ -852,17 +887,44 @@ public sealed class SlicePlayer : MonoBehaviour
     string UpgradeDescription(Upgrade u) => UpgradeCatalog.Get(u).Descriptions[language];
     string L(string ko, string en, string ja, string zh, string fr, string es) => language == 1 ? en : language == 2 ? ja : language == 3 ? zh : language == 4 ? fr : language == 5 ? es : ko;
 
+    string BuildCodexModalBody()
+    {
+        string B(int idx) => codex.IsMilestoneUnlocked(idx) ? "★" : "☆";
+        string m0 = $"{B(0)} {L("첫 궤도 추출 성공", "First Orbital Extraction", "初回軌道脱出成功", "首次轨道撤离成功", "Première extraction orbitale", "Primera extracción orbital")} ({codex.TotalExtractions})";
+        string m1 = $"{B(1)} {L("파수자(The Warden) 격침", "Defeat The Warden", "守護者(The Warden)撃破", "击败守望者(The Warden)", "Vaincre Le Gardien", "Derrotar al Guardián")} ({codex.WardenDefeats})";
+        string m2 = $"{B(2)} {L("태양 설계자(Solar Architect) 격침", "Defeat Solar Architect", "ソーラー・アーキテクト撃破", "击败太阳建筑师", "Vaincre l’Architecte Solaire", "Derrotar al Arquitecto Solar")} ({codex.ArchitectDefeats})";
+        string m3 = $"{B(3)} {L("오늘의 관측 시드 탈출 성공", "Clear Daily Observatory Seed", "本日の観測シード脱出", "通关今日观测种子", "Réussir la Graine du Jour", "Completar Semilla Diaria")} ({codex.DailyExtractions})";
+        int chassisCount = ((codex.ChassisClearMask & 1) != 0 ? 1 : 0) + ((codex.ChassisClearMask & 2) != 0 ? 1 : 0) + ((codex.ChassisClearMask & 4) != 0 ? 1 : 0);
+        string m4 = $"{B(4)} {L("3종 기체 전원 탈출 성공", "Extract with All 3 Chassis", "全3機体で脱出成功", "使用全部3种机体撤离", "Extraire avec les 3 châssis", "Extraer con los 3 chasis")} ({chassisCount}/3)";
+        int awakeCount = ((codex.AwakeningMask & 1) != 0 ? 1 : 0) + ((codex.AwakeningMask & 2) != 0 ? 1 : 0) + ((codex.AwakeningMask & 4) != 0 ? 1 : 0) + ((codex.AwakeningMask & 8) != 0 ? 1 : 0);
+        string m5 = $"{B(5)} {L("4대 무기 각성 도감 완성", "Unlock All 4 Weapon Awakenings", "4大武器覚醒コンプリート", "解锁全部4种武器觉醒", "Débloquer les 4 éveils d’arme", "Desbloquear los 4 despertares")} ({awakeCount}/4)";
+        return $"{m0}\n{m1}\n{m2}\n{m3}\n{m4}\n{m5}\n\n{L("최고 생존", "Best Survival", "最高生存", "最佳生存", "Meilleure survie", "Mejor supervivencia")}: {codex.BestSurvivalSeconds}s  ·  {L("총 출격", "Total Runs", "総出撃", "总出击", "Sorties totales", "Salidas totales")}: {codex.TotalRuns}";
+    }
+
     void ChooseUpgrade(int index) { if (index < 0 || index >= run.Choices.Count) return; run.Choose(run.Choices[index]); Play(audioBank.Upgrade); ShowPhase(true); }
     void CycleChassis() { selectedChassis = (ChassisId)(((int)selectedChassis + 1) % 3); ShowPhase(true); }
-    void ToggleDailyMode() { dailyModeSelected = !dailyModeSelected; ShowPhase(true); }
+    void CycleSeedMode()
+    {
+        seedModeSelected = (seedModeSelected + 1) % 3;
+        if (seedModeSelected == 2)
+        {
+            if (Run.TryParseCustomSeed(GUIUtility.systemCopyBuffer, out uint parsed))
+                customSeedValue = parsed;
+            else
+                customSeedValue = 20261114;
+        }
+        ShowPhase(true);
+    }
     void ResetRun()
     {
         DateTime kstNow = DateTime.UtcNow.AddHours(9);
-        uint seed = dailyModeSelected
+        uint seed = seedModeSelected == 1
             ? Run.ComputeDailySeed(kstNow.Year, kstNow.Month, kstNow.Day)
+            : seedModeSelected == 2
+            ? customSeedValue
             : (nextRunSeed = nextRunSeed * 1664525 + 1013904223);
-        run.Reset(seed, selectedChassis, dailyModeSelected);
-        copiedFeedback = false;
+        run.Reset(seed, selectedChassis, seedModeSelected == 1);
+        copiedFeedback = false; codexModalOpen = false;
         ClearInput(); accumulator = 0; hitStop = 0; seenPhase = -1; seenKills = 0; seenShots = 0; seenPickups = 0; seenBossAttack = 0; seenDash = 0; seenBossWarning = false; seenBossDown = false;
     }
     void ClearInput() { pointer = -1; stick = Vector2.zero; dashQueued = false; accumulator = 0; if (stickControl) stickControl.ResetStick(); }

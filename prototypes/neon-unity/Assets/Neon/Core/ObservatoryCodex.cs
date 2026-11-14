@@ -15,17 +15,26 @@ namespace Oiyo.Neon
         public int ChassisClearMask { get; private set; }
         public int AwakeningMask { get; private set; }
 
+        public bool IsMilestoneUnlocked(int index)
+        {
+            switch (index)
+            {
+                case 0: return TotalExtractions > 0;
+                case 1: return WardenDefeats > 0;
+                case 2: return ArchitectDefeats > 0;
+                case 3: return DailyExtractions > 0;
+                case 4: return ChassisClearMask == 7;
+                case 5: return AwakeningMask == 15;
+                default: return false;
+            }
+        }
+
         public int UnlockedMilestones
         {
             get
             {
                 int m = 0;
-                if (TotalExtractions > 0) m++;
-                if (WardenDefeats > 0) m++;
-                if (ArchitectDefeats > 0) m++;
-                if (DailyExtractions > 0) m++;
-                if (ChassisClearMask == 7) m++;
-                if (AwakeningMask == 15) m++;
+                for (int i = 0; i < 6; i++) if (IsMilestoneUnlocked(i)) m++;
                 return m;
             }
         }
