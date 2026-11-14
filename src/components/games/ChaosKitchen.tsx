@@ -651,7 +651,13 @@ export function ChaosKitchen({ lang = "ko" }: { lang?: string }) {
           value={gameState.hasFire ? "🚨 FIRE!" : gameState.status.toUpperCase()}
           icon="🍳"
         />
-        <div className="flex items-center gap-2 col-span-2 sm:col-span-1">
+        <div className="flex flex-wrap items-center gap-2 col-span-2 sm:col-span-1">
+          <a
+            href="/prototypes/chaos-kitchen-unity/index.html"
+            className="flex-1 py-2 px-2.5 rounded-md border border-primary/50 bg-primary/15 text-xs font-black text-primary hover:bg-primary/25 transition-colors text-center whitespace-nowrap"
+          >
+            🛰️ Unity 실시간 에디션
+          </a>
           <TiltKitchenButton
             onClick={() => setShowQuests(true)}
             className="flex-1 py-2 px-2.5 rounded-md border border-border bg-card text-xs font-semibold hover:bg-accent transition-colors"
