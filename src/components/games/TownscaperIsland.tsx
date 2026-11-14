@@ -298,6 +298,12 @@ export default function TownscaperIsland({ locale }: Props) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/prototypes/townscaper-island-unity/index.html"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/15 px-3 py-1.5 text-xs font-black text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
+          >
+            🛰️ Unity 3D 12스테이지 건축 에디션
+          </a>
           <span className="rounded-xl bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground">
             🧱 {isKo ? `총 블록: ${state.totalBlocks}개` : `Blocks: ${state.totalBlocks}`}
           </span>
