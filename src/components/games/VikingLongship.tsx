@@ -791,6 +791,12 @@ export function VikingLongship({ locale = "ko" }: { locale?: string }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
+          <a
+            href="/prototypes/viking-longship-unity/index.html"
+            className="px-2.5 py-1 text-xs font-black rounded-md border border-primary/50 bg-primary/15 text-primary hover:bg-primary/25 transition-colors flex items-center gap-1 whitespace-nowrap"
+          >
+            🛰️ Unity 실시간 에디션
+          </a>
           {/* 비상 수리 키트 버튼 */}
           {emergencyRepairsRemaining > 0 && gameState.status === "sailing" && (
             <TiltVikingButton
