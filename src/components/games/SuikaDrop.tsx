@@ -717,6 +717,32 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
         isImmersive ? 'fixed inset-0 z-50 overflow-y-auto rounded-none w-screen h-screen bg-background' : ''
       }`}
     >
+      {/* Unity 6 3D 12-Stage Suika Fruit Drop Launch Banner */}
+      <div className="w-full rounded-xl border border-primary/40 bg-primary/10 p-3 px-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="text-xl">🍉</span>
+          <div className="flex flex-col text-left">
+            <span className="text-xs font-bold text-foreground">
+              {locale === "ko" ? "Unity 6 3D 12스테이지 수박 합체 물리 에디션" : "Unity 6 3D 12-Stage Suika Fruit Merge Physics Edition"}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {locale === "ko"
+                ? "3D 아크릴 수조 • 실시간 과일 합체 & 팝 충격파 • 4개국어(KO/EN/JA/ES)"
+                : "3D Acrylic Jar • Real-time Fruit Fusion & Pop Shockwaves • Multi-Language"}
+            </span>
+          </div>
+        </div>
+        <a
+          href="/prototypes/suika-drop-unity/index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors shrink-0"
+        >
+          <span>{locale === "ko" ? "3D 실행" : "Play 3D"}</span>
+          <span className="text-xs">↗</span>
+        </a>
+      </div>
+
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div>
