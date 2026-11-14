@@ -26,10 +26,16 @@ public sealed class SlicePlayer : MonoBehaviour
     readonly List<Transform> gems = new List<Transform>();
     readonly List<Transform> hostileShots = new List<Transform>();
     Transform ship, engineGlow, dashRing, background;
+    SpriteRenderer shipRenderer;
     Transform extractionMarker, safeLane;
     Transform bossTellRing;
     SpriteRenderer beam;
     Sprite shipSprite, droneSprite, skitterSprite, bastionSprite, wardenSprite, gemSprite, coreSprite;
+    readonly Sprite[] playerFrames = new Sprite[4];
+    readonly Sprite[] droneFrames = new Sprite[4];
+    readonly Sprite[] skitterFrames = new Sprite[4];
+    readonly Sprite[] bastionFrames = new Sprite[4];
+    readonly Sprite[] wardenFrames = new Sprite[4];
     Sprite circleSprite, panelSprite, titleKeyArtSprite, starOrbitBgSprite;
     Sprite fxShotNeedleSprite, fxHostileBeadSprite, fxDashRingSprite, fxWarningRingSprite, fxSafeLaneSprite, fxExtractionGateSprite;
     Sprite frameSilverSprite, frameGoldSprite, framePrismaticSprite;
@@ -37,8 +43,9 @@ public sealed class SlicePlayer : MonoBehaviour
     Canvas canvas;
     RectTransform safeRoot;
     Text timerText, healthText, levelText, killsText, bossText, warningText, objectiveText, menuTitleText, menuSubtitleText, controlsText, resultTitleText, resultStatsText, bestText;
+    Text launchLabelText, languageLabelText, pauseTitleText, continueLabelText, retryLabelText, soundLabelText, musicLabelText, motionLabelText, choiceEyebrowText, choiceHeadingText, choiceFooterText, playAgainLabelText;
     Image healthFill, bossFill, beamImage, xpFill, titleArtImage, resultArtImage;
-    GameObject titleScreen, hudScreen, pauseScreen, upgradeScreen, resultScreen;
+    GameObject titleScreen, hudScreen, pauseScreen, upgradeScreen, resultScreen, wardenHealthPanel;
     readonly Button[] upgradeButtons = new Button[3];
     readonly Text[] upgradeTitles = new Text[3];
     Button dashButton, pauseButton, launchButton, continueButton, playAgainButton;
@@ -46,7 +53,7 @@ public sealed class SlicePlayer : MonoBehaviour
     StickControl stickControl;
     Font fontKo, fontJa, fontZh;
     AudioSource sfxSource, musicSource;
-    AudioClip uiClickClip, shotClip, armorHitClip, pickupClip, killClip, hitClip, dashClip, upgradeClip, bossWarnClip, bossVolleyClip, bossDownClip, winClip, loseClip, musicClip;
+    NeonAudioBank audioBank;
     ParticleSystem burst;
     Vector2 stick;
     float accumulator, hitStop, shake, beamLifetime, hudRefresh;
@@ -103,6 +110,17 @@ public sealed class SlicePlayer : MonoBehaviour
         return Sprite.Create(atlas, new Rect(col * cellW, y, cellW, cellH), new Vector2(.5f, .5f), pixelsPerUnit, 0, SpriteMeshType.FullRect);
     }
 
+    static void SliceAnimRow(Texture2D atlas, int rowFromTop, Sprite fallback, Sprite[] target, float pixelsPerUnit)
+    {
+        for (int col = 0; col < 4; col++)
+        {
+            if (!atlas) { target[col] = fallback; continue; }
+            int cellW = atlas.width / 4, cellH = atlas.height / 5;
+            int y = (4 - rowFromTop) * cellH;
+            target[col] = Sprite.Create(atlas, new Rect(col * cellW, y, cellW, cellH), new Vector2(.5f, .5f), pixelsPerUnit, 0, SpriteMeshType.FullRect);
+        }
+    }
+
     void BuildArt()
     {
         circleSprite = CircleSprite("Glow");
@@ -123,6 +141,14 @@ public sealed class SlicePlayer : MonoBehaviour
         coreSprite = LoadBundledSprite("Textures/WardenCore", 256f) ?? gemSprite;
         titleKeyArtSprite = LoadBundledSprite("Textures/TitleKeyArt", 100f);
         starOrbitBgSprite = LoadBundledSprite("Textures/StarOrbitBg", 18f) ?? BackgroundSprite();
+
+        var unitAnimAtlas = Resources.Load<Texture2D>("Textures/UnitAnimAtlas");
+        if (unitAnimAtlas) unitAnimAtlas.filterMode = FilterMode.Bilinear;
+        SliceAnimRow(unitAnimAtlas, 0, shipSprite, playerFrames, 256f);
+        SliceAnimRow(unitAnimAtlas, 1, droneSprite, droneFrames, 256f);
+        SliceAnimRow(unitAnimAtlas, 2, skitterSprite, skitterFrames, 256f);
+        SliceAnimRow(unitAnimAtlas, 3, bastionSprite, bastionFrames, 256f);
+        SliceAnimRow(unitAnimAtlas, 4, wardenSprite, wardenFrames, 256f);
 
         var fxAtlas = Resources.Load<Texture2D>("Textures/CombatFxAtlas");
         if (fxAtlas) fxAtlas.filterMode = FilterMode.Bilinear;
@@ -154,6 +180,7 @@ public sealed class SlicePlayer : MonoBehaviour
         background.position = Vector3.forward;
         CreateStars(140);
         ship = Make("Pilot", shipSprite, Color.white, 1.05f);
+        shipRenderer = ship.GetComponent<SpriteRenderer>();
         MakePart(ship, "Ion reactor", circleSprite, Cyan, .2f, Vector2.zero, 2);
         engineGlow = Make("Ion wake", circleSprite, new Color32(76, 239, 218, 175), .35f);
         dashRing = Make("Dash wake", fxDashRingSprite, new Color(Cyan.r, Cyan.g, Cyan.b, .72f), .9f);
@@ -200,71 +227,8 @@ public sealed class SlicePlayer : MonoBehaviour
     {
         sfxSource = gameObject.AddComponent<AudioSource>(); sfxSource.loop = false; sfxSource.playOnAwake = false; sfxSource.volume = .52f;
         musicSource = gameObject.AddComponent<AudioSource>(); musicSource.loop = true; musicSource.playOnAwake = false; musicSource.volume = .13f;
-        // WHY (2026-11-14): PRD §9 & game-audio-design require 12 distinct event cues with multi-layer harmonic envelopes.
-        uiClickClip = LayeredCue("ui-click", 880, 1320, .04f, 38f, .02f, .14f);
-        shotClip = LayeredCue("shot-pulse", 680, 420, .055f, 32f, .04f, .15f);
-        armorHitClip = LayeredCue("armor-clang", 240, 720, .07f, 24f, .08f, .18f);
-        pickupClip = LayeredCue("shard-pickup", 920, 1380, .08f, 22f, .01f, .14f);
-        dashClip = LayeredCue("ion-dash", 310, 620, .14f, 14f, .12f, .2f);
-        killClip = LayeredCue("enemy-break", 290, 870, .14f, 16f, .15f, .18f);
-        hitClip = LayeredCue("hull-hit", 135, 92, .16f, 12f, .22f, .24f);
-        upgradeClip = Arpeggio("level-choice", new float[] { 523.25f, 659.25f, 783.99f }, .28f, .16f);
-        bossWarnClip = LayeredCue("warden-warning", 220, 330, .48f, 4.5f, .06f, .22f);
-        bossVolleyClip = LayeredCue("warden-volley", 195, 585, .22f, 10f, .14f, .2f);
-        bossDownClip = Arpeggio("warden-defeated", new float[] { 392f, 523.25f, 659.25f, 783.99f }, .52f, .2f);
-        winClip = Arpeggio("extraction-win", new float[] { 440f, 554.37f, 659.25f, 880f }, .62f, .2f);
-        loseClip = Arpeggio("signal-lost", new float[] { 311.13f, 277.18f, 220f, 164.81f }, .58f, .2f);
-        musicClip = Drone("orbit-bgm", 73.42f, 12f);
-        musicSource.clip = musicClip;
-    }
-
-    AudioClip LayeredCue(string label, float f0, float f1, float seconds, float decay, float noiseMix, float gain)
-    {
-        const int rate = 22050; int count = Mathf.RoundToInt(rate * seconds); var data = new float[count];
-        uint seed = (uint)label.GetHashCode() ^ 0x9E3779B9u;
-        float phaseA = 0, phaseB = 0;
-        for (int i = 0; i < count; i++)
-        {
-            float t = i / (float)rate, u = i / (float)count;
-            float hz = Mathf.Lerp(f0, f1, u);
-            phaseA += 2 * Mathf.PI * hz / rate;
-            phaseB += 2 * Mathf.PI * (hz * 1.498f) / rate;
-            seed = seed * 1664525 + 1013904223;
-            float noise = ((seed >> 8) / 8388608f - 1f) * noiseMix * Mathf.Exp(-t * decay * 1.8f);
-            float attack = Mathf.Clamp01(t * 240f);
-            float env = attack * Mathf.Exp(-t * decay);
-            data[i] = Mathf.Clamp((.68f * Mathf.Sin(phaseA) + .32f * Mathf.Sin(phaseB) + noise) * env * gain, -.9f, .9f);
-        }
-        var clip = AudioClip.Create(label, count, 1, rate, false); clip.SetData(data, 0); return clip;
-    }
-
-    AudioClip Arpeggio(string label, float[] notes, float seconds, float gain)
-    {
-        const int rate = 22050; int count = Mathf.RoundToInt(rate * seconds); var data = new float[count];
-        for (int i = 0; i < count; i++)
-        {
-            float t = i / (float)rate, u = Mathf.Clamp01(i / (float)count);
-            int idx = Mathf.Min(notes.Length - 1, Mathf.FloorToInt(u * notes.Length));
-            float localT = (u * notes.Length - idx) * (seconds / notes.Length);
-            float hz = notes[idx];
-            float env = Mathf.Clamp01(localT * 180f) * Mathf.Exp(-localT * 7.5f);
-            data[i] = (Mathf.Sin(2 * Mathf.PI * hz * t) + .42f * Mathf.Sin(2 * Mathf.PI * hz * 1.5f * t)) * env * gain;
-        }
-        var clip = AudioClip.Create(label, count, 1, rate, false); clip.SetData(data, 0); return clip;
-    }
-
-    AudioClip Drone(string label, float hz, float seconds)
-    {
-        const int rate = 22050; int count = Mathf.RoundToInt(rate * seconds); var data = new float[count];
-        for (int i = 0; i < count; i++)
-        {
-            float t = i / (float)rate, swell = .65f + .35f * Mathf.Sin(t * Mathf.PI * 2 / seconds);
-            float sub = .55f * Mathf.Sin(2 * Mathf.PI * hz * t);
-            float fifth = .25f * Mathf.Sin(2 * Mathf.PI * hz * 1.5f * t);
-            float shimmer = .12f * Mathf.Sin(2 * Mathf.PI * hz * 2f * t + Mathf.Sin(t * 1.5f));
-            data[i] = swell * (sub + fifth + shimmer) * .09f;
-        }
-        var clip = AudioClip.Create(label, count, 1, rate, false); clip.SetData(data, 0); return clip;
+        audioBank = NeonAudioSynth.CreateBank();
+        musicSource.clip = audioBank.Music;
     }
 
     void BuildUI()
@@ -301,10 +265,11 @@ public sealed class SlicePlayer : MonoBehaviour
         menuTitleText = TextObject("Title", card.transform, "NEON\nSURVIVOR", 76, Ivory, TextAnchor.MiddleCenter, new Vector2(.08f, .58f), new Vector2(.92f, .9f)); menuTitleText.fontStyle = FontStyle.Bold;
         menuSubtitleText = TextObject("Subtitle", card.transform, "", 25, Cyan, TextAnchor.MiddleCenter, new Vector2(.08f, .47f), new Vector2(.92f, .59f));
         controlsText = TextObject("Controls", card.transform, "", 23, new Color32(185, 203, 220, 255), TextAnchor.MiddleCenter, new Vector2(.08f, .26f), new Vector2(.92f, .46f));
-        launchButton = MakeButton("Launch", card.transform, "", new Vector2(.12f, .1f), new Vector2(.88f, .23f), Cyan, () => { Play(uiClickClip); ResetRun(); run.Start(); UpdateMusic(0); Play(dashClip); ShowPhase(true); });
-        launchButton.GetComponentInChildren<Text>().color = Ink;
-        var settings = MakeButton("Language", titleScreen.transform, "", new Vector2(.62f, .91f), new Vector2(.94f, .98f), Panel, () => { Play(uiClickClip); CycleLanguage(); });
-        SetButtonCaption(settings, "EN · SETTINGS");
+        launchButton = MakeButton("Launch", card.transform, "", new Vector2(.12f, .1f), new Vector2(.88f, .23f), Cyan, () => { Play(audioBank.UiClick); ResetRun(); run.Start(); UpdateMusic(0); Play(audioBank.Dash); ShowPhase(true); });
+        launchLabelText = launchButton.GetComponentInChildren<Text>();
+        launchLabelText.color = Ink;
+        var settings = MakeButton("Language", titleScreen.transform, "EN · SETTINGS", new Vector2(.62f, .91f), new Vector2(.94f, .98f), Panel, () => { Play(audioBank.UiClick); CycleLanguage(); });
+        languageLabelText = settings.GetComponentInChildren<Text>();
     }
 
     void BuildHud()
@@ -318,13 +283,13 @@ public sealed class SlicePlayer : MonoBehaviour
         var xpbg = PanelObject("XP track", hudScreen.transform, new Color32(35, 48, 65, 255), new Vector2(.08f, .845f), new Vector2(.92f, .856f), Vector2.zero, Vector2.zero);
         xpFill = PanelObject("XP progress", xpbg.transform, Amber, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).GetComponent<Image>(); xpFill.type = Image.Type.Filled; xpFill.fillMethod = Image.FillMethod.Horizontal; xpFill.fillOrigin = (int)Image.OriginHorizontal.Left;
         killsText = TextObject("Run stats", hudScreen.transform, "", 22, Amber, TextAnchor.MiddleCenter, new Vector2(.16f, .805f), new Vector2(.84f, .842f));
-        var boss = PanelObject("Warden health panel", hudScreen.transform, Panel, new Vector2(.14f, .745f), new Vector2(.86f, .798f), Vector2.zero, Vector2.zero); boss.SetActive(false);
-        bossText = TextObject("Warden", boss.transform, "WARDEN", 18, Coral, TextAnchor.MiddleCenter, new Vector2(.04f, .5f), new Vector2(.96f, .96f));
-        var bbg = PanelObject("Warden track", boss.transform, new Color32(46, 60, 77, 255), new Vector2(.05f, .14f), new Vector2(.95f, .44f), Vector2.zero, Vector2.zero);
+        wardenHealthPanel = PanelObject("Warden health panel", hudScreen.transform, Panel, new Vector2(.14f, .745f), new Vector2(.86f, .798f), Vector2.zero, Vector2.zero); wardenHealthPanel.SetActive(false);
+        bossText = TextObject("Warden", wardenHealthPanel.transform, "WARDEN", 18, Coral, TextAnchor.MiddleCenter, new Vector2(.04f, .5f), new Vector2(.96f, .96f));
+        var bbg = PanelObject("Warden track", wardenHealthPanel.transform, new Color32(46, 60, 77, 255), new Vector2(.05f, .14f), new Vector2(.95f, .44f), Vector2.zero, Vector2.zero);
         bossFill = PanelObject("Warden", bbg.transform, Coral, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).GetComponent<Image>(); bossFill.type = Image.Type.Filled; bossFill.fillMethod = Image.FillMethod.Horizontal;
         warningText = TextObject("Threat warning", hudScreen.transform, "", 24, Coral, TextAnchor.MiddleCenter, new Vector2(.08f, .705f), new Vector2(.92f, .745f));
         objectiveText = TextObject("Extraction objective", hudScreen.transform, "", 22, Amber, TextAnchor.MiddleCenter, new Vector2(.08f, .668f), new Vector2(.92f, .705f));
-        pauseButton = MakeButton("Pause", hudScreen.transform, "Ⅱ", new Vector2(.81f, .882f), new Vector2(.94f, .968f), Panel, () => { Play(uiClickClip); run.Pause(); ClearInput(); ShowPhase(true); });
+        pauseButton = MakeButton("Pause", hudScreen.transform, "Ⅱ", new Vector2(.81f, .882f), new Vector2(.94f, .968f), Panel, () => { Play(audioBank.UiClick); run.Pause(); ClearInput(); ShowPhase(true); });
         dashButton = MakeButton("Dash", hudScreen.transform, "", new Vector2(.72f, .11f), new Vector2(.95f, .24f), new Color32(28, 68, 78, 245), () => dashQueued = true);
         dashLabel = dashButton.GetComponentInChildren<Text>();
     }
@@ -333,28 +298,29 @@ public sealed class SlicePlayer : MonoBehaviour
     {
         var veil = PanelObject("Pause veil", pauseScreen.transform, new Color(0, 0, 0, .72f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
         var card = PanelObject("Pause card", veil.transform, Panel, new Vector2(.08f, .2f), new Vector2(.92f, .8f), Vector2.zero, Vector2.zero);
-        TextObject("Pause title", card.transform, "PAUSED", 48, Ivory, TextAnchor.MiddleCenter, new Vector2(.08f, .82f), new Vector2(.92f, .96f));
-        continueButton = MakeButton("Continue", card.transform, "", new Vector2(.1f, .66f), new Vector2(.9f, .78f), Cyan, () => { Play(uiClickClip); ClearInput(); run.Resume(); ShowPhase(true); });
-        continueButton.GetComponentInChildren<Text>().color = Ink;
-        MakeButton("Retry", card.transform, "", new Vector2(.1f, .51f), new Vector2(.9f, .63f), new Color32(31, 55, 79, 255), () => { Play(uiClickClip); ResetRun(); run.Start(); ShowPhase(true); });
-        MakeButton("Sound", card.transform, "", new Vector2(.1f, .36f), new Vector2(.9f, .47f), new Color32(23, 42, 61, 255), () => { ToggleSfx(); Play(uiClickClip); });
-        MakeButton("Music", card.transform, "", new Vector2(.1f, .21f), new Vector2(.9f, .32f), new Color32(23, 42, 61, 255), () => { Play(uiClickClip); ToggleMusic(); });
-        MakeButton("Motion", card.transform, "", new Vector2(.1f, .06f), new Vector2(.9f, .17f), new Color32(23, 42, 61, 255), () => { Play(uiClickClip); ToggleMotion(); });
+        pauseTitleText = TextObject("Pause title", card.transform, "PAUSED", 48, Ivory, TextAnchor.MiddleCenter, new Vector2(.08f, .82f), new Vector2(.92f, .96f));
+        continueButton = MakeButton("Continue", card.transform, "", new Vector2(.1f, .66f), new Vector2(.9f, .78f), Cyan, () => { Play(audioBank.UiClick); ClearInput(); run.Resume(); ShowPhase(true); });
+        continueLabelText = continueButton.GetComponentInChildren<Text>();
+        continueLabelText.color = Ink;
+        retryLabelText = MakeButton("Retry", card.transform, "", new Vector2(.1f, .51f), new Vector2(.9f, .63f), new Color32(31, 55, 79, 255), () => { Play(audioBank.UiClick); ResetRun(); run.Start(); ShowPhase(true); }).GetComponentInChildren<Text>();
+        soundLabelText = MakeButton("Sound", card.transform, "", new Vector2(.1f, .36f), new Vector2(.9f, .47f), new Color32(23, 42, 61, 255), () => { ToggleSfx(); Play(audioBank.UiClick); }).GetComponentInChildren<Text>();
+        musicLabelText = MakeButton("Music", card.transform, "", new Vector2(.1f, .21f), new Vector2(.9f, .32f), new Color32(23, 42, 61, 255), () => { Play(audioBank.UiClick); ToggleMusic(); }).GetComponentInChildren<Text>();
+        motionLabelText = MakeButton("Motion", card.transform, "", new Vector2(.1f, .06f), new Vector2(.9f, .17f), new Color32(23, 42, 61, 255), () => { Play(audioBank.UiClick); ToggleMotion(); }).GetComponentInChildren<Text>();
     }
 
     void BuildUpgrades()
     {
         var veil = PanelObject("Choice veil", upgradeScreen.transform, new Color(0, 0, 0, .74f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
         var card = PanelObject("Choice panel", veil.transform, Panel, new Vector2(.06f, .15f), new Vector2(.94f, .85f), Vector2.zero, Vector2.zero);
-        TextObject("Choice eyebrow", card.transform, "FIELD ADAPTATION", 20, Amber, TextAnchor.MiddleCenter, new Vector2(.08f, .85f), new Vector2(.92f, .93f));
-        TextObject("Choice heading", card.transform, "CHOOSE YOUR\nNEXT VECTOR", 44, Ivory, TextAnchor.MiddleCenter, new Vector2(.08f, .71f), new Vector2(.92f, .85f));
+        choiceEyebrowText = TextObject("Choice eyebrow", card.transform, "FIELD ADAPTATION", 20, Amber, TextAnchor.MiddleCenter, new Vector2(.08f, .85f), new Vector2(.92f, .93f));
+        choiceHeadingText = TextObject("Choice heading", card.transform, "CHOOSE YOUR\nNEXT VECTOR", 44, Ivory, TextAnchor.MiddleCenter, new Vector2(.08f, .71f), new Vector2(.92f, .85f));
         for (int i = 0; i < 3; i++)
         {
             int slot = i;
             var btn = MakeButton("Upgrade " + i, card.transform, "", new Vector2(.08f, .48f - i * .18f), new Vector2(.92f, .63f - i * .18f), Color.white, () => ChooseUpgrade(slot));
             upgradeButtons[i] = btn; upgradeTitles[i] = btn.GetComponentInChildren<Text>();
         }
-        TextObject("Choice footer", card.transform, "ONE CHOICE. A NEW SURVIVAL PLAN.", 17, new Color32(150, 176, 196, 255), TextAnchor.MiddleCenter, new Vector2(.05f, .04f), new Vector2(.95f, .11f));
+        choiceFooterText = TextObject("Choice footer", card.transform, "ONE CHOICE. A NEW SURVIVAL PLAN.", 17, new Color32(150, 176, 196, 255), TextAnchor.MiddleCenter, new Vector2(.05f, .04f), new Vector2(.95f, .11f));
     }
 
     void BuildResults()
@@ -369,8 +335,9 @@ public sealed class SlicePlayer : MonoBehaviour
         resultTitleText = TextObject("Report title", card.transform, "", 52, Ivory, TextAnchor.MiddleCenter, new Vector2(.08f, .74f), new Vector2(.92f, .92f)); resultTitleText.fontStyle = FontStyle.Bold;
         resultStatsText = TextObject("Report stats", card.transform, "", 23, Cyan, TextAnchor.MiddleCenter, new Vector2(.06f, .4f), new Vector2(.94f, .72f));
         bestText = TextObject("Best record", card.transform, "", 19, new Color32(180, 200, 218, 255), TextAnchor.MiddleCenter, new Vector2(.08f, .28f), new Vector2(.92f, .39f));
-        playAgainButton = MakeButton("Play again", card.transform, "", new Vector2(.1f, .1f), new Vector2(.9f, .24f), Cyan, () => { Play(uiClickClip); ResetRun(); run.Start(); UpdateMusic(0); ShowPhase(true); });
-        playAgainButton.GetComponentInChildren<Text>().color = Ink;
+        playAgainButton = MakeButton("Play again", card.transform, "", new Vector2(.1f, .1f), new Vector2(.9f, .24f), Cyan, () => { Play(audioBank.UiClick); ResetRun(); run.Start(); UpdateMusic(0); ShowPhase(true); });
+        playAgainLabelText = playAgainButton.GetComponentInChildren<Text>();
+        playAgainLabelText.color = Ink;
     }
 
     GameObject NewScreen(string name, Transform parent) { var obj = new GameObject(name, typeof(RectTransform)); obj.transform.SetParent(parent, false); Stretch(obj.GetComponent<RectTransform>()); return obj; }
@@ -424,15 +391,15 @@ public sealed class SlicePlayer : MonoBehaviour
         ApplySafeArea();
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (run.Phase == Phase.Playing) { Play(uiClickClip); run.Pause(); ClearInput(); ShowPhase(true); }
-            else if (run.Phase == Phase.Paused) { Play(uiClickClip); run.Resume(); ClearInput(); ShowPhase(true); }
+            if (run.Phase == Phase.Playing) { Play(audioBank.UiClick); run.Pause(); ClearInput(); ShowPhase(true); }
+            else if (run.Phase == Phase.Paused) { Play(audioBank.UiClick); run.Resume(); ClearInput(); ShowPhase(true); }
         }
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
         {
-            if (run.Phase == Phase.Briefing) { Play(uiClickClip); ResetRun(); run.Start(); UpdateMusic(0); Play(dashClip); ShowPhase(true); }
+            if (run.Phase == Phase.Briefing) { Play(audioBank.UiClick); ResetRun(); run.Start(); UpdateMusic(0); Play(audioBank.Dash); ShowPhase(true); }
             else if (run.Phase == Phase.Upgrade) ChooseUpgrade(0);
-            else if (run.Phase == Phase.Paused) { Play(uiClickClip); run.Resume(); ClearInput(); UpdateMusic(0); ShowPhase(true); }
-            else if (run.Phase == Phase.Won || run.Phase == Phase.Lost) { Play(uiClickClip); ResetRun(); run.Start(); UpdateMusic(0); ShowPhase(true); }
+            else if (run.Phase == Phase.Paused) { Play(audioBank.UiClick); run.Resume(); ClearInput(); UpdateMusic(0); ShowPhase(true); }
+            else if (run.Phase == Phase.Won || run.Phase == Phase.Lost) { Play(audioBank.UiClick); ResetRun(); run.Start(); UpdateMusic(0); ShowPhase(true); }
         }
         if (run.Phase == Phase.Upgrade)
         {
@@ -455,9 +422,9 @@ public sealed class SlicePlayer : MonoBehaviour
                 bool wasDashing = run.DashTime > 0; float hpBefore = run.Hp;
                 run.Step(new Vec(move.x, move.y), dashQueued);
                 dashQueued = false; accumulator -= Run.StepSeconds;
-                if (!wasDashing && run.DashTime > 0) Play(dashClip);
-                if (run.Hp < hpBefore) { Play(hitClip); hitStop = reducedMotion ? 0 : .045f; shake = reducedMotion ? 0 : .55f; }
-                if (run.WardenDefeated && !seenBossDown) { Play(bossDownClip); hitStop = reducedMotion ? 0 : .07f; shake = reducedMotion ? 0 : .65f; seenBossDown = true; }
+                if (!wasDashing && run.DashTime > 0) Play(audioBank.Dash);
+                if (run.Hp < hpBefore) { Play(audioBank.Hit); hitStop = reducedMotion ? 0 : .045f; shake = reducedMotion ? 0 : .55f; }
+                if (run.WardenDefeated && !seenBossDown) { Play(audioBank.BossDown); hitStop = reducedMotion ? 0 : .07f; shake = reducedMotion ? 0 : .65f; seenBossDown = true; }
             }
         }
         SyncWorld(); UpdatePhase();
@@ -477,6 +444,8 @@ public sealed class SlicePlayer : MonoBehaviour
 
     void SyncWorld()
     {
+        int baseFrame = reducedMotion ? 0 : (Mathf.FloorToInt(Time.unscaledTime * 8f) & 3);
+        if (shipRenderer && playerFrames[baseFrame]) shipRenderer.sprite = playerFrames[baseFrame];
         ship.position = new Vector3(run.Position.X, run.Position.Y, 0);
         ship.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(run.Facing.Y, run.Facing.X) * Mathf.Rad2Deg - 90);
         // Squash & stretch on dash for tactile game-feel when reducedMotion is off
@@ -502,7 +471,8 @@ public sealed class SlicePlayer : MonoBehaviour
             var tEnemy = enemies[i]; var sr = enemyRenderers[i];
             tEnemy.gameObject.SetActive(true);
             tEnemy.position = new Vector3(e.Position.X, e.Position.Y, 0);
-            sr.sprite = SpriteFor(e.Kind);
+            int enemyFrame = reducedMotion ? 0 : ((baseFrame + e.Id) & 3);
+            sr.sprite = SpriteFor(e.Kind, enemyFrame);
             if (e.HitFlash > 0) sr.color = Ivory;
             else if (e.Telegraph > 0) sr.color = new Color(1f, .86f, .55f, .68f);
             else if (e.Kind == EnemyKind.Warden && run.WardenAttackTelegraph)
@@ -530,7 +500,7 @@ public sealed class SlicePlayer : MonoBehaviour
             if (!reducedMotion) gem.Rotate(0, 0, 90 * Time.unscaledDeltaTime);
         }
         for (int i = run.Gems.Count; i < gems.Count; i++) gems[i].gameObject.SetActive(false);
-        if (run.LastPickupSerial > seenPickups) { Play(pickupClip); seenPickups = run.LastPickupSerial; }
+        if (run.LastPickupSerial > seenPickups) { Play(audioBank.Pickup); seenPickups = run.LastPickupSerial; }
 
         for (int i = 0; i < run.HostileShots.Count; i++)
         {
@@ -571,7 +541,7 @@ public sealed class SlicePlayer : MonoBehaviour
         }
         if (run.BossAttackSerial != seenBossAttack)
         {
-            Play(bossVolleyClip);
+            Play(audioBank.BossVolley);
             if (!reducedMotion)
             {
                 var emit = new ParticleSystem.EmitParams { position = warden == null ? ship.position : new Vector3(warden.Position.X, warden.Position.Y, 0), startColor = Coral };
@@ -587,7 +557,7 @@ public sealed class SlicePlayer : MonoBehaviour
                 var emit = new ParticleSystem.EmitParams { position = new Vector3(run.LastShotTarget.X, run.LastShotTarget.Y, 0), startColor = Amber };
                 burst.Emit(emit, n);
             }
-            Play(killClip);
+            Play(audioBank.Kill);
             shake = reducedMotion ? 0 : Mathf.Max(shake, .22f);
             seenKills = run.Kills;
         }
@@ -599,12 +569,18 @@ public sealed class SlicePlayer : MonoBehaviour
             beam.transform.localScale = new Vector3(Mathf.Max(.15f, delta.magnitude), .18f, 1);
             beam.gameObject.SetActive(true); beamLifetime = .06f;
             bool armoredTarget = run.LastHitTargetKind == EnemyKind.Bastion || run.LastHitTargetKind == EnemyKind.Warden;
-            Play(armoredTarget ? armorHitClip : shotClip);
+            Play(armoredTarget ? audioBank.ArmorHit : audioBank.Shot);
             seenShots = run.Shots;
         }
     }
 
-    Sprite SpriteFor(EnemyKind kind) => kind == EnemyKind.Skitter ? skitterSprite : kind == EnemyKind.Bastion ? bastionSprite : kind == EnemyKind.Warden ? wardenSprite : droneSprite;
+    Sprite SpriteFor(EnemyKind kind, int frame)
+    {
+        if (kind == EnemyKind.Skitter) return skitterFrames[frame] ?? skitterSprite;
+        if (kind == EnemyKind.Bastion) return bastionFrames[frame] ?? bastionSprite;
+        if (kind == EnemyKind.Warden) return wardenFrames[frame] ?? wardenSprite;
+        return droneFrames[frame] ?? droneSprite;
+    }
 
     void RefreshHud()
     {
@@ -616,8 +592,7 @@ public sealed class SlicePlayer : MonoBehaviour
         levelText.text = $"LV  {run.Level:00}";
         killsText.text = $"{L("격추", "ELIMINATIONS", "撃破", "击破", "ÉLIMINATIONS", "ELIMINACIONES")}  {run.Kills:00}     ·     {run.Time:000}s";
         bool boss = run.WardenSpawned && !run.WardenDefeated && run.Phase == Phase.Playing;
-        var bossPanel = hudScreen.transform.Find("Warden health panel");
-        if (bossPanel) bossPanel.gameObject.SetActive(boss);
+        if (wardenHealthPanel) wardenHealthPanel.SetActive(boss);
         if (boss)
         {
             bossFill.fillAmount = Mathf.Clamp01(run.WardenHp / BalanceConfig.WardenHealth);
@@ -627,7 +602,7 @@ public sealed class SlicePlayer : MonoBehaviour
         warningText.text = L("파수자 접근 경보 · 06초", "WARDEN INBOUND · 06 SEC", "守護者接近 · 06秒", "守望者接近 · 06秒", "GARDIEN · 06 S", "GUARDIÁN · 06 S");
         objectiveText.gameObject.SetActive(run.ExtractionActive);
         objectiveText.text = L("추출 지점으로 이동", "MOVE TO EXTRACTION", "脱出地点へ移動", "前往撤离点", "REJOIGNEZ L’EXTRACTION", "VE A LA EXTRACCIÓN");
-        if (run.WardenWarning && !seenBossWarning) { Play(bossWarnClip); seenBossWarning = true; }
+        if (run.WardenWarning && !seenBossWarning) { Play(audioBank.BossWarn); seenBossWarning = true; }
         dashLabel.text = run.DashCooldown <= 0 ? L("대시", "DASH", "ダッシュ", "冲刺", "DASH", "IMPULSO") : run.DashCooldown.ToString("0.0") + "s";
     }
 
@@ -684,13 +659,13 @@ public sealed class SlicePlayer : MonoBehaviour
                     cardImg.color = new Color(1, 1, 1, .5f);
                 }
             }
-            Play(upgradeClip);
+            Play(audioBank.Upgrade);
             FocusControl(upgradeButtons[0]);
         }
         if (run.Phase == Phase.Won || run.Phase == Phase.Lost)
         {
             bool win = run.Phase == Phase.Won;
-            Play(win ? winClip : loseClip);
+            Play(win ? audioBank.Win : audioBank.Lose);
             if (musicSource.isPlaying) musicSource.Stop();
             string grade = SurvivalGrade(win);
             resultTitleText.text = (win
@@ -709,8 +684,7 @@ public sealed class SlicePlayer : MonoBehaviour
             int best = Mathf.Max(PlayerPrefs.GetInt(SaveKey + ".best", 0), Mathf.RoundToInt(run.Time));
             PlayerPrefs.SetInt(SaveKey + ".best", best); PlayerPrefs.Save();
             bestText.text = $"{L("최고 생존", "BEST SURVIVAL", "最高生存", "最佳生存", "RECORD", "MEJOR MARCA")} {best}s   ·   SEED #{run.Seed}";
-            var again = resultScreen.transform.Find("Report veil/Report card/Play again/Label");
-            if (again) again.GetComponent<Text>().text = L("다시 출격", "PLAY AGAIN", "もう一度出撃", "再次出发", "REJOUER", "JUGAR DE NUEVO");
+            if (playAgainLabelText) playAgainLabelText.text = L("다시 출격", "PLAY AGAIN", "もう一度出撃", "再次出发", "REJOUER", "JUGAR DE NUEVO");
             FocusControl(playAgainButton);
         }
     }
@@ -733,39 +707,27 @@ public sealed class SlicePlayer : MonoBehaviour
             menuTitleText.text = "NEON\nSURVIVOR";
             menuSubtitleText.text = L("어둠 속 마지막 불빛", "A LAST LIGHT IN THE DARK", "闇に残る、最後の光", "黑暗中的最后一道光", "UNE DERNIÈRE LUEUR", "LA ÚLTIMA LUZ EN LA OSCURIDAD");
             controlsText.text = L("이동  왼쪽 스틱 / WASD\n대시  오른쪽 버튼 / Space\n주포는 자동으로 발사됩니다", "MOVE   LEFT STICK / WASD\nDASH   RIGHT BUTTON / SPACE\nYOUR CANNON FIRES AUTOMATICALLY", "移動   左スティック / WASD\nダッシュ   右ボタン / Space\n主砲は自動発射", "移动   左侧摇杆 / WASD\n冲刺   右侧按钮 / Space\n主炮自动发射", "BOUGER   STICK GAUCHE / WASD\nDASH   BOUTON DROIT / ESPACE", "MOVER   CONTROL IZQUIERDO / WASD\nIMPULSO   BOTÓN DERECHO / ESPACIO");
-            var launch = titleScreen.transform.Find("Title card/Launch/Label");
-            if (launch) launch.GetComponent<Text>().text = L("출격 시작", "BEGIN DESCENT", "出撃する", "开始行动", "DÉMARRER", "INICIAR DESCENSO");
-            var lang = titleScreen.transform.Find("Language/Label");
-            if (lang) lang.GetComponent<Text>().text = new[] { "한국어 · 설정", "EN · SETTINGS", "日本語 · 設定", "简体中文 · 设置", "FR · OPTIONS", "ES · OPCIONES" }[language];
+            if (launchLabelText) launchLabelText.text = L("출격 시작", "BEGIN DESCENT", "出撃する", "开始行动", "DÉMARRER", "INICIAR DESCENSO");
+            if (languageLabelText) languageLabelText.text = new[] { "한국어 · 설정", "EN · SETTINGS", "日本語 · 設定", "简体中文 · 设置", "FR · OPTIONS", "ES · OPCIONES" }[language];
             FocusControl(launchButton);
         }
         if (run.Phase == Phase.Paused)
         {
-            const string root = "Pause veil/Pause card/";
-            var title = pauseScreen.transform.Find(root + "Pause title");
-            if (title) title.GetComponent<Text>().text = L("일시 정지", "PAUSED", "一時停止", "暂停", "PAUSE", "PAUSA");
-            var t = pauseScreen.transform.Find(root + "Continue/Label");
-            if (t) t.GetComponent<Text>().text = L("계속하기", "RESUME", "再開", "继续", "REPRENDRE", "CONTINUAR");
-            var retry = pauseScreen.transform.Find(root + "Retry/Label");
-            if (retry) retry.GetComponent<Text>().text = L("다시 출격", "RESTART", "再出撃", "重新开始", "RECOMMENCER", "REINICIAR");
-            var s = pauseScreen.transform.Find(root + "Sound/Label");
-            if (s) s.GetComponent<Text>().text = L(sfxOn ? "효과음  켬" : "효과음  끔", sfxOn ? "SFX  ON" : "SFX  OFF", sfxOn ? "効果音  ON" : "効果音  OFF", sfxOn ? "音效  开" : "音效  关", sfxOn ? "SON  ON" : "SON  OFF", sfxOn ? "SONIDO  ON" : "SONIDO  OFF");
-            var m = pauseScreen.transform.Find(root + "Music/Label");
-            if (m) m.GetComponent<Text>().text = L(musicOn ? "음악  켬" : "음악  끔", musicOn ? "MUSIC  ON" : "MUSIC  OFF", musicOn ? "音楽  ON" : "音楽  OFF", musicOn ? "音乐  开" : "音乐  关", musicOn ? "MUSIQUE  ON" : "MUSIQUE  OFF", musicOn ? "MÚSICA  ON" : "MÚSICA  OFF");
-            var motion = pauseScreen.transform.Find(root + "Motion/Label");
-            if (motion) motion.GetComponent<Text>().text = L(reducedMotion ? "움직임 줄임  켬" : "움직임 줄임  끔", reducedMotion ? "REDUCED MOTION  ON" : "REDUCED MOTION  OFF", reducedMotion ? "動きを減らす  ON" : "動きを減らす  OFF", reducedMotion ? "减少动态效果  开" : "减少动态效果  关", reducedMotion ? "MOUVEMENT RÉDUIT  ON" : "MOUVEMENT RÉDUIT  OFF", reducedMotion ? "MOVIMIENTO REDUCIDO  ON" : "MOVIMIENTO REDUCIDO  OFF");
+            if (pauseTitleText) pauseTitleText.text = L("일시 정지", "PAUSED", "一時停止", "暂停", "PAUSE", "PAUSA");
+            if (continueLabelText) continueLabelText.text = L("계속하기", "RESUME", "再開", "继续", "REPRENDRE", "CONTINUAR");
+            if (retryLabelText) retryLabelText.text = L("다시 출격", "RESTART", "再出撃", "重新开始", "RECOMMENCER", "REINICIAR");
+            if (soundLabelText) soundLabelText.text = L(sfxOn ? "효과음  켬" : "효과음  끔", sfxOn ? "SFX  ON" : "SFX  OFF", sfxOn ? "効果音  ON" : "効果音  OFF", sfxOn ? "音效  开" : "音效  关", sfxOn ? "SON  ON" : "SON  OFF", sfxOn ? "SONIDO  ON" : "SONIDO  OFF");
+            if (musicLabelText) musicLabelText.text = L(musicOn ? "음악  켬" : "음악  끔", musicOn ? "MUSIC  ON" : "MUSIC  OFF", musicOn ? "音楽  ON" : "音楽  OFF", musicOn ? "音乐  开" : "音乐  关", musicOn ? "MUSIQUE  ON" : "MUSIQUE  OFF", musicOn ? "MÚSICA  ON" : "MÚSICA  OFF");
+            if (motionLabelText) motionLabelText.text = L(reducedMotion ? "움직임 줄임  켬" : "움직임 줄임  끔", reducedMotion ? "REDUCED MOTION  ON" : "REDUCED MOTION  OFF", reducedMotion ? "動きを減らす  ON" : "動きを減らす  OFF", reducedMotion ? "减少动态效果  开" : "减少动态效果  关", reducedMotion ? "MOUVEMENT RÉDUIT  ON" : "MOUVEMENT RÉDUIT  OFF", reducedMotion ? "MOVIMIENTO REDUCIDO  ON" : "MOVIMIENTO REDUCIDO  OFF");
             FocusControl(continueButton);
         }
         if (run.Phase == Phase.Upgrade)
         {
-            var eyebrow = upgradeScreen.transform.Find("Choice veil/Choice panel/Choice eyebrow");
-            if (eyebrow) eyebrow.GetComponent<Text>().text = run.IsBonusChoice
+            if (choiceEyebrowText) choiceEyebrowText.text = run.IsBonusChoice
                 ? L("파수자 코어 확보", "WARDEN CORE RECOVERED", "守護者コア回収", "已回收守望者核心", "NOYAU DU GARDIEN RÉCUPÉRÉ", "NÚCLEO DEL GUARDIÁN RECUPERADO")
                 : L("전술 적응", "FIELD ADAPTATION", "戦術適応", "战术适配", "ADAPTATION", "ADAPTACIÓN");
-            var heading = upgradeScreen.transform.Find("Choice veil/Choice panel/Choice heading");
-            if (heading) heading.GetComponent<Text>().text = L("다음 생존법을\n선택하세요", "CHOOSE YOUR\nNEXT VECTOR", "次の戦術を\n選択", "选择你的\n生存策略", "CHOISISSEZ\nVOTRE STRATÉGIE", "ELIGE TU\nESTRATEGIA");
-            var footer = upgradeScreen.transform.Find("Choice veil/Choice panel/Choice footer");
-            if (footer) footer.GetComponent<Text>().text = L("하나의 선택, 달라지는 생존 전략", "ONE CHOICE. A NEW SURVIVAL PLAN.", "一つの選択が生存戦略を変える", "一次选择，改变生存策略", "UN CHOIX, UNE NOUVELLE STRATÉGIE", "UNA ELECCIÓN. UNA NUEVA ESTRATEGIA.");
+            if (choiceHeadingText) choiceHeadingText.text = L("다음 생존법을\n선택하세요", "CHOOSE YOUR\nNEXT VECTOR", "次の戦術を\n選択", "选择你的\n生存策略", "CHOISISSEZ\nVOTRE STRATÉGIE", "ELIGE TU\nESTRATEGIA");
+            if (choiceFooterText) choiceFooterText.text = L("하나의 선택, 달라지는 생존 전략", "ONE CHOICE. A NEW SURVIVAL PLAN.", "一つの選択が生存戦略を変える", "一次选择，改变生存策略", "UN CHOIX, UNE NOUVELLE STRATÉGIE", "UNA ELECCIÓN. UNA NUEVA ESTRATEGIA.");
         }
         if (force) RefreshHud();
     }
@@ -774,7 +736,7 @@ public sealed class SlicePlayer : MonoBehaviour
     string UpgradeDescription(Upgrade u) => UpgradeCatalog.Get(u).Descriptions[language];
     string L(string ko, string en, string ja, string zh, string fr, string es) => language == 1 ? en : language == 2 ? ja : language == 3 ? zh : language == 4 ? fr : language == 5 ? es : ko;
 
-    void ChooseUpgrade(int index) { if (index < 0 || index >= run.Choices.Count) return; run.Choose(run.Choices[index]); Play(upgradeClip); ShowPhase(true); }
+    void ChooseUpgrade(int index) { if (index < 0 || index >= run.Choices.Count) return; run.Choose(run.Choices[index]); Play(audioBank.Upgrade); ShowPhase(true); }
     void ResetRun() { nextRunSeed = nextRunSeed * 1664525 + 1013904223; run = new Run(nextRunSeed); ClearInput(); accumulator = 0; hitStop = 0; seenPhase = -1; seenKills = 0; seenShots = 0; seenPickups = 0; seenBossAttack = 0; seenDash = 0; seenBossWarning = false; seenBossDown = false; }
     void ClearInput() { pointer = -1; stick = Vector2.zero; dashQueued = false; accumulator = 0; if (stickControl) stickControl.ResetStick(); }
     void CycleLanguage() { language = (language + 1) % 6; PlayerPrefs.SetInt(SaveKey + ".language", language); foreach (var text in safeRoot.GetComponentsInChildren<Text>(true)) text.font = LocaleFont(); ShowPhase(true); }
