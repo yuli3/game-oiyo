@@ -148,6 +148,12 @@ for (const file of listMdxFiles(contentRoot)) {
   }
 }
 
+// WHY (2026-11-13): An inherited blog-only audit inspected zero game files and
+// falsely reported PASS. Empty coverage must remain visible until a game audit exists.
+if (stats.files === 0) {
+  errors.push(`NOT ASSESSED: no MDX content inspected at ${contentRoot}; this audit does not validate game component copy`);
+}
+
 console.log(`localization audit — ${repoName}`);
 console.log(`files: ${stats.files}`);
 console.log(`with market metadata: ${stats.withMarket}`);

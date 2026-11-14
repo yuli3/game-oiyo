@@ -4,7 +4,7 @@ import { certificationStage, validateReleaseEvidenceDocument } from "./game-rele
 const knownSlugs = new Set(["example-game"]);
 const technicalGates = {
   verifiedAt: "2026-08-08T00:00:00Z",
-  commit: "abcdef1",
+  commit: "a".repeat(40),
   commands: ["npm run type-check", "npm run test -- --run", "npm run build"],
   result: "pass",
 };
@@ -58,6 +58,23 @@ describe("game release evidence", () => {
     };
     const document = { schema: "oiyo.game-release-evidence", schemaVersion: 1, games: { "example-game": evidence } };
     expect(validateReleaseEvidenceDocument(document, knownSlugs)).toEqual([]);
-    expect(certificationStage(true, evidence)).toBe("release-certified");
+    expect(certificationStage(true, evidence, technicalGates.commit)).toBe("release-certified");
+  });
+});
+
+describe('current-build certification', () => {
+  it('does not certify malformed evidence objects', () => {
+    expect(certificationStage(true, { technicalGates: { commit: technicalGates.commit }, playtest: {}, craftReview: {}, releaseApproval: { decision: 'approved' } }, technicalGates.commit))
+      .toBe('implementation-complete');
+  });
+
+  it('does not carry an old technical pass into the current build', () => {
+    expect(certificationStage(true, { technicalGates }, 'f'.repeat(40))).toBe('implementation-complete');
+  });
+
+  it('rejects a playtest whose preceding technical evidence is invalid', () => {
+    const document = { schema: 'oiyo.game-release-evidence', schemaVersion: 1,
+      games: { 'example-game': { technicalGates: {}, playtest } } };
+    expect(validateReleaseEvidenceDocument(document, knownSlugs)).toContain('example-game: invalid or out-of-order playtest');
   });
 });

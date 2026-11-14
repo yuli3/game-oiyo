@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Check, Sparkles, Shield, Zap, Target, Rocket } from 'lucide-react';
+import { Check, Sparkles, Shield, Zap, Target, Rocket, Pause, Play } from 'lucide-react';
 import { celebrate } from "../../lib/games/celebration";
 import {
   type NeonSurvivorState,
   type UpgradeCard,
   EVOLUTION_RECIPES,
+  NEON_DASH,
   UPGRADE_CATALOG,
   createInitialNeonSurvivorState,
   updateNeonSurvivor,
@@ -38,15 +39,11 @@ import {
 } from '../../lib/games/engine-suite-unified';
 import type { Locale } from '../../lib/i18n';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { useAutoPause } from '../../lib/games/game-flow';
+import { Button } from '../ui/button';
 import { ArcadeTouchControls } from '../ui/game/ArcadeTouchControls';
 
-export interface JoystickVector {
-  x: number;
-  y: number;
-  magnitude: number;
-  angle: number;
-  knobDistance: number;
-}
+import { neonJoystick, neonCanvasSize, type JoystickVector } from '../../lib/games/neon-survivor-input';
 import { CameraShake2D, HitStopController } from '../../lib/games/game-juice';
 import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 import {
@@ -84,6 +81,11 @@ const drawRoundRect = (
 
 const COPY = {
   ko: {
+    dash: '대시',
+    dashReady: '준비',
+    pause: '일시정지',
+    resume: '계속하기',
+    pausedNote: '잠시 멈췄습니다. 준비되면 계속하세요.',
     title: '네온 서바이버',
     subtitle: '100% 캔버스 기반 네온 로그라이크 서바이벌',
     time: '생존 시간',
@@ -111,6 +113,11 @@ const COPY = {
     cost: '비용',
   },
   en: {
+    dash: 'Dash',
+    dashReady: 'Ready',
+    pause: 'Pause',
+    resume: 'Resume',
+    pausedNote: 'Paused. Continue when you are ready.',
     title: 'Neon Survivor',
     subtitle: '100% Canvas Horde Survival Roguelite',
     time: 'Time',
@@ -138,6 +145,11 @@ const COPY = {
     cost: 'Cost',
   },
   ja: {
+    dash: 'ダッシュ',
+    dashReady: '準備完了',
+    pause: '一時停止',
+    resume: '再開',
+    pausedNote: '一時停止中です。準備ができたら再開してください。',
     title: 'ネオン・サバイバー',
     subtitle: '100%キャンバス高速ローグライクサバイバル',
     time: '生存時間',
@@ -165,6 +177,11 @@ const COPY = {
     cost: '費用',
   },
   zh: {
+    dash: '冲刺',
+    dashReady: '就绪',
+    pause: '暂停',
+    resume: '继续',
+    pausedNote: '已暂停。准备好后继续。',
     title: '霓虹幸存者',
     subtitle: '100% Canvas 无限割草肉鸽幸存者',
     time: '存活时间',
@@ -192,6 +209,11 @@ const COPY = {
     cost: '消耗',
   },
   fr: {
+    dash: 'Ruée',
+    dashReady: 'Prêt',
+    pause: 'Pause',
+    resume: 'Reprendre',
+    pausedNote: 'En pause. Reprenez quand vous êtes prêt.',
     title: 'Neon Survivor',
     subtitle: 'Jeu de survie en horde 100 % Canvas',
     time: 'Temps',
@@ -219,6 +241,11 @@ const COPY = {
     cost: 'Coût',
   },
   es: {
+    dash: 'Impulso',
+    dashReady: 'Listo',
+    pause: 'Pausa',
+    resume: 'Continuar',
+    pausedNote: 'En pausa. Continúa cuando estés listo.',
     title: 'Neon Survivor',
     subtitle: 'Juego de supervivencia de hordas 100% Canvas',
     time: 'Tiempo',
@@ -251,6 +278,10 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   const t = COPY[locale] ?? COPY.en;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [phase, setPhase] = useState<'briefing' | 'playing'>('briefing');
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(false);
+  const pauseDialogRef = useRef<HTMLDialogElement | null>(null);
+  const pauseButtonRef = useRef<HTMLButtonElement | null>(null);
   const touchOriginRef = useRef<{ id: number; x: number; y: number } | null>(null);
 
   // Meta Progression State
@@ -399,10 +430,53 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   const cameraShakeRef = useRef(new CameraShake2D());
   const hitStopRef = useRef(new HitStopController());
   const keysDownRef = useRef<Record<string, boolean>>({});
+  const dashRequestedRef = useRef(false);
+
+  const clearInput = useCallback(() => {
+    keysDownRef.current = {};
+    dashRequestedRef.current = false;
+    inputVectorRef.current = { x: 0, y: 0 };
+    joystickVectorRef.current = { x: 0, y: 0, magnitude: 0, angle: 0, knobDistance: 0 };
+    const pointerId = touchOriginRef.current?.id;
+    if (pointerId !== undefined && canvasRef.current?.hasPointerCapture(pointerId)) {
+      canvasRef.current.releasePointerCapture(pointerId);
+    }
+    touchOriginRef.current = null;
+  }, []);
+
+  const pauseGame = useCallback(() => {
+    // WHY (2026-11-13): Stop the loop synchronously before React commits the overlay.
+    pausedRef.current = true;
+    clearInput();
+    setPaused(true);
+  }, [clearInput]);
+
+  const resumeGame = useCallback(() => {
+    clearInput();
+    pausedRef.current = false;
+    setPaused(false);
+  }, [clearInput]);
+
+  useAutoPause(phase === 'playing' && !paused && !gameState.gameOver, pauseGame);
+  useEffect(() => {
+    const dialog = pauseDialogRef.current;
+    if (paused && dialog && !dialog.open) dialog.showModal();
+    if (!paused && dialog?.open) dialog.close();
+  }, [paused]);
+
+  const menuOpenRef = useRef(false);
+  menuOpenRef.current = showHangar || showQuests || showEvoGuide;
+  useEffect(() => {
+    if (showHangar || showQuests || showEvoGuide) clearInput();
+  }, [showHangar, showQuests, showEvoGuide, clearInput]);
 
   // Keyboard handling
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (phase !== 'playing' || pausedRef.current || menuOpenRef.current) return;
+      if (e.key === 'Escape') { pauseGame(); return; }
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
+      if (e.code === 'Space' && !e.repeat) dashRequestedRef.current = true;
       keysDownRef.current[e.key.toLowerCase()] = true;
     };
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -414,7 +488,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [phase, pauseGame]);
 
   // Level Up sound and vibration
   const prevLevelRef = useRef(gameState.player.level);
@@ -426,7 +500,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     prevLevelRef.current = gameState.player.level;
   }, [gameState.player.level, playLevelUpSound, vibrate]);
 
-  // Main 120fps Game & Canvas Render Loop
+  // Simulation and rendering follow the display clock; performance is measured per device.
   useEffect(() => {
     let animId: number;
     let lastTime = performance.now();
@@ -436,7 +510,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       const rawDt = Math.min(0.05, (now - lastTime) / 1000);
       lastTime = now;
 
-      if (phase !== 'playing') {
+      if (phase !== 'playing' || pausedRef.current || menuOpenRef.current) {
         animId = requestAnimationFrame(loop);
         return;
       }
@@ -472,7 +546,11 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
         const prevLevelUp = stateRef.current.levelUpPending;
         const prevGameOver = stateRef.current.gameOver;
         const prevKills = stateRef.current.kills;
-        const next = updateNeonSurvivor(stateRef.current, effectiveDt, inputVectorRef.current);
+        const next = updateNeonSurvivor(stateRef.current, effectiveDt, { ...inputVectorRef.current, dash: dashRequestedRef.current });
+        dashRequestedRef.current = false;
+        if ((next.dashCooldown ?? 0) > (stateRef.current.dashCooldown ?? 0)) {
+          nativeHaptics.trigger('light');
+        }
 
         // Sound & FX triggers & CoreHaptics
         if (next.player.hp < prevHp) {
@@ -573,17 +651,17 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
 
   // Canvas drawing function
   const renderCanvas = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, state: NeonSurvivorState) => {
-    const dpr = window.devicePixelRatio || 1;
     const displayW = canvas.clientWidth;
     const displayH = canvas.clientHeight;
 
-    if (canvas.width !== displayW * dpr || canvas.height !== displayH * dpr) {
-      canvas.width = displayW * dpr;
-      canvas.height = displayH * dpr;
+    const size = neonCanvasSize(displayW, displayH, window.devicePixelRatio);
+    if (canvas.width !== size.width || canvas.height !== size.height) {
+      canvas.width = size.width;
+      canvas.height = size.height;
     }
 
     ctx.save();
-    ctx.scale(dpr, dpr);
+    ctx.scale(size.ratio, size.ratio);
 
     // Camera follow player
     const camX = Math.round(state.player.x - displayW / 2);
@@ -1005,26 +1083,20 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     drawRoundRect(ctx, hpX, hpY, hpW * hpRatio, hpH, 4);
     ctx.fill();
 
-    // 3. Time & Kills (Top Center / Right)
-    const infoW = 150;
-    const infoH = 34;
-    const infoX = displayW - 16 - infoW - 56; // leave room for sound button
-    if (infoX > 190) {
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
-      ctx.beginPath();
-      drawRoundRect(ctx, infoX, hudY, infoW, infoH, 8);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.font = 'bold 12px ui-monospace, monospace';
-      ctx.fillStyle = '#ffffff';
-      const timeStr = formatTime(state.survivalTime);
-      ctx.fillText(`⏱ ${timeStr}`, infoX + 10, hudY + 22);
-      ctx.fillStyle = '#f43f5e';
-      ctx.fillText(`💀 ${state.kills}`, infoX + 88, hudY + 22);
-    }
+    // WHY (2026-11-13): The second row stays visible at 320px; toolbar sits below it.
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+    ctx.beginPath();
+    drawRoundRect(ctx, 16, 58, Math.max(0, displayW - 32), 42, 8);
+    ctx.fill();
+    ctx.font = 'bold 12px ui-monospace, monospace';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(`${t.time} ${formatTime(state.survivalTime)}`, 24, 75);
+    const recharge = state.dashCooldown ?? 0;
+    ctx.fillStyle = recharge > 0 ? '#94a3b8' : '#38bdf8';
+    ctx.fillText(`${t.dash} · ${recharge > 0 ? recharge.toFixed(1) + 's' : t.dashReady}`, 24, 91);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(16, 98, (displayW - 32) * (1 - Math.min(1, recharge / NEON_DASH.cooldown)), 2);
     ctx.restore();
 
     // 4. Elite Boss Warning Siren Overlay & HUD
@@ -1047,8 +1119,9 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   };
 
   const handleRestart = useCallback(() => {
+    resumeGame();
     setGameState(createInitialNeonSurvivorState(metaState.upgrades));
-  }, [metaState.upgrades]);
+  }, [metaState.upgrades, resumeGame]);
 
   const handleBuyUpgrade = (upgradeId: keyof PlayerMetaState['upgrades']) => {
     const res = purchaseMetaUpgrade(metaState, upgradeId);
@@ -1106,7 +1179,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   }, [formatTime, gameState.kills, gameState.player.level, gameState.score, gameState.survivalTime, t.title]);
 
   const handleCanvasPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (touchOriginRef.current !== null) return;
+    if (pausedRef.current || menuOpenRef.current || touchOriginRef.current !== null) return;
     e.preventDefault();
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
@@ -1130,19 +1203,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     const curY = e.clientY - rect.top;
     const dx = curX - touchOriginRef.current.x;
     const dy = curY - touchOriginRef.current.y;
-    const dist = Math.hypot(dx, dy);
-    if (dist > 8) {
-      const maxRadius = 60;
-      const norm = Math.min(1.0, dist / maxRadius);
-      const angle = Math.atan2(dy, dx);
-      joystickVectorRef.current = {
-        x: Math.cos(angle) * norm,
-        y: Math.sin(angle) * norm,
-        magnitude: norm,
-        angle,
-        knobDistance: Math.min(dist, maxRadius),
-      };
-    }
+    joystickVectorRef.current = neonJoystick(dx, dy);
   };
 
   const handleCanvasPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -1303,7 +1364,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
           </div>
         </div>
       ) : (
-        <>
+        <div className="neon-playfield">
       {/* 100% Canvas Surface with direct touch & pointer tracking */}
       <canvas
         ref={canvasRef}
@@ -1311,11 +1372,12 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
         onPointerMove={handleCanvasPointerMove}
         onPointerUp={handleCanvasPointerUp}
         onPointerCancel={handleCanvasPointerUp}
+        onLostPointerCapture={handleCanvasPointerUp}
         className="w-full h-full block cursor-crosshair touch-none select-none"
       />
 
       {/* Emberdeep-Grade In-Viewport Mobile Touch Controls */}
-      {!gameState.levelUpPending && !gameState.gameOver && (
+      {!paused && !showHangar && !showQuests && !showEvoGuide && !gameState.levelUpPending && !gameState.gameOver && (
         <ArcadeTouchControls
           showDPad={true}
           onDirection={(dir, active) => {
@@ -1341,23 +1403,14 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
           actions={[
             {
               id: 'dash',
-              label: 'DASH',
+              label: (gameState.dashCooldown ?? 0) > 0 ? `${t.dash} ${Math.ceil(gameState.dashCooldown ?? 0)}` : t.dash,
               variant: 'primary',
               icon: <Zap className="size-4" />,
-              onPress: () => {
-                nativeHaptics.trigger('medium');
-                if (stateRef.current) {
-                  const baseSpeed = stateRef.current.player.speed;
-                  stateRef.current.player.speed = baseSpeed * 1.75;
-                  setTimeout(() => {
-                    if (stateRef.current) stateRef.current.player.speed = baseSpeed;
-                  }, 350);
-                }
-              },
+              onPress: () => { dashRequestedRef.current = true; },
             },
             {
               id: 'evo',
-              label: 'EVO',
+              label: t.evoGuide,
               variant: 'info',
               onPress: () => setShowEvoGuide(true),
             },
@@ -1365,9 +1418,26 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
         />
       )}
 
+      {!gameState.gameOver && !paused && (
+        <div className="absolute bottom-40 right-4 z-20">
+          <Button variant="secondary" size="lg" ref={pauseButtonRef} onClick={pauseGame} aria-label={t.pause}>
+            <Pause aria-hidden="true" />{t.pause}
+          </Button>
+        </div>
+      )}
+      <dialog ref={pauseDialogRef} aria-label={t.pause}
+        onCancel={(event) => event.preventDefault()}
+        className="m-auto max-w-sm rounded-xl border border-border bg-background p-6 text-foreground shadow-xl backdrop:bg-background/80">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <h2 className="text-xl font-bold">{t.pause}</h2>
+          <p>{t.pausedNote}</p>
+          <Button size="lg" onClick={resumeGame}><Play aria-hidden="true" />{t.resume}</Button>
+        </div>
+      </dialog>
+
       {/* Hologram Storyline Operator Lore Banner */}
       {activeLore && (
-        <div className="absolute top-16 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md z-20 pointer-events-none animate-in fade-in slide-in-from-top-3 duration-200">
+        <div className="absolute top-44 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md z-20 pointer-events-none animate-in fade-in slide-in-from-top-3 duration-200">
           <div className="rounded-xl border border-primary/50 bg-background/90 backdrop-blur-md p-3 shadow-xl flex items-start gap-2.5">
             <span className="text-xl shrink-0 p-1 rounded-lg bg-primary/20">📡</span>
             <div className="min-w-0 flex-1">
@@ -1384,7 +1454,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       )}
 
       {/* Top Controls: Immersion Portal & Sound Mute Toggle */}
-      <div className="absolute top-4 right-4 z-10 pointer-events-auto flex items-center gap-1.5">
+      <div className="absolute top-28 right-4 left-4 z-10 pointer-events-auto flex flex-wrap justify-end items-center gap-1.5">
         {/* Crystal Inventory Badge */}
         <button
           type="button"
@@ -1612,7 +1682,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
           </div>
         </div>
       )}
-        </>
+        </div>
       )}
 
       {/* Evolution Guide Modal */}

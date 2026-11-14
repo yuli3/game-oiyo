@@ -54,16 +54,35 @@ export function countdownSchedule(options: { quick?: boolean; reducedMotion?: bo
   return { steps, total: steps.length * step };
 }
 
+export function subscribeAutoPause(
+  visibility: EventTarget & { visibilityState: string },
+  focus: EventTarget,
+  onPause: () => void,
+): () => void {
+  const listener = () => {
+    if (visibility.visibilityState === "hidden") onPause();
+  };
+  visibility.addEventListener("visibilitychange", listener);
+  // WHY (2026-11-13): Losing focus can swallow keyup without hiding the tab.
+  // Never resume automatically: the player must explicitly regain control.
+  focus.addEventListener("blur", onPause);
+  // WHY (2026-11-13): BFCache navigation must preserve a paused run, not held input.
+  focus.addEventListener("pagehide", onPause);
+  listener();
+  return () => {
+    visibility.removeEventListener("visibilitychange", listener);
+    focus.removeEventListener("blur", onPause);
+    focus.removeEventListener("pagehide", onPause);
+  };
+}
+
 /** Calls onHide when the tab is hidden while the game is live (E3, X5). */
 export function useAutoPause(live: boolean, onHide: () => void): void {
   const callback = useRef(onHide);
   callback.current = onHide;
   useEffect(() => {
     if (!live || typeof document === "undefined") return;
-    const listener = () => {
-      if (document.visibilityState === "hidden") callback.current();
-    };
-    document.addEventListener("visibilitychange", listener);
-    return () => document.removeEventListener("visibilitychange", listener);
+    return subscribeAutoPause(document, window, () => callback.current());
   }, [live]);
+
 }
