@@ -1,0 +1,12 @@
+Noto Sans KR, JP and SC regional fonts
+Copyright © 2014–2021 Adobe and Google. Licensed under SIL Open Font License 1.1; see OFL.txt.
+
+Source files from Google Fonts (Noto CJK), main branch:
+- ofl/notosanskr/NotoSansKR[wght].ttf
+- ofl/notosansjp/NotoSansJP[wght].ttf
+- ofl/notosanssc/NotoSansSC[wght].ttf
+Source repository: https://github.com/google/fonts
+
+The bundled derivatives were statically instantiated at weight 400 and subset to the
+Unicode text literals used by this game, then renamed to “OIYO Neon Korean”,
+“OIYO Neon Japanese” and “OIYO Neon Chinese SC” to comply with the OFL reserved-name rule.

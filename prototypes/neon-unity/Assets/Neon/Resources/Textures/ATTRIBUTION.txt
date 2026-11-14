@@ -1,0 +1,25 @@
+Neon Survivor — Original Studio Vector-to-Bitmap Art Assets (2026-11-14)
+Copyright © 2026 OIYO Studio. All rights reserved.
+
+All 14 PNG textures in this directory were procedurally authored in-house from clean SVG
+optical-engraving geometry and rendered via libvips/sharp following `projects/game/art-bibles/neon-survivor.md`.
+No external game art, third-party screenshots, franchise designs, or external assets were used.
+
+Palette tokens:
+- Abyss (#07111F), Slate (#172A3D), Ivory (#EAF5F2), Ion Cyan (#4CEFD8), Amber (#FFC36B), Coral (#FF687F), Violet (#B493FF)
+
+Asset Manifest (total ~761 KB, under the 1.5 MB budget):
+1. TitleKeyArt.png (1024x1536) — Briefing / results backdrop with solitary pilot probe and distant orbital ring.
+2. StarOrbitBg.png (1024x1024) — Seamless deep-space optical engraving world backdrop (low-detail central 70%).
+3. PlayerProbe.png (512x512) — Narrow kite silhouette with open center notch, three ivory plates, cyan reactor.
+4. EnemyDrone.png (512x512) — Driftling 3-point asymmetrical mineral shard with coral strike tell and amber reactor.
+5. EnemySkitter.png (512x512) — Swept twin-fin flanker with split rear and dual ivory optical sensors.
+6. EnemyBastion.png (512x512) — Heavy 6-sided mineral plate with violet center seam and core.
+7. EnemyWarden.png (1024x1024) — Tall crown/eye boss silhouette around an open reactor core.
+8. SalvageShard.png (256x256) — Warm amber diamond prism with hollow inner cut.
+9. WardenCore.png (256x256) — High-value octagonal core pickup with double amber/cyan outline and hollow cut.
+10. CombatFxAtlas.png (2048x1024, 4x2 cells of 512x512) — Player needle shot, hostile round bead, dash ring, hit spark, broken warning ring, safe lane guide, extraction gate, phase return shockwave.
+11. ChoiceFrameSilver.png (384x512) — Silver tier observatory-glass upgrade card frame.
+12. ChoiceFrameGold.png (384x512) — Gold tier observatory-glass upgrade card frame.
+13. ChoiceFramePrismatic.png (384x512) — Prismatic tier observatory-glass upgrade card frame.
+14. UnitAnimAtlas.png (1024x1280, 4x5 cells of 256x256) — 4-frame animation strips for PlayerProbe, EnemyDrone, EnemySkitter, EnemyBastion, and EnemyWarden.
