@@ -646,6 +646,12 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+          <a
+            href="/prototypes/border-inspector-unity/index.html"
+            className="rounded-lg border border-primary/50 bg-primary/15 px-3 py-1 text-xs font-black text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
+          >
+            🛰️ Unity 3D 실시간 에디션 (12스테이지)
+          </a>
           <button
             type="button"
             onClick={() => handleFieldClick('clock_date')}
