@@ -40,6 +40,11 @@ function TiltBackpackItemButton({
   value,
   bonus,
   isSelected,
+  isDragging,
+  dragOffset,
+  onPointerDownDrag,
+  onPointerMoveDrag,
+  onPointerUpDrag,
   onClick,
 }: {
   item: PlacedItem;
@@ -47,6 +52,11 @@ function TiltBackpackItemButton({
   value: number;
   bonus: number;
   isSelected: boolean;
+  isDragging: boolean;
+  dragOffset: { dx: number; dy: number } | null;
+  onPointerDownDrag: (e: React.PointerEvent<HTMLButtonElement>, item: PlacedItem) => void;
+  onPointerMoveDrag: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  onPointerUpDrag: (e: React.PointerEvent<HTMLButtonElement>) => void;
   onClick: () => void;
 }) {
   const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
@@ -57,16 +67,28 @@ function TiltBackpackItemButton({
       type="button"
       style={
         {
-          '--card-tilt': transformCss,
+          '--card-tilt': isDragging ? 'none' : transformCss,
+          '--drag-tx': isDragging && dragOffset ? `${dragOffset.dx}px` : '0px',
+          '--drag-ty': isDragging && dragOffset ? `${dragOffset.dy}px` : '0px',
         } as React.CSSProperties
       }
-      onPointerMove={onPointerMove}
+      onPointerDown={(e) => onPointerDownDrag(e, item)}
+      onPointerMove={(e) => {
+        onPointerMove(e);
+        onPointerMoveDrag(e);
+      }}
+      onPointerUp={onPointerUpDrag}
+      onPointerCancel={onPointerUpDrag}
       onPointerLeave={onPointerLeave}
       onClick={() => {
         triggerPop(0.2);
         onClick();
       }}
-      className={`h-16 rounded border p-1 flex flex-col items-center justify-between text-xs transition-all cursor-pointer will-change-transform transform-(--card-tilt) ${
+      className={`h-16 rounded border p-1 flex flex-col items-center justify-between text-xs touch-none select-none will-change-transform translate-x-(--drag-tx) translate-y-(--drag-ty) transform-(--card-tilt) ${
+        isDragging
+          ? 'z-40 scale-110 shadow-2xl ring-2 ring-primary cursor-grabbing'
+          : 'transition-all cursor-grab'
+      } ${
         isSelected
           ? 'border-primary bg-primary/25 ring-2 ring-primary scale-105 shadow-md'
           : def.type === 'weapon'
@@ -114,6 +136,18 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
   const [highScore, setHighScore] = useState(() => loadHighScore('backpack-hero', 0));
 
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
+  const [dragItem, setDragItem] = useState<{
+    instanceId: string;
+    pointerId: number;
+    startX: number;
+    startY: number;
+    dx: number;
+    dy: number;
+    active: boolean;
+  } | null>(null);
+  const [hoverCell, setHoverCell] = useState<{ r: number; c: number } | null>(null);
+  const cellRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const suppressItemClickRef = useRef(false);
   const { shakeCssVars, addTrauma } = useGameJuicePro();
   const audioCtxRef = useRef<AudioContext | null>(null);
 
@@ -197,8 +231,78 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
     return map;
   }, [engineState.items]);
 
+  const findCellAtPoint = (clientX: number, clientY: number): { r: number; c: number } | null => {
+    for (const [key, el] of cellRefs.current.entries()) {
+      const rect = el.getBoundingClientRect();
+      if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+        const [rStr, cStr] = key.split(':');
+        return { r: Number(rStr), c: Number(cStr) };
+      }
+    }
+    return null;
+  };
+
+  const handleItemPointerDown = (e: React.PointerEvent<HTMLButtonElement>, item: PlacedItem) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    suppressItemClickRef.current = false;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDragItem({
+      instanceId: item.instanceId,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      dx: 0,
+      dy: 0,
+      active: false,
+    });
+  };
+
+  const handleItemPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!dragItem || dragItem.pointerId !== e.pointerId) return;
+    const dx = e.clientX - dragItem.startX;
+    const dy = e.clientY - dragItem.startY;
+    const active = dragItem.active || dx * dx + dy * dy > 64;
+    if (active && !dragItem.active) {
+      suppressItemClickRef.current = true;
+      setSelectedInstanceId(dragItem.instanceId);
+      MobileHapticsPro.light();
+    }
+    if (active) {
+      setDragItem({ ...dragItem, dx, dy, active: true });
+      setHoverCell(findCellAtPoint(e.clientX, e.clientY));
+    }
+  };
+
+  const handleItemPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!dragItem || dragItem.pointerId !== e.pointerId) return;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    if (dragItem.active) {
+      const target = findCellAtPoint(e.clientX, e.clientY);
+      const id = dragItem.instanceId;
+      setDragItem(null);
+      setHoverCell(null);
+      if (target) {
+        const moved = engineRef.current.moveItem(id, target.r, target.c);
+        if (moved) {
+          RetroChiptuneSynth.playBlip(audioCtxRef.current);
+          MobileHapticsPro.impact();
+          setSelectedInstanceId(null);
+          syncState();
+        }
+      }
+    } else {
+      setDragItem(null);
+    }
+  };
+
   // Activate item during battle
   const handleItemClick = (item: PlacedItem) => {
+    if (suppressItemClickRef.current) {
+      suppressItemClickRef.current = false;
+      return;
+    }
     if (engineState.gameState === 'battle') {
       const res = engineRef.current.activateItem(item.instanceId);
       if (res.success) {
@@ -440,25 +544,49 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
                 const item = occupied.item;
                 const def = ITEM_CATALOG[item.defId];
                 const { value, bonus } = engineRef.current.calculateEffectiveItemValue(item.instanceId);
+                const isDraggingThis = Boolean(dragItem?.active && dragItem.instanceId === item.instanceId);
+                const isSnapTarget = Boolean(hoverCell && hoverCell.r === r && hoverCell.c === c);
 
                 return (
-                  <TiltBackpackItemButton
+                  <div
                     key={key}
-                    item={item}
-                    def={def}
-                    value={value}
-                    bonus={bonus}
-                    isSelected={Boolean(isSelected)}
-                    onClick={() => handleItemClick(item)}
-                  />
+                    ref={(el) => {
+                      if (el) cellRefs.current.set(key, el);
+                      else cellRefs.current.delete(key);
+                    }}
+                    className={isSnapTarget ? 'ring-2 ring-primary rounded' : undefined}
+                  >
+                    <TiltBackpackItemButton
+                      item={item}
+                      def={def}
+                      value={value}
+                      bonus={bonus}
+                      isSelected={Boolean(isSelected)}
+                      isDragging={isDraggingThis}
+                      dragOffset={isDraggingThis && dragItem ? { dx: dragItem.dx, dy: dragItem.dy } : null}
+                      onPointerDownDrag={handleItemPointerDown}
+                      onPointerMoveDrag={handleItemPointerMove}
+                      onPointerUpDrag={handleItemPointerUp}
+                      onClick={() => handleItemClick(item)}
+                    />
+                  </div>
                 );
               }
 
+              const isEmptySnap = Boolean(hoverCell && hoverCell.r === r && hoverCell.c === c);
               return (
                 <button
                   key={key}
+                  ref={(el) => {
+                    if (el) cellRefs.current.set(key, el);
+                    else cellRefs.current.delete(key);
+                  }}
                   onClick={() => handleCellClick(r, c)}
-                  className="h-16 rounded border border-border/40 bg-background/50 hover:bg-muted/40 transition-colors flex items-center justify-center text-muted-foreground/20 text-xs"
+                  className={`h-16 rounded border transition-colors flex items-center justify-center text-xs ${
+                    isEmptySnap
+                      ? 'border-primary bg-primary/20 text-primary ring-2 ring-primary'
+                      : 'border-border/40 bg-background/50 hover:bg-muted/40 text-muted-foreground/20'
+                  }`}
                 >
                   ·
                 </button>
