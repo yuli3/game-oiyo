@@ -347,6 +347,29 @@ export default function TwoHands({ locale }: { locale: Locale }) {
   return (
     <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
       <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
+        {/* 3D Unity 6 WebGL Launcher Banner */}
+        <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl select-none" aria-hidden="true">🧠</span>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-foreground">
+                Unity 6 3D 12스테이지 양손 뇌 반사 조율 4개국어 에디션
+              </span>
+              <span className="text-xs text-muted-foreground">
+                3D 듀얼 트랙 러너 • 양손 동시 싱크 게이트 & 쉴드 • 4개국어(KO/EN/JA/ES)
+              </span>
+            </div>
+          </div>
+          <a
+            href="/prototypes/two-hands-unity/index.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
+          >
+            <span>3D 실행</span>
+            <span className="text-xs">↗</span>
+          </a>
+        </div>
         <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
           <img src={TWO_HANDS_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
         </div>
