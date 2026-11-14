@@ -1,4 +1,4 @@
-// VERTICAL SLICE + G3 EXPANSION — validates the three-minute Neon Survivor loop with Chassis, Orbitals, Awakenings, and Daily Seed.
+// VERTICAL SLICE + G3 EXPANSION — validates the three-minute Neon Survivor loop with Chassis, Orbitals, Awakenings, Tactical Hostiles, Boss Rotation, and Daily Seed.
 using System;
 using System.Collections.Generic;
 
@@ -6,7 +6,7 @@ namespace Oiyo.Neon
 {
     public enum Phase { Briefing, Playing, Paused, Upgrade, Won, Lost }
     public enum Upgrade { Power, Cadence, Hull, Magnet, VectorDrive, PhaseReturn, SplitCharge, EventHorizon, OrbitalPrism, GravityWell, ArmorBreaker, ChronoStep }
-    public enum EnemyKind { Drone, Skitter, Bastion, Warden }
+    public enum EnemyKind { Drone, Skitter, Bastion, Warden, TetherWeaver, NullLeech, SolarArchitect }
     public struct Vec
     {
         public float X, Y;
@@ -20,6 +20,7 @@ namespace Oiyo.Neon
     public sealed class Enemy
     {
         public int Id; public EnemyKind Kind; public Vec Position; public float Hp,Speed,Radius,Telegraph,HitFlash;
+        public int AbsorbedGems;
         internal float StrafePhase;
     }
     public sealed class HostileShot { public Vec Position, Velocity; public float Radius, Damage, Remaining; }
@@ -30,6 +31,8 @@ namespace Oiyo.Neon
         public Phase Phase { get; private set; }=Phase.Briefing;
         public ChassisId Chassis { get; }
         public bool IsDailyRun { get; }
+        public EnemyKind ActiveBossKind => (Seed & 1u) == 0u ? EnemyKind.SolarArchitect : EnemyKind.Warden;
+        public float ActiveBossMaxHp => ActiveBossKind == EnemyKind.SolarArchitect ? BalanceConfig.ArchitectHealth : BalanceConfig.WardenHealth;
         public Vec Position { get; private set; } public Vec Facing { get; private set; }=new Vec(1,0);
         public float Time { get; private set; } public float Hp { get; private set; }
         public float MaxHp { get; private set; }
@@ -43,6 +46,9 @@ namespace Oiyo.Neon
         public float WardenHp { get; private set; } public bool WardenSpawned { get; private set; }
         public bool WardenDefeated { get; private set; } public bool WardenWarning { get; private set; }
         public Vec WardenSafeLaneDirection { get; private set; }=new Vec(.94f,.34f);
+        public bool HasActiveTether { get; private set; }
+        public Vec TetherStart { get; private set; }
+        public Vec TetherEnd { get; private set; }
         public bool ExtractionActive => Time>=BalanceConfig.ExtractionStart && Phase==Phase.Playing;
         public Vec ExtractionPosition => new Vec(0,HalfHeight-3);
         public float ExtractionDistance => (Position-ExtractionPosition).Length;
@@ -65,11 +71,11 @@ namespace Oiyo.Neon
         public int ActiveOrbitals => BalanceConfig.GetChassis(Chassis).BaseOrbitals + OrbitalPrismStacks;
         public float OrbitalAngle { get; private set; }
         public bool PiercingActive => BalanceConfig.GetChassis(Chassis).PiercingShots || AwakenedThermalLance;
-        // Weapon Awakenings (2nd-tier evolutions when core + partner upgrades are combined)
         public bool AwakenedPhaseNova => Stack(Upgrade.VectorDrive)>0 && Stack(Upgrade.PhaseReturn)>0;
         public bool AwakenedArcTempest => Stack(Upgrade.Cadence)>0 && Stack(Upgrade.SplitCharge)>0;
         public bool AwakenedSingularity => Stack(Upgrade.Magnet)>0 && Stack(Upgrade.GravityWell)>0;
         public bool AwakenedThermalLance => Stack(Upgrade.Power)>0 && Stack(Upgrade.ArmorBreaker)>0;
+        public int AwakeningCount => (AwakenedPhaseNova?1:0)+(AwakenedArcTempest?1:0)+(AwakenedSingularity?1:0)+(AwakenedThermalLance?1:0);
         public float PhaseReturnRadius => 2.6f*(AwakenedPhaseNova ? 1.25f : 1f);
         public float SplitChargeMultiplier => .6f*(AwakenedArcTempest ? 1.2f : 1f);
         public float GravityWellRadius => BalanceConfig.GravityWellBaseRadius*(AwakenedSingularity ? 1.25f : 1f);
@@ -100,6 +106,9 @@ namespace Oiyo.Neon
             return h == 0 ? 20261114u : h;
         }
 
+        public static bool IsBoss(EnemyKind kind) => kind == EnemyKind.Warden || kind == EnemyKind.SolarArchitect;
+        public static bool IsArmored(EnemyKind kind) => kind == EnemyKind.Bastion || IsBoss(kind);
+
         public void Start(){if(Phase==Phase.Briefing)Phase=Phase.Playing;}
         public void Pause(){if(Phase==Phase.Playing)Phase=Phase.Paused;}
         public void Resume(){if(Phase==Phase.Paused)Phase=Phase.Playing;}
@@ -129,9 +138,24 @@ namespace Oiyo.Neon
         float Random01(){random^=random<<13;random^=random>>17;random^=random<<5;return(random>>8)/16777216f;}
         Enemy MakeEnemy(EnemyKind kind,Vec position)
         {
-            float hp=kind==EnemyKind.Bastion?BalanceConfig.BastionHp:kind==EnemyKind.Skitter?BalanceConfig.SkitterHp:kind==EnemyKind.Warden?BalanceConfig.WardenHealth:BalanceConfig.DroneHp;
-            float speed=kind==EnemyKind.Bastion?BalanceConfig.BastionSpeed:kind==EnemyKind.Skitter?BalanceConfig.SkitterSpeed:kind==EnemyKind.Warden?BalanceConfig.WardenSpeed:BalanceConfig.DroneSpeed;
-            float radius=kind==EnemyKind.Bastion?BalanceConfig.BastionRadius:kind==EnemyKind.Skitter?BalanceConfig.SkitterRadius:kind==EnemyKind.Warden?BalanceConfig.WardenRadius:BalanceConfig.DroneRadius;
+            float hp=kind==EnemyKind.Bastion?BalanceConfig.BastionHp:
+                     kind==EnemyKind.Skitter?BalanceConfig.SkitterHp:
+                     kind==EnemyKind.TetherWeaver?BalanceConfig.WeaverHp:
+                     kind==EnemyKind.NullLeech?BalanceConfig.LeechHp:
+                     kind==EnemyKind.SolarArchitect?BalanceConfig.ArchitectHealth:
+                     kind==EnemyKind.Warden?BalanceConfig.WardenHealth:BalanceConfig.DroneHp;
+            float speed=kind==EnemyKind.Bastion?BalanceConfig.BastionSpeed:
+                        kind==EnemyKind.Skitter?BalanceConfig.SkitterSpeed:
+                        kind==EnemyKind.TetherWeaver?BalanceConfig.WeaverSpeed:
+                        kind==EnemyKind.NullLeech?BalanceConfig.LeechSpeed:
+                        kind==EnemyKind.SolarArchitect?BalanceConfig.ArchitectSpeed:
+                        kind==EnemyKind.Warden?BalanceConfig.WardenSpeed:BalanceConfig.DroneSpeed;
+            float radius=kind==EnemyKind.Bastion?BalanceConfig.BastionRadius:
+                         kind==EnemyKind.Skitter?BalanceConfig.SkitterRadius:
+                         kind==EnemyKind.TetherWeaver?BalanceConfig.WeaverRadius:
+                         kind==EnemyKind.NullLeech?BalanceConfig.LeechRadius:
+                         kind==EnemyKind.SolarArchitect?BalanceConfig.ArchitectRadius:
+                         kind==EnemyKind.Warden?BalanceConfig.WardenRadius:BalanceConfig.DroneRadius;
             return new Enemy{Id=++nextId,Kind=kind,Position=position,Hp=hp,Speed=speed,Radius=radius,Telegraph=.6f};
         }
         public Vec GetOrbitalPosition(int index, int count)
@@ -159,11 +183,19 @@ namespace Oiyo.Neon
             spawnClock-=dt;
             bool wardenJustSpawned=false;
             if(!WardenSpawned&&Time>=BalanceConfig.WardenSpawnAt)
-            {WardenSpawned=true;wardenJustSpawned=true;WardenHp=BalanceConfig.WardenHealth;wardenAttackClock=BalanceConfig.WardenAttackTell;WardenSafeLaneDirection=SafeLaneFor(BossAttackSerial);Enemies.Add(MakeEnemy(EnemyKind.Warden,new Vec(0,HalfHeight+5)));}
+            {
+                WardenSpawned=true;wardenJustSpawned=true;
+                var bossKind=ActiveBossKind;
+                WardenHp=ActiveBossMaxHp;
+                wardenAttackClock=BalanceConfig.WardenAttackTell;
+                WardenSafeLaneDirection=SafeLaneFor(BossAttackSerial);
+                Enemies.Add(MakeEnemy(bossKind,new Vec(0,HalfHeight+5)));
+            }
             if(spawnClock<=0&&Enemies.Count<WaveDirector.ActiveCap(Time)&&Time<Duration)
             {float a=Random01()*(float)Math.PI*2;var kind=WaveDirector.Choose(Time,Random01());Enemies.Add(MakeEnemy(kind,new Vec((float)Math.Cos(a)*(HalfWidth+3),(float)Math.Sin(a)*(HalfHeight+3))));spawnClock=WaveDirector.SpawnInterval(Time);}
             Enemy nearest=null;float nearestDistance=float.MaxValue;
             float wellRadius=GravityWellRadius;
+            Enemy firstWeaver=null, secondWeaver=null;
             for(int i=0;i<Enemies.Count;i++)
             {
                 var e=Enemies[i];e.Telegraph=Math.Max(0,e.Telegraph-dt);e.HitFlash=Math.Max(0,e.HitFlash-dt);
@@ -176,15 +208,46 @@ namespace Oiyo.Neon
                     float effSpeed = e.Speed * slowFactor;
                     if(e.Kind==EnemyKind.Skitter)
                     {Vec lateral=new Vec(-delta.Unit.Y,delta.Unit.X);e.StrafePhase+=dt*3.8f;e.Position+=delta.Unit*(effSpeed*.72f*dt)+lateral*((float)Math.Sin(e.StrafePhase)*effSpeed*.42f*dt);}
+                    else if(e.Kind==EnemyKind.NullLeech&&Gems.Count>0&&e.AbsorbedGems<2)
+                    {
+                        int nearGem=-1;float gDist=7.5f;
+                        for(int g=0;g<Gems.Count;g++){float gd=(Gems[g]-e.Position).Length;if(gd<gDist){gDist=gd;nearGem=g;}}
+                        if(nearGem>=0)
+                        {
+                            Vec toGem=(Gems[nearGem]-e.Position).Unit;
+                            e.Position+=toGem*(effSpeed*1.12f*dt);
+                            if((Gems[nearGem]-e.Position).Length<.6f)
+                            {Gems.RemoveAt(nearGem);e.AbsorbedGems++;e.Hp+=12f;e.Radius+=.05f;}
+                        }
+                        else e.Position+=delta.Unit*(effSpeed*dt);
+                    }
                     else e.Position+=delta.Unit*(effSpeed*dt);
                     d=(Position-e.Position).Length;
                     if(d<nearestDistance){nearest=e;nearestDistance=d;}
+                    if(e.Kind==EnemyKind.TetherWeaver)
+                    {
+                        if(firstWeaver==null)firstWeaver=e;
+                        else if(secondWeaver==null&&(e.Position-firstWeaver.Position).Length<=BalanceConfig.WeaverTetherRange)secondWeaver=e;
+                    }
                     if(d<e.Radius+.35f)
                     {
-                        float damage=e.Kind==EnemyKind.Warden?BalanceConfig.WardenContactDamage:BalanceConfig.ContactDamage;
-                        if((e.Kind==EnemyKind.Warden?wardenContactClock:hurtClock)<=0&&!invulnerable)
-                        {Hp=Math.Max(0,Hp-damage);if(e.Kind==EnemyKind.Warden)wardenContactClock=BalanceConfig.WardenContactCooldown;else hurtClock=BalanceConfig.ContactInvulnerability;LastHitSerial++;}
+                        float damage=IsBoss(e.Kind)?BalanceConfig.WardenContactDamage:BalanceConfig.ContactDamage;
+                        if((IsBoss(e.Kind)?wardenContactClock:hurtClock)<=0&&!invulnerable)
+                        {Hp=Math.Max(0,Hp-damage);if(IsBoss(e.Kind))wardenContactClock=BalanceConfig.WardenContactCooldown;else hurtClock=BalanceConfig.ContactInvulnerability;LastHitSerial++;}
                     }
+                }
+            }
+            HasActiveTether = firstWeaver != null && secondWeaver != null;
+            if(HasActiveTether)
+            {
+                TetherStart=firstWeaver.Position;TetherEnd=secondWeaver.Position;
+                Vec seg=TetherEnd-TetherStart;float segLenSq=seg.X*seg.X+seg.Y*seg.Y;
+                if(segLenSq>.01f&&!invulnerable&&hurtClock<=0)
+                {
+                    float t=Clamp(((Position.X-TetherStart.X)*seg.X+(Position.Y-TetherStart.Y)*seg.Y)/segLenSq,0f,1f);
+                    Vec closest=TetherStart+seg*t;
+                    if((Position-closest).Length<.42f)
+                    {Hp=Math.Max(0,Hp-BalanceConfig.WeaverTetherDamage);hurtClock=BalanceConfig.ContactInvulnerability;LastHitSerial++;}
                 }
             }
             if(dashStarted&&PhaseReturnStacks>0)
@@ -207,7 +270,7 @@ namespace Oiyo.Neon
                             if(e.Telegraph<=0&&(e.Position-orbPos).Length<e.Radius+.62f)
                             {
                                 e.Hp-=orbDmg;e.HitFlash=.09f;
-                                if(e.Kind==EnemyKind.Warden)WardenHp=Math.Max(0,e.Hp);
+                                if(IsBoss(e.Kind))WardenHp=Math.Max(0,e.Hp);
                             }
                         }
                     }
@@ -217,13 +280,13 @@ namespace Oiyo.Neon
             for(int i=HostileShots.Count-1;i>=0;i--)
             {var s=HostileShots[i];s.Position+=s.Velocity*dt;s.Remaining-=dt;if((s.Position-Position).Length<s.Radius+.3f){if(!invulnerable&&hurtClock<=0){Hp=Math.Max(0,Hp-s.Damage);LastHitSerial++;hurtClock=BalanceConfig.ContactInvulnerability;}HostileShots.RemoveAt(i);}else if(s.Remaining<=0)HostileShots.RemoveAt(i);}
             fireClock=Math.Max(0,fireClock-dt);
-            if(nearest!=null&&nearestDistance<(nearest.Kind==EnemyKind.Warden?16:10)&&fireClock<=0)
+            if(nearest!=null&&nearestDistance<(IsBoss(nearest.Kind)?16:10)&&fireClock<=0)
             {
-                float armorBonus=(ArmorBreakerStacks>0&&(nearest.Kind==EnemyKind.Bastion||nearest.Kind==EnemyKind.Warden)) ? (1f+.14f*ArmorBreakerStacks) : 1f;
+                float armorBonus=(ArmorBreakerStacks>0&&IsArmored(nearest.Kind)) ? (1f+.14f*ArmorBreakerStacks) : 1f;
                 float dealt=Damage*armorBonus;
                 nearest.Hp-=dealt;nearest.HitFlash=.1f;LastHitTargetKind=nearest.Kind;
                 LastShotTarget=nearest.Position;Shots++;ShotSerial++;fireClock=FireInterval;
-                if(nearest.Kind==EnemyKind.Warden)WardenHp=Math.Max(0,nearest.Hp);
+                if(IsBoss(nearest.Kind))WardenHp=Math.Max(0,nearest.Hp);
                 if(PiercingActive)
                 {
                     Vec rayDir=(nearest.Position-Position).Unit;
@@ -239,7 +302,7 @@ namespace Oiyo.Neon
                                 if(perp.Length<e.Radius+.42f)
                                 {
                                     e.Hp-=dealt*.38f;e.HitFlash=.1f;
-                                    if(e.Kind==EnemyKind.Warden)WardenHp=Math.Max(0,e.Hp);
+                                    if(IsBoss(e.Kind))WardenHp=Math.Max(0,e.Hp);
                                     break;
                                 }
                             }
@@ -247,10 +310,16 @@ namespace Oiyo.Neon
                     }
                 }
                 if(SplitChargeStacks>0&&Shots%(SplitChargeStacks==1?4:3)==0)
-                {Enemy other=null;float d0=4.5f;foreach(var e in Enemies)if(e!=nearest&&e.Hp>0){float d1=(e.Position-nearest.Position).Length;if(d1<d0){other=e;d0=d1;}}if(other!=null){other.Hp-=Damage*SplitChargeMultiplier;other.HitFlash=.1f;if(other.Kind==EnemyKind.Warden)WardenHp=Math.Max(0,other.Hp);}}
+                {Enemy other=null;float d0=4.5f;foreach(var e in Enemies)if(e!=nearest&&e.Hp>0){float d1=(e.Position-nearest.Position).Length;if(d1<d0){other=e;d0=d1;}}if(other!=null){other.Hp-=Damage*SplitChargeMultiplier;other.HitFlash=.1f;if(IsBoss(other.Kind))WardenHp=Math.Max(0,other.Hp);}}
             }
             for(int i=Enemies.Count-1;i>=0;i--)if(Enemies[i].Hp<=0)
-            {var e=Enemies[i];bool boss=e.Kind==EnemyKind.Warden;Gems.Add(e.Position);Enemies.RemoveAt(i);Kills++;LastKillSerial++;if(boss){WardenHp=0;WardenDefeated=true;HostileShots.Clear();RollChoices(true);if(choices.Count>0)Phase=Phase.Upgrade;}}
+            {
+                var e=Enemies[i];bool boss=IsBoss(e.Kind);
+                int dropCount = 1 + e.AbsorbedGems;
+                for(int g=0;g<dropCount;g++)Gems.Add(e.Position + new Vec((g*0.18f),0));
+                Enemies.RemoveAt(i);Kills++;LastKillSerial++;
+                if(boss){WardenHp=0;WardenDefeated=true;HostileShots.Clear();RollChoices(true);if(choices.Count>0)Phase=Phase.Upgrade;}
+            }
             for(int i=Gems.Count-1;i>=0;i--)
             {Vec delta=Position-Gems[i];if(delta.Length<BalanceConfig.PickupCollectRange){xp++;Gems.RemoveAt(i);LastPickupSerial++;}else if(delta.Length<MagnetRange)Gems[i]+=delta.Unit*(BalanceConfig.PickupSpeed*dt);}
             if(Hp<=0){FailureReason="hull";Phase=Phase.Lost;}
@@ -263,11 +332,12 @@ namespace Oiyo.Neon
             wardenAttackClock-=dt;
             if(wardenAttackClock<=0)
             {
-                var boss=Enemies.Find(e=>e.Kind==EnemyKind.Warden);if(boss==null)return;
-                // WHY (2026-11-14): a player-aimed opening rewarded standing still; rotate a telegraphed lane so dodging is an intentional action.
+                var boss=Enemies.Find(e=>IsBoss(e.Kind));if(boss==null)return;
+                // WHY (2026-11-14): both Warden and Solar Architect preserve a deterministic 90-degree safe lane while rotating their volley pattern.
                 WardenSafeLaneDirection=SafeLaneFor(BossAttackSerial);
                 float safeAngle=(float)Math.Atan2(WardenSafeLaneDirection.Y,WardenSafeLaneDirection.X);
-                for(int i=1;i<BalanceConfig.WardenVolleyCount;i++){float a=safeAngle+(float)(Math.PI*2*i/BalanceConfig.WardenVolleyCount);HostileShots.Add(new HostileShot{Position=boss.Position,Velocity=new Vec((float)Math.Cos(a)*BalanceConfig.WardenProjectileSpeed,(float)Math.Sin(a)*BalanceConfig.WardenProjectileSpeed),Radius=BalanceConfig.WardenProjectileRadius,Damage=BalanceConfig.WardenProjectileDamage,Remaining=BalanceConfig.WardenProjectileLifetime});}
+                float speedMult = boss.Kind == EnemyKind.SolarArchitect ? 1.06f : 1f;
+                for(int i=1;i<BalanceConfig.WardenVolleyCount;i++){float a=safeAngle+(float)(Math.PI*2*i/BalanceConfig.WardenVolleyCount);HostileShots.Add(new HostileShot{Position=boss.Position,Velocity=new Vec((float)Math.Cos(a)*BalanceConfig.WardenProjectileSpeed*speedMult,(float)Math.Sin(a)*BalanceConfig.WardenProjectileSpeed*speedMult),Radius=BalanceConfig.WardenProjectileRadius,Damage=BalanceConfig.WardenProjectileDamage,Remaining=BalanceConfig.WardenProjectileLifetime});}
                 BossAttackSerial++;WardenSafeLaneDirection=SafeLaneFor(BossAttackSerial);wardenAttackClock=BalanceConfig.WardenAttackInterval;
             }
         }

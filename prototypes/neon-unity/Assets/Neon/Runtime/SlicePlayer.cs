@@ -23,12 +23,13 @@ public sealed class SlicePlayer : MonoBehaviour
     static uint nextRunSeed = 20261113;
     ChassisId selectedChassis = ChassisId.AegisProbe;
     bool dailyModeSelected;
+    ObservatoryCodex codex = new ObservatoryCodex();
     readonly List<Transform> enemies = new List<Transform>();
     readonly List<SpriteRenderer> enemyRenderers = new List<SpriteRenderer>();
     readonly List<Transform> gems = new List<Transform>();
     readonly List<Transform> hostileShots = new List<Transform>();
     readonly List<Transform> orbitalBlades = new List<Transform>();
-    Transform ship, engineGlow, dashRing, gravityWellRing, background;
+    Transform ship, engineGlow, dashRing, gravityWellRing, tetherBeam, background;
     SpriteRenderer shipRenderer;
     Transform extractionMarker, safeLane;
     Transform bossTellRing;
@@ -39,6 +40,9 @@ public sealed class SlicePlayer : MonoBehaviour
     readonly Sprite[] skitterFrames = new Sprite[4];
     readonly Sprite[] bastionFrames = new Sprite[4];
     readonly Sprite[] wardenFrames = new Sprite[4];
+    readonly Sprite[] weaverFrames = new Sprite[4];
+    readonly Sprite[] leechFrames = new Sprite[4];
+    readonly Sprite[] architectFrames = new Sprite[4];
     Sprite circleSprite, panelSprite, titleKeyArtSprite, starOrbitBgSprite;
     Sprite fxShotNeedleSprite, fxHostileBeadSprite, fxDashRingSprite, fxWarningRingSprite, fxSafeLaneSprite, fxExtractionGateSprite;
     Sprite frameSilverSprite, frameGoldSprite, framePrismaticSprite;
@@ -85,6 +89,7 @@ public sealed class SlicePlayer : MonoBehaviour
         musicOn = PlayerPrefs.GetInt(SaveKey + ".music", 1) == 1;
         reducedMotion = PlayerPrefs.GetInt(SaveKey + ".motion", 0) == 1;
         language = Mathf.Clamp(PlayerPrefs.GetInt(SaveKey + ".language", 0), 0, 5);
+        codex = ObservatoryCodex.Deserialize(PlayerPrefs.GetString(SaveKey + ".codex", ""));
     }
 
     void LoadFonts()
@@ -115,11 +120,12 @@ public sealed class SlicePlayer : MonoBehaviour
 
     static void SliceAnimRow(Texture2D atlas, int rowFromTop, Sprite fallback, Sprite[] target, float pixelsPerUnit)
     {
+        int totalRows = atlas && atlas.height >= 2048 ? 8 : 5;
         for (int col = 0; col < 4; col++)
         {
-            if (!atlas) { target[col] = fallback; continue; }
-            int cellW = atlas.width / 4, cellH = atlas.height / 5;
-            int y = (4 - rowFromTop) * cellH;
+            if (!atlas || rowFromTop >= totalRows) { target[col] = fallback; continue; }
+            int cellW = atlas.width / 4, cellH = atlas.height / totalRows;
+            int y = (totalRows - 1 - rowFromTop) * cellH;
             target[col] = Sprite.Create(atlas, new Rect(col * cellW, y, cellW, cellH), new Vector2(.5f, .5f), pixelsPerUnit, 0, SpriteMeshType.FullRect);
         }
     }
@@ -152,6 +158,9 @@ public sealed class SlicePlayer : MonoBehaviour
         SliceAnimRow(unitAnimAtlas, 2, skitterSprite, skitterFrames, 256f);
         SliceAnimRow(unitAnimAtlas, 3, bastionSprite, bastionFrames, 256f);
         SliceAnimRow(unitAnimAtlas, 4, wardenSprite, wardenFrames, 256f);
+        SliceAnimRow(unitAnimAtlas, 5, droneSprite, weaverFrames, 256f);
+        SliceAnimRow(unitAnimAtlas, 6, skitterSprite, leechFrames, 256f);
+        SliceAnimRow(unitAnimAtlas, 7, wardenSprite, architectFrames, 256f);
 
         var fxAtlas = Resources.Load<Texture2D>("Textures/CombatFxAtlas");
         if (fxAtlas) fxAtlas.filterMode = FilterMode.Bilinear;
@@ -190,6 +199,8 @@ public sealed class SlicePlayer : MonoBehaviour
         dashRing.gameObject.SetActive(false);
         gravityWellRing = Make("Gravity well aura", fxDashRingSprite, new Color(Violet.r, Violet.g, Violet.b, .28f), 2.5f);
         gravityWellRing.gameObject.SetActive(false);
+        tetherBeam = Make("Tether Weaver beam", fxShotNeedleSprite, Coral, 1f);
+        tetherBeam.gameObject.SetActive(false);
         extractionMarker = Make("Extraction beacon", fxExtractionGateSprite, Color.white, 2.8f);
         extractionMarker.position = new Vector3(0, 17, 0);
         extractionMarker.gameObject.SetActive(false);
@@ -508,7 +519,7 @@ public sealed class SlicePlayer : MonoBehaviour
             sr.sprite = SpriteFor(e.Kind, enemyFrame);
             if (e.HitFlash > 0) sr.color = Ivory;
             else if (e.Telegraph > 0) sr.color = new Color(1f, .86f, .55f, .68f);
-            else if (e.Kind == EnemyKind.Warden && run.WardenAttackTelegraph)
+            else if (Run.IsBoss(e.Kind) && run.WardenAttackTelegraph)
                 sr.color = Color.Lerp(Color.white, Coral, .35f + .35f * Mathf.Sin(Time.unscaledTime * 18));
             else sr.color = Color.white;
 
@@ -516,12 +527,23 @@ public sealed class SlicePlayer : MonoBehaviour
             float size = e.Radius * 2.35f * hitPop;
             tEnemy.localScale = Vector3.one * size;
             Vec toPilot = run.Position - e.Position;
-            float angle = e.Kind == EnemyKind.Warden
+            float angle = Run.IsBoss(e.Kind)
                 ? Mathf.Sin(Time.unscaledTime * 1.6f + e.Id) * 8f
                 : Mathf.Atan2(toPilot.Y, toPilot.X) * Mathf.Rad2Deg - 90f;
             tEnemy.rotation = Quaternion.Euler(0, 0, angle);
         }
         for (int i = run.Enemies.Count; i < enemies.Count; i++) enemies[i].gameObject.SetActive(false);
+
+        tetherBeam.gameObject.SetActive(run.HasActiveTether);
+        if (run.HasActiveTether)
+        {
+            Vector3 fromT = new Vector3(run.TetherStart.X, run.TetherStart.Y, -.04f);
+            Vector3 toT = new Vector3(run.TetherEnd.X, run.TetherEnd.Y, -.04f);
+            Vector3 diffT = toT - fromT;
+            tetherBeam.position = (fromT + toT) * .5f;
+            tetherBeam.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(diffT.y, diffT.x) * Mathf.Rad2Deg);
+            tetherBeam.localScale = new Vector3(Mathf.Max(.2f, diffT.magnitude), .22f, 1f);
+        }
 
         for (int i = 0; i < run.Gems.Count; i++)
         {
@@ -547,7 +569,7 @@ public sealed class SlicePlayer : MonoBehaviour
         extractionMarker.gameObject.SetActive(run.ExtractionActive);
         extractionMarker.localScale = Vector3.one * (2.6f + (reducedMotion ? 0 : Mathf.Sin(Time.unscaledTime * 4) * .22f));
 
-        var warden = run.Enemies.Find(e => e.Kind == EnemyKind.Warden);
+        var warden = run.Enemies.Find(e => Run.IsBoss(e.Kind));
         bossTellRing.gameObject.SetActive(warden != null && run.WardenAttackTelegraph);
         safeLane.gameObject.SetActive(warden != null && run.WardenAttackTelegraph);
         if (warden != null && run.WardenAttackTelegraph)
@@ -601,7 +623,7 @@ public sealed class SlicePlayer : MonoBehaviour
             beam.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
             beam.transform.localScale = new Vector3(Mathf.Max(.15f, delta.magnitude), .18f, 1);
             beam.gameObject.SetActive(true); beamLifetime = .06f;
-            bool armoredTarget = run.LastHitTargetKind == EnemyKind.Bastion || run.LastHitTargetKind == EnemyKind.Warden;
+            bool armoredTarget = Run.IsArmored(run.LastHitTargetKind);
             Play(armoredTarget ? audioBank.ArmorHit : audioBank.Shot);
             seenShots = run.Shots;
         }
@@ -612,8 +634,15 @@ public sealed class SlicePlayer : MonoBehaviour
         if (kind == EnemyKind.Skitter) return skitterFrames[frame] ?? skitterSprite;
         if (kind == EnemyKind.Bastion) return bastionFrames[frame] ?? bastionSprite;
         if (kind == EnemyKind.Warden) return wardenFrames[frame] ?? wardenSprite;
+        if (kind == EnemyKind.TetherWeaver) return weaverFrames[frame] ?? droneSprite;
+        if (kind == EnemyKind.NullLeech) return leechFrames[frame] ?? skitterSprite;
+        if (kind == EnemyKind.SolarArchitect) return architectFrames[frame] ?? wardenSprite;
         return droneFrames[frame] ?? droneSprite;
     }
+
+    string ActiveBossTitle() => run.ActiveBossKind == EnemyKind.SolarArchitect
+        ? L("태양 설계자", "SOLAR ARCHITECT", "ソーラー・アーキテクト", "太阳建筑师", "ARCHITECTE SOLAIRE", "ARQUITECTO SOLAR")
+        : L("파수자", "THE WARDEN", "WARDEN", "守望者", "LE GARDIEN", "EL GUARDIÁN");
 
     void RefreshHud()
     {
@@ -628,11 +657,11 @@ public sealed class SlicePlayer : MonoBehaviour
         if (wardenHealthPanel) wardenHealthPanel.SetActive(boss);
         if (boss)
         {
-            bossFill.fillAmount = Mathf.Clamp01(run.WardenHp / BalanceConfig.WardenHealth);
-            bossText.text = L("파수자", "THE WARDEN", "WARDEN", "守望者", "LE GARDIEN", "EL GUARDIÁN");
+            bossFill.fillAmount = Mathf.Clamp01(run.WardenHp / run.ActiveBossMaxHp);
+            bossText.text = ActiveBossTitle();
         }
         warningText.gameObject.SetActive(run.WardenWarning && !run.WardenSpawned);
-        warningText.text = L("파수자 접근 경보 · 06초", "WARDEN INBOUND · 06 SEC", "守護者接近 · 06秒", "守望者接近 · 06秒", "GARDIEN · 06 S", "GUARDIÁN · 06 S");
+        warningText.text = $"{ActiveBossTitle()} {L("접근 경보 · 06초", "INBOUND · 06 SEC", "接近 · 06秒", "接近 · 06秒", "APPROCHE · 06 S", "EN CAMINO · 06 S")}";
         objectiveText.gameObject.SetActive(run.ExtractionActive);
         objectiveText.text = L("추출 지점으로 이동", "MOVE TO EXTRACTION", "脱出地点へ移動", "前往撤离点", "REJOIGNEZ L’EXTRACTION", "VE A LA EXTRACCIÓN");
         if (run.WardenWarning && !seenBossWarning) { Play(audioBank.BossWarn); seenBossWarning = true; }
@@ -722,15 +751,17 @@ public sealed class SlicePlayer : MonoBehaviour
                 ? L("추출 지점에 도달하지 못했습니다", "EXTRACTION ZONE MISSED", "脱出地点に到達できません", "未能到达撤离区", "ZONE D’EXTRACTION MANQUÉE", "NO LLEGASTE A LA EXTRACCIÓN")
                 : L("선체가 파괴되었습니다", "HULL BREACHED", "船体損傷", "船体被击毁", "COQUE DÉTRUITE", "CASCO DESTRUIDO");
             string bossResult = run.WardenDefeated
-                ? L("파수자 격침", "WARDEN DEFEATED", "守護者撃破", "已击败守望者", "GARDIEN VAINCU", "GUARDIÁN DERROTADO")
-                : L("파수자 생존", "WARDEN SURVIVED", "守護者生存", "守望者存活", "GARDIEN EN VIE", "GUARDIÁN VIVO");
+                ? $"{ActiveBossTitle()} {L("격침", "DEFEATED", "撃破", "已击败", "VAINCU", "DERROTADO")}"
+                : $"{ActiveBossTitle()} {L("생존", "SURVIVED", "生存", "存活", "EN VIE", "VIVO")}";
             resultStatsText.text = $"{run.Time:0}s   ·   {run.Kills:00} {L("격추", "HOSTILES", "撃破", "击破", "ENNEMIS", "ENEMIGOS")}   ·   LV {run.Level:00}\n{cause}  ·  {bossResult}\n{BuildSummary()}";
-            int best = Mathf.Max(PlayerPrefs.GetInt(SaveKey + ".best", 0), Mathf.RoundToInt(run.Time));
+            codex.RecordRun(run);
+            PlayerPrefs.SetString(SaveKey + ".codex", codex.Serialize());
+            int best = Mathf.Max(PlayerPrefs.GetInt(SaveKey + ".best", 0), codex.BestSurvivalSeconds);
             PlayerPrefs.SetInt(SaveKey + ".best", best); PlayerPrefs.Save();
             string modeBadge = run.IsDailyRun
                 ? L("오늘의 시드", "DAILY SEED", "本日シード", "今日种子", "GRAINE DU JOUR", "SEMILLA DIARIA")
                 : L("표준 시드", "SEED", "シード", "种子", "GRAINE", "SEMILLA");
-            bestText.text = $"{L("최고 생존", "BEST SURVIVAL", "最高生存", "最佳生存", "RECORD", "MEJOR MARCA")} {best}s   ·   {BalanceConfig.GetChassis(run.Chassis).Names[language]}   ·   {modeBadge} #{run.Seed}";
+            bestText.text = $"{L("최고 생존", "BEST SURVIVAL", "最高生存", "最佳生存", "RECORD", "MEJOR MARCA")} {best}s   ·   {L("관측 도감", "CODEX", "観測図鑑", "观测图鉴", "CODEX", "CÓDICE")} {codex.UnlockedMilestones}/6   ·   {modeBadge} #{run.Seed}";
             if (playAgainLabelText) playAgainLabelText.text = L("다시 출격", "PLAY AGAIN", "もう一度出撃", "再次出发", "REJOUER", "JUGAR DE NUEVO");
             FocusControl(playAgainButton);
         }
@@ -760,7 +791,7 @@ public sealed class SlicePlayer : MonoBehaviour
             if (modeLabelText) modeLabelText.text = dailyModeSelected
                 ? $"{L("오늘의 관측 시드", "DAILY OBSERVATORY SEED", "本日の観測シード", "今日观测种子", "GRAINE DU JOUR", "SEMILLA DIARIA")} #{dailySeed} ({kstNow:MM-dd}) ▸"
                 : $"{L("표준 작전 (매 출격 무작위 시드)", "STANDARD OPS (RANDOM SEED)", "標準作戦（ランダムシード）", "标准行动（随机种子）", "OPÉRATION STANDARD", "OPERACIÓN ESTÁNDAR")} ▸";
-            controlsText.text = L("이동 왼쪽 스틱/WASD · 대시 오른쪽 버튼/Space · 주포 자동 발사", "MOVE LEFT STICK/WASD · DASH RIGHT BUTTON/SPACE · AUTO FIRE", "移動 左スティック/WASD · ダッシュ 右ボタン/Space · 自動射撃", "移动 左摇杆/WASD · 冲刺 右按钮/Space · 自动射击", "BOUGER STICK/WASD · DASH BOUTON/ESPACE · TIR AUTO", "MOVER STICK/WASD · IMPULSO BOTÓN/ESPACIO · TIRO AUTO");
+            controlsText.text = $"{L("이동 왼쪽 스틱/WASD · 대시 오른쪽 버튼/Space · 관측 도감", "MOVE STICK/WASD · DASH BUTTON/SPACE · CODEX", "移動 左スティック/WASD · ダッシュ 右ボタン/Space · 図鑑", "移动 左摇杆/WASD · 冲刺 右按钮/Space · 图鉴", "BOUGER STICK/WASD · DASH BOUTON/ESPACE · CODEX", "MOVER STICK/WASD · IMPULSO BOTÓN/ESPACIO · CÓDICE")} {codex.UnlockedMilestones}/6 ({L("탈출", "WINS", "脱出", "撤离", "VICTOIRES", "VICTORIAS")} {codex.TotalExtractions})";
             if (launchLabelText) launchLabelText.text = L("출격 시작", "BEGIN DESCENT", "出撃する", "开始行动", "DÉMARRER", "INICIAR DESCENSO");
             if (languageLabelText) languageLabelText.text = new[] { "한국어 · 설정", "EN · SETTINGS", "日本語 · 設定", "简体中文 · 设置", "FR · OPTIONS", "ES · OPCIONES" }[language];
             FocusControl(launchButton);

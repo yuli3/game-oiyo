@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="SimulationAudit.cs" />
     <Compile Include="../Assets/Neon/Core/BalanceConfig.cs" Link="BalanceConfig.cs" />
+    <Compile Include="../Assets/Neon/Core/ObservatoryCodex.cs" Link="ObservatoryCodex.cs" />
     <Compile Include="../Assets/Neon/Core/UpgradeCatalog.cs" Link="UpgradeCatalog.cs" />
     <Compile Include="../Assets/Neon/Core/WaveDirector.cs" Link="WaveDirector.cs" />
     <Compile Include="../Assets/Neon/Core/Run.cs" Link="Run.cs" />

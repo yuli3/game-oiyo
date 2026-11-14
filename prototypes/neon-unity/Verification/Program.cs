@@ -6,7 +6,7 @@ static class Checks
     static int count;
     static void Check(bool value,string title){if(!value)throw new Exception("FAIL "+title);count++;Console.WriteLine("PASS "+title);}
     static Run Started(uint seed=123, ChassisId chassis=ChassisId.AegisProbe, bool daily=false){var r=new Run(seed,chassis,daily);r.Start();return r;}
-    static void TickTo(Run r,float time){while(r.Time<time&&r.Phase==Phase.Playing){for(int i=r.Enemies.Count-1;i>=0;i--)if(r.Enemies[i].Kind!=EnemyKind.Warden)r.Enemies.RemoveAt(i);r.Gems.Clear();r.Step(new Vec(),false);}}
+    static void TickTo(Run r,float time){while(r.Time<time&&r.Phase==Phase.Playing){for(int i=r.Enemies.Count-1;i>=0;i--)if(!Run.IsBoss(r.Enemies[i].Kind))r.Enemies.RemoveAt(i);r.Gems.Clear();r.Step(new Vec(),false);}}
     static void Main()
     {
         var a=Started();var b=Started();
@@ -32,7 +32,27 @@ static class Checks
         uint daily1=Run.ComputeDailySeed(2026,11,14);uint daily2=Run.ComputeDailySeed(2026,11,14);uint dailyNext=Run.ComputeDailySeed(2026,11,15);
         Check(daily1==daily2&&daily1!=dailyNext&&daily1!=0,"Daily observatory seed is deterministic per calendar date");
         Check(WaveDirector.SpawnInterval(130)<WaveDirector.SpawnInterval(115)&&WaveDirector.ActiveCap(130)>0,"boss phase retains a paced wave budget");
-        var w=Started(987);TickTo(w,126);Check(w.WardenSpawned&&w.WardenHp==BalanceConfig.WardenHealth,"warden spawns at authored time");TickTo(w,126.9f);Check(w.BossAttackSerial==1&&w.HostileShots.Count==BalanceConfig.WardenVolleyCount-1,"warden radial volley preserves one readable safe gap");
+        var w=Started(987);TickTo(w,126);Check(w.WardenSpawned&&w.ActiveBossKind==EnemyKind.Warden&&w.WardenHp==BalanceConfig.WardenHealth,"warden spawns at authored time on odd seeds");TickTo(w,126.9f);Check(w.BossAttackSerial==1&&w.HostileShots.Count==BalanceConfig.WardenVolleyCount-1,"warden radial volley preserves one readable safe gap");
+        var arch=Started(988);TickTo(arch,126);Check(arch.WardenSpawned&&arch.ActiveBossKind==EnemyKind.SolarArchitect&&arch.WardenHp==BalanceConfig.ArchitectHealth,"solar architect boss spawns at authored time on even seeds");TickTo(arch,126.9f);Check(arch.BossAttackSerial==1&&arch.HostileShots.Count==BalanceConfig.WardenVolleyCount-1,"solar architect radial volley preserves one readable safe gap");
+        var weaverRun=Started(301);weaverRun.Enemies.Clear();
+        weaverRun.Enemies.Add(new Enemy{Id=501,Kind=EnemyKind.TetherWeaver,Position=new Vec(-2f,0f),Hp=38f,Speed=0f,Radius=.36f,Telegraph=0f});
+        weaverRun.Enemies.Add(new Enemy{Id=502,Kind=EnemyKind.TetherWeaver,Position=new Vec(2f,0f),Hp=38f,Speed=0f,Radius=.36f,Telegraph=0f});
+        weaverRun.Step(new Vec(),false);
+        Check(weaverRun.HasActiveTether&&weaverRun.Hp==BalanceConfig.PlayerMaxHp-BalanceConfig.WeaverTetherDamage,"Tether Weaver pair links laser and damages non-dashing pilot on line");
+        var weaverDash=Started(302);weaverDash.Enemies.Clear();
+        weaverDash.Enemies.Add(new Enemy{Id=503,Kind=EnemyKind.TetherWeaver,Position=new Vec(-2f,0f),Hp=38f,Speed=0f,Radius=.36f,Telegraph=0f});
+        weaverDash.Enemies.Add(new Enemy{Id=504,Kind=EnemyKind.TetherWeaver,Position=new Vec(2f,0f),Hp=38f,Speed=0f,Radius=.36f,Telegraph=0f});
+        weaverDash.Step(new Vec(0,1),true);
+        Check(weaverDash.Hp==BalanceConfig.PlayerMaxHp,"Dashing through Tether Weaver beam avoids tether damage");
+        var leechRun=Started(303);leechRun.Step(new Vec(),false);leechRun.Enemies.Clear();leechRun.Gems.Clear();
+        var leech=new Enemy{Id=601,Kind=EnemyKind.NullLeech,Position=new Vec(12.1f,12f),Hp=28f,Speed=3.15f,Radius=.32f,Telegraph=0f};
+        leechRun.Enemies.Add(leech);
+        leechRun.Gems.Add(new Vec(12f,12f));
+        for(int i=0;i<5&&leech.AbsorbedGems==0;i++){for(int k=leechRun.Enemies.Count-1;k>=0;k--)if(leechRun.Enemies[k]!=leech)leechRun.Enemies.RemoveAt(k);leechRun.Step(new Vec(),false);}
+        Check(leech.AbsorbedGems==1&&leech.Hp>28f,"Null Leech siphons uncollected salvage shard and grows");
+        leech.Hp=.1f;leech.Position=new Vec(1.5f,0f);
+        for(int i=0;i<40&&leechRun.Enemies.Contains(leech);i++)leechRun.Step(new Vec(),false);
+        Check(!leechRun.Enemies.Contains(leech)&&leechRun.Gems.Count>=2,"Defeating evolved Null Leech drops bonus salvage shards");
         var firstGap=new Vec((float)Math.Cos(Math.PI/8),(float)Math.Sin(Math.PI/8));Check(w.HostileShots.All(s=>{float dot=(s.Velocity.X*firstGap.X+s.Velocity.Y*firstGap.Y)/s.Velocity.Length;return dot<.72f;}),"first volley leaves its previewed 90-degree lane clear");
         float nextLaneAngle=(float)Math.Atan2(w.WardenSafeLaneDirection.Y,w.WardenSafeLaneDirection.X);Check(Math.Cos(nextLaneAngle+Math.PI/2)<.5f,"warden safe lane is not aimed at the stationary player");TickTo(w,129.9f);Check(w.BossAttackSerial==2&&Math.Abs(w.WardenSafeLaneDirection.X-firstGap.X)+Math.Abs(w.WardenSafeLaneDirection.Y-firstGap.Y)>.5f,"safe lane rotates deterministically between telegraphed volleys");
         var volley=Started(99);for(int i=0;i<BalanceConfig.WardenVolleyCount;i++)volley.HostileShots.Add(new HostileShot{Position=volley.Position,Radius=.4f,Damage=BalanceConfig.WardenProjectileDamage,Remaining=1});volley.Step(new Vec(),false);Check(volley.Hp==BalanceConfig.PlayerMaxHp-BalanceConfig.WardenProjectileDamage,"one volley cannot bypass shared hit invulnerability");
@@ -42,6 +62,11 @@ static class Checks
         var win=Started(6);win.Step(new Vec(0,1),false); // approach extraction while the arena bounds stay valid
         for(int i=0;i<10810&&win.Phase==Phase.Playing;i++){win.Enemies.Clear();win.Gems.Clear();var m=win.Position.Y<16?new Vec(0,1):new Vec();win.Step(m,false);}
         Check(win.Phase==Phase.Won&&win.ExtractionDistance<=BalanceConfig.ExtractionRadius,"reaching extraction completes run");
+        var codex=ObservatoryCodex.Deserialize("corrupted|save|payload");
+        Check(codex.TotalRuns==0&&codex.Version==ObservatoryCodex.CurrentVersion,"ObservatoryCodex recovers cleanly from corrupted save string");
+        codex.RecordRun(win);
+        var roundTrip=ObservatoryCodex.Deserialize(codex.Serialize());
+        Check(roundTrip.TotalRuns==1&&roundTrip.TotalExtractions==1&&roundTrip.UnlockedMilestones>=1,"ObservatoryCodex serializes and restores milestone state");
         var invalid=Started();invalid.Step(new Vec(float.NaN,float.PositiveInfinity),false);Check(!float.IsNaN(invalid.Position.X),"non-finite input is sanitized");
         Console.WriteLine("CORE CHECKS: "+count+" passed. Unity rendering/device certification NOT assessed.");
     }
