@@ -345,17 +345,38 @@ export function CatFishing({ locale = 'ko' }: { locale?: string }) {
     const started = useRef(false);
     const startedAt = useRef<number | null>(null);
     const areaRef = useRef<HTMLDivElement>(null);
+    const pondCanvasRef = useRef<HTMLCanvasElement>(null);
     const pointer = useRef({ x: -1000, y: -1000 });
     const seedRef = useRef(1);
     const rngRef = useRef(mulberry32(1));
     const fishRef = useRef(fish);
     fishRef.current = fish;
-    const fishNodes = useRef(new Map<number, HTMLButtonElement>());
 
-    // Visual ripple and paw strike particles
-    const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
-    const [strikes, setStrikes] = useState<{ id: number; x: number; y: number }[]>([]);
-    const fxId = useRef(0);
+    const koiImgsRef = useRef<HTMLImageElement[]>([]);
+    const pawImgRef = useRef<HTMLImageElement | null>(null);
+    const canvasFxRef = useRef<{
+        ripples: Array<{ xPct: number; yPct: number; life: number; maxLife: number; rings: number; color: string }>;
+        splashes: Array<{ xPct: number; yPct: number; vx: number; vy: number; r: number; life: number; maxLife: number; color: string }>;
+        strikes: Array<{ xPct: number; yPct: number; life: number; maxLife: number; angle: number }>;
+        floats: Array<{ xPct: number; yPct: number; text: string; life: number; maxLife: number; color: string }>;
+    }>({
+        ripples: [],
+        splashes: [],
+        strikes: [],
+        floats: [],
+    });
+
+    useEffect(() => {
+        if (typeof Image === 'undefined') return;
+        koiImgsRef.current = CAT_FISHING_KOI.map((src) => {
+            const img = new Image();
+            img.src = src;
+            return img;
+        });
+        const paw = new Image();
+        paw.src = CAT_FISHING_PAW;
+        pawImgRef.current = paw;
+    }, []);
 
     const remaining = fish.filter((f) => !f.caught).length;
     const won = fish.length > 0 && remaining === 0;
@@ -378,7 +399,7 @@ export function CatFishing({ locale = 'ko' }: { locale?: string }) {
         return () => clearInterval(id);
     }, [won, remaining]);
 
-    // Fish swimming movement loop with heading rotation
+    // Fish swimming movement loop
     useEffect(() => {
         if (won || isFrozen) return;
         const cfg = CONFIGS[difficulty];
@@ -386,22 +407,239 @@ export function CatFishing({ locale = 'ko' }: { locale?: string }) {
         const loop = createDeltaLoop((deltaSeconds) => {
             const next = fishRef.current.map((f) => stepFish(f, slowedCfg, pointer.current, deltaSeconds * 60, rngRef.current));
             fishRef.current = next;
-            for (const f of next) {
-                const node = fishNodes.current.get(f.id);
-                if (!node || f.caught) continue;
-                node.style.left = `${f.x}%`;
-                node.style.top = `${f.y}%`;
-                // Natural swimming orientation based on velocity
-                const angle = Math.atan2(f.vy, f.vx) * (180 / Math.PI);
-                node.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
-            }
         });
         loop.start();
         return () => loop.stop();
     }, [difficulty, won, isFrozen, metaMods.catnipSlowMult]);
 
+    // 60fps Canvas Koi Pond Renderer (Water Caustics + Fish + Ripples + Paw Strikes + Splashes)
+    useEffect(() => {
+        let rafId = 0;
+        let lastTime = performance.now();
+
+        const drawFrame = (now: number) => {
+            const dt = Math.min(0.05, (now - lastTime) / 1000);
+            lastTime = now;
+            const canvas = pondCanvasRef.current;
+            if (canvas) {
+                const rect = canvas.getBoundingClientRect();
+                const dpr = Math.min(2, window.devicePixelRatio || 1);
+                const w = Math.max(1, Math.round(rect.width * dpr));
+                const h = Math.max(1, Math.round(rect.height * dpr));
+                if (canvas.width !== w || canvas.height !== h) {
+                    canvas.width = w;
+                    canvas.height = h;
+                }
+                const ctx = canvas.getContext('2d');
+                if (ctx && rect.width > 0 && rect.height > 0) {
+                    const cw = rect.width;
+                    const ch = rect.height;
+                    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                    const grad = ctx.createLinearGradient(0, 0, 0, ch);
+                    grad.addColorStop(0, isFrozen ? '#0f2942' : '#0b2c3d');
+                    grad.addColorStop(0.55, isFrozen ? '#164e63' : '#0f3d52');
+                    grad.addColorStop(1, isFrozen ? '#1e3a5f' : '#072230');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, cw, ch);
+
+                    const tSec = now * 0.001;
+                    ctx.save();
+                    ctx.strokeStyle = isFrozen ? 'rgba(186, 230, 253, 0.14)' : 'rgba(103, 232, 249, 0.10)';
+                    ctx.lineWidth = 2;
+                    for (let band = 0; band < 4; band++) {
+                        ctx.beginPath();
+                        const baseY = ch * (0.18 + band * 0.22);
+                        for (let x = 0; x <= cw; x += 24) {
+                            const y = baseY + Math.sin(x * 0.02 + tSec * 1.4 + band * 1.7) * 10;
+                            if (x === 0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+
+                    const drawLilyPad = (lx: number, ly: number, radius: number, notchAngle: number) => {
+                        ctx.save();
+                        ctx.translate(lx, ly);
+                        ctx.fillStyle = 'rgba(0,0,0,0.28)';
+                        ctx.beginPath();
+                        ctx.arc(3, 5, radius, notchAngle + 0.28, notchAngle + Math.PI * 2 - 0.28);
+                        ctx.lineTo(3, 5);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        const padGrad = ctx.createRadialGradient(-radius * 0.2, -radius * 0.2, 2, 0, 0, radius);
+                        padGrad.addColorStop(0, '#4ade80');
+                        padGrad.addColorStop(1, '#15803d');
+                        ctx.fillStyle = padGrad;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, radius, notchAngle + 0.28, notchAngle + Math.PI * 2 - 0.28);
+                        ctx.lineTo(0, 0);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.strokeStyle = 'rgba(187, 247, 208, 0.45)';
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                        ctx.restore();
+                    };
+                    drawLilyPad(cw * 0.1, ch * 0.16 + Math.sin(tSec * 1.2) * 2, Math.min(cw, ch) * 0.085, 0.6);
+                    drawLilyPad(cw * 0.88, ch * 0.82 + Math.cos(tSec * 1.1) * 2, Math.min(cw, ch) * 0.095, 2.5);
+
+                    const fx = canvasFxRef.current;
+                    const nextRipples: typeof fx.ripples = [];
+                    for (const r of fx.ripples) {
+                        r.life += dt;
+                        if (r.life >= r.maxLife) continue;
+                        const p = r.life / r.maxLife;
+                        const rx = (r.xPct / 100) * cw;
+                        const ry = (r.yPct / 100) * ch;
+                        for (let ring = 0; ring < r.rings; ring++) {
+                            const rp = Math.max(0, p - ring * 0.16);
+                            if (rp <= 0) continue;
+                            ctx.save();
+                            ctx.strokeStyle = r.color;
+                            ctx.globalAlpha = (1 - rp) * 0.65;
+                            ctx.lineWidth = Math.max(1, 2.5 * (1 - rp));
+                            ctx.beginPath();
+                            ctx.arc(rx, ry, 8 + rp * 44, 0, Math.PI * 2);
+                            ctx.stroke();
+                            ctx.restore();
+                        }
+                        nextRipples.push(r);
+                    }
+                    fx.ripples = nextRipples;
+
+                    for (const f of fishRef.current) {
+                        if (f.caught) continue;
+                        const fxX = (f.x / 100) * cw;
+                        const fxY = (f.y / 100) * ch;
+                        const sway = isFrozen ? 0 : Math.sin(tSec * 9 + f.id * 1.7) * 0.08;
+                        const angle = Math.atan2(f.vy, f.vx) + sway;
+                        const fishSize = Math.max(42, Math.min(60, cw * 0.085));
+                        const img = koiImgsRef.current[f.id % Math.max(1, koiImgsRef.current.length)];
+
+                        ctx.save();
+                        ctx.translate(fxX + 4, fxY + 8);
+                        ctx.rotate(angle);
+                        ctx.fillStyle = 'rgba(2, 12, 20, 0.38)';
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, fishSize * 0.42, fishSize * 0.2, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+
+                        ctx.save();
+                        ctx.translate(fxX, fxY);
+                        ctx.rotate(angle);
+                        if (img && img.complete && img.naturalWidth > 0) {
+                            ctx.drawImage(img, -fishSize / 2, -fishSize / 2, fishSize, fishSize);
+                        } else {
+                            ctx.fillStyle = '#fb923c';
+                            ctx.beginPath();
+                            ctx.ellipse(0, 0, fishSize * 0.4, fishSize * 0.2, 0, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        if (isFrozen) {
+                            ctx.strokeStyle = 'rgba(186, 230, 253, 0.85)';
+                            ctx.lineWidth = 2;
+                            ctx.beginPath();
+                            ctx.arc(0, 0, fishSize * 0.45, 0, Math.PI * 2);
+                            ctx.stroke();
+                        }
+                        ctx.restore();
+                    }
+
+                    const nextSplashes: typeof fx.splashes = [];
+                    for (const sp of fx.splashes) {
+                        sp.life += dt;
+                        if (sp.life >= sp.maxLife) continue;
+                        sp.vy += 260 * dt;
+                        sp.xPct += (sp.vx * dt * 100) / cw;
+                        sp.yPct += (sp.vy * dt * 100) / ch;
+                        const alpha = 1 - sp.life / sp.maxLife;
+                        ctx.save();
+                        ctx.globalAlpha = alpha;
+                        ctx.fillStyle = sp.color;
+                        ctx.beginPath();
+                        ctx.arc((sp.xPct / 100) * cw, (sp.yPct / 100) * ch, sp.r, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                        nextSplashes.push(sp);
+                    }
+                    fx.splashes = nextSplashes;
+
+                    const nextStrikes: typeof fx.strikes = [];
+                    for (const st of fx.strikes) {
+                        st.life += dt;
+                        if (st.life >= st.maxLife) continue;
+                        const p = st.life / st.maxLife;
+                        const sx = (st.xPct / 100) * cw;
+                        const sy = (st.yPct / 100) * ch;
+                        const scale = p < 0.25 ? 0.6 + (p / 0.25) * 0.65 : 1.25 - (p - 0.25) * 0.45;
+                        const alpha = p > 0.65 ? (1 - p) / 0.35 : 1;
+                        ctx.save();
+                        ctx.globalAlpha = Math.max(0, alpha);
+                        ctx.translate(sx, sy - (1 - Math.min(1, p * 3)) * 28);
+                        ctx.rotate(st.angle);
+                        ctx.scale(scale, scale);
+                        if (pawImgRef.current && pawImgRef.current.complete && pawImgRef.current.naturalWidth > 0) {
+                            ctx.drawImage(pawImgRef.current, -28, -28, 56, 56);
+                        } else {
+                            ctx.fillStyle = '#fef3c7';
+                            ctx.beginPath();
+                            ctx.arc(0, 0, 18, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        ctx.restore();
+                        nextStrikes.push(st);
+                    }
+                    fx.strikes = nextStrikes;
+
+                    const nextFloats: typeof fx.floats = [];
+                    for (const fl of fx.floats) {
+                        fl.life += dt;
+                        if (fl.life >= fl.maxLife) continue;
+                        const p = fl.life / fl.maxLife;
+                        const x = (fl.xPct / 100) * cw;
+                        const y = (fl.yPct / 100) * ch - p * 32;
+                        ctx.save();
+                        ctx.globalAlpha = 1 - p;
+                        ctx.font = '800 13px system-ui, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+                        ctx.fillText(fl.text, x + 1, y + 1);
+                        ctx.fillStyle = fl.color;
+                        ctx.fillText(fl.text, x, y);
+                        ctx.restore();
+                        nextFloats.push(fl);
+                    }
+                    fx.floats = nextFloats;
+
+                    if (!won && pointer.current.x >= 0 && pointer.current.x <= 100 && pointer.current.y >= 0 && pointer.current.y <= 100) {
+                        const px = (pointer.current.x / 100) * cw;
+                        const py = (pointer.current.y / 100) * ch;
+                        ctx.save();
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+                        ctx.lineWidth = 1.5;
+                        ctx.setLineDash([4, 4]);
+                        ctx.beginPath();
+                        ctx.arc(px, py, 20, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                }
+            }
+            rafId = window.requestAnimationFrame(drawFrame);
+        };
+
+        rafId = window.requestAnimationFrame(drawFrame);
+        return () => {
+            if (rafId) window.cancelAnimationFrame(rafId);
+        };
+    }, [isFrozen, won]);
+
     const trackPointer = (clientX: number, clientY: number) => {
-        const rect = areaRef.current?.getBoundingClientRect();
+        const rect = pondCanvasRef.current?.getBoundingClientRect() ?? areaRef.current?.getBoundingClientRect();
         if (!rect) return;
         pointer.current = {
             x: ((clientX - rect.left) / rect.width) * 100,
@@ -409,16 +647,77 @@ export function CatFishing({ locale = 'ko' }: { locale?: string }) {
         };
     };
 
-    const handlePondTap = (e: React.PointerEvent<HTMLDivElement>) => {
-        const rect = areaRef.current?.getBoundingClientRect();
-        if (!rect) return;
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const spawnPondFx = (xPct: number, yPct: number, isHit: boolean) => {
+        const fx = canvasFxRef.current;
+        fx.ripples.push({
+            xPct,
+            yPct,
+            life: 0,
+            maxLife: isHit ? 0.7 : 0.55,
+            rings: isHit ? 3 : 2,
+            color: isHit ? '#fde047' : '#bae6fd',
+        });
+        const dropCount = isHit ? 16 : 7;
+        for (let i = 0; i < dropCount; i++) {
+            const angle = -Math.PI + Math.random() * Math.PI * 2;
+            const spd = (isHit ? 70 : 35) + Math.random() * (isHit ? 120 : 50);
+            fx.splashes.push({
+                xPct,
+                yPct,
+                vx: Math.cos(angle) * spd,
+                vy: Math.sin(angle) * spd - (isHit ? 80 : 35),
+                r: isHit ? 2.2 + Math.random() * 2.5 : 1.5 + Math.random() * 1.8,
+                life: 0,
+                maxLife: 0.35 + Math.random() * 0.25,
+                color: i % 3 === 0 ? '#ffffff' : isHit ? '#bae6fd' : '#7dd3fc',
+            });
+        }
+        if (isHit && !prefersReducedMotion) {
+            fx.strikes.push({
+                xPct,
+                yPct,
+                life: 0,
+                maxLife: 0.45,
+                angle: (Math.random() - 0.5) * 0.6,
+            });
+            fx.floats.push({
+                xPct,
+                yPct: yPct - 4,
+                text: '+1 CAUGHT!',
+                life: 0,
+                maxLife: 0.65,
+                color: '#fde047',
+            });
+        }
+    };
 
-        audio.current?.playWaterPlop();
-        const rid = fxId.current++;
-        setRipples((prev) => [...prev, { id: rid, x, y }]);
-        setTimeout(() => setRipples((prev) => prev.filter((r) => r.id !== rid)), 650);
+    const handleCanvasPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+        if (won) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const xPct = ((e.clientX - rect.left) / rect.width) * 100;
+        const yPct = ((e.clientY - rect.top) / rect.height) * 100;
+        pointer.current = { x: xPct, y: yPct };
+
+        const hitRadiusPct = 9.5;
+        let hitFish: FishState | null = null;
+        let bestDist = Infinity;
+        for (const f of fishRef.current) {
+            if (f.caught) continue;
+            const dx = f.x - xPct;
+            const dy = (f.y - yPct) * 0.75;
+            const d = Math.hypot(dx, dy);
+            if (d <= hitRadiusPct && d < bestDist) {
+                bestDist = d;
+                hitFish = f;
+            }
+        }
+
+        if (hitFish) {
+            catchFishById(hitFish.id);
+        } else {
+            audio.current?.playWaterPlop();
+            spawnPondFx(xPct, yPct, false);
+        }
     };
 
     const [shareCardCopied, setShareCardCopied] = useState(false);
@@ -453,17 +752,14 @@ export function CatFishing({ locale = 'ko' }: { locale?: string }) {
         } catch {}
     }, [best, difficulty, seconds, t]);
 
-    const catchFish = (id: number, e: React.PointerEvent) => {
-        e.stopPropagation();
+    const catchFishById = (id: number) => {
         if (won) return;
         started.current = true;
         if (startedAt.current === null) startedAt.current = performance.now();
 
         const caughtAt = fishRef.current.find((f) => f.id === id);
-        if (caughtAt && !prefersReducedMotion) {
-            const sid = fxId.current++;
-            setStrikes((prev) => [...prev, { id: sid, x: caughtAt.x, y: caughtAt.y }]);
-            setTimeout(() => setStrikes((prev) => prev.filter((s) => s.id !== sid)), 550);
+        if (caughtAt) {
+            spawnPondFx(caughtAt.x, caughtAt.y, true);
         }
 
         // 6대 심화 시스템: 퀘스트 & 츄르 재화 적립
@@ -669,80 +965,19 @@ export function CatFishing({ locale = 'ko' }: { locale?: string }) {
                     </div>
                 </div>
 
-                {/* 2.5D Tranquil Koi Pond with Caustics & Water Ripples */}
+                {/* 60fps Canvas Koi Pond */}
                 <div
                     ref={areaRef}
-                    onPointerDown={handlePondTap}
-                    onMouseMove={(e) => trackPointer(e.clientX, e.clientY)}
-                    onTouchMove={(e) => trackPointer(e.touches[0].clientX, e.touches[0].clientY)}
-                    className="relative w-full aspect-video rounded-3xl overflow-hidden border-2 border-border/80 bg-gradient-to-b from-accent-foreground/20 via-primary/10 to-accent-foreground/30 shadow-inner cursor-crosshair touch-none select-none"
+                    className="relative w-full aspect-video rounded-3xl overflow-hidden border-2 border-border/80 shadow-inner touch-none select-none"
                     aria-label={t.title}
                 >
-                    {/* Water Caustics Shimmer Overlay */}
-                    <div className="absolute inset-0 pointer-events-none opacity-20 mix-blend-screen bg-primary/10 animate-pulse" />
-
-                    {/* Lily Pads Water Decorations */}
-                    <div className="absolute top-8 left-6 w-14 h-14 rounded-full bg-primary/25 border-2 border-primary/30 pointer-events-none opacity-60 flex items-center justify-center">
-                      <div className="w-1.5 h-6 bg-background/40 transform rotate-45" />
-                    </div>
-                    <div className="absolute bottom-10 right-8 w-16 h-16 rounded-full bg-primary/25 border-2 border-primary/30 pointer-events-none opacity-60 flex items-center justify-center">
-                      <div className="w-2 h-7 bg-background/40 transform -rotate-12" />
-                    </div>
-
-                    {/* 3D Fish with Velocity Rotation */}
-                    {fish.map((f) => !f.caught && (
-                        <button
-                            key={f.id}
-                            ref={(node) => {
-                                if (node) fishNodes.current.set(f.id, node);
-                                else fishNodes.current.delete(f.id);
-                            }}
-                            onPointerDown={(e) => catchFish(f.id, e)}
-                            aria-label="catch fish"
-                            className="absolute flex min-h-12 min-w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center cursor-pointer transition-transform hover:scale-115 active:scale-95 will-change-transform z-10"
-                            style={{
-                                left: `${f.x}%`,
-                                top: `${f.y}%`,
-                                transform: `translate(-50%,-50%) rotate(${Math.atan2(f.vy, f.vx) * (180 / Math.PI)}deg)`,
-                            }}
-                        >
-                            <img
-                                src={CAT_FISHING_KOI[f.id % CAT_FISHING_KOI.length]}
-                                alt="Koi"
-                                draggable={false}
-                                className="h-12 w-12 object-contain pointer-events-none select-none drop-shadow-md"
-                            />
-                        </button>
-                    ))}
-
-                    {/* Water Ripples */}
-                    {ripples.map((r) => (
-                        <span
-                            key={r.id}
-                            aria-hidden="true"
-                            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary/60 animate-ping w-12 h-12"
-                            style={{ left: `${r.x}%`, top: `${r.y}%` }}
-                        />
-                    ))}
-
-                    {/* 3D Cat Paw Strike Effect */}
-                    {strikes.map((s) => (
-                        <div
-                            key={s.id}
-                            aria-hidden="true"
-                            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center justify-center animate-in zoom-in-75 fade-out duration-500"
-                            style={{ left: `${s.x}%`, top: `${s.y}%` }}
-                        >
-                            <img
-                                src={CAT_FISHING_PAW}
-                                alt="Paw"
-                                className="w-14 h-14 object-contain drop-shadow-xl animate-bounce"
-                            />
-                            <span className="text-xs font-black text-warning bg-card/90 px-2 py-0.5 rounded-full border border-border shadow-sm mt-1">
-                                +1 CAUGHT!
-                            </span>
-                        </div>
-                    ))}
+                    <canvas
+                        ref={pondCanvasRef}
+                        onPointerDown={handleCanvasPointerDown}
+                        onPointerMove={(e) => trackPointer(e.clientX, e.clientY)}
+                        onPointerLeave={() => { pointer.current = { x: -1000, y: -1000 }; }}
+                        className="block h-full w-full cursor-crosshair touch-none"
+                    />
 
                     {/* Victory Overlay with Cat Master Rank */}
                     {won && (
