@@ -232,6 +232,12 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/prototypes/stacklands-unity/index.html"
+            className="rounded-xl border border-primary/50 bg-primary/15 px-3 py-1.5 text-xs font-black text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
+          >
+            🛰️ Unity 실시간 에디션
+          </a>
           <TiltVillageButton
             onClick={onBuyPack}
             disabled={state.coins < state.boosterCost}
