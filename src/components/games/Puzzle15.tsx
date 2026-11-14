@@ -112,7 +112,9 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         }
     }, [muted]);
 
-    const [lastSlide, setLastSlide] = useState<{ from: number; to: number; key: number } | null>(null);
+    const [lastSlides, setLastSlides] = useState<Array<{ from: number; to: number; key: number }>>([]);
+    const swipeOriginRef = useRef<{ index: number; x: number; y: number; fired: boolean } | null>(null);
+    const suppressClickRef = useRef(false);
     const slideKey = useRef(0);
     const started = useRef(false);
     const startedAt = useRef<number | null>(null);
@@ -172,7 +174,7 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setMoves(0);
         setSeconds(0);
         setWon(false);
-        setLastSlide(null);
+        setLastSlides([]);
         started.current = false;
         startedAt.current = null;
     }, [size]);
@@ -212,21 +214,78 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const slide = useCallback((tileIdx: number) => {
         if (won) return;
-        const transition = movePuzzle15Tile(board, tileIdx, size);
-        if (!transition.moved) return;
+        const empty = board.indexOf(0);
+        const er = Math.floor(empty / size), ec = empty % size;
+        const tr = Math.floor(tileIdx / size), tc = tileIdx % size;
+        if (er !== tr && ec !== tc) return;
+        if (empty === tileIdx) return;
+
+        // Build chain of tiles between empty and tileIdx so multi-tile row/column push works smoothly
+        const step = er === tr ? (tc > ec ? 1 : -1) : (tr > er ? size : -size);
+        let currBoard = board;
+        let currEmpty = empty;
+        let totalMoves = moves;
+        let solved = false;
+        const slides: Array<{ from: number; to: number; key: number }> = [];
+
+        while (currEmpty !== tileIdx) {
+            const nextTile = currEmpty + step;
+            const transition = movePuzzle15Tile(currBoard, nextTile, size);
+            if (!transition.moved) break;
+            slideKey.current += 1;
+            slides.push({ from: nextTile, to: currEmpty, key: slideKey.current });
+            currBoard = transition.board;
+            currEmpty = nextTile;
+            totalMoves += 1;
+            solved = transition.solved;
+        }
+
+        if (slides.length === 0) return;
         started.current = true;
         if (startedAt.current === null) startedAt.current = performance.now();
-        const empty = board.indexOf(0);
-        slideKey.current += 1;
-        setLastSlide({ from: tileIdx, to: empty, key: slideKey.current });
-        const nextMoves = moves + 1;
-        setBoard(transition.board);
-        setMoves(nextMoves);
+        setLastSlides(slides);
+        setBoard(currBoard);
+        setMoves(totalMoves);
         MobileHapticsPro.light();
-        if (transition.solved) finish(nextMoves);
-        else tone(300, 0.04);
+        if (solved) finish(totalMoves);
+        else tone(300 + Math.min(120, slides.length * 30), 0.04);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [board, moves, size, won, seconds, tone]);
+
+    const handleTilePointerDown = (e: React.PointerEvent<HTMLButtonElement>, index: number) => {
+        if (won) return;
+        suppressClickRef.current = false;
+        swipeOriginRef.current = { index, x: e.clientX, y: e.clientY, fired: false };
+    };
+
+    const handleTilePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+        const origin = swipeOriginRef.current;
+        if (!origin || origin.fired || won) return;
+        const dx = e.clientX - origin.x;
+        const dy = e.clientY - origin.y;
+        if (dx * dx + dy * dy < 196) return;
+
+        const empty = board.indexOf(0);
+        const er = Math.floor(empty / size), ec = empty % size;
+        const tr = Math.floor(origin.index / size), tc = origin.index % size;
+        if (er !== tr && ec !== tc) return;
+
+        const dirX = Math.sign(ec - tc);
+        const dirY = Math.sign(er - tr);
+        const swipeMatch =
+            (dirX !== 0 && Math.abs(dx) > Math.abs(dy) && Math.sign(dx) === dirX) ||
+            (dirY !== 0 && Math.abs(dy) > Math.abs(dx) && Math.sign(dy) === dirY);
+
+        if (swipeMatch) {
+            origin.fired = true;
+            suppressClickRef.current = true;
+            slide(origin.index);
+        }
+    };
+
+    const handleTilePointerUp = () => {
+        swipeOriginRef.current = null;
+    };
 
     // arrow keys move the tile INTO the gap (arrow = direction the tile slides)
     useEffect(() => {
@@ -308,25 +367,37 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
                     role="grid" aria-label={t.title}
                 >
-                    {board.map((v, i) => v === 0 ? (
-                        <div key="empty" className="rounded-xl bg-muted/40" />
-                    ) : (
-                        <button
-                            key={lastSlide?.to === i ? `${v}-${lastSlide.key}` : v}
-                            onClick={() => slide(i)}
-                            aria-label={String(v)}
-                            className={`relative min-h-11 min-w-11 overflow-hidden rounded-xl font-black ${!reducedMotion && lastSlide?.to === i ? 'oiyo-piece-slide' : ''} ${!reducedMotion ? 'active:scale-95' : ''} ${
-                                size === 3 ? 'text-2xl' : size === 4 ? 'text-xl' : 'text-base'
-                            } ${v === (i + 1) % (size * size) ? 'ring-2 ring-primary' : ''}`}
-                            style={lastSlide?.to === i && !reducedMotion ? {
-                                '--dx': indexToRowCol(lastSlide.from, size).col - indexToRowCol(lastSlide.to, size).col,
-                                '--dy': indexToRowCol(lastSlide.from, size).row - indexToRowCol(lastSlide.to, size).row,
-                            } as CSSProperties : undefined}
-                        >
-                            <img src={PUZZLE15_SPRITES.tile} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
-                            <span className={`relative z-[1] flex h-full w-full items-center justify-center ${v === (i + 1) % (size * size) ? 'text-primary' : 'text-card-foreground'}`}>{v}</span>
-                        </button>
-                    ))}
+                    {board.map((v, i) => {
+                        if (v === 0) return <div key="empty" className="rounded-xl bg-muted/40" />;
+                        const slideEntry = lastSlides.find((s) => s.to === i);
+                        return (
+                            <button
+                                key={slideEntry ? `${v}-${slideEntry.key}` : v}
+                                onPointerDown={(e) => handleTilePointerDown(e, i)}
+                                onPointerMove={handleTilePointerMove}
+                                onPointerUp={handleTilePointerUp}
+                                onPointerCancel={handleTilePointerUp}
+                                onClick={() => {
+                                    if (suppressClickRef.current) {
+                                        suppressClickRef.current = false;
+                                        return;
+                                    }
+                                    slide(i);
+                                }}
+                                aria-label={String(v)}
+                                className={`relative min-h-11 min-w-11 touch-none select-none overflow-hidden rounded-xl font-black ${!reducedMotion && slideEntry ? 'oiyo-piece-slide' : ''} ${!reducedMotion ? 'active:scale-95' : ''} ${
+                                    size === 3 ? 'text-2xl' : size === 4 ? 'text-xl' : 'text-base'
+                                } ${v === (i + 1) % (size * size) ? 'ring-2 ring-primary' : ''}`}
+                                style={slideEntry && !reducedMotion ? {
+                                    '--dx': indexToRowCol(slideEntry.from, size).col - indexToRowCol(slideEntry.to, size).col,
+                                    '--dy': indexToRowCol(slideEntry.from, size).row - indexToRowCol(slideEntry.to, size).row,
+                                } as CSSProperties : undefined}
+                            >
+                                <img src={PUZZLE15_SPRITES.tile} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
+                                <span className={`relative z-[1] flex h-full w-full items-center justify-center ${v === (i + 1) % (size * size) ? 'text-primary' : 'text-card-foreground'}`}>{v}</span>
+                            </button>
+                        );
+                    })}
 
                     {won && (
                         <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 p-4 ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`} role="status" aria-live="polite">
