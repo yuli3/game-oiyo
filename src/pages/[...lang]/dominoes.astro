@@ -1,4 +1,5 @@
 ---
+import EmbedGameSnippet from "../../components/EmbedGameSnippet.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import gameArtDocument from "../../../config/game-art-v1.json";
 import DominoesComp from "../../components/games/Dominoes";
@@ -49,4 +50,5 @@ const m = meta[locale] ?? meta.en;
       <GameGuide slug="dominoes" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
     </div>
   </div>
+  <EmbedGameSnippet slug="dominoes" locale={locale} />
 </BaseLayout>

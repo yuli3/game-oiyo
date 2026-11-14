@@ -1,4 +1,5 @@
 ---
+import EmbedGameSnippet from "../../components/EmbedGameSnippet.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import gameArtDocument from "../../../config/game-art-v1.json";
 import TentsAndTreesComp from "../../components/games/TentsAndTrees";
@@ -66,4 +67,5 @@ const rel = related[locale] ?? related.en;
       </a>
     </section>
   </div>
+  <EmbedGameSnippet slug="tents-and-trees" locale={locale} />
 </BaseLayout>

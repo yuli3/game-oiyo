@@ -62,6 +62,8 @@ export default defineConfig({
         if (segs.length > 0 && DEINDEXED_LOCALES.has(segs[0])) return false;
         if (segs.length === 2 && BRIDGE_SLUGS.has(segs[1])) return false;
         if (segs.length === 2 && NOINDEX_SLUGS.has(segs[1])) return false;
+        // Embeddable puzzle frames are noindex; the game page is canonical.
+        if (segs.length >= 2 && segs[1] === "embed") return false;
         return true;
       },
       // Use serialize for per-URL priority and changefreq

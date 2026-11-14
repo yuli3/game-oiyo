@@ -101,3 +101,10 @@
 /prototypes/*
   ! X-Frame-Options
   Content-Security-Policy: frame-ancestors 'self'
+
+# Embeddable puzzle routes — external sites iframe these (natural-backlink embeds).
+# Detach the global DENY; the pages are noindex, ad-free and carry no auth/user data.
+# Cloudflare allows only ONE splat per rule (/*/embed/* never matches), so the
+# locale segment uses a :placeholder.
+/:lang/embed/*
+  ! X-Frame-Options
