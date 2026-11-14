@@ -281,6 +281,30 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
           : "mx-auto flex w-full max-w-xl flex-col items-center gap-4 p-3 sm:p-4"
       }`}
     >
+      {/* Unity 6 3D 12-Stage Edition Launch Banner */}
+      <div className="flex w-full items-center justify-between rounded-xl border border-primary/40 bg-primary/10 p-2.5 px-3.5 shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <span className="text-xl">🔮</span>
+          <div className="flex flex-col text-left">
+            <span className="text-xs font-bold text-foreground">
+              {locale === "ko" ? "Unity 6 3D 12스테이지 파칭코 던전" : "Unity 6 3D 12-Stage Pachinko Dungeon"}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {locale === "ko" ? "3D 탄성 반사 물리 • 크릿/폭탄 펙 • 12종 보스전" : "3D Bouncing Physics • Crit/Bomb Pegs • 12 Boss Encounters"}
+            </span>
+          </div>
+        </div>
+        <a
+          href="/prototypes/peglin-rogue-unity/index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+        >
+          <span>{locale === "ko" ? "3D 실행" : "Play 3D"}</span>
+          <span className="text-xs">↗</span>
+        </a>
+      </div>
+
       {/* Top Controls & Status Bar */}
       <div className="flex w-full items-center justify-between rounded-xl border border-border bg-card p-3 shadow-sm gap-2">
         {/* Player Status */}
