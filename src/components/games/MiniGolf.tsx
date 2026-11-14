@@ -568,6 +568,12 @@ export default function MiniGolf({ locale }: Props) {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <a
+            href="/prototypes/mini-golf-unity/index.html"
+            className="flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-lg border border-primary/50 bg-primary/15 text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
+          >
+            🛰️ Unity 3D 12홀 챔피언십 에디션
+          </a>
           <button
             type="button"
             onClick={() => setIsMuted((m) => !m)}
