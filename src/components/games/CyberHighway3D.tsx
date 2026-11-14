@@ -280,8 +280,35 @@ export default function CyberHighway3D() {
   const speedKmh = Math.round(gameState.speed * 3.6);
 
   return (
-    <div
-      ref={containerRef}
+    <div className="w-full space-y-4">
+      {/* 3D Unity 6 WebGL Launcher Banner */}
+      {!isImmersive && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 w-full">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl select-none" aria-hidden="true">🏎️</span>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-foreground">
+                Unity 6 3D 12섹터 사이버 하이웨이 4개국어 에디션
+              </span>
+              <span className="text-xs text-muted-foreground">
+                3D 사이버 슈퍼카 • 260km/h 니트로 부스트 & 니어 미스 & 경찰 추격전 • 4개국어(KO/EN/JA/ES)
+              </span>
+            </div>
+          </div>
+          <a
+            href="/prototypes/cyber-highway-unity/index.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
+          >
+            <span>3D 실행</span>
+            <span className="text-xs">↗</span>
+          </a>
+        </div>
+      )}
+
+      <div
+        ref={containerRef}
       data-game-surface
       className={`relative select-none touch-none overflow-hidden ${
         isImmersive
@@ -492,5 +519,6 @@ export default function CyberHighway3D() {
         </div>
       )}
     </div>
+  </div>
   );
 }
