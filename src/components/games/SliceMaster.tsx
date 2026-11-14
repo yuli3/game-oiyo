@@ -414,6 +414,12 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
 
         {/* Tactical Sub-Modals & Action Buttons */}
         <div className="flex items-center gap-2">
+          <a
+            href="/prototypes/slice-master-unity/index.html"
+            className="flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-lg border border-primary/50 bg-primary/15 text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
+          >
+            🛰️ Unity 3D 12스테이지 나이프 플립
+          </a>
           <Button
             size="sm"
             variant="outline"
