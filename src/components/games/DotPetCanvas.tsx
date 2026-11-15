@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { dotPetSprite, DOT_PET_UI_SPRITES } from '../../lib/games/sprites';
 import { MobileHapticsPro, playProceduralSfx, playComboSfx } from '../../lib/games/engine-suite-unified';
+import { HitStopController, PixelFxController, playMultiLayerPixelSfx } from '../../lib/games/pixelfx-engine';
 
 interface DotPetCanvasProps {
   petType: string;
@@ -44,6 +45,8 @@ export const DotPetCanvas: React.FC<DotPetCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animRef = useRef<number | null>(null);
+  const pixelFxRef = useRef<PixelFxController>(new PixelFxController(32));
+  const hitStopRef = useRef<HitStopController>(new HitStopController());
 
   // Asset images
   const petImgRef = useRef<HTMLImageElement | null>(null);
@@ -134,8 +137,11 @@ export const DotPetCanvas: React.FC<DotPetCanvasProps> = ({
     let lastTime = performance.now();
 
     const loop = (currentTime: number) => {
-      const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+      const dt = Math.min((currentTime - lastTime) / 1000, 0.05);
       lastTime = currentTime;
+      pixelFxRef.current.update(dt);
+      const isFreezing = hitStopRef.current.update(dt);
+      const effDt = isFreezing ? 0 : dt;
 
       const rect = canvas.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -221,10 +227,15 @@ export const DotPetCanvas: React.FC<DotPetCanvasProps> = ({
           sim.ball.vy = -200 - Math.random() * 100;
           sim.scaleX = 1.3;
           sim.scaleY = 0.7;
+          hitStopRef.current.trigger(35);
+          pixelFxRef.current.spawn('nature-bloom', sim.petX, (sim.petY - 12));
           addParticle(sim.petX, sim.petY - 20, '⚽ 멍멍!', -2.0, '#10b981');
           MobileHapticsPro.medium();
           const actx = getAudioContext();
-          if (actx) playProceduralSfx(actx, 'jump');
+          if (actx) {
+            playProceduralSfx(actx, 'jump');
+            playMultiLayerPixelSfx(660, 0.22, 'sine', true);
+          }
           onPlayFetch();
         }
       } else {
@@ -241,7 +252,7 @@ export const DotPetCanvas: React.FC<DotPetCanvasProps> = ({
       if (Math.abs(dx) > 6 && !isSleeping) {
         sim.facing = dx > 0 ? 1 : -1;
         sim.vx = Math.sign(dx) * Math.min(Math.abs(dx) * 3, 110);
-        sim.petX += sim.vx * dt;
+        sim.petX += sim.vx * effDt;
         // Natural hopping bob
         sim.petY = (floorY - petSize * 0.45) - Math.abs(Math.sin(currentTime * 0.008)) * 14;
       } else {
@@ -381,6 +392,9 @@ export const DotPetCanvas: React.FC<DotPetCanvasProps> = ({
         ctx.restore();
       }
 
+      if (effDt > 0 || isFreezing) {
+        pixelFxRef.current.drawToCanvas(ctx);
+      }
       ctx.restore();
       animRef.current = requestAnimationFrame(loop);
     };

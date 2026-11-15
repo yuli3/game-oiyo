@@ -84,7 +84,32 @@ const NumberGuessingGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) =>
 
   const [error, setError] = useState(''); const [best, setBest] = useState<Best | null>(null);
   const elapsedBase = useRef(0); const startedAt = useRef<number | null>(null); const audio = useRef<AudioContext | null>(null);
-  const tone = (frequency: number, duration = .08) => { if (muted || typeof window === 'undefined') return; const context = audio.current ?? new AudioContext(); audio.current = context; const oscillator = context.createOscillator(); const gain = context.createGain(); oscillator.frequency.value = frequency; gain.gain.setValueAtTime(.035, context.currentTime); gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + duration); oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + duration); };
+  const tone = (frequency: number, duration = .08) => {
+    if (muted || typeof window === 'undefined') return;
+    const context = audio.current ?? new AudioContext();
+    audio.current = context;
+    const oscillator = context.createOscillator();
+    const sub = context.createOscillator();
+    const filter = context.createBiquadFilter();
+    const gain = context.createGain();
+    const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+    oscillator.type = 'triangle';
+    oscillator.frequency.value = frequency * pitchVar;
+    oscillator.detune.value = (Math.random() - 0.5) * 12;
+    sub.type = 'sine';
+    sub.frequency.value = frequency * 0.5 * pitchVar;
+    filter.type = 'lowpass';
+    filter.frequency.value = 2400;
+    gain.gain.setValueAtTime(.035, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + duration);
+    oscillator.connect(filter);
+    sub.connect(filter);
+    filter.connect(gain).connect(context.destination);
+    oscillator.start();
+    sub.start();
+    oscillator.stop(context.currentTime + duration);
+    sub.stop(context.currentTime + duration);
+  };
   const loadBest = (difficulty: NumberGuessingDifficulty) => { try { setBest(JSON.parse(localStorage.getItem(`oiyo:number-guessing-best:${difficulty}`) ?? 'null')); } catch { setBest(null); } };
   const startGame = (difficulty: NumberGuessingDifficulty) => { const seed = (crypto.getRandomValues?.(new Uint32Array(1))[0] ?? Date.now()) >>> 0; clearNumberGuessingSave(); setState(createNumberGuessingGame(seed, difficulty)); setInput(''); setElapsedMs(0); elapsedBase.current = 0; startedAt.current = Date.now(); setPaused(false); setRestored(false); setAssisted(false); setError(''); loadBest(difficulty); };
 

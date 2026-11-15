@@ -347,13 +347,26 @@ const CUE_HZ: Record<SurfCue, number> = {
 
 function playTone(ctx: AudioContext, frequency: number) {
   const osc = ctx.createOscillator();
+  const sub = ctx.createOscillator();
+  const filter = ctx.createBiquadFilter();
   const gain = ctx.createGain();
-  osc.frequency.value = frequency;
+  const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+  osc.type = "triangle";
+  osc.frequency.value = frequency * pitchVar;
+  osc.detune.value = (Math.random() - 0.5) * 12;
+  sub.type = "sine";
+  sub.frequency.value = frequency * 0.5 * pitchVar;
+  filter.type = "lowpass";
+  filter.frequency.value = 2400;
   gain.gain.value = 0.04;
-  osc.connect(gain);
+  osc.connect(filter);
+  sub.connect(filter);
+  filter.connect(gain);
   gain.connect(ctx.destination);
   osc.start();
+  sub.start();
   osc.stop(ctx.currentTime + 0.08);
+  sub.stop(ctx.currentTime + 0.08);
 }
 
 const KEYS: Record<string, Act> = {

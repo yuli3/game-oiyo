@@ -411,13 +411,26 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
     if (!AudioCtor) return;
     const audio = new AudioCtor();
     const oscillator = audio.createOscillator();
+    const sub = audio.createOscillator();
+    const filter = audio.createBiquadFilter();
     const gain = audio.createGain();
-    oscillator.frequency.value = frequency;
+    const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+    oscillator.type = "triangle";
+    oscillator.frequency.value = frequency * pitchVar;
+    oscillator.detune.value = (Math.random() - 0.5) * 12;
+    sub.type = "sine";
+    sub.frequency.value = frequency * 0.5 * pitchVar;
+    filter.type = "lowpass";
+    filter.frequency.value = 2400;
     gain.gain.setValueAtTime(0.035, audio.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.12);
-    oscillator.connect(gain).connect(audio.destination);
+    oscillator.connect(filter);
+    sub.connect(filter);
+    filter.connect(gain).connect(audio.destination);
     oscillator.start();
+    sub.start();
     oscillator.stop(audio.currentTime + 0.12);
+    sub.stop(audio.currentTime + 0.12);
   }, [sound]);
 
   const submit = useCallback(() => {

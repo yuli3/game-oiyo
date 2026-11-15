@@ -241,15 +241,30 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     const context = audioContext.current ?? new AudioContextClass();
     audioContext.current = context;
     const oscillator = context.createOscillator();
+    const sub = context.createOscillator();
+    const filter = context.createBiquadFilter();
     const gain = context.createGain();
     const frequencies = { flap: 330, point: 660, crash: 110 } as const;
-    oscillator.type = kind === "crash" ? "sawtooth" : "sine";
-    oscillator.frequency.setValueAtTime(frequencies[kind], context.currentTime);
-    if (kind === "point") oscillator.frequency.exponentialRampToValueAtTime(920, context.currentTime + 0.1);
+    const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+    const baseFreq = frequencies[kind] * pitchVar;
+    oscillator.type = kind === "crash" ? "sawtooth" : "triangle";
+    oscillator.frequency.setValueAtTime(baseFreq, context.currentTime);
+    oscillator.detune.setValueAtTime((Math.random() - 0.5) * 14, context.currentTime);
+    sub.type = "sine";
+    sub.frequency.setValueAtTime(baseFreq * 0.5, context.currentTime);
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(kind === "crash" ? 900 : 2800, context.currentTime);
+    if (kind === "point") oscillator.frequency.exponentialRampToValueAtTime(920 * pitchVar, context.currentTime + 0.1);
     gain.gain.setValueAtTime(kind === "crash" ? 0.08 : 0.045, context.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + (kind === "crash" ? 0.28 : 0.12));
-    oscillator.connect(gain); gain.connect(context.destination);
-    oscillator.start(); oscillator.stop(context.currentTime + (kind === "crash" ? 0.28 : 0.12));
+    oscillator.connect(filter);
+    sub.connect(filter);
+    filter.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start();
+    sub.start();
+    oscillator.stop(context.currentTime + (kind === "crash" ? 0.28 : 0.12));
+    sub.stop(context.currentTime + (kind === "crash" ? 0.28 : 0.12));
   }, []);
 
   useEffect(() => {

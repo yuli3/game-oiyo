@@ -6,6 +6,7 @@ import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth, getRetroChiptuneBgm } from '../../lib/games/engine-suite-unified';
 import { GameJuice } from '../../lib/games/game-juice';
+import { HitStopController, PixelFxController, playMultiLayerPixelSfx } from '../../lib/games/pixelfx-engine';
 import { frameScale } from '../../lib/games/time-contracts';
 
 function TiltRunnerButton({
@@ -178,6 +179,8 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const dashBoosterRef = useRef(0);
     const perfectCountRef = useRef(0);
     const juiceRef = useRef<GameJuice>(new GameJuice(320));
+    const pixelFxRef = useRef<PixelFxController>(new PixelFxController(32));
+    const hitStopRef = useRef<HitStopController>(new HitStopController());
 
     const playTone = useCallback((kind: 'jump' | 'coin' | 'crash') => {
         if (mutedRef.current || typeof window === 'undefined') return;
@@ -187,11 +190,14 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         audioContext.current = context;
         if (kind === 'jump') {
             RetroChiptuneSynth.playJump(context);
+            playMultiLayerPixelSfx(420, 0.12, 'triangle', false);
         } else if (kind === 'coin') {
             RetroChiptuneSynth.playCoin(context);
+            playMultiLayerPixelSfx(880, 0.16, 'triangle', true);
             addTrauma(0.08);
         } else if (kind === 'crash') {
             RetroChiptuneSynth.playHit(context);
+            playMultiLayerPixelSfx(140, 0.2, 'sawtooth', false);
             setTimeout(() => {
                 if (audioContext.current) RetroChiptuneSynth.playGameOver(audioContext.current);
             }, 80);
@@ -294,8 +300,10 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             const dtSec = Math.min((lastFrame === null ? 16 : now - lastFrame) / 1000, 0.05);
             lastFrame = now;
             juiceRef.current.update(dtSec);
+            pixelFxRef.current.update(dtSec);
+            const isFreezing = hitStopRef.current.update(dtSec);
 
-            if (statusRef.current === 'playing' && game.current) {
+            if (statusRef.current === 'playing' && game.current && !isFreezing) {
                 accumulator += scale;
                 let steps = 0;
                 while (accumulator >= 1 && steps < 4 && game.current?.status === 'playing') {
@@ -317,6 +325,8 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         setCoins(next.coins);
                         MobileHapticsPro.selection();
                         playTone('coin');
+                        hitStopRef.current.trigger(25);
+                        pixelFxRef.current.spawn('coin-sparkle', (DOT_RUNNER_PLAYER_X + DOT_RUNNER_PLAYER_SIZE / 2), (next.playerY + DOT_RUNNER_PLAYER_SIZE / 2));
                         juiceRef.current.combatText.spawn(
                             DOT_RUNNER_PLAYER_X + DOT_RUNNER_PLAYER_SIZE + 8,
                             next.playerY - 8,
@@ -333,6 +343,8 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         clearDotRunnerSave();
                         statusRef.current = 'over';
                         setStatus('over');
+                        hitStopRef.current.trigger(60);
+                        pixelFxRef.current.spawn('slash-impact', (DOT_RUNNER_PLAYER_X + DOT_RUNNER_PLAYER_SIZE / 2), next.playerY);
                         juiceRef.current.impact(DOT_RUNNER_PLAYER_X + DOT_RUNNER_PLAYER_SIZE / 2, next.playerY, 'heavy', 'CRASH!');
                         const beat = next.score > bestRef.current;
                         if (beat && next.score > 0) {
@@ -489,6 +501,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             }
 
             juiceRef.current.render(ctx);
+            pixelFxRef.current.drawToCanvas(ctx);
             ctx.restore();
 
             raf = requestAnimationFrame(loop);

@@ -22,7 +22,8 @@ import {
 } from '../../lib/games/orbital-defense';
 import { OrbitalDefense3DScene } from './OrbitalDefense3DScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
-import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useCardTiltPro, MobileHapticsPro, playProceduralSfx } from '../../lib/games/engine-suite-unified';
+import { useAudioContext } from '../../lib/games/use-audio-context';
 import { ORBITAL_DEFENSE_UI_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
 
 function TiltDefenseButton({
@@ -153,6 +154,37 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
     locale: (locale as any) || 'ko',
   });
+  const getAudioContext = useAudioContext();
+
+  const playDefenseSfx = useCallback((cue: 'laser' | 'explosion' | 'coin' | 'win') => {
+    if (muted) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    playProceduralSfx(ctx, cue === 'explosion' ? 'hit' : cue);
+    try {
+      const osc = ctx.createOscillator();
+      const sub = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+      const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+      osc.type = cue === 'explosion' ? 'sawtooth' : 'triangle';
+      osc.frequency.value = (cue === 'explosion' ? 120 : cue === 'win' ? 760 : 540) * pitchVar;
+      osc.detune.value = (Math.random() - 0.5) * 16;
+      sub.type = 'sine';
+      sub.frequency.value = 240 * pitchVar;
+      filter.type = 'lowpass';
+      filter.frequency.value = cue === 'explosion' ? 1000 : 2800;
+      gain.gain.setValueAtTime(0.035, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      osc.connect(filter);
+      sub.connect(filter);
+      filter.connect(gain).connect(ctx.destination);
+      osc.start();
+      sub.start();
+      osc.stop(ctx.currentTime + 0.12);
+      sub.stop(ctx.currentTime + 0.12);
+    } catch {}
+  }, [getAudioContext, muted]);
 
   const toggleMute = useCallback(() => {
     setMuted((prev) => {
@@ -239,6 +271,7 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
       const success = buildTurret(next, selectedSlot.orbitIndex, selectedSlot.slotIndex, type);
       if (success) {
         MobileHapticsPro.medium();
+        playDefenseSfx('laser');
         setSelectedSlot(null);
       }
       return next;

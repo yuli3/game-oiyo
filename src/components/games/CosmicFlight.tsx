@@ -7,7 +7,8 @@ import { generateFlightCourse, type FlightCourse } from '../../lib/games/cosmic-
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
-import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useCardTiltPro, MobileHapticsPro, playProceduralSfx } from '../../lib/games/engine-suite-unified';
+import { useAudioContext } from '../../lib/games/use-audio-context';
 import { COSMIC_FLIGHT_UI_SPRITES } from '../../lib/games/sprites';
 
 const CosmicFlightScene = lazy(() => import('./CosmicFlightScene'));
@@ -176,6 +177,42 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
     locale: (locale as any) || 'ko',
   });
+  const getAudioContext = useAudioContext();
+
+  const playCosmicSfx = useCallback(
+    (cue: 'jump' | 'coin' | 'explosion' | 'win', combo = 1) => {
+      if (!audioEnabled) return;
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      playProceduralSfx(ctx, cue);
+      try {
+        const osc = ctx.createOscillator();
+        const sub = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+        const pitchVar = 1 + Math.min(combo, 10) * 0.04 + (Math.random() - 0.5) * 0.06;
+        osc.type = cue === 'explosion' ? 'sawtooth' : 'triangle';
+        osc.frequency.value = (cue === 'explosion' ? 140 : 520) * pitchVar;
+        osc.detune.value = (Math.random() - 0.5) * 16;
+        sub.type = 'sine';
+        sub.frequency.value = 240 * pitchVar;
+        filter.type = 'lowpass';
+        filter.frequency.value = cue === 'explosion' ? 900 : 2800;
+        gain.gain.setValueAtTime(0.035, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+        osc.connect(filter);
+        sub.connect(filter);
+        filter.connect(gain).connect(ctx.destination);
+        osc.start();
+        sub.start();
+        osc.stop(ctx.currentTime + 0.12);
+        sub.stop(ctx.currentTime + 0.12);
+      } catch {
+        // ignore audio errors
+      }
+    },
+    [audioEnabled, getAudioContext]
+  );
 
   const toggleAudio = useCallback(() => {
     setAudioEnabled((prev) => {
@@ -213,6 +250,7 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
 
   const startNewFlight = () => {
     MobileHapticsPro.medium();
+    playCosmicSfx('jump');
     setCourse(generateFlightCourse(Date.now(), 22));
     setPassedRings(0);
     setMaxCombo(0);
@@ -245,6 +283,7 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
   }, [status, finalScore, passedRings, course.rings.length, maxCombo, bestScore]);
 
   const handlePassRing = (_ringIndex: number, combo: number) => {
+    playCosmicSfx('coin', combo);
     if (combo >= 5) {
       MobileHapticsPro.heavy();
     } else if (combo >= 3) {
@@ -258,12 +297,14 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
 
   const handleCrash = () => {
     MobileHapticsPro.heavy();
+    playCosmicSfx('explosion');
     setStatus('crashed');
     if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
   };
 
   const handleFinish = (score: number) => {
     MobileHapticsPro.success();
+    playCosmicSfx('win');
     setFinalScore(score);
     setStatus('cleared');
     if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });

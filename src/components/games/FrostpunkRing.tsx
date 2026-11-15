@@ -115,6 +115,34 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
           .webkitAudioContext;
       if (Ctx) audioRef.current = new Ctx();
     }
+    if (audioRef.current) {
+      try {
+        const ctx = audioRef.current;
+        const osc = ctx.createOscillator();
+        const sub = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+        const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+        osc.type = 'triangle';
+        osc.frequency.value = 340 * pitchVar;
+        osc.detune.value = (Math.random() - 0.5) * 14;
+        sub.type = 'sine';
+        sub.frequency.value = 170 * pitchVar;
+        filter.type = 'lowpass';
+        filter.frequency.value = 1800;
+        gain.gain.setValueAtTime(0.025, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
+        osc.connect(filter);
+        sub.connect(filter);
+        filter.connect(gain).connect(ctx.destination);
+        osc.start();
+        sub.start();
+        osc.stop(ctx.currentTime + 0.09);
+        sub.stop(ctx.currentTime + 0.09);
+      } catch {
+        // ignore audio errors
+      }
+    }
     return audioRef.current;
   }, []);
 

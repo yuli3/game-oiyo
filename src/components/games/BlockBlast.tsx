@@ -16,6 +16,7 @@ import {
   RetroChiptuneSynth,
   getRetroChiptuneBgm,
 } from "../../lib/games/engine-suite-unified";
+import { playMultiLayerPixelSfx } from "../../lib/games/pixelfx-engine";
 import { Button } from "../ui/button";
 import { BLOCK_BLAST_UI_SPRITES } from "../../lib/games/sprites";
 import { Volume2, VolumeX } from "lucide-react";
@@ -132,6 +133,29 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
     if (!game.hand[idx]) return;
     setSelectedHandIdx((prev) => (prev === idx ? null : idx));
     RetroChiptuneSynth.playBlip(audioCtxRef.current);
+    if (soundEnabled && audioCtxRef.current) {
+      const osc = audioCtxRef.current.createOscillator();
+      const sub = audioCtxRef.current.createOscillator();
+      const filter = audioCtxRef.current.createBiquadFilter();
+      const gain = audioCtxRef.current.createGain();
+      const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+      osc.type = "triangle";
+      osc.frequency.value = 540 * pitchVar;
+      osc.detune.value = (Math.random() - 0.5) * 12;
+      sub.type = "sine";
+      sub.frequency.value = 270 * pitchVar;
+      filter.type = "lowpass";
+      filter.frequency.value = 2200;
+      gain.gain.setValueAtTime(0.03, audioCtxRef.current.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtxRef.current.currentTime + 0.08);
+      osc.connect(filter);
+      sub.connect(filter);
+      filter.connect(gain).connect(audioCtxRef.current.destination);
+      osc.start();
+      sub.start();
+      osc.stop(audioCtxRef.current.currentTime + 0.08);
+      sub.stop(audioCtxRef.current.currentTime + 0.08);
+    }
     MobileHapticsPro.light();
   };
 
@@ -156,6 +180,9 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
       const traumaAmount = Math.min(0.85, 0.4 + lines * 0.15 + result.nextState.comboCount * 0.1);
       addTrauma(traumaAmount);
       RetroChiptuneSynth.playCoin(audioCtxRef.current);
+      if (soundEnabled) {
+        playMultiLayerPixelSfx(lines >= 2 ? 990 : 880, lines >= 2 ? 0.22 : 0.16, "triangle", true);
+      }
       if (lines >= 2 || result.nextState.comboCount > 1) {
         RetroChiptuneSynth.playPowerup(audioCtxRef.current);
         MobileHapticsPro.success();

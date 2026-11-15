@@ -114,7 +114,33 @@ export default function SlotRogue({ locale }: Props) {
   const [shareCardCopied, setShareCardCopied] = useState(false);
   const getAudioContext = useAudioContext();
   const playSfx = useCallback((cue: "spin" | "coin" | "gem" | "win" | "fail" | "place" | "tap") => {
-    playProceduralSfx(getAudioContext(), cue);
+    const ctx = getAudioContext();
+    playProceduralSfx(ctx, cue);
+    if (ctx) {
+      try {
+        const osc = ctx.createOscillator();
+        const sub = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+        const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+        osc.type = "triangle";
+        osc.frequency.value = (cue === "win" ? 840 : cue === "coin" ? 620 : cue === "gem" ? 720 : 420) * pitchVar;
+        osc.detune.value = (Math.random() - 0.5) * 14;
+        sub.type = "sine";
+        sub.frequency.value = 210 * pitchVar;
+        filter.type = "lowpass";
+        filter.frequency.value = 2500;
+        gain.gain.setValueAtTime(0.03, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
+        osc.connect(filter);
+        sub.connect(filter);
+        filter.connect(gain).connect(ctx.destination);
+        osc.start();
+        sub.start();
+        osc.stop(ctx.currentTime + 0.09);
+        sub.stop(ctx.currentTime + 0.09);
+      } catch {}
+    }
   }, [getAudioContext]);
 
   const recordArcadePass = (rentCyclesCleared: number) => {

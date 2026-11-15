@@ -289,35 +289,65 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
 
       const now = ctx.currentTime;
       const osc = ctx.createOscillator();
+      const sub = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
       const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+      const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
 
       if (kind === 'build') {
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(320, now);
-        osc.frequency.exponentialRampToValueAtTime(520, now + 0.08);
+        osc.frequency.setValueAtTime(320 * pitchVar, now);
+        osc.frequency.exponentialRampToValueAtTime(520 * pitchVar, now + 0.08);
+        osc.detune.setValueAtTime((Math.random() - 0.5) * 12, now);
+        sub.type = 'sine';
+        sub.frequency.setValueAtTime(160 * pitchVar, now);
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2400, now);
         gain.gain.setValueAtTime(0.14, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        osc.connect(filter);
+        sub.connect(filter);
+        filter.connect(gain).connect(ctx.destination);
         osc.start(now);
+        sub.start(now);
         osc.stop(now + 0.09);
+        sub.stop(now + 0.09);
       } else if (kind === 'snap') {
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.setValueAtTime(160 * pitchVar, now);
         osc.frequency.exponentialRampToValueAtTime(45, now + 0.18);
+        osc.detune.setValueAtTime((Math.random() - 0.5) * 16, now);
+        sub.type = 'sine';
+        sub.frequency.setValueAtTime(80 * pitchVar, now);
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1000, now);
         gain.gain.setValueAtTime(0.22, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
+        osc.connect(filter);
+        sub.connect(filter);
+        filter.connect(gain).connect(ctx.destination);
         osc.start(now);
+        sub.start(now);
         osc.stop(now + 0.19);
+        sub.stop(now + 0.19);
       } else {
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(523.25, now);
-        osc.frequency.setValueAtTime(659.25, now + 0.09);
-        osc.frequency.setValueAtTime(783.99, now + 0.18);
+        osc.frequency.setValueAtTime(523.25 * pitchVar, now);
+        osc.frequency.setValueAtTime(659.25 * pitchVar, now + 0.09);
+        osc.frequency.setValueAtTime(783.99 * pitchVar, now + 0.18);
+        sub.type = 'sine';
+        sub.frequency.setValueAtTime(261.63 * pitchVar, now);
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2800, now);
         gain.gain.setValueAtTime(0.18, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
+        osc.connect(filter);
+        sub.connect(filter);
+        filter.connect(gain).connect(ctx.destination);
         osc.start(now);
+        sub.start(now);
         osc.stop(now + 0.37);
+        sub.stop(now + 0.37);
       }
     } catch {
       // Ignore audio errors

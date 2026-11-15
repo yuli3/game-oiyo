@@ -5,6 +5,7 @@ import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
 import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth, getRetroChiptuneBgm } from '../../lib/games/engine-suite-unified';
 import { useAudioContext } from '../../lib/games/use-audio-context';
+import { playMultiLayerPixelSfx } from '../../lib/games/pixelfx-engine';
 import { explainDotPetAction, type DotPetAction } from '../../lib/games/dot-pet';
 import { DOT_PET_SPRITES, DOT_PET_UI_SPRITES } from '../../lib/games/sprites';
 import { DotPetCanvas } from './DotPetCanvas';
@@ -233,7 +234,10 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 addTrauma(0.55);
                 MobileHapticsPro.success();
                 const ctx = getAudioContext();
-                if (ctx) RetroChiptuneSynth.playPowerup(ctx);
+                if (ctx) {
+                    RetroChiptuneSynth.playPowerup(ctx);
+                    playMultiLayerPixelSfx(660, 0.22, 'sine', true);
+                }
                 if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
                 if (grewTimer.current) clearTimeout(grewTimer.current);
                 grewTimer.current = setTimeout(() => setGrewUp(false), 2500);
@@ -246,21 +250,30 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         MobileHapticsPro.light();
         addTrauma(0.08);
         const ctx = getAudioContext();
-        if (ctx) RetroChiptuneSynth.playCoin(ctx);
+        if (ctx) {
+            RetroChiptuneSynth.playCoin(ctx);
+            playMultiLayerPixelSfx(880, 0.16, 'triangle', true);
+        }
         pet && care('feed', { hunger: Math.min(100, pet.hunger + 20), energy: Math.min(100, pet.energy + 5) }, 5);
     };
     const play = () => {
         MobileHapticsPro.medium();
         addTrauma(0.12);
         const ctx = getAudioContext();
-        if (ctx) RetroChiptuneSynth.playJump(ctx);
+        if (ctx) {
+            RetroChiptuneSynth.playJump(ctx);
+            playMultiLayerPixelSfx(660, 0.22, 'sine', true);
+        }
         pet && care('play', { happiness: Math.min(100, pet.happiness + 20), hunger: Math.max(0, pet.hunger - 10), energy: Math.max(0, pet.energy - 15) }, 10);
     };
     const rest = () => {
         MobileHapticsPro.selection();
         addTrauma(0.06);
         const ctx = getAudioContext();
-        if (ctx) RetroChiptuneSynth.playBlip(ctx, 300);
+        if (ctx) {
+            RetroChiptuneSynth.playBlip(ctx, 300);
+            playMultiLayerPixelSfx(420, 0.12, 'triangle', false);
+        }
         pet && care('rest', { energy: Math.min(100, pet.energy + 30), happiness: Math.max(0, pet.happiness - 5) }, 3);
     };
 

@@ -163,7 +163,33 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
   const getAudioContext = useAudioContext();
   const playSfx = useCallback((cue: "coin" | "jump" | "win" | "fail" | "tap" | "roll") => {
     if (muted) return;
-    playProceduralSfx(getAudioContext(), cue);
+    const ctx = getAudioContext();
+    playProceduralSfx(ctx, cue);
+    if (ctx) {
+      try {
+        const osc = ctx.createOscillator();
+        const sub = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+        const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+        osc.type = "triangle";
+        osc.frequency.value = (cue === "win" ? 820 : cue === "coin" ? 640 : 440) * pitchVar;
+        osc.detune.value = (Math.random() - 0.5) * 14;
+        sub.type = "sine";
+        sub.frequency.value = 220 * pitchVar;
+        filter.type = "lowpass";
+        filter.frequency.value = 2600;
+        gain.gain.setValueAtTime(0.03, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
+        osc.connect(filter);
+        sub.connect(filter);
+        filter.connect(gain).connect(ctx.destination);
+        osc.start();
+        sub.start();
+        osc.stop(ctx.currentTime + 0.09);
+        sub.stop(ctx.currentTime + 0.09);
+      } catch {}
+    }
   }, [getAudioContext, muted]);
 
   const inputRef = useRef<MarbleInput>({ steerX: 0, throttleZ: 0, jump: false });

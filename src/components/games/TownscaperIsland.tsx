@@ -116,16 +116,28 @@ export default function TownscaperIsland({ locale }: Props) {
     if (!ctx) return;
     const t = ctx.currentTime;
     const osc = ctx.createOscillator();
+    const sub = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
     const gain = ctx.createGain();
-    const freq = 260 + Math.min(height, 8) * 45;
+    const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+    const freq = (260 + Math.min(height, 8) * 45) * pitchVar;
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(freq, t);
     osc.frequency.exponentialRampToValueAtTime(freq * 1.5, t + 0.08);
+    osc.detune.setValueAtTime((Math.random() - 0.5) * 12, t);
+    sub.type = 'sine';
+    sub.frequency.setValueAtTime(freq * 0.5, t);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2600, t);
     gain.gain.setValueAtTime(0.15, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-    osc.connect(gain).connect(ctx.destination);
+    osc.connect(filter);
+    sub.connect(filter);
+    filter.connect(gain).connect(ctx.destination);
     osc.start(t);
+    sub.start(t);
     osc.stop(t + 0.1);
+    sub.stop(t + 0.1);
   }, [getAudioContext]);
 
   const recordArcadePass = (blocks: number) => {

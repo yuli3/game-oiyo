@@ -37,13 +37,26 @@ function tone() {
   try {
     const context = new AudioCtor();
     const oscillator = context.createOscillator();
+    const sub = context.createOscillator();
+    const filter = context.createBiquadFilter();
     const gain = context.createGain();
-    oscillator.frequency.value = 520;
+    const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+    oscillator.type = "triangle";
+    oscillator.frequency.value = 520 * pitchVar;
+    oscillator.detune.value = (Math.random() - 0.5) * 12;
+    sub.type = "sine";
+    sub.frequency.value = 260 * pitchVar;
+    filter.type = "lowpass";
+    filter.frequency.value = 2200;
     gain.gain.setValueAtTime(0.03, context.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.08);
-    oscillator.connect(gain).connect(context.destination);
+    oscillator.connect(filter);
+    sub.connect(filter);
+    filter.connect(gain).connect(context.destination);
     oscillator.start();
+    sub.start();
     oscillator.stop(context.currentTime + 0.09);
+    sub.stop(context.currentTime + 0.09);
     oscillator.addEventListener("ended", () => void context.close().catch(() => {}), { once: true });
   } catch { /* Sound must not block a move. */ }
 }

@@ -135,13 +135,26 @@ export default function LightUp({ locale = 'ko' }: { locale?: string }) {
    if (!AudioContextClass) return;
    const a = new AudioContextClass();
    const o = a.createOscillator();
+   const sub = a.createOscillator();
+   const filter = a.createBiquadFilter();
    const g = a.createGain();
-   o.frequency.value = win ? 880 : 520;
+   const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+   o.type = "triangle";
+   o.frequency.value = (win ? 880 : 520) * pitchVar;
+   o.detune.value = (Math.random() - 0.5) * 12;
+   sub.type = "sine";
+   sub.frequency.value = (win ? 440 : 260) * pitchVar;
+   filter.type = "lowpass";
+   filter.frequency.value = 2600;
    g.gain.setValueAtTime(0.03, a.currentTime);
    g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.16);
-   o.connect(g).connect(a.destination);
+   o.connect(filter);
+   sub.connect(filter);
+   filter.connect(g).connect(a.destination);
    o.start();
+   sub.start();
    o.stop(a.currentTime + 0.16);
+   sub.stop(a.currentTime + 0.16);
  }, [sound]);
 
  const act = (fn: (s: LightUpState) => LightUpState) => {

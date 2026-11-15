@@ -207,7 +207,35 @@ export function CardTable3D({ lang = 'ko' }: Props) {
   const celebratedRef = useRef(false);
   const getAudioContext = useAudioContext();
   const playSfx = useCallback((cue: "card" | "place" | "tap" | "success" | "win") => {
-    playProceduralSfx(getAudioContext(), cue);
+    const ctx = getAudioContext();
+    playProceduralSfx(ctx, cue);
+    if (ctx) {
+      try {
+        const osc = ctx.createOscillator();
+        const sub = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+        const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+        osc.type = "triangle";
+        osc.frequency.value = (cue === "win" ? 780 : cue === "place" ? 520 : 440) * pitchVar;
+        osc.detune.value = (Math.random() - 0.5) * 14;
+        sub.type = "sine";
+        sub.frequency.value = 220 * pitchVar;
+        filter.type = "lowpass";
+        filter.frequency.value = 2400;
+        gain.gain.setValueAtTime(0.025, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
+        osc.connect(filter);
+        sub.connect(filter);
+        filter.connect(gain).connect(ctx.destination);
+        osc.start();
+        sub.start();
+        osc.stop(ctx.currentTime + 0.07);
+        sub.stop(ctx.currentTime + 0.07);
+      } catch {
+        // ignore audio errors
+      }
+    }
   }, [getAudioContext]);
 
   useEffect(() => {

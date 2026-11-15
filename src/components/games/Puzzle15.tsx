@@ -123,13 +123,26 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const context = audioRef.current ?? new AudioContext();
         audioRef.current = context;
         const oscillator = context.createOscillator();
+        const sub = context.createOscillator();
+        const filter = context.createBiquadFilter();
         const gain = context.createGain();
-        oscillator.frequency.value = frequency;
+        const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+        oscillator.type = 'triangle';
+        oscillator.frequency.value = frequency * pitchVar;
+        oscillator.detune.value = (Math.random() - 0.5) * 12;
+        sub.type = 'sine';
+        sub.frequency.value = frequency * 0.5 * pitchVar;
+        filter.type = 'lowpass';
+        filter.frequency.value = 2400;
         gain.gain.setValueAtTime(0.05, context.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
-        oscillator.connect(gain).connect(context.destination);
+        oscillator.connect(filter);
+        sub.connect(filter);
+        filter.connect(gain).connect(context.destination);
         oscillator.start();
+        sub.start();
         oscillator.stop(context.currentTime + duration);
+        sub.stop(context.currentTime + duration);
     }, [muted]);
     useEffect(() => () => { void audioRef.current?.close(); }, []);
 

@@ -36,15 +36,27 @@ class TamagotchiSound {
             this.init();
             if (!this.ctx) return;
             const osc = this.ctx.createOscillator();
+            const sub = this.ctx.createOscillator();
+            const filter = this.ctx.createBiquadFilter();
             const gain = this.ctx.createGain();
+            const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
             osc.type = type;
-            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            osc.frequency.setValueAtTime(freq * pitchVar, this.ctx.currentTime);
+            osc.detune.setValueAtTime((Math.random() - 0.5) * 12, this.ctx.currentTime);
+            sub.type = 'sine';
+            sub.frequency.setValueAtTime(freq * 0.5 * pitchVar, this.ctx.currentTime);
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(2600, this.ctx.currentTime);
             gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
-            osc.connect(gain);
+            osc.connect(filter);
+            sub.connect(filter);
+            filter.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start();
+            sub.start();
             osc.stop(this.ctx.currentTime + duration);
+            sub.stop(this.ctx.currentTime + duration);
         } catch { /* ignore */ }
     }
     action() {

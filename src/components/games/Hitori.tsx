@@ -150,13 +150,26 @@ export default function Hitori({ locale = 'ko' }: { locale?: string }) {
     if (!A) return;
     const a = new A();
     const o = a.createOscillator();
+    const sub = a.createOscillator();
+    const filter = a.createBiquadFilter();
     const g = a.createGain();
-    o.frequency.value = win ? 720 : 330;
+    const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+    o.type = "triangle";
+    o.frequency.value = (win ? 720 : 330) * pitchVar;
+    o.detune.value = (Math.random() - 0.5) * 14;
+    sub.type = "sine";
+    sub.frequency.value = (win ? 360 : 165) * pitchVar;
+    filter.type = "lowpass";
+    filter.frequency.value = 2400;
     g.gain.setValueAtTime(0.035, a.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.12);
-    o.connect(g).connect(a.destination);
+    o.connect(filter);
+    sub.connect(filter);
+    filter.connect(g).connect(a.destination);
     o.start();
+    sub.start();
     o.stop(a.currentTime + 0.12);
+    sub.stop(a.currentTime + 0.12);
   }, [sound]);
 
   const act = (fn: (s: HitoriState) => HitoriState) => {

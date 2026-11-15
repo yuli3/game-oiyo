@@ -120,12 +120,34 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
     } else {
       MobileHapticsPro.light();
     }
-    playSyntheticTone(ensureAudio(), {
-      freq: state.lastVoiceFormantHz || 420,
+    const ctx = ensureAudio();
+    const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+    const baseHz = (state.lastVoiceFormantHz || 420) * pitchVar;
+    playSyntheticTone(ctx, {
+      freq: baseHz,
       duration: 0.14,
       type: 'sawtooth',
       gain: 0.14,
     });
+    if (ctx) {
+      try {
+        const sub = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+        sub.type = 'triangle';
+        sub.frequency.value = baseHz * 0.5;
+        sub.detune.value = (Math.random() - 0.5) * 16;
+        filter.type = 'lowpass';
+        filter.frequency.value = 1400;
+        gain.gain.setValueAtTime(0.05, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+        sub.connect(filter).connect(gain).connect(ctx.destination);
+        sub.start();
+        sub.stop(ctx.currentTime + 0.15);
+      } catch {
+        // ignore audio errors
+      }
+    }
 
     const prevEnemies = state.enemies;
     const targetId = selectedEnemyId ?? prevEnemies[0]?.id;

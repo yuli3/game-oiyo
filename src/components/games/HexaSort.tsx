@@ -119,6 +119,32 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
     if (!game.hand[idx]) return;
     setSelectedHandIdx((prev) => (prev === idx ? null : idx));
     RetroChiptuneSynth.playBlip(audioCtxRef.current);
+    if (audioCtxRef.current) {
+      try {
+        const ctx = audioCtxRef.current;
+        const osc = ctx.createOscillator();
+        const sub = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+        const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+        osc.type = "triangle";
+        osc.frequency.value = 480 * pitchVar;
+        osc.detune.value = (Math.random() - 0.5) * 12;
+        sub.type = "sine";
+        sub.frequency.value = 240 * pitchVar;
+        filter.type = "lowpass";
+        filter.frequency.value = 2200;
+        gain.gain.setValueAtTime(0.03, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
+        osc.connect(filter);
+        sub.connect(filter);
+        filter.connect(gain).connect(ctx.destination);
+        osc.start();
+        sub.start();
+        osc.stop(ctx.currentTime + 0.07);
+        sub.stop(ctx.currentTime + 0.07);
+      } catch {}
+    }
     MobileHapticsPro.light();
   };
 

@@ -332,6 +332,31 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
         } else {
           RetroChiptuneSynth.playPowerup(ctx);
         }
+        if (ctx) {
+          try {
+            const osc = ctx.createOscillator();
+            const sub = ctx.createOscillator();
+            const filter = ctx.createBiquadFilter();
+            const gain = ctx.createGain();
+            const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+            osc.type = "triangle";
+            osc.frequency.value = (isMega ? 780 : 540) * pitchVar;
+            osc.detune.value = (Math.random() - 0.5) * 12;
+            sub.type = "sine";
+            sub.frequency.value = (isMega ? 390 : 270) * pitchVar;
+            filter.type = "lowpass";
+            filter.frequency.value = 2400;
+            gain.gain.setValueAtTime(0.035, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+            osc.connect(filter);
+            sub.connect(filter);
+            filter.connect(gain).connect(ctx.destination);
+            osc.start();
+            sub.start();
+            osc.stop(ctx.currentTime + 0.12);
+            sub.stop(ctx.currentTime + 0.12);
+          } catch {}
+        }
       }
 
       setMessage(`"${result.clearedWord}" +${result.pointsEarned}${t.pointsPlus}`);

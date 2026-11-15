@@ -91,14 +91,26 @@ const LottoGenerator: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             audioRef.current = ctx;
             if (ctx.state === 'suspended') void ctx.resume();
             const osc = ctx.createOscillator();
+            const sub = ctx.createOscillator();
+            const filter = ctx.createBiquadFilter();
             const gain = ctx.createGain();
+            const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
             osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            osc.frequency.setValueAtTime(freq * pitchVar, ctx.currentTime);
+            osc.detune.setValueAtTime((Math.random() - 0.5) * 12, ctx.currentTime);
+            sub.type = 'sine';
+            sub.frequency.setValueAtTime(freq * 0.5 * pitchVar, ctx.currentTime);
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(2600, ctx.currentTime);
             gain.gain.setValueAtTime(0.04, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-            osc.connect(gain).connect(ctx.destination);
+            osc.connect(filter);
+            sub.connect(filter);
+            filter.connect(gain).connect(ctx.destination);
             osc.start();
+            sub.start();
             osc.stop(ctx.currentTime + duration);
+            sub.stop(ctx.currentTime + duration);
         } catch {
             // ignore
         }

@@ -5,6 +5,7 @@ import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth, getSharedAudioContext, getRetroChiptuneBgm } from "../../lib/games/engine-suite-unified";
 import { frameScale } from "../../lib/games/time-contracts";
 import { GameJuice } from "../../lib/games/game-juice";
+import { HitStopController, PixelFxController, playMultiLayerPixelSfx } from "../../lib/games/pixelfx-engine";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 
 function TiltJumpKingButton({
@@ -188,6 +189,8 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
   const artRef = useRef<JumpArt | null>(null);
   if (artRef.current === null) artRef.current = loadJumpArt();
   const juiceRef = useRef<GameJuice>(new GameJuice(320));
+  const pixelFxRef = useRef<PixelFxController>(new PixelFxController(32));
+  const hitStopRef = useRef<HitStopController>(new HitStopController());
   const wasOnGroundRef = useRef(true);
   const prefersReducedMotion = usePrefersReducedMotion();
   const [phase, setPhase] = useState<
@@ -224,13 +227,26 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
       if (!A) return;
       const a = new A(),
         o = a.createOscillator(),
+        sub = a.createOscillator(),
+        filter = a.createBiquadFilter(),
         g = a.createGain();
-      o.frequency.value = f;
+      const pitchVar = 1 + (Math.random() - 0.5) * 0.08;
+      o.type = "triangle";
+      o.frequency.value = f * pitchVar;
+      o.detune.value = (Math.random() - 0.5) * 14;
+      sub.type = "sine";
+      sub.frequency.value = f * 0.5 * pitchVar;
+      filter.type = "lowpass";
+      filter.frequency.value = Math.min(3600, f * 4);
       g.gain.setValueAtTime(0.03, a.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.14);
-      o.connect(g).connect(a.destination);
+      o.connect(filter);
+      sub.connect(filter);
+      filter.connect(g).connect(a.destination);
       o.start();
+      sub.start();
       o.stop(a.currentTime + 0.14);
+      sub.stop(a.currentTime + 0.14);
     },
     [sound],
   );
@@ -294,13 +310,17 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
       if (sound) {
         try {
           const audioCtx = getSharedAudioContext();
-          if (audioCtx) RetroChiptuneSynth.playJump(audioCtx);
+          if (audioCtx) {
+            RetroChiptuneSynth.playJump(audioCtx);
+            playMultiLayerPixelSfx(880, 0.16, 'triangle', true);
+          }
         } catch {
           /* audio disabled */
         }
       }
       juiceRef.current.spring.punch(1.3, 0.7);
       const sy = (y: number) => y - state.current.camY;
+      pixelFxRef.current.spawn("coin-sparkle", state.current.x, (sy(state.current.y) + 12));
       juiceRef.current.particles.emit(state.current.x, sy(state.current.y) + 12, { count: 8, kind: 'spark', color: '#cbd5e1', speedMin: 20, speedMax: 60 });
     }
   };
@@ -352,8 +372,10 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
       last = now;
 
       juiceRef.current.update(dtSec);
+      pixelFxRef.current.update(dtSec);
+      const isFreezing = hitStopRef.current.update(dtSec);
 
-      if (phaseRef.current === "playing") {
+      if (phaseRef.current === "playing" && !isFreezing) {
         if (state.current.charge > 0 && state.current.onGround)
           state.current = chargeJump(
             state.current,
@@ -369,15 +391,20 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
         if (!wasOnGroundRef.current && state.current.onGround) {
           juiceRef.current.camera.addTrauma(0.16);
           addTrauma(0.12);
+          hitStopRef.current.trigger(35);
           if (sound) {
             try {
               const audioCtx = getSharedAudioContext();
-              if (audioCtx) RetroChiptuneSynth.playHit(audioCtx);
+              if (audioCtx) {
+                RetroChiptuneSynth.playHit(audioCtx);
+                playMultiLayerPixelSfx(220, 0.12, 'square', false);
+              }
             } catch {
               /* audio disabled */
             }
           }
           const sy = (y: number) => y - state.current.camY;
+          pixelFxRef.current.spawn("ore-shatter", state.current.x, (sy(state.current.y) + 12));
           juiceRef.current.particles.emit(state.current.x, sy(state.current.y) + 12, { count: 6, kind: 'spark', color: '#9eb66d', speedMin: 15, speedMax: 45 });
         }
         wasOnGroundRef.current = state.current.onGround;
@@ -390,15 +417,20 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
           setPhase("over");
           localStorage.removeItem(SAVE_KEY);
           addTrauma(0.45);
+          hitStopRef.current.trigger(65);
           if (sound) {
             try {
               const audioCtx = getSharedAudioContext();
-              if (audioCtx) RetroChiptuneSynth.playGameOver(audioCtx);
+              if (audioCtx) {
+                RetroChiptuneSynth.playGameOver(audioCtx);
+                playMultiLayerPixelSfx(140, 0.2, 'sawtooth', false);
+              }
             } catch {
               /* audio disabled */
             }
           }
           const sy = (y: number) => y - state.current.camY;
+          pixelFxRef.current.spawn("slash-impact", state.current.x, sy(state.current.y));
           juiceRef.current.impact(state.current.x, sy(state.current.y), 'heavy', 'FALL!');
           if (h > best) {
             setBest(h);
@@ -418,7 +450,7 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
           }
         }
       }
-      draw(ctx, state.current, artRef.current, juiceRef.current, prefersReducedMotion);
+      draw(ctx, state.current, artRef.current, juiceRef.current, pixelFxRef.current, prefersReducedMotion);
       if (phaseRef.current === "playing") raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -654,7 +686,7 @@ function Stat({ label, value, icon }: { label: string; value: string; icon?: str
     </div>
   );
 }
-function draw(ctx: CanvasRenderingContext2D, s: JumpState, art: JumpArt | null, juice: GameJuice, reducedMotion: boolean) {
+function draw(ctx: CanvasRenderingContext2D, s: JumpState, art: JumpArt | null, juice: GameJuice, pixelFx: PixelFxController, reducedMotion: boolean) {
   ctx.save();
   if (!reducedMotion && juice.camera.trauma > 0) {
     ctx.translate(juice.camera.x, juice.camera.y);
@@ -709,6 +741,7 @@ function draw(ctx: CanvasRenderingContext2D, s: JumpState, art: JumpArt | null, 
   }
 
   juice.render(ctx);
+  pixelFx.drawToCanvas(ctx);
   ctx.restore();
 }
 declare global {
