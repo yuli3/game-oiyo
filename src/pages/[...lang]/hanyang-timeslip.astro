@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import HanyangTimeslip from "../../components/games/HanyangTimeslip";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "한양 타임슬립 — 무료 도트 픽셀 RPG, 1426년 조선 모험",
+    description: "2026년의 내가 1426년 한양에 떨어졌다! 마을을 걸으며 사람들과 이야기하고, 남산 숲에서 미래 물건 요괴를 칼로 물리치고, 성문에서 호패를 검문해 시간 조각 셋을 모으는 무료 브라우저 픽셀 RPG.",
+  },
+  en: {
+    title: "Hanyang Timeslip — Free Pixel RPG Adventure in 1426 Korea",
+    description: "Fall from 2026 into Joseon-era Hanyang. Explore the town, sword-fight runaway future objects in Namsan Forest, inspect travellers at the city gate, and gather three time shards to get home. Free in your browser.",
+  },
+  ja: {
+    title: "漢陽タイムスリップ — 無料ドット絵RPG、1426年の朝鮮を冒険",
+    description: "2026年から1426年の漢陽へ！町を歩いて人々と話し、南山の森で未来の品のお化けを剣で倒し、城門で号牌を検問して時のかけらを3つ集める無料ブラウザRPG。",
+  },
+  zh: {
+    title: "汉阳时光穿越 — 免费像素RPG，1426年朝鲜冒险",
+    description: "从2026年掉进1426年的汉阳！逛城镇与居民对话，在南山森林挥剑击退未来物品化成的怪物，在城门盘查号牌，集齐三块时光碎片回家。免费浏览器像素RPG。",
+  },
+  fr: {
+    title: "Hanyang Timeslip — RPG pixel gratuit dans la Corée de 1426",
+    description: "Tombé de 2026 dans le Hanyang de l'ère Joseon : explorez la ville, combattez à l'épée des objets du futur dans la forêt de Namsan, contrôlez les voyageurs à la porte et réunissez trois éclats de temps.",
+  },
+  es: {
+    title: "Hanyang Timeslip — RPG pixel gratis en la Corea de 1426",
+    description: "Caes de 2026 al Hanyang de la era Joseon: explora el pueblo, lucha con la espada contra objetos del futuro en el bosque de Namsan, revisa viajeros en la puerta y reúne tres fragmentos del tiempo.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["hanyang-timeslip"]}>
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
+    <HanyangTimeslip client:load locale={locale} />
+    <div class="mx-auto max-w-3xl px-4 mt-8">
+      <GameGuide slug="hanyang-timeslip" locale={locale} name={m.title.split(' — ')[0]} />
+    </div>
+  </div>
+</BaseLayout>
