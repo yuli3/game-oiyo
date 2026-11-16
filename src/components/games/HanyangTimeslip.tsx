@@ -29,7 +29,7 @@ import {
 import type { Locale } from "../../lib/i18n";
 import { COPY, fmt, type TimeslipCopy } from "../../lib/games/hanyang-timeslip-copy";
 import { ACHIEVEMENTS, ACHIEVEMENT_KEY, QUESTS, type AchievementId, type QuestId } from "../../lib/games/hanyang-timeslip-config";
-import { DAILY_KEY, INN_COST, RIVER_CHARM_HP, RIVER_REPEAT_COINS, SAVE_KEY, MUTE_KEY, SLUG, TOWN_RETURN, TRAVELER_NAMES, type FieldId, type NpcId } from "../../lib/games/hanyang-timeslip-config";
+import { BEACON_CHARM_ATK, BEACON_REPEAT_COINS, DAILY_KEY, INN_COST, RIVER_CHARM_HP, RIVER_REPEAT_COINS, SAVE_KEY, MUTE_KEY, SLUG, TOWN_RETURN, TRAVELER_NAMES, type FieldId, type NpcId } from "../../lib/games/hanyang-timeslip-config";
 import {
   acceptQuest,
   earnedAchievements,
@@ -226,7 +226,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
     if (phase === "ending") theme = "town";
     else if (phase === "play" || phase === "daily") {
       if (scene === "gate" || phase === "daily") theme = "gate";
-      else if (scene === "field") theme = fieldId === "rift" ? "boss" : "field";
+      else if (scene === "field") theme = fieldId === "rift" || fieldId === "beacon" ? "boss" : "field";
       else theme = "town";
     }
     musicRef.current?.play(theme);
@@ -378,12 +378,24 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
     return { label: fmt(t.questProgress, { n, need: def.need }), run: () => say([fmt(copy.remind, { n, need: def.need })]) };
   }, [buzz, checkAch, cue, save, say, t]);
 
+  // Small talk: each townsperson cycles through a few lines about 1426 Hanyang.
+  const gossipRef = useRef<Record<NpcId, number>>({ innkeeper: 0, smith: 0, sage: 0, guard: 0 });
+  const chatChoice = useCallback((id: NpcId): Choice => ({
+    label: t.chat,
+    run: () => {
+      const lines = t.gossip[id];
+      const i = gossipRef.current[id]++ % lines.length;
+      say([lines[i]]);
+    },
+  }), [say, t]);
+
   const talk = useCallback((id: NpcId) => {
     const game = viewRef.current.game;
     const hero = game.hero;
     const errand = errandChoice(id);
+    const chat = chatChoice(id);
     const leave: Choice = { label: t.leave, run: () => undefined };
-    const withErrand = (choices: Choice[]) => (errand ? [...choices.slice(0, -1), errand, choices[choices.length - 1]] : choices);
+    const withErrand = (choices: Choice[]) => [...choices.slice(0, -1), ...(errand ? [errand] : []), chat, choices[choices.length - 1]];
     cue("tap");
     if (id === "innkeeper") {
       say([t.innGreet], withErrand([
@@ -402,7 +414,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
     } else if (id === "smith") {
       const price = swordPrice(hero);
       if (price === null) {
-        say([t.smithMaxed], errand ? [errand, leave] : undefined);
+        say([t.smithMaxed], errand ? [errand, chat, leave] : [chat, leave]);
         return;
       }
       say([fmt(t.smithGreet, { price })], withErrand([
@@ -429,14 +441,16 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
         if (!p.gate) lines.push(t.sageGate);
       }
       if (p.forest && !p.river) lines.push(t.sageRiver);
-      say(lines, errand ? [errand, leave] : undefined);
+      if (p.river && !p.beacon) lines.push(t.sageBeacon);
+      say(lines, errand ? [errand, chat, leave] : [chat, leave]);
     } else if (id === "guard") {
       say([game.progress.gate ? t.guardDone : t.guardGreet], [
         { label: t.guardWork, run: () => startShift() },
+        chat,
         { label: t.later, run: () => undefined },
       ]);
     }
-  }, [buzz, checkAch, cue, errandChoice, save, say, startShift, t]);
+  }, [buzz, chatChoice, checkAch, cue, errandChoice, save, say, startShift, t]);
 
   // ─── Fields ───
   const startField = useCallback((id: FieldId) => {
@@ -448,7 +462,8 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
     cue("place");
     if (id === "rift") say([t.bossIntro]);
     if (id === "river" && !viewRef.current.game.progress.river) say([t.riverIntro]);
-  }, [cue, say, setSceneBoth, t.bossIntro, t.riverIntro]);
+    if (id === "beacon" && !viewRef.current.game.progress.beacon) say([t.beaconIntro]);
+  }, [cue, say, setSceneBoth, t.beaconIntro, t.bossIntro, t.riverIntro]);
 
   const onTownEvents = useCallback((events: TownEvent[]) => {
     for (const e of events) {
@@ -502,6 +517,9 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
         if (e.field === "river") {
           const line = e.first ? fmt(t.riverCharm, { hp: RIVER_CHARM_HP }) : fmt(t.riverRepeat, { coins: RIVER_REPEAT_COINS });
           say([line], undefined, () => backToTown(TOWN_RETURN.river, "down"));
+        } else if (e.field === "beacon") {
+          const line = e.first ? fmt(t.beaconCharm, { atk: BEACON_CHARM_ATK }) : fmt(t.beaconRepeat, { coins: BEACON_REPEAT_COINS });
+          say([line], undefined, () => backToTown(TOWN_RETURN.beacon, "down"));
         } else if (e.first) {
           say([fmt(t.shardGot, { n: shardCount(game.progress) })], undefined, () => backToTown(TOWN_RETURN.south, "up"));
         } else backToTown(TOWN_RETURN.south, "up");
@@ -580,6 +598,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
       if (!it) return;
       if (it.kind === "npc") talk(it.id);
       else if (it.kind === "dock-closed") say([t.dockClosed]);
+      else if (it.kind === "trail-closed") say([t.trailClosed]);
       else if (it.kind === "rift-closed") say([fmt(t.riftClosed, { n: Number(view.game.progress.forest) + Number(view.game.progress.gate) })]);
       else if (it.kind === "jangseung") say([t.jangseung]);
       else if (it.kind === "water") say([t.water]);
@@ -933,7 +952,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
           <div className="absolute inset-0 flex items-center justify-center p-3">
             <div className="max-h-full w-full max-w-sm overflow-y-auto rounded-xl border-2 border-border bg-card/95 p-4 shadow-xl">
               <ul className="list-disc space-y-1.5 pl-4 text-sm text-foreground">
-                {[...t.help, t.helpRiver].map((line) => <li key={line}>{line}</li>)}
+                {[...t.help, t.helpRiver, t.helpBeacon].map((line) => <li key={line}>{line}</li>)}
               </ul>
               <button type="button" className="mt-3 min-h-11 w-full rounded-lg bg-primary font-bold text-primary-foreground" onClick={() => setShowHelp(false)}>
                 {t.close}
@@ -1024,7 +1043,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
             </button>
             <span className="flex items-center justify-center">
               {scene === "field" && (
-                <button type="button" className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground" aria-label={t.retreat} onClick={() => (fieldId === "river" ? backToTown(TOWN_RETURN.river, "down") : backToTown(TOWN_RETURN.south, "up"))}>
+                <button type="button" className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground" aria-label={t.retreat} onClick={() => (fieldId === "river" ? backToTown(TOWN_RETURN.river, "down") : fieldId === "beacon" ? backToTown(TOWN_RETURN.beacon, "down") : backToTown(TOWN_RETURN.south, "up"))}>
                   <Home className="size-4" />
                 </button>
               )}

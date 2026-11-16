@@ -11,6 +11,7 @@ import { MOBS, NPCS, PHYSICS, TILE, TOWN_MAP, VIEW_H, VIEW_W, expToNext } from "
 import {
   dockOpen,
   riftOpen,
+  trailOpen,
   shardCount,
   stepField,
   stepTown,
@@ -107,7 +108,7 @@ interface Popup {
 
 const TOWN_TILE: Record<string, SpriteId> = {
   "#": "tileFortress", G: "tileGate", ".": "tileGrass", ",": "tileFlowers", "=": "tileDirt", _: "tileStone",
-  R: "tileRoof", E: "tileEaves", H: "tileWall", D: "tileDoor", S: "tileDirt", "~": "tileWater0", N: "tileDock",
+  R: "tileRoof", E: "tileEaves", H: "tileWall", D: "tileDoor", S: "tileDirt", "~": "tileWater0", N: "tileDock", M: "tileTrail",
 };
 const TOWN_OVERLAY: Record<string, SpriteId> = { T: "tileTree", F: "tileFence", J: "tileJangseung", X: "tileRift0" };
 const NPC_SPRITE: Record<string, [SpriteId, SpriteId]> = {
@@ -200,6 +201,7 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
       const water: Sprite[] = [];
       let rift: Sprite | null = null;
       let dock: Sprite | null = null;
+      let trail: Sprite | null = null;
       TOWN_MAP.forEach((row, ty) => {
         for (let tx = 0; tx < row.length; tx++) {
           const ch = row[tx];
@@ -209,6 +211,7 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
           town.addChild(t);
           if (ch === "~") water.push(t);
           if (ch === "N") dock = t;
+          if (ch === "M") trail = t;
           const over = TOWN_OVERLAY[ch];
           if (over) {
             const o = sprite(over);
@@ -248,6 +251,7 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
       const pickupSprites = new Map<number, Sprite>();
       const gearSprites: Sprite[] = [];
       const riverSurface: Sprite[] = [];
+      const fires: Sprite[] = [];
       const boatSprites: [Sprite, Sprite][] = [];
       let goalSprite: Sprite | null = null;
 
@@ -262,13 +266,17 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
         pickupSprites.clear();
         goalSprite = null;
         riverSurface.length = 0;
+        fires.length = 0;
         boatSprites.length = 0;
         const riftWorld = field.id === "rift";
         const riverWorld = field.id === "river";
+        const beaconWorld = field.id === "beacon";
         sky.clear();
         const bands = riftWorld
           ? [PALETTE.k, PALETTE.V, PALETTE.v, PALETTE.V]
-          : riverWorld
+          : beaconWorld
+            ? [PALETTE.B, 0x3d4f86, 0x8a6a9a, 0xe7a36a]
+            : riverWorld
             ? [0xf3c98b, 0xf7dcae, PALETTE.p, 0xd8eef0]
             : [PALETTE.n, 0xb8e0f4, 0xd8eef0, PALETTE.p];
         bands.forEach((c, i) => sky.rect(0, (i * VIEW_H) / bands.length, VIEW_W, VIEW_H / bands.length + 1).fill(c));
@@ -277,9 +285,19 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
         const ridgeW = field.cols * TILE;
         for (let x = 0; x < ridgeW; x += 2) {
           const top = Math.round(70 + 12 * Math.sin(x / 37) + 6 * Math.sin(x / 13 + 2));
-          ridge.rect(x, top, 2, VIEW_H - top).fill(riftWorld ? PALETTE.V : riverWorld ? 0x8f9fb8 : 0x6fae8f);
+          ridge.rect(x, top, 2, VIEW_H - top).fill(riftWorld ? PALETTE.V : beaconWorld ? 0x4a3f6a : riverWorld ? 0x8f9fb8 : 0x6fae8f);
         }
         far.addChild(ridge);
+        if (beaconWorld) {
+          // The five fire towers of Mokmyeoksan along the far ridge.
+          for (let i = 0; i < 5; i++) {
+            const x = 20 + i * 52;
+            const f = sprite("beacon0");
+            f.position.set(x, Math.round(70 + 12 * Math.sin(x / 37) + 6 * Math.sin(x / 13 + 2)) - 12);
+            far.addChild(f);
+            fires.push(f);
+          }
+        }
         if (!riftWorld) {
           for (let x = 8; x < ridgeW; x += 40) {
             const p = sprite("tilePine");
@@ -375,7 +393,7 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
           if (e.type === "hit") {
             popup(String(e.dmg), e.x - 4, e.y - 6, e.crit ? PALETTE.y : PALETTE.w, e.crit ? 2 : 1);
             if (!reduced()) bursts.emit("sparks", e.x, e.y + 6, [hex(PALETTE.w), hex(PALETTE.y)], { count: e.crit ? 10 : 6, scale: 0.12 });
-            hitstop.trigger(e.kind === "boss" || e.crit ? JUICE.hitstop.boss : JUICE.hitstop.hit);
+            hitstop.trigger(e.kind === "boss" || e.kind === "droneKing" || e.crit ? JUICE.hitstop.boss : JUICE.hitstop.hit);
             if (e.crit) shake.kick(2, 120);
           } else if (e.type === "kill") {
             popup(`+${e.exp}`, e.x - 6, e.y - 14, PALETTE.c);
@@ -466,6 +484,7 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
             r.alpha = riftOpen(view.game.progress) ? 1 : 0.3;
           }
           if (dock) (dock as Sprite).alpha = dockOpen(view.game.progress) ? 1 : 0.55;
+          if (trail) (trail as Sprite).alpha = trailOpen(view.game.progress) ? 1 : 0.55;
           const blink = Math.floor(clock * 10) % 25 === 0;
           for (const [id, s] of npcSprites) s.texture = tex[NPC_SPRITE[id][blink ? 1 : 0]];
           const pos = townPixel(view.town);
@@ -522,12 +541,15 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
               actors.addChildAt(s, 0);
               mobSprites.set(m.id, s);
             }
-            const f2 = Math.floor(m.t * (m.kind === "boss" ? 3 : m.kind === "drone" ? 14 : 5)) % 2;
+            const flier = m.kind === "drone" || m.kind === "droneKing";
+            const f2 = Math.floor(m.t * (m.kind === "boss" ? 3 : flier ? 14 : 5)) % 2;
             s.texture = tex[`${m.kind}${f2}` as SpriteId];
-            s.scale.x = m.kind === "phone" || m.kind === "drone" ? 1 : m.dir;
-            s.tint = m.flashT > 0 ? 0xff9a9a : 0xffffff;
-            const extra = m.kind === "phone" ? 1 : m.kind === "drone" ? 4 : 0;
-            s.position.set(Math.round(m.x + m.w / 2), Math.round(m.y + m.h + extra + (m.kind === "boss" ? 4 : 0)));
+            s.scale.x = m.kind === "phone" || flier ? 1 : m.dir;
+            // The Drone King glows while it shakes before a swoop.
+            const warn = m.kind === "droneKing" && m.mode === 1 && Math.floor(m.t * 12) % 2 === 0;
+            s.tint = m.flashT > 0 ? 0xff9a9a : warn ? 0xffd27a : 0xffffff;
+            const extra = m.kind === "phone" ? 1 : m.kind === "drone" ? 4 : m.kind === "boss" ? 4 : m.kind === "droneKing" ? 2 : 0;
+            s.position.set(Math.round(m.x + m.w / 2), Math.round(m.y + m.h + extra));
           }
           for (const [id, s] of mobSprites) if (!alive.has(id)) {
             s.destroy();
@@ -545,6 +567,7 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
           }
           const wf = Math.floor(clock * 3) % 2;
           for (const w of riverSurface) w.texture = tex[wf ? "tileRiverTop1" : "tileRiverTop0"];
+          fires.forEach((f, i) => (f.texture = tex[(Math.floor(clock * 5) + i) % 2 ? "beacon1" : "beacon0"]));
           field.boats.forEach((b, i) => {
             const pair = boatSprites[i];
             if (!pair) return;
@@ -561,8 +584,9 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
             const pj = field.projectiles[i];
             g.visible = Boolean(pj);
             if (pj) {
+              g.texture = tex[pj.kind === "cell" ? "cell" : "gear"];
               g.position.set(Math.round(pj.x + 8), Math.round(pj.y + 8));
-              g.rotation = reduced() ? 0 : clock * 10 * Math.sign(pj.vx);
+              g.rotation = reduced() || pj.kind === "cell" ? 0 : clock * 10 * Math.sign(pj.vx);
             }
           });
           fx.clear();
@@ -625,10 +649,10 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
             hud.poly([x + 2, 1, x + 5, 5, x + 2, 9, x - 1, 5]).fill(i < shards ? PALETTE.c : PALETTE.V);
           }
           if (view.scene === "field" && view.field) {
-            const boss = view.field.mobs.find((m) => m.kind === "boss");
+            const boss = view.field.mobs.find((m) => m.kind === "boss" || m.kind === "droneKing");
             if (boss) {
               hud.rect(30, VIEW_H - 8, 100, 5).fill(PALETTE.k);
-              hud.rect(31, VIEW_H - 7, Math.round((98 * Math.max(0, boss.hp)) / MOBS.boss.hp), 3).fill(PALETTE.v);
+              hud.rect(31, VIEW_H - 7, Math.round((98 * Math.max(0, boss.hp)) / MOBS[boss.kind].hp), 3).fill(boss.kind === "droneKing" ? PALETTE.r : PALETTE.v);
             }
           }
         }

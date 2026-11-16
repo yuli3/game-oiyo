@@ -12,7 +12,10 @@
  * ────────────────────────────────────────────────────────────────────────── */
 
 import {
+  BEACON_CHARM_ATK,
+  BEACON_REPEAT_COINS,
   BOAT,
+  KING,
   BOSS,
   BOTTLE_SIGHT,
   DAILY_SIZE,
@@ -99,12 +102,16 @@ export interface Hero {
   coins: number;
   kills: number;
   faints: number;
+  /** Permanent attack from the 봉화 부적 (beacon charm). */
+  atkBonus: number;
 }
 
 export interface Progress {
   forest: boolean;
   /** Han river cleared once (물결 부적 owned). Optional field: not a shard. */
   river: boolean;
+  /** Drone King beaten once at the Namsan beacon. Optional, not a shard. */
+  beacon: boolean;
   gate: boolean;
   rift: boolean;
   shifts: number;
@@ -134,10 +141,11 @@ export interface Game extends RngHolder {
 export function createGame(seed: number): Game {
   return {
     rng: seed >>> 0,
-    hero: { level: 1, exp: 0, hp: HERO_BASE.maxHp, maxHp: HERO_BASE.maxHp, sword: 0, coins: 0, kills: 0, faints: 0 },
+    hero: { level: 1, exp: 0, hp: HERO_BASE.maxHp, maxHp: HERO_BASE.maxHp, sword: 0, coins: 0, kills: 0, faints: 0, atkBonus: 0 },
     progress: {
       forest: false,
       river: false,
+      beacon: false,
       gate: false,
       rift: false,
       shifts: 0,
@@ -153,7 +161,7 @@ export function createGame(seed: number): Game {
 }
 
 export function heroAttack(hero: Hero): number {
-  return HERO_BASE.atk + (hero.level - 1) * LEVEL_UP.atk + SWORD_BONUS[Math.min(hero.sword, SWORD_BONUS.length - 1)];
+  return HERO_BASE.atk + (hero.level - 1) * LEVEL_UP.atk + SWORD_BONUS[Math.min(hero.sword, SWORD_BONUS.length - 1)] + hero.atkBonus;
 }
 
 export function shardCount(progress: Progress): number {
@@ -163,6 +171,11 @@ export function shardCount(progress: Progress): number {
 /** The ferry runs once the forest is cleared, so the river is the second step. */
 export function dockOpen(progress: Progress): boolean {
   return progress.forest;
+}
+
+/** The trail up to the beacon opens after the river, so it is the third step. */
+export function trailOpen(progress: Progress): boolean {
+  return progress.river;
 }
 
 /** The rift opens once the forest and the gate have each given up a shard. */
@@ -254,6 +267,7 @@ export function canWalk(tx: number, ty: number, progress: Progress): boolean {
   if (!TOWN_WALKABLE.has(tile)) return false;
   if (tile === "X" && !riftOpen(progress)) return false;
   if (tile === "N" && !dockOpen(progress)) return false;
+  if (tile === "M" && !trailOpen(progress)) return false;
   return npcAt(tx, ty) === null;
 }
 
@@ -282,6 +296,7 @@ export function stepTown(town: TownState, held: Dir | null, dt: number, progress
     if (tile === "S") events.push({ type: "enter", field: "forest" });
     if (tile === "X" && riftOpen(progress)) events.push({ type: "enter", field: "rift" });
     if (tile === "N" && dockOpen(progress)) events.push({ type: "enter", field: "river" });
+    if (tile === "M" && trailOpen(progress)) events.push({ type: "enter", field: "beacon" });
     if (events.length > 1) return events;
   }
   if (!held) return events;
@@ -299,7 +314,7 @@ export function stepTown(town: TownState, held: Dir | null, dt: number, progress
   return events;
 }
 
-export type Interaction = { kind: "npc"; id: NpcId } | { kind: "rift-closed" } | { kind: "dock-closed" } | { kind: "jangseung" } | { kind: "water" } | { kind: "gate" } | null;
+export type Interaction = { kind: "npc"; id: NpcId } | { kind: "rift-closed" } | { kind: "dock-closed" } | { kind: "trail-closed" } | { kind: "jangseung" } | { kind: "water" } | { kind: "gate" } | null;
 
 /** What the hero would talk to or examine by pressing A. */
 export function interact(town: TownState): Interaction {
@@ -311,6 +326,7 @@ export function interact(town: TownState): Interaction {
   const tile = townTile(fx, fy);
   if (tile === "X") return { kind: "rift-closed" };
   if (tile === "N") return { kind: "dock-closed" };
+  if (tile === "M") return { kind: "trail-closed" };
   if (tile === "J") return { kind: "jangseung" };
   if (tile === "~") return { kind: "water" };
   if (tile === "G") return { kind: "gate" };
@@ -354,7 +370,7 @@ export interface Mob extends Body {
   t: number;
   homeY: number;
   homeX: number;
-  /** Drone state: 0 patrol, 1 dive, 2 climb. */
+  /** Drone state: 0 patrol, 1 dive, 2 climb. Drone King: 0 hover, 1 shake, 2 swoop, 3 grounded, 4 climb. */
   mode: number;
   jumpT: number;
   throwT: number;
@@ -373,6 +389,9 @@ export interface Projectile {
   x: number;
   y: number;
   vx: number;
+  /** Falling speed; battery cells drop, gears roll flat. */
+  vy: number;
+  kind: "gear" | "cell";
   alive: boolean;
 }
 
@@ -503,6 +522,13 @@ export function createField(id: FieldId): FieldState {
       else if (ch === "b") field.mobs.push(newMob(field, "bottle", px + 3, py + 1));
       else if (ch === "d") field.mobs.push(newMob(field, "drone", px + 2, py + 3));
       else if (ch === "K") field.mobs.push(newMob(field, "boss", px - 6, py + TILE - MOBS.boss.h));
+      else if (ch === "Q") {
+        const king = newMob(field, "droneKing", px - 6, KING.hoverY);
+        king.homeY = KING.hoverY;
+        king.jumpT = KING.swoopEvery;
+        king.throwT = KING.dropEvery;
+        field.mobs.push(king);
+      }
       else if (ch === "c") field.pickups.push({ id: field.nextId++, kind: "coin", x: px + 4, y: py + 4, taken: false });
       else if (ch === "h") field.pickups.push({ id: field.nextId++, kind: "heart", x: px + 4, y: py + 4, taken: false });
       else if (ch === "J") field.goal = { x: px, y: py };
@@ -629,7 +655,7 @@ function damageMob(game: Game, field: FieldState, mob: Mob, events: FieldEvent[]
   mob.flashT = 0.15;
   const cx = mob.x + mob.w / 2;
   events.push({ type: "hit", x: cx, y: mob.y, dmg, crit, kind: mob.kind });
-  if (mob.kind !== "boss") {
+  if (mob.kind !== "boss" && mob.kind !== "droneKing") {
     mob.vx = field.hero.face * COMBAT.mobKnock;
     if (mob.kind === "phone") mob.vy = -90;
   }
@@ -639,7 +665,7 @@ function damageMob(game: Game, field: FieldState, mob: Mob, events: FieldEvent[]
   const coins = randInt(game, stats.coins[0], stats.coins[1]);
   game.hero.coins += coins;
   game.hero.kills += 1;
-  if (mob.kind !== "boss") game.progress.hunts[mob.kind] += 1;
+  if (mob.kind === "phone" || mob.kind === "bottle" || mob.kind === "drone") game.progress.hunts[mob.kind] += 1;
   events.push({ type: "kill", x: cx, y: mob.y, kind: mob.kind, exp: stats.exp, coins });
   for (const level of gainExp(game.hero, stats.exp)) events.push({ type: "levelup", level });
   if (mob.kind === "boss") {
@@ -647,6 +673,72 @@ function damageMob(game: Game, field: FieldState, mob: Mob, events: FieldEvent[]
     game.progress.rift = true;
     for (const other of field.mobs) other.dead = true;
     events.push({ type: "boss-dead", x: cx, y: mob.y });
+  } else if (mob.kind === "droneKing") {
+    field.done = true;
+    for (const other of field.mobs) other.dead = true;
+    const first = !game.progress.beacon;
+    if (first) {
+      game.progress.beacon = true;
+      game.hero.atkBonus += BEACON_CHARM_ATK;
+    } else game.hero.coins += BEACON_REPEAT_COINS;
+    events.push({ type: "goal", field: "beacon", first });
+  }
+}
+
+/** 드론 대왕: hover and drop cells, then shake, swoop to the ground, sit, and climb back. */
+function stepKing(field: FieldState, mob: Mob, dt: number, events: FieldEvent[]): void {
+  const hero = field.hero;
+  const heroCx = hero.x + hero.w / 2;
+  const cx = mob.x + mob.w / 2;
+  const enraged = mob.hp <= mob.maxHp * KING.enrageAt;
+  const pace = enraged ? KING.enrageSpeed : 1;
+  mob.jumpT -= dt;
+  if (mob.mode === 0) {
+    mob.dir = heroCx < cx ? -1 : 1;
+    const target = Math.abs(heroCx - cx) > 6 ? mob.dir * MOBS.droneKing.speed * pace : 0;
+    mob.vx += (target - mob.vx) * Math.min(1, dt * 3);
+    mob.x = Math.max(TILE, Math.min((field.cols - 1) * TILE - mob.w, mob.x + mob.vx * dt));
+    mob.y = mob.homeY + Math.sin(mob.t * 2.2) * 3;
+    mob.throwT -= dt;
+    if (mob.throwT <= 0) {
+      mob.throwT = KING.dropEvery / pace;
+      field.projectiles.push({ x: cx - 8, y: mob.y + mob.h - 4, vx: 0, vy: KING.dropSpeed, kind: "cell", alive: true });
+      events.push({ type: "throw", x: cx, y: mob.y + mob.h });
+    }
+    if (mob.jumpT <= 0) {
+      mob.mode = 1;
+      mob.jumpT = KING.warn;
+      mob.vx = 0;
+    }
+  } else if (mob.mode === 1) {
+    // A visible shake is the tell before every swoop.
+    mob.y = mob.homeY - 3 + Math.sin(mob.t * 40);
+    if (mob.jumpT <= 0) mob.mode = 2;
+  } else if (mob.mode === 2) {
+    mob.y += KING.diveSpeed * pace * dt;
+    const below = fieldTile(field, Math.floor(cx / TILE), Math.floor((mob.y + mob.h) / TILE));
+    if (below === "#" || below === "r" || mob.y + mob.h >= (field.rows - 2) * TILE) {
+      mob.y = Math.floor((mob.y + mob.h) / TILE) * TILE - mob.h;
+      mob.mode = 3;
+      mob.jumpT = KING.stuck;
+    }
+  } else if (mob.mode === 3) {
+    if (mob.jumpT <= 0) mob.mode = 4;
+  } else {
+    mob.y -= KING.climbSpeed * pace * dt;
+    if (mob.y <= mob.homeY) {
+      mob.y = mob.homeY;
+      mob.mode = 0;
+      mob.jumpT = KING.swoopEvery / pace;
+    }
+  }
+  if (enraged && !field.summoned) {
+    field.summoned = true;
+    for (let i = 0; i < KING.summonCount; i++) {
+      const sx = TILE * (3 + i * (field.cols - 7));
+      field.mobs.push(newMob(field, "drone", sx, TILE + 3));
+    }
+    events.push({ type: "summon" });
   }
 }
 
@@ -708,6 +800,8 @@ function stepMob(game: Game, field: FieldState, mob: Mob, dt: number, events: Fi
         mob.jumpT = DRONE.rest;
       }
     }
+  } else if (mob.kind === "droneKing") {
+    stepKing(field, mob, dt, events);
   } else {
     const enraged = mob.hp <= mob.maxHp * BOSS.enrageAt;
     const speed = stats.speed * (enraged ? BOSS.enrageSpeed : 1);
@@ -724,7 +818,7 @@ function stepMob(game: Game, field: FieldState, mob: Mob, dt: number, events: Fi
     }
     if (mob.throwT <= 0) {
       mob.throwT = BOSS.throwEvery * (enraged ? 0.7 : 1);
-      field.projectiles.push({ x: cx - 6, y: mob.y + 10, vx: mob.dir * BOSS.gearSpeed, alive: true });
+      field.projectiles.push({ x: cx - 6, y: mob.y + 10, vx: mob.dir * BOSS.gearSpeed, vy: 0, kind: "gear", alive: true });
       events.push({ type: "throw", x: cx, y: mob.y + 10 });
     }
     if (enraged && !field.summoned) {
@@ -736,7 +830,9 @@ function stepMob(game: Game, field: FieldState, mob: Mob, dt: number, events: Fi
       events.push({ type: "summon" });
     }
   }
-  if (!mob.dead && overlaps(hero, mob)) hurtHero(game, field, stats.atk, cx, events);
+  // The Drone King's rotors ride high: it only hurts by touch while swooping, grounded or climbing.
+  const harmless = mob.kind === "droneKing" && mob.mode < 2;
+  if (!mob.dead && !harmless && overlaps(hero, mob)) hurtHero(game, field, stats.atk, cx, events);
 }
 
 /** One fixed step of a field. Mutates `field` and `game.hero`. */
@@ -848,11 +944,17 @@ export function stepField(game: Game, field: FieldState, input: FieldInput, dt: 
   for (const p of field.projectiles) {
     if (!p.alive) continue;
     p.x += p.vx * dt;
-    const gear = { x: p.x + 3, y: p.y + 3, w: 10, h: 10 };
-    if (isSolid(field, Math.floor((p.x + 8) / TILE), Math.floor((p.y + 8) / TILE))) p.alive = false;
-    else if (overlaps(hero, gear)) {
+    p.y += p.vy * dt;
+    const cell = p.kind === "cell";
+    const box = cell ? { x: p.x + 5, y: p.y + 3, w: 6, h: 10 } : { x: p.x + 3, y: p.y + 3, w: 10, h: 10 };
+    // Cells land on platforms too, so a ledge is shelter from the rain.
+    const tx = Math.floor((p.x + 8) / TILE);
+    const ty = Math.floor((p.y + (cell ? 13 : 8)) / TILE);
+    const blocked = cell ? standable(fieldTile(field, tx, ty)) || p.y > field.rows * TILE : isSolid(field, tx, ty);
+    if (blocked) p.alive = false;
+    else if (overlaps(hero, box)) {
       p.alive = false;
-      hurtHero(game, field, BOSS.gearDamage, p.x + 8, events);
+      hurtHero(game, field, cell ? KING.dropDamage : BOSS.gearDamage, p.x + 8, events);
     }
   }
   field.projectiles = field.projectiles.filter((p) => p.alive);
@@ -1056,6 +1158,7 @@ export function earnedAchievements(game: Game): AchievementId[] {
   if (h.level >= 10) out.push("level10");
   if (h.sword >= SWORD_COST.length) out.push("masterSword");
   if (p.river) out.push("riverCharm");
+  if (p.beacon) out.push("beacon");
   if (p.perfects >= 1) out.push("sharpEye");
   if (QUESTS.every((q) => p.quests[q.id].s === 2)) out.push("errands");
   if (p.rift) out.push("home");
@@ -1105,11 +1208,12 @@ export function fromSave(raw: string | null): Game | null {
     if (h.level < 1 || h.level > MAX_LEVEL || h.sword > SWORD_COST.length) return null;
     return {
       rng: data.rng >>> 0,
-      hero: { ...h, hp: Math.max(1, Math.min(h.hp, h.maxHp)) },
+      hero: { ...h, hp: Math.max(1, Math.min(h.hp, h.maxHp)), atkBonus: isNum(h.atkBonus) ? h.atkBonus : 0 },
       progress: {
         ...p,
         forest: p.forest === true,
         river: p.river === true,
+        beacon: p.beacon === true,
         gate: p.gate === true,
         rift: p.rift === true,
         hunts: {

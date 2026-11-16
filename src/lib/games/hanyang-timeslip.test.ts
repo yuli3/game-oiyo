@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { SONGS } from "./hanyang-timeslip-music";
 import { PALETTE, SPRITES, layoutSheet, renderSheetRGBA, validateArt } from "./hanyang-timeslip-art";
+import { COPY } from "./hanyang-timeslip-copy";
 import {
+  ACHIEVEMENTS,
+  BEACON_CHARM_ATK,
+  BEACON_REPEAT_COINS,
+  KING,
+  TOWN_TRAIL,
   DAILY_SIZE,
   FIELD_MAPS,
   RIVER_CHARM_HP,
@@ -44,6 +50,7 @@ import {
   stepField,
   stepTown,
   toSave,
+  trailOpen,
   upgradeSword,
   violationOf,
   type FieldInput,
@@ -445,6 +452,8 @@ describe("hanyang timeslip 3rd update: errands and achievements", () => {
     for (const id of ["phones", "drones", "perfect"] as const) game.progress.quests[id] = { s: 2, base: 0 };
     game.progress.rift = true;
     expect(earnedAchievements(game)).toEqual(["firstHunt", "hunter", "level10", "masterSword", "riverCharm", "sharpEye", "errands", "home", "untouched"]);
+    game.progress.beacon = true;
+    expect(earnedAchievements(game)).toContain("beacon");
     game.hero.faints = 1;
     expect(earnedAchievements(game)).not.toContain("untouched");
   });
@@ -462,5 +471,118 @@ describe("hanyang timeslip 3rd update: errands and achievements", () => {
     const old = fromSave(JSON.stringify(raw))!;
     expect(old.progress.quests.phones.s).toBe(0);
     expect(old.progress.hunts.drone).toBe(0);
+  });
+});
+
+/** Beacon bot: stays beside the Drone King on the ground and swings whenever it is close. */
+function kingBot(field: FieldState, frame: number): FieldInput {
+  const h = field.hero;
+  const king = field.mobs.find((m) => m.kind === "droneKing");
+  if (!king) return IDLE;
+  const kx = king.x + king.w / 2;
+  const hx = h.x + h.w / 2;
+  const side = hx < kx ? -1 : 1;
+  const dx = kx + side * 22 - hx;
+  const toward = side < 0 ? "right" : "left";
+  const move = Math.abs(dx) > 4 ? (dx > 0 ? "right" : "left") : frame % 20 === 0 ? toward : null;
+  return { ...IDLE, left: move === "left", right: move === "right", attackPressed: frame % 12 === 0 };
+}
+
+describe("hanyang timeslip 4th update: Namsan beacon and the Drone King", () => {
+  it("the trail stays shut until the river, then leads to the beacon", () => {
+    const game = createGame(1);
+    expect(TOWN_MAP[TOWN_TRAIL.ty][TOWN_TRAIL.tx]).toBe("M");
+    expect(trailOpen(game.progress)).toBe(false);
+    expect(canWalk(TOWN_TRAIL.tx, TOWN_TRAIL.ty, game.progress)).toBe(false);
+    const town = createTown(TOWN_RETURN.beacon, "down");
+    expect(interact(town)).toEqual({ kind: "trail-closed" });
+    game.progress.river = true;
+    stepTown(town, "down", 0, game.progress);
+    expect(stepTown(town, null, 1, game.progress)).toContainEqual({ type: "enter", field: "beacon" });
+  });
+
+  it("the Drone King hovers, drops cells, then shakes and swoops to the ground", () => {
+    const game = createGame(2);
+    game.hero.maxHp = 999;
+    game.hero.hp = 999;
+    const field = createField("beacon");
+    const king = field.mobs.find((m) => m.kind === "droneKing")!;
+    expect(king.y).toBe(KING.hoverY);
+    let dropped = false;
+    let grounded = false;
+    for (let i = 0; i < 60 * 8 && !grounded; i++) {
+      stepField(game, field, IDLE, PHYSICS.step);
+      if (field.projectiles.some((p) => p.kind === "cell")) dropped = true;
+      if (king.mode === 3) grounded = true;
+    }
+    expect(dropped).toBe(true);
+    expect(grounded).toBe(true);
+    expect(king.y + king.h).toBe((field.rows - 2) * TILE);
+  });
+
+  it("a hovering king does not hurt by touch, but its cells do and ledges block them", () => {
+    const game = createGame(3);
+    const field = createField("beacon");
+    const king = field.mobs.find((m) => m.kind === "droneKing")!;
+    // Put the hero on the left upper ledge, inside the hovering king's body.
+    field.hero.x = 5 * TILE;
+    field.hero.y = 3 * TILE - field.hero.h;
+    king.x = field.hero.x - 8;
+    king.throwT = 99;
+    king.jumpT = 99;
+    stepField(game, field, IDLE, PHYSICS.step);
+    expect(game.hero.hp).toBe(game.hero.maxHp);
+    // A cell dropped above the ledge lands on it; one dropped above open ground falls through.
+    field.projectiles.push({ x: 6 * TILE, y: 0, vx: 0, vy: KING.dropSpeed, kind: "cell", alive: true });
+    field.projectiles.push({ x: 2 * TILE, y: 0, vx: 0, vy: KING.dropSpeed, kind: "cell", alive: true });
+    field.hero.x = 2 * TILE + 3;
+    field.hero.y = 7 * TILE - field.hero.h;
+    for (let i = 0; i < 90; i++) stepField(game, field, IDLE, PHYSICS.step);
+    expect(game.hero.hp).toBe(game.hero.maxHp - KING.dropDamage);
+  });
+
+  it("the king can be beaten from the ground; the first win gives the charm once", () => {
+    const game = createGame(11);
+    game.hero.level = 10;
+    game.hero.maxHp = 500;
+    game.hero.hp = 500;
+    game.hero.sword = 3;
+    const before = heroAttack(game.hero);
+    const events = run(game, createField("beacon"), 180, kingBot);
+    expect(events).toContainEqual({ type: "goal", field: "beacon", first: true });
+    expect(events.some((e) => e.type === "summon")).toBe(true);
+    expect(game.progress.beacon).toBe(true);
+    expect(heroAttack(game.hero)).toBe(before + BEACON_CHARM_ATK);
+    game.hero.hp = 500;
+    const coins = game.hero.coins;
+    const again = run(game, createField("beacon"), 180, kingBot);
+    expect(again).toContainEqual({ type: "goal", field: "beacon", first: false });
+    expect(heroAttack(game.hero)).toBe(before + BEACON_CHARM_ATK);
+    expect(game.hero.coins).toBeGreaterThanOrEqual(coins + BEACON_REPEAT_COINS);
+    // The king is not an ordinary hunt.
+    expect(Object.values(game.progress.hunts).reduce((a, b) => a + b, 0)).toBe(game.hero.kills - 2);
+  });
+
+  it("the charm survives a save, and old saves load without it", () => {
+    const game = createGame(6);
+    game.progress.beacon = true;
+    game.hero.atkBonus = BEACON_CHARM_ATK;
+    const back = fromSave(JSON.stringify(toSave(game)))!;
+    expect(back.progress.beacon).toBe(true);
+    expect(back.hero.atkBonus).toBe(BEACON_CHARM_ATK);
+    const raw = toSave(createGame(7)) as unknown as { hero: Record<string, unknown>; progress: Record<string, unknown> };
+    delete raw.hero.atkBonus;
+    delete raw.progress.beacon;
+    const old = fromSave(JSON.stringify(raw))!;
+    expect(old.hero.atkBonus).toBe(0);
+    expect(old.progress.beacon).toBe(false);
+    expect(heroAttack(old.hero)).toBe(heroAttack(createGame(7).hero));
+  });
+
+  it("every locale has small talk for each townsperson and names every achievement", () => {
+    for (const copy of Object.values(COPY)) {
+      for (const npc of NPCS) expect(copy.gossip[npc.id].length).toBe(4);
+      for (const id of ACHIEVEMENTS) expect(copy.achievements[id].name.length).toBeGreaterThan(0);
+    }
   });
 });

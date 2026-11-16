@@ -865,6 +865,93 @@ const DOCK = fill((x, y) => {
   return hash(x, y, 11) > 0.9 ? "O" : "o";
 });
 
+// ─── Namsan beacon (4th update, 2026-11-16) ─────────────────────────────────
+
+/** 드론 대왕: a crowned four-rotor drone with one camera eye, the beacon's boss. */
+function drawDroneKing(frame: 0 | 1): Art {
+  return fill((x, y) => {
+    // Rotor blades blur between a long and a short stroke.
+    if (y === 3) {
+      const reach = frame === 0 ? 5 : 3;
+      if (Math.abs(x - 4.5) <= reach || Math.abs(x - 26.5) <= reach) return "k";
+      return ".";
+    }
+    if ((y === 4 || y === 5) && ((x >= 3 && x <= 6) || (x >= 25 && x <= 28))) return y === 4 ? "a" : "k";
+    if (y >= 6 && y <= 8 && (x === 5 || x === 26 || (y === 8 && x > 5 && x < 26))) return y === 8 ? "a" : "k";
+    // Crown.
+    if (y >= 5 && y <= 9 && x >= 10 && x <= 21) {
+      const spike = x === 10 || x === 13 || x === 18 || x === 21 || x === 15 || x === 16;
+      if (y === 9) return "y";
+      if (spike && y >= 6) return y === 6 ? "k" : "y";
+      if (y === 9) return "k";
+    }
+    const dx = (x - 15.5) / 12.5;
+    const dy = (y - 17) / 7.5;
+    const d = dx * dx + dy * dy;
+    if (y >= 10 && y <= 24 && d <= 1) {
+      if (d > 0.8) return "k";
+      const ex = x - 15.5;
+      const ey = y - 16.5;
+      const e = Math.sqrt(ex * ex + ey * ey);
+      if (e <= 2) return ex < 0 && ey < 0 ? "w" : frame === 0 ? "r" : "y";
+      if (e <= 3.2) return "B";
+      if (e <= 4.2) return "k";
+      if (y === 20 || y === 21) return "v";
+      if (y <= 12) return "A";
+      return "a";
+    }
+    // Claws.
+    if (y >= 25 && y <= 29) {
+      const spread = frame === 0 ? 0 : 1;
+      const left = x === 9 - spread || x === 10 - spread;
+      const right = x === 21 + spread || x === 22 + spread;
+      if (left || right) return y === 29 ? "k" : "a";
+      if (y === 25 && x >= 10 && x <= 21) return "k";
+    }
+    return ".";
+  }, 32);
+}
+
+/** A falling battery cell, the Drone King's rain. */
+const CELL_DROP = fill((x, y) => {
+  if (x < 5 || x > 10 || y < 2 || y > 13) return ".";
+  if (y === 2) return x >= 7 && x <= 8 ? "k" : ".";
+  if (y === 3) return x >= 7 && x <= 8 ? "A" : x === 6 || x === 9 ? "k" : ".";
+  if (x === 5 || x === 10 || y === 4 || y === 13) return "k";
+  if (y <= 6) return "y";
+  if (y === 9 && x >= 7 && x <= 8) return "w";
+  return "l";
+});
+
+/** 봉수대 오르는 길: stone steps climbing a grassy slope, with a small red flag. */
+const TRAIL = fill((x, y) => {
+  if (x === 11 && y >= 1 && y <= 9) return "O";
+  if (y >= 1 && y <= 4 && x >= 12 && x <= 15 && x - 12 <= Math.min(y - 1, 4 - y) + 1) return "r";
+  const step = Math.floor(y / 4);
+  const left = 2 + step;
+  const right = 9 + step;
+  if (y % 4 === 3 && x >= left && x <= right) return "k";
+  if (x >= left && x <= right) return y % 4 === 0 ? "A" : "a";
+  return hash(x, y, 31) > 0.85 ? "G" : "g";
+});
+
+/** 봉수대: a stone chimney with a flickering signal fire, in the background. */
+function beaconTower(frame: 0 | 1): Art {
+  return fill((x, y) => {
+    if (y <= 6) {
+      // Flame: narrow at the tip, wide at the mouth; the tip sways between frames.
+      const w = [1, 2, 3, 4, 6, 7, 8][y];
+      const sway = frame === 0 ? 0 : y <= 2 ? 1 : 0;
+      const off = Math.abs(x - 7.5 - sway);
+      if (off > w / 2) return ".";
+      return off < w / 4 && y >= 3 ? "y" : "r";
+    }
+    if (x < 3 || x > 12) return ".";
+    if (x === 3 || x === 12 || y === 7 || y === 15) return "k";
+    return (x + Math.floor(y / 3)) % 4 === 0 || y % 3 === 0 ? "a" : "A";
+  });
+}
+
 // ─── Sheet layout ────────────────────────────────────────────────────────────
 
 export interface SpriteDef {
@@ -954,6 +1041,12 @@ export const SPRITES = {
   tileRiverTop1: { art: riverTop(4) },
   tileRiverDeep: { art: RIVER_DEEP },
   tileDock: { art: DOCK },
+  cell: { art: CELL_DROP },
+  tileTrail: { art: TRAIL },
+  beacon0: { art: beaconTower(0) },
+  beacon1: { art: beaconTower(1) },
+  droneKing0: { art: drawDroneKing(0), span: 2 },
+  droneKing1: { art: drawDroneKing(1), span: 2 },
 } satisfies Record<string, SpriteDef>;
 
 export type SpriteId = keyof typeof SPRITES;
@@ -966,11 +1059,17 @@ export interface Frame {
 }
 
 /**
- * Packs sprites into a 16-column grid. 2×2 sprites start on a fresh row pair so
- * the layout is stable and trivially reproducible on both sides.
+ * Packs sprites into a 16-column grid, left to right, skipping cells a 2×2
+ * sprite already holds. The layout is stable and reproducible on both sides.
  */
 export function layoutSheet(): { frames: Record<SpriteId, Frame>; width: number; height: number } {
   const frames = {} as Record<SpriteId, Frame>;
+  // Cells already taken, so a 2×2 sprite never shares cells with the row below it.
+  const used = new Set<string>();
+  const free = (c: number, r: number, span: number) => {
+    for (let dy = 0; dy < span; dy++) for (let dx = 0; dx < span; dx++) if (used.has(`${c + dx},${r + dy}`)) return false;
+    return true;
+  };
   let col = 0;
   let row = 0;
   let bottom = 0;
@@ -978,15 +1077,16 @@ export function layoutSheet(): { frames: Record<SpriteId, Frame>; width: number;
   for (const id of ids) {
     const def: SpriteDef = SPRITES[id];
     const span = def.span ?? 1;
-    if (span === 2) {
-      if (col + 2 > SHEET_COLUMNS) {
+    for (;;) {
+      if (col + span > SHEET_COLUMNS) {
         col = 0;
         row += 1;
+        continue;
       }
-    } else if (col >= SHEET_COLUMNS) {
-      col = 0;
-      row += 1;
+      if (free(col, row, span)) break;
+      col += 1;
     }
+    for (let dy = 0; dy < span; dy++) for (let dx = 0; dx < span; dx++) used.add(`${col + dx},${row + dy}`);
     frames[id] = { x: col * CELL, y: row * CELL, w: span * CELL, h: span * CELL };
     bottom = Math.max(bottom, row + span);
     col += span;
