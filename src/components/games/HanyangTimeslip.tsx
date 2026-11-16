@@ -5,12 +5,14 @@
 
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
+  CalendarDays,
   Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
   CircleHelp,
+  Copy,
   Home,
   Maximize2,
   Minimize2,
@@ -23,13 +25,14 @@ import {
 } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { COPY, fmt, type TimeslipCopy } from "../../lib/games/hanyang-timeslip-copy";
-import { INN_COST, SAVE_KEY, MUTE_KEY, SHIFT_SIZE, SLUG, TOWN_RETURN, TRAVELER_NAMES, type FieldId, type NpcId } from "../../lib/games/hanyang-timeslip-config";
+import { DAILY_KEY, INN_COST, RIVER_CHARM_HP, RIVER_REPEAT_COINS, SAVE_KEY, MUTE_KEY, SLUG, TOWN_RETURN, TRAVELER_NAMES, type FieldId, type NpcId } from "../../lib/games/hanyang-timeslip-config";
 import {
   createField,
   createGame,
   createTown,
   faint,
   fromSave,
+  generateDailyShift,
   generateShift,
   heroAttack,
   interact,
@@ -54,10 +57,11 @@ import { createHaptics, readHapticsEnabled, writeHapticsEnabled, type HapticKind
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { recordAchievementEvent, recordBest, recordResult } from "../../lib/games/records";
+import { createMusicPlayer, type MusicPlayer, type MusicTheme } from "../../lib/games/hanyang-timeslip-music";
 
 const Canvas = lazy(() => import("./HanyangTimeslipCanvas"));
 
-type Phase = "title" | "play" | "ending";
+type Phase = "title" | "play" | "ending" | "daily";
 
 interface Choice {
   label: string;
@@ -75,7 +79,45 @@ interface GateRun {
   shift: Shift;
   idx: number;
   correct: number;
+  marks: boolean[];
   feedback: { ok: boolean; reason: string } | null;
+  daily: string | null;
+}
+
+interface DailyResult {
+  day: string;
+  correct: number;
+  total: number;
+  best: number;
+  marks: boolean[];
+}
+
+/** Today's date in Seoul, so the daily line turns over at Korean midnight for everyone. */
+function seoulDay(): string {
+  try {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  } catch {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+function readDailyBest(day: string): number | null {
+  try {
+    const raw = window.localStorage.getItem(DAILY_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as { day?: unknown; best?: unknown };
+    return data.day === day && typeof data.best === "number" ? data.best : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDailyBest(day: string, best: number): void {
+  try {
+    window.localStorage.setItem(DAILY_KEY, JSON.stringify({ day, best }));
+  } catch {
+    /* private mode */
+  }
 }
 
 function readSave(): string | null {
@@ -106,6 +148,9 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
   const [showHelp, setShowHelp] = useState(false);
   const [muted, setMuted] = useState(false);
   const [haptic, setHaptic] = useState(true);
+  const [fieldId, setFieldId] = useState<FieldId | null>(null);
+  const [dailyResult, setDailyResult] = useState<DailyResult | null>(null);
+  const [copied, setCopied] = useState(false);
   const [ending, setEnding] = useState<{ level: number; kills: number; gate: number; seconds: number; faints: number } | null>(null);
 
   const viewRef = useRef<TimeslipView>({
@@ -127,20 +172,38 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
   // Created after mount so the server HTML and the first client render match.
   const audioRef = useRef<CuePlayer<CoreCue> | null>(null);
   const hapticsRef = useRef<Haptics | null>(null);
+  const musicRef = useRef<MusicPlayer | null>(null);
   const [hapticSupported, setHapticSupported] = useState(false);
   useEffect(() => {
     const m = readMutedPref(MUTE_KEY);
     const audio = createCuePlayer<CoreCue>({ cues: RETRO_8BIT_CUES, muted: m });
     const haptics = createHaptics({ enabled: readHapticsEnabled() });
+    const music = createMusicPlayer({ muted: m });
     audioRef.current = audio;
     hapticsRef.current = haptics;
+    musicRef.current = music;
     setMuted(m);
     setHaptic(haptics.enabled);
     setHapticSupported(haptics.supported);
     setHasSave(fromSave(readSave()) !== null);
     recordAchievementEvent(SLUG, "opened");
-    return () => audio.close();
+    return () => {
+      audio.close();
+      music.close();
+    };
   }, []);
+
+  // One loop per place; silence on the title screen.
+  useEffect(() => {
+    let theme: MusicTheme | null = null;
+    if (phase === "ending") theme = "town";
+    else if (phase === "play" || phase === "daily") {
+      if (scene === "gate" || phase === "daily") theme = "gate";
+      else if (scene === "field") theme = fieldId === "rift" ? "boss" : "field";
+      else theme = "town";
+    }
+    musicRef.current?.play(theme);
+  }, [fieldId, phase, scene]);
   const cue = useCallback((name: CoreCue, step = 1) => audioRef.current?.play(name, { step }), []);
   const buzz = useCallback((kind: HapticKind) => hapticsRef.current?.fire(kind), []);
 
@@ -172,6 +235,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
   const backToTown = useCallback((at: { tx: number; ty: number }, dir: Dir = "down") => {
     viewRef.current.town = createTown(at, dir);
     viewRef.current.field = null;
+    setFieldId(null);
     setSceneBoth("town");
     save();
   }, [save, setSceneBoth]);
@@ -187,6 +251,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
     setSceneBoth("town");
     setConfirmNew(false);
     setEnding(null);
+    setDailyResult(null);
     recordAchievementEvent(SLUG, "played");
     void enterPortal();
     cue("tap");
@@ -212,8 +277,22 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
     const seed = Math.floor(nextRandom(game) * 0xffffffff);
     const shift = generateShift(seed, game.progress.shifts);
     setSceneBoth("gate");
-    showTraveler({ shift, idx: 0, correct: 0, feedback: null });
+    showTraveler({ shift, idx: 0, correct: 0, marks: [], feedback: null, daily: null });
   }, [setSceneBoth, showTraveler]);
+
+  const startDaily = useCallback(() => {
+    const day = seoulDay();
+    viewRef.current.field = null;
+    setDailyResult(null);
+    setCopied(false);
+    setPhase("play");
+    setSceneBoth("gate");
+    recordAchievementEvent(SLUG, "played");
+    void enterPortal();
+    cue("tap");
+    showTraveler({ shift: generateDailyShift(day), idx: 0, correct: 0, marks: [], feedback: null, daily: day });
+    say([t.dailyIntro]);
+  }, [cue, enterPortal, say, setSceneBoth, showTraveler, t.dailyIntro]);
 
   // ─── Town talk ───
   const talk = useCallback((id: NpcId) => {
@@ -263,6 +342,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
         if (!p.forest) lines.push(t.sageForest);
         if (!p.gate) lines.push(t.sageGate);
       }
+      if (p.forest && !p.river) lines.push(t.sageRiver);
       say(lines);
     } else if (id === "guard") {
       say([game.progress.gate ? t.guardDone : t.guardGreet], [
@@ -277,10 +357,12 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
     viewRef.current.field = createField(id);
     inputRef.current.aPressed = false;
     inputRef.current.bPressed = false;
+    setFieldId(id);
     setSceneBoth("field");
     cue("place");
     if (id === "rift") say([t.bossIntro]);
-  }, [cue, say, setSceneBoth, t.bossIntro]);
+    if (id === "river" && !viewRef.current.game.progress.river) say([t.riverIntro]);
+  }, [cue, say, setSceneBoth, t.bossIntro, t.riverIntro]);
 
   const onTownEvents = useCallback((events: TownEvent[]) => {
     for (const e of events) {
@@ -331,7 +413,12 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
         cue("win");
         buzz("win");
         save();
-        say([fmt(t.shardGot, { n: shardCount(game.progress) })], undefined, () => backToTown(TOWN_RETURN.south, "up"));
+        if (e.field === "river") {
+          const line = e.first ? fmt(t.riverCharm, { hp: RIVER_CHARM_HP }) : fmt(t.riverRepeat, { coins: RIVER_REPEAT_COINS });
+          say([line], undefined, () => backToTown(TOWN_RETURN.river, "down"));
+        } else if (e.first) {
+          say([fmt(t.shardGot, { n: shardCount(game.progress) })], undefined, () => backToTown(TOWN_RETURN.south, "up"));
+        } else backToTown(TOWN_RETURN.south, "up");
       } else if (e.type === "boss-dead") {
         cue("win");
         buzz("win");
@@ -354,11 +441,25 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
     viewRef.current.gate.stamp = { approve, t: 0 };
     cue(ok ? "success" : "fail");
     buzz(ok ? "success" : "fail");
-    const next: GateRun = { ...run, correct: run.correct + (ok ? 1 : 0), feedback: { ok, reason: t.reasons[violation ?? "none"] } };
+    const next: GateRun = { ...run, correct: run.correct + (ok ? 1 : 0), marks: [...run.marks, ok], feedback: { ok, reason: t.reasons[violation ?? "none"] } };
     setGateRun(next);
     window.setTimeout(() => {
-      if (next.idx + 1 < SHIFT_SIZE) {
+      const total = next.shift.travelers.length;
+      if (next.idx + 1 < total) {
         showTraveler({ ...next, idx: next.idx + 1, feedback: null });
+        return;
+      }
+      if (next.daily) {
+        const prev = readDailyBest(next.daily);
+        const best = Math.max(prev ?? 0, next.correct);
+        writeDailyBest(next.daily, best);
+        if (prev === null || next.correct > prev) recordAchievementEvent(SLUG, "personal-best");
+        setGateRun(null);
+        viewRef.current.gate.traveler = null;
+        setDailyResult({ day: next.daily, correct: next.correct, total, best, marks: next.marks });
+        setSceneBoth("title");
+        setPhase("daily");
+        cue(next.correct === total ? "win" : "success");
         return;
       }
       const result = settleShift(viewRef.current.game, next.correct);
@@ -373,7 +474,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
       backToTown(TOWN_RETURN.gate, "down");
       say(lines);
     }, 1300);
-  }, [backToTown, buzz, cue, gateRun, say, showTraveler, t]);
+  }, [backToTown, buzz, cue, gateRun, say, setSceneBoth, showTraveler, t]);
 
   // ─── Buttons ───
   const pressA = useCallback(() => {
@@ -390,6 +491,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
       const it = interact(view.town);
       if (!it) return;
       if (it.kind === "npc") talk(it.id);
+      else if (it.kind === "dock-closed") say([t.dockClosed]);
       else if (it.kind === "rift-closed") say([fmt(t.riftClosed, { n: Number(view.game.progress.forest) + Number(view.game.progress.gate) })]);
       else if (it.kind === "jangseung") say([t.jangseung]);
       else if (it.kind === "water") say([t.water]);
@@ -458,6 +560,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
   useEffect(() => {
     const onHide = () => {
       if (document.hidden) inputRef.current = { dirs: [], a: false, aPressed: false, bPressed: false };
+      musicRef.current?.setHidden(document.hidden);
     };
     document.addEventListener("visibilitychange", onHide);
     return () => document.removeEventListener("visibilitychange", onHide);
@@ -479,6 +582,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
     const next = !muted;
     setMuted(next);
     audioRef.current?.setMuted(next);
+    musicRef.current?.setMuted(next);
     writeMutedPref(MUTE_KEY, next);
   };
   const toggleHaptic = () => {
@@ -490,6 +594,18 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
 
   const traveler = gateRun ? gateRun.shift.travelers[gateRun.idx] : null;
   const travelerName = traveler ? (locale === "ko" ? TRAVELER_NAMES[traveler.name].ko : TRAVELER_NAMES[traveler.name].roman) : "";
+  const shareDaily = async () => {
+    if (!dailyResult) return;
+    const line = dailyResult.marks.map((m) => (m ? "🟩" : "🟥")).join("");
+    const text = `${t.dailyStreakLine} ${dailyResult.day}\n${line} ${dailyResult.correct}/${dailyResult.total}\n${window.location.origin}${window.location.pathname}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      cue("success");
+    } catch {
+      setCopied(false);
+    }
+  };
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   return (
@@ -564,6 +680,14 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
                   >
                     {t.newGame}
                   </button>
+                  <button
+                    type="button"
+                    className="flex min-h-12 items-center justify-center gap-2 rounded-lg border-2 border-primary bg-card px-4 text-base font-black text-primary"
+                    onClick={startDaily}
+                  >
+                    <CalendarDays className="size-5" aria-hidden="true" />
+                    {t.dailyButton}
+                  </button>
                 </div>
               )}
               <p className="text-xs text-muted-foreground">{t.controlsHint}</p>
@@ -590,6 +714,32 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
               <button type="button" className="mt-1 min-h-12 rounded-lg bg-primary px-4 font-black text-primary-foreground" onClick={() => begin(true)}>
                 {t.playAgain}
               </button>
+            </div>
+          </div>
+        )}
+
+        {phase === "daily" && dailyResult && (
+          <div className="absolute inset-0 flex items-center justify-center p-3">
+            <div className="flex w-full max-w-xs flex-col items-center gap-2 rounded-xl border-2 border-border bg-card/95 p-4 text-center shadow-xl" role="status">
+              <p className="text-lg font-black text-foreground">{fmt(t.dailyResult, { correct: dailyResult.correct, total: dailyResult.total })}</p>
+              <p className="text-2xl tracking-tight" aria-hidden="true">{dailyResult.marks.map((m) => (m ? "🟩" : "🟥")).join("")}</p>
+              <p className="text-sm text-muted-foreground">{dailyResult.day} · {fmt(t.dailyBest, { best: dailyResult.best, total: dailyResult.total })}</p>
+              <div className="flex w-full gap-2">
+                <button type="button" className="flex min-h-11 flex-1 items-center justify-center gap-1 rounded-lg bg-primary px-3 font-bold text-primary-foreground" onClick={() => void shareDaily()}>
+                  <Copy className="size-4" aria-hidden="true" />
+                  {copied ? t.dailyCopied : t.dailyShare}
+                </button>
+                <button
+                  type="button"
+                  className="min-h-11 flex-1 rounded-lg border border-border bg-muted px-3 font-bold text-foreground"
+                  onClick={() => {
+                    setDailyResult(null);
+                    setPhase("title");
+                  }}
+                >
+                  {t.dailyBack}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -628,7 +778,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
           <div className="absolute inset-0 flex items-center justify-center p-3">
             <div className="max-h-full w-full max-w-sm overflow-y-auto rounded-xl border-2 border-border bg-card/95 p-4 shadow-xl">
               <ul className="list-disc space-y-1.5 pl-4 text-sm text-foreground">
-                {t.help.map((line) => <li key={line}>{line}</li>)}
+                {[...t.help, t.helpRiver].map((line) => <li key={line}>{line}</li>)}
               </ul>
               <button type="button" className="mt-3 min-h-11 w-full rounded-lg bg-primary font-bold text-primary-foreground" onClick={() => setShowHelp(false)}>
                 {t.close}
@@ -719,7 +869,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
             </button>
             <span className="flex items-center justify-center">
               {scene === "field" && (
-                <button type="button" className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground" aria-label={t.retreat} onClick={() => backToTown(TOWN_RETURN.south, "up")}>
+                <button type="button" className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground" aria-label={t.retreat} onClick={() => (fieldId === "river" ? backToTown(TOWN_RETURN.river, "down") : backToTown(TOWN_RETURN.south, "up"))}>
                   <Home className="size-4" />
                 </button>
               )}

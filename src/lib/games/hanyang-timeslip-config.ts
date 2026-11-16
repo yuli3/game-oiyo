@@ -21,7 +21,7 @@ export const TOWN_MAP: readonly string[] = [
   "#.,.....__.....,...#",
   "#=======__=========#",
   "#..,....__...~~~~..#",
-  "#.RRRR..__..~~~~~,.#",
+  "#.RRRR..__..~~~~~N.#",
   "#.EEEE..__...~~~...#",
   "#.HHDH..__.........#",
   "#.......__..RRRR.T.#",
@@ -30,7 +30,9 @@ export const TOWN_MAP: readonly string[] = [
   "#T..F...__.......TT#",
   "########SS##########",
 ];
-export const TOWN_WALKABLE = new Set([".", ",", "=", "_", "S", "X"]);
+/** 나루 (ferry landing) by the pond: the way to the Han river field. */
+export const TOWN_DOCK = { tx: 17, ty: 8 } as const;
+export const TOWN_WALKABLE = new Set([".", ",", "=", "_", "S", "X", "N"]);
 export const TOWN_START = { tx: 8, ty: 13 } as const;
 /** Where the hero reappears after the inn, a defeat, or coming back from a field. */
 export const TOWN_RETURN = {
@@ -38,6 +40,7 @@ export const TOWN_RETURN = {
   south: { tx: 8, ty: 14 },
   rift: { tx: 6, ty: 13 },
   gate: { tx: 9, ty: 2 },
+  river: { tx: 17, ty: 9 },
 } as const;
 /** Tiles per second while walking. */
 export const TOWN_WALK_SPEED = 5.5;
@@ -52,8 +55,8 @@ export const NPCS: readonly { id: NpcId; tx: number; ty: number }[] = [
 
 // ─── Fields (side view) ──────────────────────────────────────────────────────
 // # ground  = one-way platform  r rock  p phone  b bottle  c coin  h heart
-// J goal 장승  K boss
-export type FieldId = "forest" | "rift";
+// J goal 장승  K boss  d drone  w river water (a pit you fall into)
+export type FieldId = "forest" | "river" | "rift";
 export const FIELD_MAPS: Record<FieldId, readonly string[]> = {
   forest: [
     "................................................................",
@@ -65,6 +68,17 @@ export const FIELD_MAPS: Record<FieldId, readonly string[]> = {
     ".......p......p.r.......p.....p.....p.rr....hp.......p........J.",
     "####################..###################..#####################",
     "####################..###################..#####################",
+  ],
+  river: [
+    "........................................................................",
+    "........................................................................",
+    "..........d........................d..........................d.........",
+    "..........cc............cc...............cc.............cc............h.",
+    "....b.............................b...............................b.....",
+    ".........====..........====.............====...........====.........====",
+    "........p.....c.c.c.c.....p..p.......p...r.p.....c.c.c.c.c...p.....p..J.",
+    "##############wwwwww############ww###########wwwwwwww###################",
+    "##############wwwwww############ww###########wwwwwwww###################",
   ],
   rift: [
     "r............................r",
@@ -80,6 +94,7 @@ export const FIELD_MAPS: Record<FieldId, readonly string[]> = {
 };
 export const FIELD_START: Record<FieldId, { x: number; y: number }> = {
   forest: { x: 24, y: 6 * 16 },
+  river: { x: 24, y: 6 * 16 },
   rift: { x: 40, y: 6 * 16 },
 };
 
@@ -114,7 +129,7 @@ export const COMBAT = {
   fallDamage: 5,
 } as const;
 
-export type MobKind = "phone" | "bottle" | "boss";
+export type MobKind = "phone" | "bottle" | "drone" | "boss";
 export interface MobStats {
   hp: number;
   atk: number;
@@ -127,9 +142,21 @@ export interface MobStats {
 export const MOBS: Record<MobKind, MobStats> = {
   phone: { hp: 14, atk: 3, speed: 22, exp: 8, coins: [2, 4], w: 10, h: 12 },
   bottle: { hp: 20, atk: 4, speed: 20, exp: 12, coins: [3, 6], w: 10, h: 14 },
+  drone: { hp: 18, atk: 5, speed: 30, exp: 16, coins: [4, 7], w: 12, h: 9 },
   boss: { hp: 240, atk: 6, speed: 26, exp: 120, coins: [40, 40], w: 26, h: 28 },
 };
 export const BOTTLE_SIGHT = 76;
+/** 드론령: patrols high, dives when the hero passes underneath, climbs back. */
+export const DRONE = { patrol: 28, sight: 14, diveSpeed: 120, climbSpeed: 40, rest: 1.2, dive: 72 } as const;
+/** 나룻배: two-tile ferries that shuttle across the wide river gaps (tile columns). */
+export const RIVER_BOATS: readonly { from: number; to: number }[] = [
+  { from: 14, to: 20 },
+  { from: 45, to: 53 },
+];
+export const BOAT = { w: 32, speed: 26, pause: 1.2 } as const;
+/** First clear of the river: 물결 부적, a charm that raises max HP for good. */
+export const RIVER_CHARM_HP = 10;
+export const RIVER_REPEAT_COINS = 15;
 export const BOSS = {
   jumpEvery: 2.6,
   jumpVelocity: 240,
@@ -158,6 +185,9 @@ export const DEFEAT_COIN_LOSS = 0.2;
 
 // ─── Gate inspection (성문 검문) ──────────────────────────────────────────────
 export const SHIFT_SIZE = 5;
+/** 오늘의 검문: one fixed line of travellers per calendar day (Asia/Seoul). */
+export const DAILY_SIZE = 8;
+export const DAILY_KEY = "oiyo:hanyang-timeslip:daily:v1";
 export const SHIFT_REWARD = { correct: 5, perfect: 10 } as const;
 /** Correct calls in one shift needed to earn the gate's time shard. */
 export const SHIFT_PASS = 4;

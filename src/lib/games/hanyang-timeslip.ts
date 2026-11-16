@@ -12,8 +12,11 @@
  * ────────────────────────────────────────────────────────────────────────── */
 
 import {
+  BOAT,
   BOSS,
   BOTTLE_SIGHT,
+  DAILY_SIZE,
+  DRONE,
   COMBAT,
   DEFEAT_COIN_LOSS,
   FIELD_MAPS,
@@ -29,6 +32,9 @@ import {
   PERIOD_ITEMS,
   PHYSICS,
   PROVINCES,
+  RIVER_BOATS,
+  RIVER_CHARM_HP,
+  RIVER_REPEAT_COINS,
   RULES_BY_SHIFT,
   SHIFT_PASS,
   SHIFT_REWARD,
@@ -92,6 +98,8 @@ export interface Hero {
 
 export interface Progress {
   forest: boolean;
+  /** Han river cleared once (물결 부적 owned). Optional field: not a shard. */
+  river: boolean;
   gate: boolean;
   rift: boolean;
   shifts: number;
@@ -112,7 +120,7 @@ export function createGame(seed: number): Game {
   return {
     rng: seed >>> 0,
     hero: { level: 1, exp: 0, hp: HERO_BASE.maxHp, maxHp: HERO_BASE.maxHp, sword: 0, coins: 0, kills: 0, faints: 0 },
-    progress: { forest: false, gate: false, rift: false, shifts: 0, bestShift: 0, gateCorrect: 0, gateTotal: 0 },
+    progress: { forest: false, river: false, gate: false, rift: false, shifts: 0, bestShift: 0, gateCorrect: 0, gateTotal: 0 },
     playMs: 0,
   };
 }
@@ -123,6 +131,11 @@ export function heroAttack(hero: Hero): number {
 
 export function shardCount(progress: Progress): number {
   return Number(progress.forest) + Number(progress.gate) + Number(progress.rift);
+}
+
+/** The ferry runs once the forest is cleared, so the river is the second step. */
+export function dockOpen(progress: Progress): boolean {
+  return progress.forest;
 }
 
 /** The rift opens once the forest and the gate have each given up a shard. */
@@ -213,6 +226,7 @@ export function canWalk(tx: number, ty: number, progress: Progress): boolean {
   const tile = townTile(tx, ty);
   if (!TOWN_WALKABLE.has(tile)) return false;
   if (tile === "X" && !riftOpen(progress)) return false;
+  if (tile === "N" && !dockOpen(progress)) return false;
   return npcAt(tx, ty) === null;
 }
 
@@ -240,6 +254,7 @@ export function stepTown(town: TownState, held: Dir | null, dt: number, progress
     const tile = townTile(town.tx, town.ty);
     if (tile === "S") events.push({ type: "enter", field: "forest" });
     if (tile === "X" && riftOpen(progress)) events.push({ type: "enter", field: "rift" });
+    if (tile === "N" && dockOpen(progress)) events.push({ type: "enter", field: "river" });
     if (events.length > 1) return events;
   }
   if (!held) return events;
@@ -257,7 +272,7 @@ export function stepTown(town: TownState, held: Dir | null, dt: number, progress
   return events;
 }
 
-export type Interaction = { kind: "npc"; id: NpcId } | { kind: "rift-closed" } | { kind: "jangseung" } | { kind: "water" } | { kind: "gate" } | null;
+export type Interaction = { kind: "npc"; id: NpcId } | { kind: "rift-closed" } | { kind: "dock-closed" } | { kind: "jangseung" } | { kind: "water" } | { kind: "gate" } | null;
 
 /** What the hero would talk to or examine by pressing A. */
 export function interact(town: TownState): Interaction {
@@ -268,6 +283,7 @@ export function interact(town: TownState): Interaction {
   if (npc) return { kind: "npc", id: npc };
   const tile = townTile(fx, fy);
   if (tile === "X") return { kind: "rift-closed" };
+  if (tile === "N") return { kind: "dock-closed" };
   if (tile === "J") return { kind: "jangseung" };
   if (tile === "~") return { kind: "water" };
   if (tile === "G") return { kind: "gate" };
@@ -297,6 +313,8 @@ export interface FieldHero extends Body {
   safeX: number;
   safeY: number;
   runT: number;
+  /** Index of the ferry the hero stands on, or -1. */
+  boat: number;
 }
 
 export interface Mob extends Body {
@@ -308,6 +326,9 @@ export interface Mob extends Body {
   flashT: number;
   t: number;
   homeY: number;
+  homeX: number;
+  /** Drone state: 0 patrol, 1 dive, 2 climb. */
+  mode: number;
   jumpT: number;
   throwT: number;
   dead: boolean;
@@ -328,6 +349,16 @@ export interface Projectile {
   alive: boolean;
 }
 
+export interface Boat {
+  x: number;
+  y: number;
+  w: number;
+  minX: number;
+  maxX: number;
+  vx: number;
+  pauseT: number;
+}
+
 export interface FieldState {
   id: FieldId;
   cols: number;
@@ -339,6 +370,7 @@ export interface FieldState {
   mobs: Mob[];
   pickups: Pickup[];
   projectiles: Projectile[];
+  boats: Boat[];
   time: number;
   nextId: number;
   summoned: boolean;
@@ -365,7 +397,7 @@ export type FieldEvent =
   | { type: "fell" }
   | { type: "throw"; x: number; y: number }
   | { type: "summon" }
-  | { type: "goal" }
+  | { type: "goal"; field: FieldId; first: boolean }
   | { type: "boss-dead"; x: number; y: number }
   | { type: "defeat" };
 
@@ -387,7 +419,9 @@ function newMob(field: FieldState, kind: MobKind, x: number, y: number): Mob {
     flashT: 0,
     t: (x * 0.37) % 6.28,
     homeY: y,
-    jumpT: BOSS.jumpEvery,
+    homeX: x,
+    mode: 0,
+    jumpT: kind === "drone" ? 0 : BOSS.jumpEvery,
     throwT: BOSS.throwEvery,
     dead: false,
   };
@@ -421,10 +455,12 @@ export function createField(id: FieldId): FieldState {
       safeX: start.x,
       safeY: start.y + TILE - PHYSICS.heroH,
       runT: 0,
+      boat: -1,
     },
     mobs: [],
     pickups: [],
     projectiles: [],
+    boats: [],
     time: 0,
     nextId: 1,
     summoned: false,
@@ -438,14 +474,22 @@ export function createField(id: FieldId): FieldState {
       const py = ty * TILE;
       if (ch === "p") field.mobs.push(newMob(field, "phone", px + 3, py + TILE - MOBS.phone.h));
       else if (ch === "b") field.mobs.push(newMob(field, "bottle", px + 3, py + 1));
+      else if (ch === "d") field.mobs.push(newMob(field, "drone", px + 2, py + 3));
       else if (ch === "K") field.mobs.push(newMob(field, "boss", px - 6, py + TILE - MOBS.boss.h));
       else if (ch === "c") field.pickups.push({ id: field.nextId++, kind: "coin", x: px + 4, y: py + 4, taken: false });
       else if (ch === "h") field.pickups.push({ id: field.nextId++, kind: "heart", x: px + 4, y: py + 4, taken: false });
       else if (ch === "J") field.goal = { x: px, y: py };
-      line += ch === "#" || ch === "r" || ch === "=" ? ch : ".";
+      line += ch === "#" || ch === "r" || ch === "=" || ch === "w" ? ch : ".";
     }
     field.grid.push(line);
   });
+  if (id === "river") {
+    for (const b of RIVER_BOATS) {
+      const minX = b.from * TILE;
+      const maxX = b.to * TILE - BOAT.w;
+      field.boats.push({ x: minX, y: (rows - 2) * TILE, w: BOAT.w, minX, maxX, vx: BOAT.speed, pauseT: BOAT.pause });
+    }
+  }
   return field;
 }
 
@@ -453,6 +497,11 @@ export function fieldTile(field: FieldState, tx: number, ty: number): string {
   if (tx < 0 || tx >= field.cols) return "r";
   if (ty < 0 || ty >= field.rows) return ".";
   return field.grid[ty][tx];
+}
+
+/** Something you can stand on: ground, rock or a one-way platform (not water). */
+function standable(t: string): boolean {
+  return t === "#" || t === "r" || t === "=";
 }
 
 function isSolid(field: FieldState, tx: number, ty: number): boolean {
@@ -590,7 +639,7 @@ function stepMob(game: Game, field: FieldState, mob: Mob, dt: number, events: Fi
     if (mob.onGround) {
       const aheadX = mob.dir > 0 ? mob.x + mob.w + 1 : mob.x - 1;
       const below = fieldTile(field, Math.floor(aheadX / TILE), Math.floor((mob.y + mob.h + 2) / TILE));
-      if (wall || below === ".") mob.dir = mob.dir > 0 ? -1 : 1;
+      if (wall || !standable(below)) mob.dir = mob.dir > 0 ? -1 : 1;
     }
     if (mob.y > field.rows * TILE) mob.dead = true;
   } else if (mob.kind === "bottle") {
@@ -603,6 +652,34 @@ function stepMob(game: Game, field: FieldState, mob: Mob, dt: number, events: Fi
     mob.dir = mob.vx >= 0 ? 1 : -1;
     mob.x += mob.vx * dt;
     mob.y = mob.homeY + Math.sin(mob.t * 2.4) * 5;
+  } else if (mob.kind === "drone") {
+    mob.jumpT = Math.max(0, mob.jumpT - dt);
+    if (mob.mode === 0) {
+      if (Math.abs(mob.x - mob.homeX) > 40) mob.dir = mob.x > mob.homeX ? -1 : 1;
+      mob.vx += (mob.dir * DRONE.patrol - mob.vx) * Math.min(1, dt * 4);
+      mob.x += mob.vx * dt;
+      mob.y = mob.homeY + Math.sin(mob.t * 3) * 2;
+      if (mob.jumpT <= 0 && Math.abs(heroCx - cx) < DRONE.sight && heroCy > mob.y + mob.h) {
+        mob.mode = 1;
+        mob.vx = 0;
+        mob.vy = DRONE.diveSpeed;
+      }
+    } else if (mob.mode === 1) {
+      // Dives straight through one-way platforms; only real ground stops it.
+      mob.vx = 0;
+      mob.y += DRONE.diveSpeed * dt;
+      const below = fieldTile(field, Math.floor(cx / TILE), Math.floor((mob.y + mob.h) / TILE));
+      if (below === "#" || below === "r" || mob.y > mob.homeY + DRONE.dive) mob.mode = 2;
+    } else {
+      mob.vx *= Math.max(0, 1 - dt * 6);
+      mob.x += mob.vx * dt;
+      mob.y -= DRONE.climbSpeed * dt;
+      if (mob.y <= mob.homeY) {
+        mob.y = mob.homeY;
+        mob.mode = 0;
+        mob.jumpT = DRONE.rest;
+      }
+    }
   } else {
     const enraged = mob.hp <= mob.maxHp * BOSS.enrageAt;
     const speed = stats.speed * (enraged ? BOSS.enrageSpeed : 1);
@@ -663,12 +740,41 @@ export function stepField(game: Game, field: FieldState, input: FieldInput, dt: 
   if (!input.jumpHeld && hero.vy < -110) hero.vy = -110;
   hero.vy = Math.min(PHYSICS.maxFall, hero.vy + PHYSICS.gravity * dt);
   const wasGround = hero.onGround;
+  // Ferries move first and carry whoever stands on them.
+  field.boats.forEach((b, i) => {
+    let dx = 0;
+    if (b.pauseT > 0) b.pauseT = Math.max(0, b.pauseT - dt);
+    else {
+      const nx = Math.max(b.minX, Math.min(b.maxX, b.x + b.vx * dt));
+      dx = nx - b.x;
+      b.x = nx;
+      if (b.x <= b.minX || b.x >= b.maxX) {
+        b.vx = -b.vx;
+        b.pauseT = BOAT.pause;
+      }
+    }
+    if (hero.boat === i) hero.x += dx;
+  });
+  const prevBottom = hero.y + hero.h;
   moveBody(field, hero, dt);
+  hero.boat = -1;
+  if (hero.vy >= 0) {
+    field.boats.forEach((b, i) => {
+      const bottom = hero.y + hero.h;
+      if (prevBottom <= b.y + 0.5 && bottom >= b.y && hero.x + hero.w > b.x + 2 && hero.x < b.x + b.w - 2) {
+        hero.y = b.y - hero.h;
+        hero.vy = 0;
+        hero.onGround = true;
+        hero.boat = i;
+      }
+    });
+  }
   if (hero.onGround && !wasGround) events.push({ type: "land" });
-  if (hero.onGround) {
+  if (hero.onGround && hero.boat < 0) {
     // Remember solid footing to come back to after a fall.
     const under = fieldTile(field, Math.floor((hero.x + hero.w / 2) / TILE), Math.floor((hero.y + hero.h + 1) / TILE));
-    if (under !== ".") {
+    // Platforms are skipped: respawning on a ledge above water would drop you straight back in.
+    if (under === "#" || under === "r") {
       hero.safeX = hero.x;
       hero.safeY = hero.y;
     }
@@ -680,6 +786,7 @@ export function stepField(game: Game, field: FieldState, input: FieldInput, dt: 
     hero.vx = 0;
     hero.vy = 0;
     hero.invulnT = 0;
+    hero.boat = -1;
     hurtHero(game, field, COMBAT.fallDamage, hero.x, events);
     hero.vx = 0;
     hero.vy = 0;
@@ -733,8 +840,19 @@ export function stepField(game: Game, field: FieldState, input: FieldInput, dt: 
 
   if (field.goal && overlaps(hero, { x: field.goal.x + 2, y: field.goal.y, w: 12, h: TILE })) {
     field.done = true;
-    game.progress.forest = true;
-    events.push({ type: "goal" });
+    let first = false;
+    if (field.id === "river") {
+      first = !game.progress.river;
+      if (first) {
+        game.progress.river = true;
+        game.hero.maxHp += RIVER_CHARM_HP;
+        game.hero.hp = game.hero.maxHp;
+      } else game.hero.coins += RIVER_REPEAT_COINS;
+    } else {
+      first = !game.progress.forest;
+      game.progress.forest = true;
+    }
+    events.push({ type: "goal", field: field.id, first });
   }
   return events;
 }
@@ -765,13 +883,29 @@ export function rulesFor(shiftIndex: number): readonly RuleId[] {
   return RULES_BY_SHIFT[Math.min(shiftIndex, RULES_BY_SHIFT.length - 1)];
 }
 
-export function generateShift(seed: number, shiftIndex: number): Shift {
+/** FNV-1a over a day key such as "2026-11-16": everyone gets the same daily line. */
+export function dailySeed(dayKey: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < dayKey.length; i++) {
+    h ^= dayKey.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+/** Today's gate: every rule switched on, a longer line, same for every player. */
+export function generateDailyShift(dayKey: string): Shift {
+  return generateShift(dailySeed(dayKey), RULES_BY_SHIFT.length - 1, DAILY_SIZE);
+}
+
+export function generateShift(seed: number, shiftIndex: number, size: number = SHIFT_SIZE): Shift {
   const rng: RngHolder = { rng: (seed ^ Math.imul(shiftIndex + 1, 0x9e3779b1)) >>> 0 };
   const rules = rulesFor(shiftIndex);
   const banned = rules.includes("origin") ? pick(rng, PROVINCES) : null;
   const travelers: Traveler[] = [];
   const names = TRAVELER_NAMES.map((_, i) => i);
-  for (let i = 0; i < SHIFT_SIZE; i++) {
+  for (let i = 0; i < size; i++) {
+    if (names.length === 0) names.push(...TRAVELER_NAMES.map((_, n) => n));
     const nameIdx = names.splice(Math.floor(nextRandom(rng) * names.length), 1)[0];
     const look = randInt(rng, 0, TRAVELER_LOOKS - 1);
     const allowed = PROVINCES.filter((p) => p !== banned);
@@ -865,7 +999,7 @@ export function fromSave(raw: string | null): Game | null {
     return {
       rng: data.rng >>> 0,
       hero: { ...h, hp: Math.max(1, Math.min(h.hp, h.maxHp)) },
-      progress: { ...p, forest: p.forest === true, gate: p.gate === true, rift: p.rift === true },
+      progress: { ...p, forest: p.forest === true, river: p.river === true, gate: p.gate === true, rift: p.rift === true },
       playMs: data.playMs,
     };
   } catch {

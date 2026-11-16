@@ -9,6 +9,7 @@ import type { Application, Graphics, Sprite, Texture } from "pixi.js";
 import { PALETTE, renderSheetRGBA, layoutSheet, type SpriteId } from "../../lib/games/hanyang-timeslip-art";
 import { MOBS, NPCS, PHYSICS, TILE, TOWN_MAP, VIEW_H, VIEW_W, expToNext } from "../../lib/games/hanyang-timeslip-config";
 import {
+  dockOpen,
   riftOpen,
   shardCount,
   stepField,
@@ -106,7 +107,7 @@ interface Popup {
 
 const TOWN_TILE: Record<string, SpriteId> = {
   "#": "tileFortress", G: "tileGate", ".": "tileGrass", ",": "tileFlowers", "=": "tileDirt", _: "tileStone",
-  R: "tileRoof", E: "tileEaves", H: "tileWall", D: "tileDoor", S: "tileDirt", "~": "tileWater0",
+  R: "tileRoof", E: "tileEaves", H: "tileWall", D: "tileDoor", S: "tileDirt", "~": "tileWater0", N: "tileDock",
 };
 const TOWN_OVERLAY: Record<string, SpriteId> = { T: "tileTree", F: "tileFence", J: "tileJangseung", X: "tileRift0" };
 const NPC_SPRITE: Record<string, [SpriteId, SpriteId]> = {
@@ -198,6 +199,7 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
       const town = new PIXI.Container();
       const water: Sprite[] = [];
       let rift: Sprite | null = null;
+      let dock: Sprite | null = null;
       TOWN_MAP.forEach((row, ty) => {
         for (let tx = 0; tx < row.length; tx++) {
           const ch = row[tx];
@@ -206,6 +208,7 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
           t.position.set(tx * TILE, ty * TILE);
           town.addChild(t);
           if (ch === "~") water.push(t);
+          if (ch === "N") dock = t;
           const over = TOWN_OVERLAY[ch];
           if (over) {
             const o = sprite(over);
@@ -244,6 +247,8 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
       const mobSprites = new Map<number, Sprite>();
       const pickupSprites = new Map<number, Sprite>();
       const gearSprites: Sprite[] = [];
+      const riverSurface: Sprite[] = [];
+      const boatSprites: [Sprite, Sprite][] = [];
       let goalSprite: Sprite | null = null;
 
       const buildField = (field: FieldState) => {
@@ -256,16 +261,23 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
         for (const s of pickupSprites.values()) s.destroy();
         pickupSprites.clear();
         goalSprite = null;
+        riverSurface.length = 0;
+        boatSprites.length = 0;
         const riftWorld = field.id === "rift";
+        const riverWorld = field.id === "river";
         sky.clear();
-        const bands = riftWorld ? [PALETTE.k, PALETTE.V, PALETTE.v, PALETTE.V] : [PALETTE.n, 0xb8e0f4, 0xd8eef0, PALETTE.p];
+        const bands = riftWorld
+          ? [PALETTE.k, PALETTE.V, PALETTE.v, PALETTE.V]
+          : riverWorld
+            ? [0xf3c98b, 0xf7dcae, PALETTE.p, 0xd8eef0]
+            : [PALETTE.n, 0xb8e0f4, 0xd8eef0, PALETTE.p];
         bands.forEach((c, i) => sky.rect(0, (i * VIEW_H) / bands.length, VIEW_W, VIEW_H / bands.length + 1).fill(c));
         // Far ridge drawn as columns so it stays pixel-crisp.
         const ridge = new PIXI.Graphics();
         const ridgeW = field.cols * TILE;
         for (let x = 0; x < ridgeW; x += 2) {
           const top = Math.round(70 + 12 * Math.sin(x / 37) + 6 * Math.sin(x / 13 + 2));
-          ridge.rect(x, top, 2, VIEW_H - top).fill(riftWorld ? PALETTE.V : 0x6fae8f);
+          ridge.rect(x, top, 2, VIEW_H - top).fill(riftWorld ? PALETTE.V : riverWorld ? 0x8f9fb8 : 0x6fae8f);
         }
         far.addChild(ridge);
         if (!riftWorld) {
@@ -279,6 +291,14 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
           for (let tx = 0; tx < row.length; tx++) {
             const ch = row[tx];
             if (ch === ".") continue;
+            if (ch === "w") {
+              const top = (field.grid[ty - 1]?.[tx] ?? ".") !== "w";
+              const ws = sprite(top ? "tileRiverTop0" : "tileRiverDeep");
+              ws.position.set(tx * TILE, ty * TILE);
+              tiles.addChild(ws);
+              if (top) riverSurface.push(ws);
+              continue;
+            }
             let id: SpriteId = "tileGround";
             if (ch === "#") id = (field.grid[ty - 1]?.[tx] ?? ".") === "#" ? "tileGround" : "tileGroundTop";
             else if (ch === "r") id = "tileRock";
@@ -292,6 +312,12 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
           goalSprite = sprite("tileJangseung");
           goalSprite.position.set(field.goal.x, field.goal.y);
           tiles.addChild(goalSprite);
+        }
+        for (let i = 0; i < field.boats.length; i++) {
+          const l = sprite("boatL");
+          const r = sprite("boatR");
+          tiles.addChild(l, r);
+          boatSprites.push([l, r]);
         }
         actors.addChild(fieldHero, slash);
       };
@@ -439,6 +465,7 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
             r.texture = tex[Math.floor(clock * 4) % 2 ? "tileRift1" : "tileRift0"];
             r.alpha = riftOpen(view.game.progress) ? 1 : 0.3;
           }
+          if (dock) (dock as Sprite).alpha = dockOpen(view.game.progress) ? 1 : 0.55;
           const blink = Math.floor(clock * 10) % 25 === 0;
           for (const [id, s] of npcSprites) s.texture = tex[NPC_SPRITE[id][blink ? 1 : 0]];
           const pos = townPixel(view.town);
@@ -491,15 +518,15 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
             alive.add(m.id);
             let s = mobSprites.get(m.id);
             if (!s) {
-              s = sprite(m.kind === "boss" ? "boss0" : m.kind === "phone" ? "phone0" : "bottle0", 0.5, 1);
+              s = sprite(`${m.kind}0` as SpriteId, 0.5, 1);
               actors.addChildAt(s, 0);
               mobSprites.set(m.id, s);
             }
-            const f2 = Math.floor(m.t * (m.kind === "boss" ? 3 : 5)) % 2;
+            const f2 = Math.floor(m.t * (m.kind === "boss" ? 3 : m.kind === "drone" ? 14 : 5)) % 2;
             s.texture = tex[`${m.kind}${f2}` as SpriteId];
-            s.scale.x = m.kind === "phone" ? 1 : m.dir;
+            s.scale.x = m.kind === "phone" || m.kind === "drone" ? 1 : m.dir;
             s.tint = m.flashT > 0 ? 0xff9a9a : 0xffffff;
-            const extra = m.kind === "phone" ? 1 : 0;
+            const extra = m.kind === "phone" ? 1 : m.kind === "drone" ? 4 : 0;
             s.position.set(Math.round(m.x + m.w / 2), Math.round(m.y + m.h + extra + (m.kind === "boss" ? 4 : 0)));
           }
           for (const [id, s] of mobSprites) if (!alive.has(id)) {
@@ -516,6 +543,15 @@ export default function HanyangTimeslipCanvas(props: HanyangTimeslipCanvasProps)
             s.visible = !item.taken;
             s.position.set(item.x + 4, Math.round(item.y + 4 + Math.sin(clock * 4 + item.id) * 1.5));
           }
+          const wf = Math.floor(clock * 3) % 2;
+          for (const w of riverSurface) w.texture = tex[wf ? "tileRiverTop1" : "tileRiverTop0"];
+          field.boats.forEach((b, i) => {
+            const pair = boatSprites[i];
+            if (!pair) return;
+            const bob = Math.round(Math.sin(clock * 3 + i) * 0.6);
+            pair[0].position.set(Math.round(b.x), b.y - 1 + bob);
+            pair[1].position.set(Math.round(b.x) + 16, b.y - 1 + bob);
+          });
           while (gearSprites.length < field.projectiles.length) {
             const g = sprite("gear", 0.5, 0.5);
             actors.addChild(g);

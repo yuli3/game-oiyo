@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { SONGS } from "./hanyang-timeslip-music";
 import { PALETTE, SPRITES, layoutSheet, renderSheetRGBA, validateArt } from "./hanyang-timeslip-art";
 import {
+  DAILY_SIZE,
   FIELD_MAPS,
+  RIVER_CHARM_HP,
+  TOWN_DOCK,
   NPCS,
   PHYSICS,
   SHIFT_SIZE,
@@ -17,9 +21,12 @@ import {
   createField,
   createGame,
   createTown,
+  dailySeed,
+  dockOpen,
   faint,
   fromSave,
   gainExp,
+  generateDailyShift,
   generateShift,
   heroAttack,
   interact,
@@ -49,6 +56,27 @@ function botInput(field: FieldState, frame: number): FieldInput {
   const pit = (field.grid[footY]?.[aheadX] ?? ".") === "." && h.onGround;
   const jump = wall || pit;
   return { left: false, right: true, jumpHeld: jump || !h.onGround, jumpPressed: jump && frame % 6 === 0, attackPressed: frame % 10 === 0 };
+}
+
+/** River bot: waits for a ferry at wide water, rides it across, jumps the narrow gap. */
+function riverBot(field: FieldState, frame: number): FieldInput {
+  const h = field.hero;
+  const base = botInput(field, frame);
+  const aheadX = Math.floor((h.x + h.w + 6) / TILE);
+  const footY = Math.floor((h.y + h.h + 2) / TILE);
+  const waterAhead = (field.grid[footY]?.[aheadX] ?? ".") === "w";
+  if (h.boat >= 0) {
+    const b = field.boats[h.boat];
+    const docked = b.x >= b.maxX - 0.5;
+    return { ...base, right: docked, jumpHeld: false, jumpPressed: false, attackPressed: false };
+  }
+  const ferry = field.boats.find((b) => aheadX * TILE >= b.minX && aheadX * TILE < b.maxX + b.w);
+  if (waterAhead && h.onGround && ferry) {
+    const ready = ferry.x <= ferry.minX + 0.5;
+    return { ...base, right: ready, jumpHeld: false, jumpPressed: false, attackPressed: false };
+  }
+  const pit = (waterAhead || (field.grid[footY]?.[aheadX] ?? ".") === ".") && h.onGround;
+  return pit ? { ...base, jumpHeld: true, jumpPressed: frame % 6 === 0, attackPressed: false } : base;
 }
 
 function run(game: Game, field: FieldState, seconds: number, input: (f: FieldState, frame: number) => FieldInput) {
@@ -124,7 +152,7 @@ describe("hanyang timeslip fields", () => {
     for (const [id, map] of Object.entries(FIELD_MAPS)) {
       const width = map[0].length;
       for (const row of map) expect(row.length, id).toBe(width);
-      const field = createField(id as "forest" | "rift");
+      const field = createField(id as "forest" | "river" | "rift");
       expect(field.mobs.length).toBeGreaterThan(0);
     }
   });
@@ -269,5 +297,93 @@ describe("hanyang timeslip save", () => {
     expect(fromSave("{")).toBeNull();
     expect(fromSave(JSON.stringify({ v: 2 }))).toBeNull();
     expect(fromSave(JSON.stringify({ ...toSave(game), hero: { ...game.hero, coins: -1 } }))).toBeNull();
+  });
+});
+
+describe("hanyang timeslip 2nd update: river, daily gate, music", () => {
+  it("the dock stays shut until the forest shard, then leads to the river", () => {
+    const game = createGame(1);
+    expect(TOWN_MAP[TOWN_DOCK.ty][TOWN_DOCK.tx]).toBe("N");
+    expect(dockOpen(game.progress)).toBe(false);
+    expect(canWalk(TOWN_DOCK.tx, TOWN_DOCK.ty, game.progress)).toBe(false);
+    const town = createTown(TOWN_RETURN.river, "up");
+    expect(interact(town)).toEqual({ kind: "dock-closed" });
+    game.progress.forest = true;
+    stepTown(town, "up", 0, game.progress);
+    expect(stepTown(town, null, 1, game.progress)).toContainEqual({ type: "enter", field: "river" });
+  });
+
+  it("ferries shuttle and carry the hero across the wide water", () => {
+    const game = createGame(5);
+    const field = createField("river");
+    expect(field.boats.length).toBe(2);
+    expect(field.mobs.some((m) => m.kind === "drone")).toBe(true);
+    const first = field.boats[0];
+    const xs = new Set<number>();
+    for (let i = 0; i < 600; i++) {
+      stepField(game, field, IDLE, PHYSICS.step);
+      xs.add(Math.round(first.x));
+    }
+    expect(Math.min(...xs)).toBe(first.minX);
+    expect(Math.max(...xs)).toBe(first.maxX);
+  });
+
+  it("the river can be cleared by a bot and the first clear raises max HP once", () => {
+    const game = createGame(11);
+    game.hero.level = 8;
+    game.hero.maxHp = 300;
+    game.hero.hp = 300;
+    const field = createField("river");
+    const events = run(game, field, 150, riverBot);
+    expect(events.some((e) => e.type === "goal" && e.field === "river" && e.first)).toBe(true);
+    expect(game.progress.river).toBe(true);
+    expect(game.hero.maxHp).toBe(300 + RIVER_CHARM_HP);
+    // A second clear pays coins instead.
+    const coins = game.hero.coins;
+    const again = createField("river");
+    const ev2 = run(game, again, 150, riverBot);
+    expect(ev2.some((e) => e.type === "goal" && !e.first)).toBe(true);
+    expect(game.hero.maxHp).toBe(300 + RIVER_CHARM_HP);
+    expect(game.hero.coins).toBeGreaterThan(coins);
+  });
+
+  it("drones dive at a hero standing underneath and hurt them", () => {
+    const game = createGame(2);
+    const field = createField("river");
+    const drone = field.mobs.find((m) => m.kind === "drone")!;
+    field.hero.x = drone.x;
+    const events = run(game, field, 4, () => IDLE);
+    expect(events.some((e) => e.type === "hurt")).toBe(true);
+  });
+
+  it("the daily line is the same for everyone on a day and differs between days", () => {
+    const a = generateDailyShift("2026-11-16");
+    const b = generateDailyShift("2026-11-16");
+    const c = generateDailyShift("2026-11-17");
+    expect(a).toEqual(b);
+    expect(a.travelers).toHaveLength(DAILY_SIZE);
+    expect(a.rules).toContain("origin");
+    expect(dailySeed("2026-11-16")).not.toBe(dailySeed("2026-11-17"));
+    expect(JSON.stringify(a.travelers)).not.toBe(JSON.stringify(c.travelers));
+    for (let d = 1; d <= 60; d++) {
+      const shift = generateDailyShift(`2026-12-${String(d).padStart(2, "0")}`);
+      for (const t of shift.travelers) expect(violationOf(t, shift)).toBe(t.violation);
+    }
+  });
+
+  it("old saves without the river flag still load", () => {
+    const game = createGame(4);
+    const raw = toSave(game) as unknown as { progress: Record<string, unknown> };
+    delete raw.progress.river;
+    expect(fromSave(JSON.stringify(raw))?.progress.river).toBe(false);
+  });
+
+  it("every song loops cleanly and keeps its lead on its pentatonic scale", () => {
+    for (const [id, song] of Object.entries(SONGS)) {
+      expect(song.bass.length, id).toBe(song.lead.length);
+      expect(song.drum.length, id).toBe(song.lead.length);
+      expect(song.bpm).toBeGreaterThan(60);
+      for (const n of song.lead) if (n !== null) expect(song.scale, `${id} ${n}`).toContain(((n % 12) + 12) % 12);
+    }
   });
 });

@@ -809,6 +809,62 @@ const GEAR = fill((x, y) => {
   return d < 3 ? "A" : "a";
 });
 
+// ─── Han river (2nd update, 2026-11-16) ──────────────────────────────────────
+
+const DRONE_BODY: Art = [
+  "..k..........k..",
+  "..kkkkkkkkkkkk..",
+  "...kaaaaaaaaak..",
+  "...kacwcacwcak..",
+  "...kackcackcak..",
+  "...kaaaaaaaaak..",
+  "...kaarrrrraak..",
+  "....kaaaaaaak...",
+  ".....k.....k....",
+  "....kk.....kk...",
+  "................",
+  "................",
+  "................",
+  "................",
+];
+const DRONE_0: Art = ["................", "kkkkk......kkkkk", ...DRONE_BODY];
+const DRONE_1: Art = ["................", "..kkkkk..kkkkk..", ...DRONE_BODY];
+
+/** Left half of the 나룻배 (ferry); the right half is its mirror. */
+function boatHalf(x: number, y: number): string {
+  if (y === 0) return x >= 1 ? "k" : ".";
+  if (y <= 2) return x === 0 ? "." : x === 1 ? "k" : y === 1 ? "o" : x % 5 === 4 ? "O" : "o";
+  if (y > 8) return ".";
+  const edge = y - 2;
+  if (x < edge) return ".";
+  if (x === edge || y === 8) return "k";
+  return y === 4 ? "r" : y % 2 === 0 ? "O" : "o";
+}
+const BOAT_L = fill((x, y) => boatHalf(x, y));
+const BOAT_R = fill((x, y) => boatHalf(15 - x, y));
+
+/** River surface for the side view: sky on top, a bright wave line, deep water below. */
+function riverTop(phase: number): Art {
+  return fill((x, y) => {
+    if (y < 3) return ".";
+    const crest = 3 + (((x + phase) % 8) < 4 ? 0 : 1);
+    if (y < crest) return ".";
+    if (y === crest) return "w";
+    if (y === crest + 1) return "n";
+    if (y > 9 && (x + y + phase) % 11 === 0) return "n";
+    return "b";
+  });
+}
+const RIVER_DEEP = fill((x, y) => ((x * 3 + y * 5) % 17 === 0 ? "n" : (x + y) % 9 === 0 ? "B" : "b"));
+
+/** 나루: wooden landing over the pond in town. */
+const DOCK = fill((x, y) => {
+  if (x <= 1 || x >= 14) return y % 8 === 6 && x === 0 ? "w" : "b";
+  if (y % 4 === 3) return "O";
+  if (x === 2 || x === 13) return "k";
+  return hash(x, y, 11) > 0.9 ? "O" : "o";
+});
+
 // ─── Sheet layout ────────────────────────────────────────────────────────────
 
 export interface SpriteDef {
@@ -890,6 +946,14 @@ export const SPRITES = {
   tileRock: { art: ROCK_STONE },
   boss0: { art: drawBoss(0), span: 2 },
   boss1: { art: drawBoss(1), span: 2 },
+  drone0: { art: DRONE_0 },
+  drone1: { art: DRONE_1 },
+  boatL: { art: BOAT_L },
+  boatR: { art: BOAT_R },
+  tileRiverTop0: { art: riverTop(0) },
+  tileRiverTop1: { art: riverTop(4) },
+  tileRiverDeep: { art: RIVER_DEEP },
+  tileDock: { art: DOCK },
 } satisfies Record<string, SpriteDef>;
 
 export type SpriteId = keyof typeof SPRITES;
