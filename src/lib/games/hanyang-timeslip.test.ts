@@ -17,6 +17,12 @@ import {
   expToNext,
 } from "./hanyang-timeslip-config";
 import {
+  acceptQuest,
+  earnedAchievements,
+  questCount,
+  questFor,
+  questReady,
+  turnInQuest,
   canWalk,
   createField,
   createGame,
@@ -385,5 +391,76 @@ describe("hanyang timeslip 2nd update: river, daily gate, music", () => {
       expect(song.bpm).toBeGreaterThan(60);
       for (const n of song.lead) if (n !== null) expect(song.scale, `${id} ${n}`).toContain(((n % 12) + 12) % 12);
     }
+  });
+});
+
+describe("hanyang timeslip 3rd update: errands and achievements", () => {
+  it("errands count only kills made after taking them and pay once", () => {
+    const game = createGame(9);
+    expect(questFor(game, "innkeeper")).toBe("phones");
+    expect(questFor(game, "smith")).toBeNull(); // needs the river first
+    expect(questFor(game, "guard")).toBeNull();
+    game.progress.hunts.phone = 5; // earlier kills do not count
+    expect(acceptQuest(game, "phones")).toBe(true);
+    expect(acceptQuest(game, "phones")).toBe(false);
+    expect(questCount(game, "phones")).toBe(0);
+    expect(turnInQuest(game, "phones")).toBeNull();
+    game.progress.hunts.phone = 13;
+    expect(questReady(game, "phones")).toBe(true);
+    const coins = game.hero.coins;
+    expect(turnInQuest(game, "phones")).not.toBeNull();
+    expect(game.hero.coins).toBe(coins + 30);
+    expect(turnInQuest(game, "phones")).toBeNull();
+    expect(questFor(game, "innkeeper")).toBeNull();
+    game.progress.forest = true;
+    expect(questFor(game, "smith")).toBe("drones");
+  });
+
+  it("field kills feed the hunt counters and perfect shifts feed the sage's errand", () => {
+    const game = createGame(7);
+    game.hero.level = 6;
+    game.hero.maxHp = 200;
+    game.hero.hp = 200;
+    run(game, createField("forest"), 90, botInput);
+    const counted = game.progress.hunts.phone + game.progress.hunts.bottle;
+    expect(counted).toBe(game.hero.kills);
+    acceptQuest(game, "perfect");
+    settleShift(game, 4);
+    expect(questReady(game, "perfect")).toBe(false);
+    settleShift(game, SHIFT_SIZE);
+    expect(game.progress.perfects).toBe(1);
+    expect(questReady(game, "perfect")).toBe(true);
+  });
+
+  it("achievements follow the game state", () => {
+    const game = createGame(3);
+    expect(earnedAchievements(game)).toEqual([]);
+    game.hero.kills = 1;
+    expect(earnedAchievements(game)).toEqual(["firstHunt"]);
+    game.hero.kills = 60;
+    game.hero.level = 10;
+    game.hero.sword = SWORD_COST.length;
+    game.progress.river = true;
+    game.progress.perfects = 1;
+    for (const id of ["phones", "drones", "perfect"] as const) game.progress.quests[id] = { s: 2, base: 0 };
+    game.progress.rift = true;
+    expect(earnedAchievements(game)).toEqual(["firstHunt", "hunter", "level10", "masterSword", "riverCharm", "sharpEye", "errands", "home", "untouched"]);
+    game.hero.faints = 1;
+    expect(earnedAchievements(game)).not.toContain("untouched");
+  });
+
+  it("errand progress survives a save, and old saves get empty errands", () => {
+    const game = createGame(4);
+    acceptQuest(game, "phones");
+    game.progress.hunts.phone = 3;
+    const back = fromSave(JSON.stringify(toSave(game)))!;
+    expect(questCount(back, "phones")).toBe(3);
+    const raw = toSave(createGame(5)) as unknown as { progress: Record<string, unknown> };
+    delete raw.progress.quests;
+    delete raw.progress.hunts;
+    delete raw.progress.perfects;
+    const old = fromSave(JSON.stringify(raw))!;
+    expect(old.progress.quests.phones.s).toBe(0);
+    expect(old.progress.hunts.drone).toBe(0);
   });
 });

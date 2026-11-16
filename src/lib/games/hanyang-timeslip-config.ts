@@ -220,3 +220,48 @@ export const TRAVELER_NAMES: readonly { ko: string; roman: string }[] = [
   { ko: "오개똥", roman: "O Gaettong" },
   { ko: "서말순", roman: "Seo Malsun" },
 ];
+
+// ─── Errands & achievements (3rd update, 2026-11-16) ─────────────────────────
+export type QuestId = "phones" | "drones" | "perfect";
+export type HuntKind = "phone" | "bottle" | "drone";
+export interface QuestDef {
+  id: QuestId;
+  giver: NpcId;
+  /** What is counted: kills of one kind, or perfect gate shifts. */
+  metric: HuntKind | "perfect";
+  need: number;
+  reward: { coins: number; exp: number };
+}
+/** One errand per townsperson; the smith's needs the river, so it opens after the forest. */
+export const QUESTS: readonly QuestDef[] = [
+  { id: "phones", giver: "innkeeper", metric: "phone", need: 8, reward: { coins: 30, exp: 20 } },
+  { id: "drones", giver: "smith", metric: "drone", need: 4, reward: { coins: 45, exp: 30 } },
+  { id: "perfect", giver: "sage", metric: "perfect", need: 1, reward: { coins: 20, exp: 60 } },
+];
+
+export type AchievementId =
+  | "firstHunt"
+  | "hunter"
+  | "level10"
+  | "masterSword"
+  | "riverCharm"
+  | "sharpEye"
+  | "errands"
+  | "home"
+  | "untouched"
+  | "dailyPerfect";
+/** Display order. Unlocks are kept per device, across new games. */
+export const ACHIEVEMENTS: readonly AchievementId[] = [
+  "firstHunt",
+  "hunter",
+  "level10",
+  "masterSword",
+  "riverCharm",
+  "sharpEye",
+  "errands",
+  "home",
+  "untouched",
+  "dailyPerfect",
+];
+export const ACHIEVEMENT_KEY = "oiyo:hanyang-timeslip:achievements:v1";
+export const HUNTER_KILLS = 50;

@@ -1,6 +1,6 @@
 // Hanyang Timeslip copy in all six locales (ko/en/ja/zh/fr/es). zh is Simplified.
 // Placeholders use {name}. Keep every locale in step when adding a key.
-import type { ItemId, ProvinceId, RuleId, SealId } from "./hanyang-timeslip-config";
+import type { AchievementId, ItemId, ProvinceId, QuestId, RuleId, SealId } from "./hanyang-timeslip-config";
 
 export type TimeslipLocale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
 
@@ -45,6 +45,19 @@ export interface TimeslipCopy {
   guardWork: string;
   later: string;
   riftClosed: string;
+  questOffer: string;
+  questAccept: string;
+  questProgress: string;
+  questTurnIn: string;
+  questReward: string;
+  notebook: string;
+  questsTitle: string;
+  noQuests: string;
+  achTitle: string;
+  achUnlocked: string;
+  achCount: string;
+  quests: Record<QuestId, { name: string; ask: string; remind: string; done: string }>;
+  achievements: Record<AchievementId, { name: string; desc: string }>;
   dockClosed: string;
   riverIntro: string;
   riverCharm: string;
@@ -147,6 +160,19 @@ export const COPY: Record<TimeslipLocale, TimeslipCopy> = {
     guardWork: "검문 근무하기",
     later: "다음에",
     riftClosed: "보랏빛 틈이 굳게 닫혀 있다. 시간 조각이 더 필요하다. ({n}/2)",
+    questOffer: "심부름 듣기",
+    questAccept: "맡을게요",
+    questProgress: "심부름 {n}/{need}",
+    questTurnIn: "심부름 완료!",
+    questReward: "보상: {coins}냥, 경험치 +{exp}",
+    notebook: "수첩",
+    questsTitle: "심부름",
+    noQuests: "아직 맡은 심부름이 없다. 마을 사람들에게 말을 걸어 보자.",
+    achTitle: "업적",
+    achUnlocked: "업적 달성: {name}",
+    achCount: "{n}/{total}",
+    quests: {"phones": {"name": "주막의 골칫거리", "ask": "주모: \"남산 숲 폰깨비들이 밤마다 울려 대서 손님이 잠을 못 자. 8마리만 혼내 주게.\"", "remind": "주모: \"폰깨비는 아직 {n}/{need}마리야. 숲에 가 보게.\"", "done": "주모: \"이제야 조용하겠네! 고맙네.\""}, "drones": {"name": "하늘의 쇳조각", "ask": "대장장이: \"한강 위를 나는 드론령 몸에 좋은 쇠가 들었다더군. 4마리 잡아 부품을 가져다주게.\"", "remind": "대장장이: \"부품은 {n}/{need}개. 한강 나루로 가 보게.\"", "done": "대장장이: \"이 쇠면 칼이 울겠구먼! 수고했네.\""}, "perfect": {"name": "서운관의 시험", "ask": "서운관 관원: \"성문 검문을 한 번이라도 다섯 명 모두 맞혀 보게. 눈이 밝아야 하늘도 읽는 법.\"", "remind": "서운관 관원: \"아직 만점 근무가 없구먼. 성문 포졸을 찾아가게.\"", "done": "서운관 관원: \"과연 눈썰미가 좋구나. 별자리 보는 법을 조금 알려 주지.\""}},
+    achievements: {"firstHunt": {"name": "첫 사냥", "desc": "시간 얼룩을 처음 잡았다"}, "hunter": {"name": "사냥꾼", "desc": "시간 얼룩 50마리"}, "level10": {"name": "수련 완료", "desc": "레벨 10 달성"}, "masterSword": {"name": "명검", "desc": "칼을 끝까지 벼렸다"}, "riverCharm": {"name": "물결 부적", "desc": "한강 나루를 건넜다"}, "sharpEye": {"name": "눈썰미", "desc": "검문 근무 만점"}, "errands": {"name": "한양 해결사", "desc": "심부름 셋을 모두 마쳤다"}, "home": {"name": "집으로", "desc": "태엽 도깨비를 물리치고 돌아왔다"}, "untouched": {"name": "무사귀환", "desc": "한 번도 쓰러지지 않고 엔딩"}, "dailyPerfect": {"name": "오늘의 명포졸", "desc": "오늘의 검문 8/8"}},
     dockClosed: "나룻배 사공: \"숲의 장승을 먼저 찾고 오시오. 그때 배를 띄워 드리리다.\"",
     riverIntro: "한강 나루. 나룻배를 타고 강을 건너 건너편 장승까지 가자. 하늘의 드론령을 조심!",
     riverCharm: "사공이 물결 부적을 건넸다. 최대 체력 +{hp}!",
@@ -262,6 +288,19 @@ export const COPY: Record<TimeslipLocale, TimeslipCopy> = {
     guardWork: "Work a shift",
     later: "Maybe later",
     riftClosed: "The purple rift is sealed tight. You need more time shards. ({n}/2)",
+    questOffer: "Ask about errands",
+    questAccept: "I'll do it",
+    questProgress: "Errand {n}/{need}",
+    questTurnIn: "Errand done!",
+    questReward: "Reward: {coins} coins, EXP +{exp}",
+    notebook: "Notebook",
+    questsTitle: "Errands",
+    noQuests: "No errands yet. Talk to the townsfolk.",
+    achTitle: "Achievements",
+    achUnlocked: "Achievement: {name}",
+    achCount: "{n}/{total}",
+    quests: {"phones": {"name": "Trouble at the inn", "ask": "Innkeeper: \"Those phone imps in the Namsan woods ring all night and my guests can't sleep. Scold eight of them for me.\"", "remind": "Innkeeper: \"That's {n}/{need} phone imps so far. Off to the woods.\"", "done": "Innkeeper: \"Peace at last! Thank you.\""}, "drones": {"name": "Iron from the sky", "ask": "Smith: \"They say the drones over the Han carry fine metal. Bring me parts from four of them.\"", "remind": "Smith: \"{n}/{need} parts. Try the river landing.\"", "done": "Smith: \"With this iron a blade will sing! Good work.\""}, "perfect": {"name": "The observatory's test", "ask": "Sage: \"Get all five calls right in one gate shift. Sharp eyes read the sky too.\"", "remind": "Sage: \"No perfect shift yet. Go see the gate guard.\"", "done": "Sage: \"A keen eye indeed. Let me teach you a little star reading.\""}},
+    achievements: {"firstHunt": {"name": "First hunt", "desc": "Beat your first time stain"}, "hunter": {"name": "Hunter", "desc": "Beat 50 time stains"}, "level10": {"name": "Trained", "desc": "Reach level 10"}, "masterSword": {"name": "Master blade", "desc": "Fully forge your sword"}, "riverCharm": {"name": "Wave charm", "desc": "Cross the Han river"}, "sharpEye": {"name": "Sharp eye", "desc": "A perfect gate shift"}, "errands": {"name": "Hanyang fixer", "desc": "Finish all three errands"}, "home": {"name": "Home again", "desc": "Defeat the clockwork goblin"}, "untouched": {"name": "Safe return", "desc": "Reach the ending without fainting"}, "dailyPerfect": {"name": "Guard of the day", "desc": "Daily gate 8/8"}},
     dockClosed: "Ferryman: \"Find the forest's jangseung first. Then I'll push off for you.\"",
     riverIntro: "The Han river landing. Ride the ferries across to the far jangseung. Watch out for drones overhead!",
     riverCharm: "The ferryman hands you a wave charm. Max HP +{hp}!",
@@ -377,6 +416,19 @@ export const COPY: Record<TimeslipLocale, TimeslipCopy> = {
     guardWork: "検問を手伝う",
     later: "また今度",
     riftClosed: "紫の裂け目は固く閉じている。時のかけらがもっと必要だ。（{n}/2）",
+    questOffer: "頼みごとを聞く",
+    questAccept: "引き受ける",
+    questProgress: "頼みごと {n}/{need}",
+    questTurnIn: "頼みごと完了！",
+    questReward: "報酬：{coins}両、経験値 +{exp}",
+    notebook: "手帳",
+    questsTitle: "頼みごと",
+    noQuests: "まだ頼みごとはない。町の人に話しかけてみよう。",
+    achTitle: "実績",
+    achUnlocked: "実績解除：{name}",
+    achCount: "{n}/{total}",
+    quests: {"phones": {"name": "宿屋の困りごと", "ask": "女将「南山の森のスマホ鬼が毎晩鳴って、お客が眠れないの。8匹こらしめてきて」", "remind": "女将「スマホ鬼はまだ {n}/{need} 匹よ。森へ行ってきて」", "done": "女将「やっと静かになるわ！ありがとう」"}, "drones": {"name": "空の鉄くず", "ask": "鍛冶屋「漢江の上を飛ぶドローン霊にはいい鉄が入ってるらしい。4匹分の部品を持ってきてくれ」", "remind": "鍛冶屋「部品は {n}/{need} 個。漢江の渡し場へ行ってみな」", "done": "鍛冶屋「この鉄なら刀が鳴るぞ！ご苦労」"}, "perfect": {"name": "書雲観の試験", "ask": "書雲観の役人「城門の検問で一度でいい、5人全員を正しく判定してみなさい。目が利けば空も読める」", "remind": "書雲観の役人「まだ満点の勤務がないな。城門の番兵を訪ねなさい」", "done": "書雲観の役人「見事な目利きだ。星の読み方を少し教えよう」"}},
+    achievements: {"firstHunt": {"name": "初めての狩り", "desc": "時のしみを初めて倒した"}, "hunter": {"name": "狩人", "desc": "時のしみを50体"}, "level10": {"name": "修行完了", "desc": "レベル10に到達"}, "masterSword": {"name": "名刀", "desc": "刀を最後まで鍛えた"}, "riverCharm": {"name": "波のお守り", "desc": "漢江を渡った"}, "sharpEye": {"name": "目利き", "desc": "検問で満点"}, "errands": {"name": "漢陽の何でも屋", "desc": "頼みごと3つを完了"}, "home": {"name": "ただいま", "desc": "ぜんまい鬼を倒して帰った"}, "untouched": {"name": "無事帰還", "desc": "一度も倒れずにエンディング"}, "dailyPerfect": {"name": "今日の名番兵", "desc": "今日の検問 8/8"}},
     dockClosed: "渡し守「まず森の長栍を見つけておいで。そしたら舟を出してやろう」",
     riverIntro: "漢江の渡し場。渡し舟で川を越え、向こう岸の長栍へ。空のドローン霊に注意！",
     riverCharm: "渡し守が波のお守りをくれた。最大HP +{hp}！",
@@ -492,6 +544,19 @@ export const COPY: Record<TimeslipLocale, TimeslipCopy> = {
     guardWork: "帮忙盘查",
     later: "下次吧",
     riftClosed: "紫色的裂缝紧紧闭着。还需要更多时光碎片。（{n}/2）",
+    questOffer: "打听差事",
+    questAccept: "交给我",
+    questProgress: "差事 {n}/{need}",
+    questTurnIn: "差事完成！",
+    questReward: "报酬：{coins}两，经验 +{exp}",
+    notebook: "手册",
+    questsTitle: "差事",
+    noQuests: "还没有接差事。去和镇上的人说说话吧。",
+    achTitle: "成就",
+    achUnlocked: "达成成就：{name}",
+    achCount: "{n}/{total}",
+    quests: {"phones": {"name": "客栈的烦恼", "ask": "老板娘：\"南山林子里的手机怪天天晚上响，客人睡不着。帮我教训 8 只吧。\"", "remind": "老板娘：\"手机怪才 {n}/{need} 只，再去林子里看看。\"", "done": "老板娘：\"终于清静了！谢谢你。\""}, "drones": {"name": "天上的铁片", "ask": "铁匠：\"听说汉江上飞的无人机灵身上有好铁。抓 4 只把零件带来。\"", "remind": "铁匠：\"零件 {n}/{need} 个。去汉江渡口吧。\"", "done": "铁匠：\"有了这铁，刀都会唱歌！辛苦了。\""}, "perfect": {"name": "书云观的考验", "ask": "书云观官员：\"在城门盘查中有一班 5 人全判对。眼明才能观天。\"", "remind": "书云观官员：\"还没有满分的一班。去找城门的卫兵吧。\"", "done": "书云观官员：\"果然眼尖。教你一点看星的方法。\""}},
+    achievements: {"firstHunt": {"name": "第一次狩猎", "desc": "第一次打倒时光污渍"}, "hunter": {"name": "猎人", "desc": "打倒 50 个时光污渍"}, "level10": {"name": "修炼完成", "desc": "达到 10 级"}, "masterSword": {"name": "名刀", "desc": "把刀锻到最好"}, "riverCharm": {"name": "水波护符", "desc": "渡过汉江"}, "sharpEye": {"name": "好眼力", "desc": "盘查满分"}, "errands": {"name": "汉阳万事通", "desc": "完成全部 3 个差事"}, "home": {"name": "回家", "desc": "打倒发条鬼回到现代"}, "untouched": {"name": "平安归来", "desc": "一次都没倒下就通关"}, "dailyPerfect": {"name": "今日名卫兵", "desc": "今日盘查 8/8"}},
     dockClosed: "船夫：\"先去找到森林里的长丞吧，到时我再撑船送你。\"",
     riverIntro: "汉江渡口。乘渡船过江，走到对岸的长丞。小心天上的无人机灵！",
     riverCharm: "船夫送你一枚水波护符。最大体力 +{hp}！",
@@ -607,6 +672,19 @@ export const COPY: Record<TimeslipLocale, TimeslipCopy> = {
     guardWork: "Prendre la garde",
     later: "Plus tard",
     riftClosed: "La faille violette est scellée. Il faut plus d'éclats de temps. ({n}/2)",
+    questOffer: "Demander une course",
+    questAccept: "J'accepte",
+    questProgress: "Course {n}/{need}",
+    questTurnIn: "Course terminée !",
+    questReward: "Récompense : {coins} pièces, EXP +{exp}",
+    notebook: "Carnet",
+    questsTitle: "Courses",
+    noQuests: "Aucune course pour l'instant. Parlez aux habitants.",
+    achTitle: "Succès",
+    achUnlocked: "Succès : {name}",
+    achCount: "{n}/{total}",
+    quests: {"phones": {"name": "Soucis à l'auberge", "ask": "L'aubergiste : « Les lutins-téléphones de Namsan sonnent toute la nuit. Allez en gronder huit. »", "remind": "L'aubergiste : « {n}/{need} lutins pour l'instant. Retournez en forêt. »", "done": "L'aubergiste : « Enfin le calme ! Merci. »"}, "drones": {"name": "Le fer du ciel", "ask": "Le forgeron : « Les drones au-dessus du Han portent du bon métal. Rapportez les pièces de quatre d'entre eux. »", "remind": "Le forgeron : « {n}/{need} pièces. Allez à l'embarcadère. »", "done": "Le forgeron : « Avec ce fer, la lame chantera ! Beau travail. »"}, "perfect": {"name": "L'épreuve de l'observatoire", "ask": "Le sage : « Réussissez les cinq décisions d'un même service à la porte. Un œil vif lit aussi le ciel. »", "remind": "Le sage : « Pas encore de service parfait. Allez voir le garde. »", "done": "Le sage : « Quel œil ! Je vais vous apprendre un peu à lire les étoiles. »"}},
+    achievements: {"firstHunt": {"name": "Première chasse", "desc": "Vaincre une première tache du temps"}, "hunter": {"name": "Chasseur", "desc": "Vaincre 50 taches du temps"}, "level10": {"name": "Entraîné", "desc": "Atteindre le niveau 10"}, "masterSword": {"name": "Lame de maître", "desc": "Forger l'épée au maximum"}, "riverCharm": {"name": "Charme des vagues", "desc": "Traverser le fleuve Han"}, "sharpEye": {"name": "Œil vif", "desc": "Un service parfait à la porte"}, "errands": {"name": "Homme à tout faire", "desc": "Finir les trois courses"}, "home": {"name": "De retour", "desc": "Vaincre le gobelin mécanique"}, "untouched": {"name": "Sain et sauf", "desc": "Finir sans jamais s'évanouir"}, "dailyPerfect": {"name": "Garde du jour", "desc": "Contrôle du jour 8/8"}},
     dockClosed: "Le passeur : « Trouvez d'abord le jangseung de la forêt. Ensuite je vous ferai traverser. »",
     riverIntro: "L'embarcadère du fleuve Han. Prenez les bacs jusqu'au jangseung d'en face. Attention aux drones !",
     riverCharm: "Le passeur vous offre un charme des vagues. PV max +{hp} !",
@@ -722,6 +800,19 @@ export const COPY: Record<TimeslipLocale, TimeslipCopy> = {
     guardWork: "Hacer un turno",
     later: "Luego",
     riftClosed: "La grieta morada está sellada. Necesitas más fragmentos del tiempo. ({n}/2)",
+    questOffer: "Preguntar por encargos",
+    questAccept: "Lo haré",
+    questProgress: "Encargo {n}/{need}",
+    questTurnIn: "¡Encargo cumplido!",
+    questReward: "Recompensa: {coins} monedas, EXP +{exp}",
+    notebook: "Cuaderno",
+    questsTitle: "Encargos",
+    noQuests: "Aún no tienes encargos. Habla con la gente del pueblo.",
+    achTitle: "Logros",
+    achUnlocked: "Logro: {name}",
+    achCount: "{n}/{total}",
+    quests: {"phones": {"name": "Líos en la posada", "ask": "Posadera: «Los duendes-teléfono de Namsan suenan toda la noche. Riñe a ocho por mí».", "remind": "Posadera: «Llevas {n}/{need} duendes. Vuelve al bosque».", "done": "Posadera: «¡Por fin silencio! Gracias»."}, "drones": {"name": "Hierro del cielo", "ask": "Herrero: «Dicen que los drones sobre el Han llevan buen metal. Tráeme piezas de cuatro».", "remind": "Herrero: «{n}/{need} piezas. Ve al embarcadero».", "done": "Herrero: «¡Con este hierro la hoja cantará! Buen trabajo»."}, "perfect": {"name": "La prueba del observatorio", "ask": "Sabio: «Acierta las cinco decisiones de un turno en la puerta. Un buen ojo también lee el cielo».", "remind": "Sabio: «Aún no hay turno perfecto. Ve con el guardia».", "done": "Sabio: «Qué buen ojo. Te enseñaré un poco a leer las estrellas»."}},
+    achievements: {"firstHunt": {"name": "Primera caza", "desc": "Vence tu primera mancha del tiempo"}, "hunter": {"name": "Cazador", "desc": "Vence 50 manchas del tiempo"}, "level10": {"name": "Entrenado", "desc": "Llega al nivel 10"}, "masterSword": {"name": "Hoja maestra", "desc": "Forja la espada al máximo"}, "riverCharm": {"name": "Amuleto de olas", "desc": "Cruza el río Han"}, "sharpEye": {"name": "Buen ojo", "desc": "Un turno perfecto en la puerta"}, "errands": {"name": "Solucionador de Hanyang", "desc": "Termina los tres encargos"}, "home": {"name": "De vuelta a casa", "desc": "Vence al duende de cuerda"}, "untouched": {"name": "Sano y salvo", "desc": "Llega al final sin desmayarte"}, "dailyPerfect": {"name": "Guardia del día", "desc": "Control del día 8/8"}},
     dockClosed: "Barquero: «Encuentra primero el jangseung del bosque. Luego te llevaré al otro lado».",
     riverIntro: "El embarcadero del río Han. Cruza en las barcas hasta el jangseung de la otra orilla. ¡Cuidado con los drones!",
     riverCharm: "El barquero te da un amuleto de olas. ¡Vida máx. +{hp}!",
