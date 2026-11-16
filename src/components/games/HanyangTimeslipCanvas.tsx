@@ -23,11 +23,12 @@ import {
   type TownState,
   type Traveler,
 } from "../../lib/games/hanyang-timeslip";
+import { HANYANG_TIMESLIP_SPRITES } from "../../lib/games/sprites";
 import { createBurstField, createHitstop, createShake, JUICE } from "../../lib/games/juice";
 
 type Pixi = typeof import("pixi.js");
 
-export const SHEET_URL = "/assets/sprites/hanyang-timeslip/sheet.webp";
+const SHEET_URL = HANYANG_TIMESLIP_SPRITES.sheet;
 
 export type TimeslipScene = "title" | "town" | "field" | "gate" | "ending";
 

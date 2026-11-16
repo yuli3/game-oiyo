@@ -1765,3 +1765,9 @@ export const WHEEL_SPINNER_UI_SPRITES = {
 
 
 
+
+/** Hanyang Timeslip: one pixel sheet baked from src/lib/games/hanyang-timeslip-art.ts (2026-11-16). */
+export const HANYANG_TIMESLIP_SPRITES = {
+  sheet: "/assets/sprites/hanyang-timeslip/sheet.webp",
+  keyart: "/games/hanyang-timeslip-keyart.webp",
+} as const;

@@ -497,7 +497,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
       ref={containerRef}
       data-game={SLUG}
       className={`mx-auto flex w-full max-w-3xl select-none flex-col items-center gap-2 rounded-2xl bg-card p-2 text-card-foreground sm:p-4 ${
-        isImmersive ? "fixed inset-0 z-50 m-0 h-dvh max-w-none overflow-y-auto rounded-none bg-background" : "relative"
+        isImmersive ? "fixed inset-0 z-50 m-0 h-dvh max-w-none justify-center overflow-y-auto rounded-none bg-background" : "relative"
       }`}
     >
       <div className="flex w-full items-center justify-between gap-2">
