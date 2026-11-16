@@ -12,6 +12,7 @@ export const TILE = 16;
 // ─── Town (top-down) ─────────────────────────────────────────────────────────
 // # fortress  G gate  . grass  , flowers  = dirt  _ stone road  T tree  ~ water
 // R roof  E eaves  H wall  D door  F fence  J 장승  S south exit  X rift
+// N 나루 (river)  M 남산 봉수대 trail (4th update)
 export const TOWN_MAP: readonly string[] = [
   "########GG##########",
   "#T...,..__...,...T.#",
@@ -27,12 +28,14 @@ export const TOWN_MAP: readonly string[] = [
   "#.......__..RRRR.T.#",
   "#T.,F.X.__..EEEE...#",
   "#...F...__..HDHH.J.#",
-  "#T..F...__.......TT#",
+  "#T..F...__......MTT#",
   "########SS##########",
 ];
 /** 나루 (ferry landing) by the pond: the way to the Han river field. */
 export const TOWN_DOCK = { tx: 17, ty: 8 } as const;
-export const TOWN_WALKABLE = new Set([".", ",", "=", "_", "S", "X", "N"]);
+/** 봉수대 오르는 길: the trail up to the Namsan beacon, opened by the river. */
+export const TOWN_TRAIL = { tx: 16, ty: 14 } as const;
+export const TOWN_WALKABLE = new Set([".", ",", "=", "_", "S", "X", "N", "M"]);
 export const TOWN_START = { tx: 8, ty: 13 } as const;
 /** Where the hero reappears after the inn, a defeat, or coming back from a field. */
 export const TOWN_RETURN = {
@@ -41,6 +44,7 @@ export const TOWN_RETURN = {
   rift: { tx: 6, ty: 13 },
   gate: { tx: 9, ty: 2 },
   river: { tx: 17, ty: 9 },
+  beacon: { tx: 16, ty: 13 },
 } as const;
 /** Tiles per second while walking. */
 export const TOWN_WALK_SPEED = 5.5;
@@ -55,8 +59,8 @@ export const NPCS: readonly { id: NpcId; tx: number; ty: number }[] = [
 
 // ─── Fields (side view) ──────────────────────────────────────────────────────
 // # ground  = one-way platform  r rock  p phone  b bottle  c coin  h heart
-// J goal 장승  K boss  d drone  w river water (a pit you fall into)
-export type FieldId = "forest" | "river" | "rift";
+// J goal 장승  K boss  d drone  w river water (a pit you fall into)  Q 드론 대왕
+export type FieldId = "forest" | "river" | "beacon" | "rift";
 export const FIELD_MAPS: Record<FieldId, readonly string[]> = {
   forest: [
     "................................................................",
@@ -80,6 +84,17 @@ export const FIELD_MAPS: Record<FieldId, readonly string[]> = {
     "##############wwwwww############ww###########wwwwwwww###################",
     "##############wwwwww############ww###########wwwwwwww###################",
   ],
+  beacon: [
+    "r............................r",
+    "r.............Q..............r",
+    "r....c.................c.....r",
+    "r...=====............=====...r",
+    "r.............hc.............r",
+    "r..........========..........r",
+    "r............................r",
+    "##############################",
+    "##############################",
+  ],
   rift: [
     "r............................r",
     "r..............c.............r",
@@ -95,6 +110,7 @@ export const FIELD_MAPS: Record<FieldId, readonly string[]> = {
 export const FIELD_START: Record<FieldId, { x: number; y: number }> = {
   forest: { x: 24, y: 6 * 16 },
   river: { x: 24, y: 6 * 16 },
+  beacon: { x: 40, y: 6 * 16 },
   rift: { x: 40, y: 6 * 16 },
 };
 
@@ -129,7 +145,7 @@ export const COMBAT = {
   fallDamage: 5,
 } as const;
 
-export type MobKind = "phone" | "bottle" | "drone" | "boss";
+export type MobKind = "phone" | "bottle" | "drone" | "boss" | "droneKing";
 export interface MobStats {
   hp: number;
   atk: number;
@@ -144,6 +160,7 @@ export const MOBS: Record<MobKind, MobStats> = {
   bottle: { hp: 20, atk: 4, speed: 20, exp: 12, coins: [3, 6], w: 10, h: 14 },
   drone: { hp: 18, atk: 5, speed: 30, exp: 16, coins: [4, 7], w: 12, h: 9 },
   boss: { hp: 240, atk: 6, speed: 26, exp: 120, coins: [40, 40], w: 26, h: 28 },
+  droneKing: { hp: 280, atk: 7, speed: 34, exp: 150, coins: [50, 50], w: 28, h: 20 },
 };
 export const BOTTLE_SIGHT = 76;
 /** 드론령: patrols high, dives when the hero passes underneath, climbs back. */
@@ -167,6 +184,28 @@ export const BOSS = {
   enrageSpeed: 1.35,
   summonCount: 2,
 } as const;
+/**
+ * 드론 대왕 (4th update): hovers above the beacon, drops battery cells, and every
+ * few seconds swoops to the ground after a short shake. It can be hit from the
+ * upper platforms, or from the ground while it is down.
+ */
+export const KING = {
+  hoverY: 20,
+  swoopEvery: 4.2,
+  warn: 0.6,
+  diveSpeed: 150,
+  stuck: 1.1,
+  climbSpeed: 55,
+  dropEvery: 1.5,
+  dropSpeed: 95,
+  dropDamage: 5,
+  enrageAt: 0.5,
+  enrageSpeed: 1.35,
+  summonCount: 2,
+} as const;
+/** First win at the beacon: 봉화 부적, a permanent attack bonus. */
+export const BEACON_CHARM_ATK = 3;
+export const BEACON_REPEAT_COINS = 25;
 
 // ─── Hero progression ────────────────────────────────────────────────────────
 export const HERO_BASE = { maxHp: 30, atk: 6 } as const;
@@ -249,7 +288,8 @@ export type AchievementId =
   | "errands"
   | "home"
   | "untouched"
-  | "dailyPerfect";
+  | "dailyPerfect"
+  | "beacon";
 /** Display order. Unlocks are kept per device, across new games. */
 export const ACHIEVEMENTS: readonly AchievementId[] = [
   "firstHunt",
@@ -257,6 +297,7 @@ export const ACHIEVEMENTS: readonly AchievementId[] = [
   "level10",
   "masterSword",
   "riverCharm",
+  "beacon",
   "sharpEye",
   "errands",
   "home",
