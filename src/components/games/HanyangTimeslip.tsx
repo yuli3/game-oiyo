@@ -5,6 +5,7 @@
 
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
+  BookOpen,
   CalendarDays,
   Check,
   ChevronDown,
@@ -14,9 +15,11 @@ import {
   CircleHelp,
   Copy,
   Home,
+  Lock,
   Maximize2,
   Minimize2,
   Package,
+  Trophy,
   Vibrate,
   VibrateOff,
   Volume2,
@@ -25,8 +28,16 @@ import {
 } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { COPY, fmt, type TimeslipCopy } from "../../lib/games/hanyang-timeslip-copy";
+import { ACHIEVEMENTS, ACHIEVEMENT_KEY, QUESTS, type AchievementId, type QuestId } from "../../lib/games/hanyang-timeslip-config";
 import { DAILY_KEY, INN_COST, RIVER_CHARM_HP, RIVER_REPEAT_COINS, SAVE_KEY, MUTE_KEY, SLUG, TOWN_RETURN, TRAVELER_NAMES, type FieldId, type NpcId } from "../../lib/games/hanyang-timeslip-config";
 import {
+  acceptQuest,
+  earnedAchievements,
+  questCount,
+  questDef,
+  questFor,
+  questReady,
+  turnInQuest,
   createField,
   createGame,
   createTown,
@@ -120,6 +131,15 @@ function writeDailyBest(day: string, best: number): void {
   }
 }
 
+function readAchievements(): AchievementId[] {
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(ACHIEVEMENT_KEY) ?? "[]") as unknown;
+    return Array.isArray(raw) ? ACHIEVEMENTS.filter((id) => raw.includes(id)) : [];
+  } catch {
+    return [];
+  }
+}
+
 function readSave(): string | null {
   try {
     return window.localStorage.getItem(SAVE_KEY);
@@ -149,6 +169,11 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
   const [muted, setMuted] = useState(false);
   const [haptic, setHaptic] = useState(true);
   const [fieldId, setFieldId] = useState<FieldId | null>(null);
+  const [achieved, setAchieved] = useState<AchievementId[]>([]);
+  const achievedRef = useRef<AchievementId[]>([]);
+  const [toast, setToast] = useState<string | null>(null);
+  const [showBook, setShowBook] = useState(false);
+  const [bookTick, setBookTick] = useState(0);
   const [dailyResult, setDailyResult] = useState<DailyResult | null>(null);
   const [copied, setCopied] = useState(false);
   const [ending, setEnding] = useState<{ level: number; kills: number; gate: number; seconds: number; faints: number } | null>(null);
@@ -164,7 +189,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
   const pausedRef = useRef(false);
   const dialogRef = useRef<Dialog | null>(null);
   dialogRef.current = dialog;
-  pausedRef.current = dialog !== null || showHelp;
+  pausedRef.current = dialog !== null || showHelp || showBook;
 
   const { isImmersive, containerRef, togglePortal, enterPortal } = useArcadePortal({ locale });
 
@@ -186,6 +211,8 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
     setHaptic(haptics.enabled);
     setHapticSupported(haptics.supported);
     setHasSave(fromSave(readSave()) !== null);
+    achievedRef.current = readAchievements();
+    setAchieved(achievedRef.current);
     recordAchievementEvent(SLUG, "opened");
     return () => {
       audio.close();
@@ -215,6 +242,29 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
       /* private mode: play on without saving */
     }
   }, []);
+
+  // ─── Achievements: unlocked once per device, announced with a short banner ───
+  const grant = useCallback((ids: AchievementId[]) => {
+    const fresh = ids.filter((id) => !achievedRef.current.includes(id));
+    if (!fresh.length) return;
+    const next = ACHIEVEMENTS.filter((id) => achievedRef.current.includes(id) || fresh.includes(id));
+    achievedRef.current = next;
+    setAchieved(next);
+    try {
+      window.localStorage.setItem(ACHIEVEMENT_KEY, JSON.stringify(next));
+    } catch {
+      /* private mode */
+    }
+    setToast(fmt(t.achUnlocked, { name: t.achievements[fresh[0]].name }));
+    audioRef.current?.play("combo", { step: 6 });
+    recordAchievementEvent(SLUG, "personal-best");
+  }, [t]);
+  const checkAch = useCallback(() => grant(earnedAchievements(viewRef.current.game)), [grant]);
+  useEffect(() => {
+    if (!toast) return;
+    const id = window.setTimeout(() => setToast(null), 2600);
+    return () => window.clearTimeout(id);
+  }, [toast]);
 
   const say = useCallback((lines: string[], choices?: Choice[], onClose?: () => void) => {
     inputRef.current.dirs = [];
@@ -295,12 +345,48 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
   }, [cue, enterPortal, say, setSceneBoth, showTraveler, t.dailyIntro]);
 
   // ─── Town talk ───
+  /** The errand line a townsperson adds to their menu: offer, progress, or hand-in. */
+  const errandChoice = useCallback((giver: NpcId): Choice | null => {
+    const game = viewRef.current.game;
+    const id: QuestId | null = questFor(game, giver);
+    if (!id) return null;
+    const def = questDef(id);
+    const copy = t.quests[id];
+    const state = game.progress.quests[id].s;
+    if (state === 0) {
+      return { label: t.questOffer, run: () => say([copy.ask], [
+        { label: t.questAccept, run: () => {
+          acceptQuest(game, id);
+          save();
+          cue("place");
+          setBookTick((n) => n + 1);
+        } },
+        { label: t.later, run: () => undefined },
+      ]) };
+    }
+    if (questReady(game, id)) {
+      return { label: t.questTurnIn, run: () => {
+        turnInQuest(game, id);
+        save();
+        cue("win");
+        buzz("win");
+        setBookTick((n) => n + 1);
+        say([copy.done, fmt(t.questReward, { coins: def.reward.coins, exp: def.reward.exp })], undefined, checkAch);
+      } };
+    }
+    const n = questCount(game, id);
+    return { label: fmt(t.questProgress, { n, need: def.need }), run: () => say([fmt(copy.remind, { n, need: def.need })]) };
+  }, [buzz, checkAch, cue, save, say, t]);
+
   const talk = useCallback((id: NpcId) => {
     const game = viewRef.current.game;
     const hero = game.hero;
+    const errand = errandChoice(id);
+    const leave: Choice = { label: t.leave, run: () => undefined };
+    const withErrand = (choices: Choice[]) => (errand ? [...choices.slice(0, -1), errand, choices[choices.length - 1]] : choices);
     cue("tap");
     if (id === "innkeeper") {
-      say([t.innGreet], [
+      say([t.innGreet], withErrand([
         { label: fmt(t.innRest, { cost: INN_COST }), run: () => {
           const r = restAtInn(hero);
           if (r === "full") say([t.innFull]);
@@ -311,29 +397,29 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
             say([t.innDone]);
           }
         } },
-        { label: t.leave, run: () => undefined },
-      ]);
+        leave,
+      ]));
     } else if (id === "smith") {
       const price = swordPrice(hero);
       if (price === null) {
-        say([t.smithMaxed]);
+        say([t.smithMaxed], errand ? [errand, leave] : undefined);
         return;
       }
-      say([fmt(t.smithGreet, { price })], [
+      say([fmt(t.smithGreet, { price })], withErrand([
         { label: fmt(t.smithUpgrade, { price }), run: () => {
           const r = upgradeSword(hero);
           if (r === "ok") {
             save();
             cue("combo", 3);
             buzz("combo");
-            say([fmt(t.smithDone, { atk: heroAttack(hero) })]);
+            say([fmt(t.smithDone, { atk: heroAttack(hero) })], undefined, checkAch);
           } else {
             cue("fail");
             say([t.smithPoor]);
           }
         } },
-        { label: t.leave, run: () => undefined },
-      ]);
+        leave,
+      ]));
     } else if (id === "sage") {
       const p = game.progress;
       const lines = [t.sageIntro];
@@ -343,14 +429,14 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
         if (!p.gate) lines.push(t.sageGate);
       }
       if (p.forest && !p.river) lines.push(t.sageRiver);
-      say(lines);
+      say(lines, errand ? [errand, leave] : undefined);
     } else if (id === "guard") {
       say([game.progress.gate ? t.guardDone : t.guardGreet], [
         { label: t.guardWork, run: () => startShift() },
         { label: t.later, run: () => undefined },
       ]);
     }
-  }, [buzz, cue, save, say, startShift, t]);
+  }, [buzz, checkAch, cue, errandChoice, save, say, startShift, t]);
 
   // ─── Fields ───
   const startField = useCallback((id: FieldId) => {
@@ -430,7 +516,8 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
         say([fmt(t.defeat, { lost })], undefined, () => backToTown(TOWN_RETURN.inn, "up"));
       }
     }
-  }, [backToTown, buzz, cue, finishGame, save, say, t]);
+    if (events.some((e) => e.type === "kill" || e.type === "goal" || e.type === "boss-dead")) checkAch();
+  }, [backToTown, buzz, checkAch, cue, finishGame, save, say, t]);
 
   const decide = useCallback((approve: boolean) => {
     const run = gateRun;
@@ -457,6 +544,7 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
         setGateRun(null);
         viewRef.current.gate.traveler = null;
         setDailyResult({ day: next.daily, correct: next.correct, total, best, marks: next.marks });
+        if (next.correct === total) grant(["dailyPerfect"]);
         setSceneBoth("title");
         setPhase("daily");
         cue(next.correct === total ? "win" : "success");
@@ -472,9 +560,9 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
         buzz("win");
       }
       backToTown(TOWN_RETURN.gate, "down");
-      say(lines);
+      say(lines, undefined, checkAch);
     }, 1300);
-  }, [backToTown, buzz, cue, gateRun, say, setSceneBoth, showTraveler, t]);
+  }, [backToTown, buzz, checkAch, cue, gateRun, grant, say, setSceneBoth, showTraveler, t]);
 
   // ─── Buttons ───
   const pressA = useCallback(() => {
@@ -619,6 +707,9 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
       <div className="flex w-full items-center justify-between gap-2">
         <h2 className="truncate text-base font-black text-foreground sm:text-lg">{t.title}</h2>
         <div className="flex shrink-0 items-center gap-1.5">
+          <button type="button" className={iconButton} onClick={() => setShowBook((v) => !v)} aria-label={t.notebook}>
+            <BookOpen className="size-5" />
+          </button>
           <button type="button" className={iconButton} onClick={() => setShowHelp((v) => !v)} aria-label={t.helpLabel}>
             <CircleHelp className="size-5" />
           </button>
@@ -771,6 +862,70 @@ export default function HanyangTimeslip({ locale = "ko" }: { locale?: Locale }) 
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {toast && (
+          <div className="pointer-events-none absolute inset-x-0 top-2 flex justify-center px-3" role="status" aria-live="polite">
+            <p className="flex items-center gap-1.5 rounded-full border-2 border-foreground bg-primary px-3 py-1 text-sm font-black text-primary-foreground shadow-lg">
+              <Trophy className="size-4" aria-hidden="true" />
+              {toast}
+            </p>
+          </div>
+        )}
+
+        {showBook && (
+          <div className="absolute inset-0 flex items-center justify-center p-3" data-book={bookTick}>
+            <div className="max-h-full w-full max-w-sm overflow-y-auto rounded-xl border-2 border-border bg-card/95 p-4 shadow-xl">
+              <p className="text-base font-black text-foreground">{t.questsTitle}</p>
+              {(() => {
+                const game = viewRef.current.game;
+                const taken = QUESTS.filter((q) => phase === "play" && game.progress.quests[q.id].s > 0);
+                if (!taken.length) return <p className="mt-1 text-sm text-muted-foreground">{t.noQuests}</p>;
+                return (
+                  <ul className="mt-1 space-y-1.5">
+                    {taken.map((q) => {
+                      const n = questCount(game, q.id);
+                      const done = game.progress.quests[q.id].s === 2;
+                      return (
+                        <li key={q.id} className="rounded-lg border border-border bg-muted p-2 text-sm">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-foreground">{t.quests[q.id].name}</span>
+                            <span className={done ? "font-bold text-success" : "font-bold text-primary"}>{done ? "✓" : `${n}/${q.need}`}</span>
+                          </div>
+                          {!done && (
+                            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-background">
+                              <progress className="block h-1.5 w-full accent-primary" value={n} max={q.need} aria-label={t.quests[q.id].name} />
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                );
+              })()}
+              <div className="mt-3 flex items-center justify-between">
+                <p className="text-base font-black text-foreground">{t.achTitle}</p>
+                <p className="text-sm font-bold text-muted-foreground">{fmt(t.achCount, { n: achieved.length, total: ACHIEVEMENTS.length })}</p>
+              </div>
+              <ul className="mt-1 grid grid-cols-2 gap-1.5">
+                {ACHIEVEMENTS.map((id) => {
+                  const got = achieved.includes(id);
+                  return (
+                    <li key={id} className={`flex items-start gap-1.5 rounded-lg border p-2 text-xs ${got ? "border-primary bg-accent text-foreground" : "border-border bg-muted text-muted-foreground"}`}>
+                      {got ? <Trophy className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" /> : <Lock className="mt-0.5 size-4 shrink-0" aria-hidden="true" />}
+                      <span>
+                        <span className="block font-bold">{t.achievements[id].name}</span>
+                        <span className="block">{t.achievements[id].desc}</span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <button type="button" className="mt-3 min-h-11 w-full rounded-lg bg-primary font-bold text-primary-foreground" onClick={() => setShowBook(false)}>
+                {t.close}
+              </button>
+            </div>
           </div>
         )}
 

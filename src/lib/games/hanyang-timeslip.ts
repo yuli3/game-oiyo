@@ -20,6 +20,8 @@ import {
   COMBAT,
   DEFEAT_COIN_LOSS,
   FIELD_MAPS,
+  HUNTER_KILLS,
+  QUESTS,
   FIELD_START,
   HEART_HEAL,
   HERO_BASE,
@@ -51,11 +53,14 @@ import {
   TRAVELER_NAMES,
   VIOLATION_CHANCE,
   expToNext,
+  type AchievementId,
   type FieldId,
+  type HuntKind,
   type ItemId,
   type MobKind,
   type NpcId,
   type ProvinceId,
+  type QuestId,
   type RuleId,
   type SealId,
 } from "./hanyang-timeslip-config";
@@ -107,6 +112,16 @@ export interface Progress {
   /** Total correct calls at the gate, for the ending screen. */
   gateCorrect: number;
   gateTotal: number;
+  /** Kills per ordinary monster kind (errands count from these). */
+  hunts: Record<HuntKind, number>;
+  /** Gate shifts finished with every call right. */
+  perfects: number;
+  /** Errand state: 0 not taken, 1 taken (counting from base), 2 handed in. */
+  quests: Record<QuestId, { s: 0 | 1 | 2; base: number }>;
+}
+
+function freshQuests(): Progress["quests"] {
+  return { phones: { s: 0, base: 0 }, drones: { s: 0, base: 0 }, perfect: { s: 0, base: 0 } };
 }
 
 export interface Game extends RngHolder {
@@ -120,7 +135,19 @@ export function createGame(seed: number): Game {
   return {
     rng: seed >>> 0,
     hero: { level: 1, exp: 0, hp: HERO_BASE.maxHp, maxHp: HERO_BASE.maxHp, sword: 0, coins: 0, kills: 0, faints: 0 },
-    progress: { forest: false, river: false, gate: false, rift: false, shifts: 0, bestShift: 0, gateCorrect: 0, gateTotal: 0 },
+    progress: {
+      forest: false,
+      river: false,
+      gate: false,
+      rift: false,
+      shifts: 0,
+      bestShift: 0,
+      gateCorrect: 0,
+      gateTotal: 0,
+      hunts: { phone: 0, bottle: 0, drone: 0 },
+      perfects: 0,
+      quests: freshQuests(),
+    },
     playMs: 0,
   };
 }
@@ -612,6 +639,7 @@ function damageMob(game: Game, field: FieldState, mob: Mob, events: FieldEvent[]
   const coins = randInt(game, stats.coins[0], stats.coins[1]);
   game.hero.coins += coins;
   game.hero.kills += 1;
+  if (mob.kind !== "boss") game.progress.hunts[mob.kind] += 1;
   events.push({ type: "kill", x: cx, y: mob.y, kind: mob.kind, exp: stats.exp, coins });
   for (const level of gainExp(game.hero, stats.exp)) events.push({ type: "levelup", level });
   if (mob.kind === "boss") {
@@ -962,9 +990,77 @@ export function settleShift(game: Game, correctCalls: number): ShiftResult {
   game.progress.bestShift = Math.max(game.progress.bestShift, correctCalls);
   game.progress.gateCorrect += correctCalls;
   game.progress.gateTotal += SHIFT_SIZE;
+  if (perfect) game.progress.perfects += 1;
   const earnedShard = !game.progress.gate && correctCalls >= SHIFT_PASS;
   if (earnedShard) game.progress.gate = true;
   return { correct: correctCalls, coins, earnedShard, perfect };
+}
+
+// ─── Errands ─────────────────────────────────────────────────────────────────
+
+export function questDef(id: QuestId) {
+  const def = QUESTS.find((q) => q.id === id);
+  if (!def) throw new Error(`unknown quest ${id}`);
+  return def;
+}
+
+function questMetric(game: Game, id: QuestId): number {
+  const m = questDef(id).metric;
+  return m === "perfect" ? game.progress.perfects : game.progress.hunts[m];
+}
+
+/** The errand a townsperson can offer right now, if any (the smith waits for the river). */
+export function questFor(game: Game, giver: NpcId): QuestId | null {
+  const def = QUESTS.find((q) => q.giver === giver);
+  if (!def) return null;
+  if (def.id === "drones" && !dockOpen(game.progress)) return null;
+  return game.progress.quests[def.id].s === 2 ? null : def.id;
+}
+
+export function questCount(game: Game, id: QuestId): number {
+  const q = game.progress.quests[id];
+  if (q.s === 2) return questDef(id).need;
+  if (q.s === 0) return 0;
+  return Math.min(questDef(id).need, Math.max(0, questMetric(game, id) - q.base));
+}
+
+export function questReady(game: Game, id: QuestId): boolean {
+  return game.progress.quests[id].s === 1 && questCount(game, id) >= questDef(id).need;
+}
+
+export function acceptQuest(game: Game, id: QuestId): boolean {
+  const q = game.progress.quests[id];
+  if (q.s !== 0) return false;
+  game.progress.quests[id] = { s: 1, base: questMetric(game, id) };
+  return true;
+}
+
+/** Hands an errand in: pays coins and experience, returns levels gained or null if not ready. */
+export function turnInQuest(game: Game, id: QuestId): number[] | null {
+  if (!questReady(game, id)) return null;
+  const { reward } = questDef(id);
+  game.progress.quests[id] = { s: 2, base: game.progress.quests[id].base };
+  game.hero.coins += reward.coins;
+  return gainExp(game.hero, reward.exp);
+}
+
+// ─── Achievements ────────────────────────────────────────────────────────────
+
+/** Every achievement the game state already earns (the daily one is granted by the UI). */
+export function earnedAchievements(game: Game): AchievementId[] {
+  const p = game.progress;
+  const h = game.hero;
+  const out: AchievementId[] = [];
+  if (h.kills >= 1) out.push("firstHunt");
+  if (h.kills >= HUNTER_KILLS) out.push("hunter");
+  if (h.level >= 10) out.push("level10");
+  if (h.sword >= SWORD_COST.length) out.push("masterSword");
+  if (p.river) out.push("riverCharm");
+  if (p.perfects >= 1) out.push("sharpEye");
+  if (QUESTS.every((q) => p.quests[q.id].s === 2)) out.push("errands");
+  if (p.rift) out.push("home");
+  if (p.rift && h.faints === 0) out.push("untouched");
+  return out;
 }
 
 // ─── Save ────────────────────────────────────────────────────────────────────
@@ -978,10 +1074,21 @@ export interface SaveData {
 }
 
 export function toSave(game: Game): SaveData {
-  return { v: 1, rng: game.rng, hero: { ...game.hero }, progress: { ...game.progress }, playMs: game.playMs };
+  const p = game.progress;
+  return { v: 1, rng: game.rng, hero: { ...game.hero }, progress: { ...p, hunts: { ...p.hunts }, quests: JSON.parse(JSON.stringify(p.quests)) }, playMs: game.playMs };
 }
 
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v) && v >= 0;
+
+function readQuests(raw: unknown): Progress["quests"] {
+  const out = freshQuests();
+  if (!raw || typeof raw !== "object") return out;
+  for (const id of Object.keys(out) as QuestId[]) {
+    const q = (raw as Record<string, { s?: unknown; base?: unknown }>)[id];
+    if (q && (q.s === 0 || q.s === 1 || q.s === 2) && isNum(q.base)) out[id] = { s: q.s, base: q.base };
+  }
+  return out;
+}
 
 /** Returns a game from saved JSON, or null if the data is missing or malformed. */
 export function fromSave(raw: string | null): Game | null {
@@ -999,7 +1106,20 @@ export function fromSave(raw: string | null): Game | null {
     return {
       rng: data.rng >>> 0,
       hero: { ...h, hp: Math.max(1, Math.min(h.hp, h.maxHp)) },
-      progress: { ...p, forest: p.forest === true, river: p.river === true, gate: p.gate === true, rift: p.rift === true },
+      progress: {
+        ...p,
+        forest: p.forest === true,
+        river: p.river === true,
+        gate: p.gate === true,
+        rift: p.rift === true,
+        hunts: {
+          phone: isNum(p.hunts?.phone) ? p.hunts.phone : 0,
+          bottle: isNum(p.hunts?.bottle) ? p.hunts.bottle : 0,
+          drone: isNum(p.hunts?.drone) ? p.hunts.drone : 0,
+        },
+        perfects: isNum(p.perfects) ? p.perfects : 0,
+        quests: readQuests(p.quests),
+      },
       playMs: data.playMs,
     };
   } catch {
