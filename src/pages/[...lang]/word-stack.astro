@@ -43,7 +43,7 @@ const m = meta[locale] ?? meta.en;
 
 <BaseLayout title={m.title} description={m.description} heading={m.title}>
   <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
-    <SpellTower client:load locale={locale} />
+    <SpellTower client:only="react" locale={locale} />
     <div class="mx-auto max-w-3xl px-4 mt-8">
       <GameGuide slug="word-stack" locale={locale} name={m.title.split(" — ")[0]} />
     </div>

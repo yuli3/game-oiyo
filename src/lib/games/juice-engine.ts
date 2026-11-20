@@ -6,6 +6,8 @@
  * 3. Mobile tactile haptic feedback (navigator.vibrate)
  */
 
+import { vibrationAllowed } from "../haptics/user-activation";
+
 export interface ScreenShakeState {
   trauma: number; // 0.0 to 1.0
   decay: number;  // Decay rate per second (default 1.2)
@@ -96,7 +98,7 @@ export function updateHitStop(
 export type HapticStyle = "light" | "medium" | "heavy" | "success" | "warning" | "combo";
 
 export function triggerHaptic(style: HapticStyle = "light"): boolean {
-  if (typeof navigator === "undefined" || !("vibrate" in navigator)) {
+  if (!vibrationAllowed()) {
     return false;
   }
 

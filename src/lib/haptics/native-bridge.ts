@@ -4,6 +4,8 @@
  * with seamless fallback to Web Vibration API and no-op on unsupported browsers.
  */
 
+import { vibrationAllowed } from "./user-activation";
+
 export type HapticPattern =
   | 'light'
   | 'medium'
@@ -93,7 +95,7 @@ export class NativeHapticsBridge {
     }
 
     // 2. Fallback to Web Vibration API
-    if (this.checkVibration()) {
+    if (vibrationAllowed()) {
       try {
         switch (pattern) {
           case 'fire':
