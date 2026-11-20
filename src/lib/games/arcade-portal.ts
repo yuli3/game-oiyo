@@ -14,6 +14,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Locale } from "../i18n";
+import { createPlaySessionTracker } from "./play-telemetry";
 
 export interface ArcadePortalLabels {
   enter: string;
@@ -102,6 +103,7 @@ export function useArcadePortal(options?: UseArcadePortalOptions) {
   const [isImmersive, setIsImmersive] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
+  const sessionRef = useRef(createPlaySessionTracker());
 
   const locale = options?.locale ?? "en";
   const labels = ARCADE_PORTAL_LABELS[locale] ?? ARCADE_PORTAL_LABELS.en;
@@ -127,6 +129,7 @@ export function useArcadePortal(options?: UseArcadePortalOptions) {
 
   const enterPortal = useCallback(async () => {
     setIsImmersive(true);
+    sessionRef.current.start();
     options?.onEnter?.();
     await acquireLock();
 
@@ -144,6 +147,7 @@ export function useArcadePortal(options?: UseArcadePortalOptions) {
 
   const exitPortal = useCallback(async () => {
     setIsImmersive(false);
+    sessionRef.current.end("exit");
     options?.onExit?.();
     await releaseLock();
 
@@ -172,6 +176,7 @@ export function useArcadePortal(options?: UseArcadePortalOptions) {
       const active = document.fullscreenElement === containerRef.current;
       if (!active && isImmersive) {
         setIsImmersive(false);
+        sessionRef.current.end("exit");
         options?.onExit?.();
         void releaseLock();
       }
@@ -211,6 +216,18 @@ export function useArcadePortal(options?: UseArcadePortalOptions) {
       };
     }
   }, [isImmersive]);
+
+  // Close an open play session when the player leaves the page or the game unmounts.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const session = sessionRef.current;
+    const onPageHide = () => session.end("pagehide");
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      window.removeEventListener("pagehide", onPageHide);
+      session.end("unmount");
+    };
+  }, []);
 
   // Cleanup wake lock on unmount
   useEffect(() => {
