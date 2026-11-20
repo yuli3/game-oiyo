@@ -158,7 +158,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
       const { isNewBest, bestScore } = saveHighScore('backpack-hero', score);
       if (isNewBest) setHighScore(bestScore);
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'backpack-hero', score } }));
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'satchel-crawl', score } }));
       }
       if (engineState.gameState === 'victory') {
         addTrauma(0.5);

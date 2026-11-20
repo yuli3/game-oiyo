@@ -30,7 +30,7 @@ interface SpellTowerProps {
 
 const I18N: Record<string, Record<string, string>> = {
   ko: {
-    title: "스펠 타워 (SpellTower Web)",
+    title: "워드 스택 (Word Stack)",
     desc: "인접한 글자들을 연결하여 단어를 만들고, 중력 붕괴로 타워가 천장에 닿기 전에 무너뜨리세요.",
     score: "점수",
     words: "완성 단어",
@@ -45,7 +45,7 @@ const I18N: Record<string, Record<string, string>> = {
     deadCleared: "개 해골 블록 소멸!",
   },
   en: {
-    title: "SpellTower Web",
+    title: "Word Stack",
     desc: "Link adjacent letter tiles into words and trigger gravity cascades before the tower overflows.",
     score: "Score",
     words: "Words",
@@ -60,7 +60,7 @@ const I18N: Record<string, Record<string, string>> = {
     deadCleared: "skull blocks cleared!",
   },
   ja: {
-    title: "スペルタワー (SpellTower Web)",
+    title: "ワードスタック (Word Stack)",
     desc: "隣接する文字を繋げて単語を作り、塔が天井に届く前に重力崩壊させよう。",
     score: "スコア",
     words: "完成単語",
@@ -75,7 +75,7 @@ const I18N: Record<string, Record<string, string>> = {
     deadCleared: "個のドクロブロック消滅！",
   },
   zh: {
-    title: "拼字高塔 (SpellTower Web)",
+    title: "叠字塔 (Word Stack)",
     desc: "连接相邻字母拼出单词，在字母方块触顶淹没前引发重力坍塌消除高塔。",
     score: "得分",
     words: "消除单词",
@@ -90,7 +90,7 @@ const I18N: Record<string, Record<string, string>> = {
     deadCleared: "个骷髅障碍方块被清除！",
   },
   fr: {
-    title: "SpellTower Web",
+    title: "Word Stack",
     desc: "Reliez les lettres adjacentes et déclenchez des cascades de gravité avant que la tour ne déborde.",
     score: "Score",
     words: "Mots",
@@ -105,7 +105,7 @@ const I18N: Record<string, Record<string, string>> = {
     deadCleared: "blocs crâne éliminés !",
   },
   es: {
-    title: "SpellTower Web",
+    title: "Word Stack",
     desc: "Une fichas de letras adyacentes y desata cascadas de gravedad antes de que la torre se desborde.",
     score: "Puntuación",
     words: "Palabras",
@@ -210,7 +210,7 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
       const { isNewBest, bestScore } = saveHighScore("spell-tower", game.score);
       if (isNewBest) setHighScore(bestScore);
       if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "spell-tower", score: game.score } }));
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "word-stack", score: game.score } }));
       }
     }
   }, [game.score, game.status]);
@@ -246,10 +246,10 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
   const handleShareCard = useCallback(async () => {
     try {
       const canvas = createShareCardCanvas({
-        title: "SpellTower Web",
+        title: "Word Stack",
         subtitle: "Gravity Letter Word Arena",
         score: `${game.score} PTS`,
-        slug: "spell-tower",
+        slug: "word-stack",
         customStats: [
           { label: "Words Cleared", value: `${game.wordsFound.length}` },
           { label: "Status", value: game.status === "game_over" ? "Tower Collapsed" : "Active" },
@@ -260,7 +260,7 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
         setShareCardCopied(true);
         setTimeout(() => setShareCardCopied(false), 2000);
       } else {
-        downloadShareCard(canvas, `spelltower-${game.score}.png`);
+        downloadShareCard(canvas, `word-stack-${game.score}.png`);
       }
     } catch {}
   }, [game.score, game.status, game.wordsFound.length]);

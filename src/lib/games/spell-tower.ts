@@ -1,7 +1,7 @@
 /**
- * SpellTower Web - Pure Core Game Logic
+ * Word Stack - Pure Core Game Logic
  *
- * Inspired by Zach Gage's mobile hit SpellTower.
+ * Original OIYO falling-letter word puzzle.
  * Features 7x9 letter grid, word path tracing (8 directions),
  * adjacent dead block clearance, gravity cascade collapse, and tower rising.
  */

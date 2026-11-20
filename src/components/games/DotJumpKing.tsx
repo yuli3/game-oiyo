@@ -85,7 +85,7 @@ const BEST_KEY = "oiyo-dot-jumpking-best",
   SAVE_KEY = "oiyo:dot-jumpking:v1";
 const COPY = {
   ko: {
-    title: "점프 킹",
+    title: "차지 클라임",
     sub: "정상을 향한 한 번의 도약",
     height: "높이",
     best: "최고",
@@ -101,7 +101,7 @@ const COPY = {
     restored: "저장된 등반을 이어서 불러왔어요",
   },
   en: {
-    title: "Dot Jump King",
+    title: "Charge Climb",
     sub: "One decisive leap toward the summit",
     height: "Height",
     best: "Best",
@@ -117,7 +117,7 @@ const COPY = {
     restored: "Your saved climb was restored",
   },
   ja: {
-    title: "ドットジャンプキング",
+    title: "チャージクライム",
     sub: "頂上を目指す一度の跳躍",
     height: "高さ",
     best: "ベスト",
@@ -133,7 +133,7 @@ const COPY = {
     restored: "保存した登山を復元しました",
   },
   zh: {
-    title: "点点跳跳王",
+    title: "蓄力攀登",
     sub: "向山顶发起决定性一跃",
     height: "高度",
     best: "最高",
@@ -149,7 +149,7 @@ const COPY = {
     restored: "已恢复保存的攀登",
   },
   fr: {
-    title: "Dot Jump King",
+    title: "Charge Climb",
     sub: "Un saut décisif vers le sommet",
     height: "Hauteur",
     best: "Record",
@@ -165,7 +165,7 @@ const COPY = {
     restored: "Votre ascension a été restaurée",
   },
   es: {
-    title: "Dot Jump King",
+    title: "Charge Climb",
     sub: "Un salto decisivo hacia la cima",
     height: "Altura",
     best: "Récord",
@@ -434,10 +434,10 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
 
   const handleShareCard = useCallback(async () => {
     const cardCanvas = createShareCardCanvas({
-      title: "Dot Jump King",
+      title: "Charge Climb",
       subtitle: height >= best && height > 0 ? "New High Altitude Ascent!" : "Cloud Climbing Challenge",
       score: `${height}m`,
-      slug: "dot-jumpking",
+      slug: "charge-climb",
       customStats: [
         { label: "Best Ascent", value: `${Math.max(best, height)}m` },
         { label: "Target", value: "Apex Cloud" },
@@ -448,7 +448,7 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 2000);
     } else {
-      downloadShareCard(cardCanvas, `dot-jumpking-${height}m.png`);
+      downloadShareCard(cardCanvas, `charge-climb-${height}m.png`);
     }
   }, [height, best]);
 

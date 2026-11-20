@@ -48,7 +48,7 @@ const completedRisk = {
   "light-up": { mobile: "low", accessibility: "low", performance: "low" },
   "korean-semantle": { mobile: "low", accessibility: "low", performance: "low" },
   "isometric-city": { mobile: "low", accessibility: "low", performance: "medium" },
-  "dot-jumpking": { mobile: "low", accessibility: "low", performance: "low" },
+  "charge-climb": { mobile: "low", accessibility: "low", performance: "low" },
   "animal-pop": { mobile: "low", accessibility: "low", performance: "low" },
   "block-burst": { mobile: "low", accessibility: "low", performance: "low" },
   "texas-holdem": { mobile: "low", accessibility: "low", performance: "low" },

@@ -13,27 +13,27 @@ const { locale } = Astro.props as { locale: Locale };
 
 const meta: Record<Locale, { title: string; description: string }> = {
   ko: {
-    title: "백팩 히어로 웹 — 인벤토리 정렬 덱빌더 턴제 던전 RPG",
+    title: "가방 던전 — 인벤토리 정렬 덱빌더 턴제 던전 RPG",
     description: "제한된 배낭 공간에 무기, 방어구, 유물을 테트리스 격자로 정리하고 90° 회전 및 인접 시너지를 극대화하여 던전 몬스터를 격파하는 인벤토리 덱빌딩 로그라이크.",
   },
   en: {
-    title: "Backpack Hero Web — Inventory Management Roguelike RPG",
+    title: "Satchel Crawl — Inventory Management Roguelike RPG",
     description: "Organize weapons, shields, and relics in a grid backpack. Maximize spatial adjacency synergies and 90-degree rotations to conquer dungeon depths.",
   },
   ja: {
-    title: "バックパック・ヒーロー Web — インベントリ整理ローグライクRPG",
+    title: "かばんダンジョン — インベントリ整理ローグライクRPG",
     description: "限られたバックパックに武器や盾、レリックをテトリスのように整理。90度回転や隣接シナジーを活かしてダンジョンを踏破するターン制RPG。",
   },
   zh: {
-    title: "背包英雄网页版 — 背包整理肉鸽回合制地牢RPG",
+    title: "背囊地牢 — 背包整理肉鸽回合制地牢RPG",
     description: "在有限的网格背包中旋转摆放武器、护盾与遗物。利用空间相邻协同效应激发超强战力，征服幽深未知的地下迷宫。",
   },
   fr: {
-    title: "Backpack Hero Web — RPG roguelike de gestion d'inventaire",
+    title: "Satchel Crawl — RPG roguelike de gestion d'inventaire",
     description: "Organisez armes, boucliers et reliques dans votre sac à dos. Optimisez les synergies d'adjacence spatiale pour vaincre les donjons.",
   },
   es: {
-    title: "Backpack Hero Web — RPG roguelike de gestión de inventario",
+    title: "Satchel Crawl — RPG roguelike de gestión de inventario",
     description: "Organiza armas, escudos y reliquias en una mochila cuadriculada. Maximiza las sinergias espaciales adyacentes para conquistar mazmorras.",
   },
 };
@@ -45,7 +45,7 @@ const m = meta[locale] ?? meta.en;
   <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
     <BackpackHero client:load locale={locale} />
     <div class="mx-auto max-w-3xl px-4 mt-8">
-      <GameGuide slug="backpack-hero" locale={locale} name={m.title.split(" — ")[0]} />
+      <GameGuide slug="satchel-crawl" locale={locale} name={m.title.split(" — ")[0]} />
     </div>
   </div>
 </BaseLayout>

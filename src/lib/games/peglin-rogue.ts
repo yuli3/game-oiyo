@@ -1,5 +1,5 @@
 /**
- * Pure simulation & 2D physics engine for 『페글린 로그 (Peglin Roguelike)』
+ * Pure simulation & 2D physics engine for 『페그 던전 (Peg Dungeon)』
  *
  * Pachinko ball drop deckbuilder roguelike:
  * Elastic pinball peg bounces, bomb & crit augments, turn-based RPG enemy battles.

@@ -9,7 +9,7 @@
     "no-production-residue",
     "key-art-matches-play"
   ],
-  "flagship": ["star-blaster", "animal-pop", "block-burst", "brick-breaker", "snake-game", "dot-jumpking"],
+  "flagship": ["star-blaster", "animal-pop", "block-burst", "brick-breaker", "snake-game", "charge-climb"],
   "games": {
     "star-blaster": {
       "cluster": "flat-vector-topdown",
@@ -66,7 +66,7 @@
       },
       "note": "Batch 2 VFX + W4 play-matching key art from in-game sprites."
     },
-    "dot-jumpking": {
+    "charge-climb": {
       "cluster": "clay-character",
       "gates": {
         "style-bible": "pass",

@@ -2520,7 +2520,7 @@
       "componentLines": 363
     },
     {
-      "slug": "dot-jumpking",
+      "slug": "charge-climb",
       "genre": "arcade",
       "generation": "G3",
       "component": "src/components/games/DotJumpKing.tsx",
@@ -2567,7 +2567,7 @@
         "craft-review"
       ],
       "owner": "game",
-      "route": "src/pages/[...lang]/dot-jumpking.astro",
+      "route": "src/pages/[...lang]/charge-climb.astro",
       "componentLines": 448
     },
     {

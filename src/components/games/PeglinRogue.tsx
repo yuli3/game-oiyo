@@ -80,7 +80,7 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
       const { isNewBest, bestScore } = saveHighScore("peglin-rogue", score);
       if (isNewBest) setHighScore(bestScore);
       if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "peglin-rogue", score } }));
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "peg-dungeon", score } }));
       }
     }
   }, [game.status, game.stage, game.enemy.hp, game.enemy.maxHp]);
@@ -241,8 +241,8 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
   const handleShare = async () => {
     MobileHapticsPro.medium();
     const canvas = createShareCardCanvas({
-      title: "Peglin Rogue Pachinko",
-      slug: "peglin-rogue",
+      title: "Peg Dungeon",
+      slug: "peg-dungeon",
       score: `Stage ${game.stage}`,
       subtitle: `Hero HP: ${game.playerHp}/${game.maxPlayerHp} • VS ${game.enemy.name}`,
     });
@@ -251,7 +251,7 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } else {
-      downloadShareCard(canvas, `peglin-rogue-stage${game.stage}.png`);
+      downloadShareCard(canvas, `peg-dungeon-stage${game.stage}.png`);
     }
   };
 
