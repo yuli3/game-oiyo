@@ -671,7 +671,7 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
         var bold = new GUIStyle(GUI.skin.box) { fontSize = 14, fontStyle = FontStyle.Bold };
         GUI.Box(new Rect(14, 12, Screen.width - 28, 56), "");
         GUI.Label(new Rect(26, 18, 600, 24),
-            $"DARKEST TORCH UNITY  |  CORRIDOR {_corridor}/{BossCorridor}  |  TORCH: {Mathf.RoundToInt(_torch)}/100  |  GOLD: {_gold}", bold);
+            $"TORCH EXPEDITION  |  CORRIDOR {_corridor}/{BossCorridor}  |  TORCH: {Mathf.RoundToInt(_torch)}/100  |  GOLD: {_gold}", bold);
         GUI.Label(new Rect(26, 40, 620, 20),
             _inCombat ? (_playerTurn ? $"COMBAT: {_heroes[Mathf.Clamp(_activeHeroIdx, 0, 3)].Name}'s Turn — Press 1-4 or Click Skill" : "ENEMIES ACTING...") : "EXPLORATION: Hold D/→ to March • Space to Loot Chest • T to Light Torch");
 

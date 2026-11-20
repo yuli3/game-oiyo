@@ -16,7 +16,7 @@ public static class MiniMotorwaysBuild
         EditorSceneManager.SaveScene(scene, ScenePath);
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
         PlayerSettings.companyName = "OIYO";
-        PlayerSettings.productName = "Mini Motorways Unity";
+        PlayerSettings.productName = "Road Weaver";
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
         PlayerSettings.runInBackground = false;
         AssetDatabase.SaveAssets();

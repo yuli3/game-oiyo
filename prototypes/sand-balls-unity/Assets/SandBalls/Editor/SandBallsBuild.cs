@@ -16,7 +16,7 @@ public static class SandBallsBuild
         EditorSceneManager.SaveScene(scene, ScenePath);
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
         PlayerSettings.companyName = "OIYO";
-        PlayerSettings.productName = "Sand Balls Physics Unity";
+        PlayerSettings.productName = "Sand Dig";
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
         PlayerSettings.runInBackground = false;
         AssetDatabase.SaveAssets();

@@ -16,7 +16,7 @@ public static class SliceMasterBuild
         EditorSceneManager.SaveScene(scene, ScenePath);
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
         PlayerSettings.companyName = "OIYO";
-        PlayerSettings.productName = "Slice Master Unity";
+        PlayerSettings.productName = "Blade Drop 3D";
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
         PlayerSettings.runInBackground = false;
         AssetDatabase.SaveAssets();

@@ -16,7 +16,7 @@ public static class CrossyRoadBuild
         EditorSceneManager.SaveScene(scene, ScenePath);
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
         PlayerSettings.companyName = "OIYO";
-        PlayerSettings.productName = "Crossy Road 3D Unity";
+        PlayerSettings.productName = "Hop Across 3D";
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
         PlayerSettings.runInBackground = false;
         AssetDatabase.SaveAssets();

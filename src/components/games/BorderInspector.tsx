@@ -100,7 +100,7 @@ const COPY: Record<
   }
 > = {
   ko: {
-    title: '페이퍼 플리즈 국경 심사',
+    title: '국경 서류 심사',
     subtitle: '여권·입국 허가증·규칙서의 두 항목을 클릭해 위조/만료 불일치를 적발하고 스탬프를 날인하세요',
     applicantLabel: '심사 대상',
     creditsLabel: '보유 급여',
@@ -198,7 +198,7 @@ const COPY: Record<
     },
   },
   ja: {
-    title: 'ペーパー・プリーズ 国境審査',
+    title: '国境書類審査',
     subtitle: 'パスポート・入国許可証・規則書の2項目をクリック照合して偽造を見抜き、スタンプを押そう',
     applicantLabel: '審査対象',
     creditsLabel: '所持金',
@@ -247,7 +247,7 @@ const COPY: Record<
     },
   },
   zh: {
-    title: '请出示证件：边境审查',
+    title: '边境证件审查',
     subtitle: '点击比对护照、入境许可证与规则书中的两项栏目，揪出伪造漏洞并盖下印章',
     applicantLabel: '申请人',
     creditsLabel: '薪资',

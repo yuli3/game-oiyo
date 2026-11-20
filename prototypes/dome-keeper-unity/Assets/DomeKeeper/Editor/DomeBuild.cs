@@ -16,7 +16,7 @@ public static class DomeBuild
         EditorSceneManager.SaveScene(scene, ScenePath);
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
         PlayerSettings.companyName = "OIYO";
-        PlayerSettings.productName = "Dome Keeper Unity";
+        PlayerSettings.productName = "Drill Dome Defense";
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
         PlayerSettings.runInBackground = false;
         AssetDatabase.SaveAssets();

@@ -262,7 +262,7 @@ export function validateRuleOfThree(
       feedbackKo:
         '🏆 [3인의 법칙 (Rule of Three) 검증 완료!] 선장·갑판장·군의관 3인의 신원과 사인이 완벽히 일치하여 장부가 영구 봉인되었습니다!',
       feedbackEn:
-        '🏆 [Rule of Three Confirmed!] All 3 Fates are 100% accurate—the Obra Dinn Ledger has permanently sealed the truth!',
+        '🏆 [Rule of Three Confirmed!] All 3 Fates are 100% accurate—the Fate Ledger has permanently sealed the truth!',
     };
   }
 
