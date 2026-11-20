@@ -28,8 +28,8 @@ describe("share-card module", () => {
       expect(resolveRankTier("game-2048", 2048)).toBe("MASTER");
       expect(resolveRankTier("game-2048", 512)).toBe("APPRENTICE");
       expect(resolveRankTier("cosmic-merge", 12000)).toBe("GODLIKE");
-      expect(resolveRankTier("wordle", 3)).toBe("GENIUS");
-      expect(resolveRankTier("wordle", 4)).toBe("MASTER");
+      expect(resolveRankTier("five-letter-guess", 3)).toBe("GENIUS");
+      expect(resolveRankTier("five-letter-guess", 4)).toBe("MASTER");
       expect(resolveRankTier("sudoku", 150)).toBe("GRANDMASTER");
       expect(resolveRankTier("sudoku", 250)).toBe("MASTER");
       expect(resolveRankTier("minesweeper", 18)).toBe("DEMOLITIONIST");

@@ -342,7 +342,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
       try {
         const dateKey = new Date().toISOString().slice(0, 10);
         const current = loadArcadePassProgress(dateKey);
-        const updated = reportMissionProgress(current, 'ftl-mini', 1);
+        const updated = reportMissionProgress(current, 'star-skiff', 1);
         saveArcadePassProgress(updated);
       } catch {
         // arcade pass fallback

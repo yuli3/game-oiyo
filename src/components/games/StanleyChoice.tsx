@@ -227,7 +227,7 @@ export default function StanleyChoice() {
       title: 'THE STANLEY PARABLE',
       subtitle: endingData?.title || '수수께끼의 엔딩 도달',
       score: `${completionPct}%`,
-      slug: 'stanley-choice',
+      slug: 'narrator-door',
       customStats: [
         { label: '도달 엔딩', value: endingData?.code || 'END' },
         { label: '엔딩 수집율', value: `${completionPct}%` },

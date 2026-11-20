@@ -176,7 +176,7 @@
       },
       "note": "Baked ship flame cropped; 4-frame pixel exhaust loops behind the hull. Physics radius unchanged."
     },
-    "wordle": {
+    "five-letter-guess": {
       "cluster": "tile-motion",
       "gates": {
         "style-bible": "pass",
@@ -330,7 +330,7 @@
       },
       "note": "Only the stone just placed zooms in. Restored boards keep the last-move ring without replaying every stone."
     },
-    "kingdomino": {
+    "kingdom-tiles": {
       "cluster": "card-flip",
       "gates": {
         "style-bible": "pass",

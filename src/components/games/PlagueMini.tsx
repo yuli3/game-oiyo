@@ -126,10 +126,10 @@ export const PlagueMini: React.FC = () => {
 
   const handleShareCard = useCallback(async () => {
     const canvas = createShareCardCanvas({
-      title: "Plague Mini",
+      title: "Outbreak Map",
       subtitle: victory ? "전 지구적 대변혁 — 박멸 성공" : "백신 개발로 진압됨",
       score: victory ? "WORLD EXTINCTION" : `CURE ${cureProgress}%`,
-      slug: "plague-mini",
+      slug: "outbreak-map",
       customStats: [
         { label: "DAYS", value: `${day} Days` },
         { label: "DEAD", value: totalDead.toLocaleString() },
@@ -243,7 +243,7 @@ export const PlagueMini: React.FC = () => {
             try {
               const dateKey = new Date().toISOString().slice(0, 10);
               const current = loadArcadePassProgress(dateKey);
-              const updated = reportMissionProgress(current, 'plague-mini', 1);
+              const updated = reportMissionProgress(current, 'outbreak-map', 1);
               saveArcadePassProgress(updated);
             } catch {
               // arcade pass fallback

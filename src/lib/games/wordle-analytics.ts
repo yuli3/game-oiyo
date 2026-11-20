@@ -11,7 +11,7 @@ interface WordleAnalyticsContext {
 
 export function wordleAnalyticsPayload(context: WordleAnalyticsContext): Record<string, string | number> {
   const payload: Record<string, string | number> = {
-    game_id: 'wordle',
+    game_id: 'five-letter-guess',
     mode: context.mode,
     hard_mode: context.hardMode ? 1 : 0,
   };

@@ -132,7 +132,7 @@ export default function TownscaperIsland({ locale }: Props) {
     try {
       const dateKey = new Date().toISOString().slice(0, 10);
       const current = loadArcadePassProgress(dateKey);
-      const updated = reportMissionProgress(current, 'townscaper-island', blocks);
+      const updated = reportMissionProgress(current, 'harbor-blocks', blocks);
       saveArcadePassProgress(updated);
     } catch {
       // Safe fallback in SSR/test
@@ -290,7 +290,7 @@ export default function TownscaperIsland({ locale }: Props) {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
         <div>
           <h2 className="text-lg font-bold tracking-tight">
-            🏝️ {isKo ? '타운스케이퍼 아일랜드 빌더' : 'Townscaper Island Builder'}
+            🏝️ {isKo ? '하버 블록 빌더' : 'Harbor Blocks'}
           </h2>
           <p className="text-xs text-muted-foreground">
             {isKo ? state.lastActionNoteKo : state.lastActionNoteEn}

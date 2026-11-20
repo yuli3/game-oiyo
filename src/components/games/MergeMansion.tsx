@@ -136,7 +136,7 @@ export default function MergeMansion() {
       const { isNewBest, bestScore } = saveHighScore('merge-mansion', score);
       if (isNewBest) setHighScore(bestScore);
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'merge-mansion', score } }));
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'merge-cottage', score } }));
       }
     }
   }, [stars, completedCount]);
@@ -366,10 +366,10 @@ export default function MergeMansion() {
   const handleShareCard = useCallback(async () => {
     try {
       const canvas = createShareCardCanvas({
-        title: 'Merge Mansion',
+        title: 'Merge Cottage',
         subtitle: '저택 복원 머지 퍼즐',
         score: `${stars} STARS`,
-        slug: 'merge-mansion',
+        slug: 'merge-cottage',
         customStats: [
           { label: '복원 구역', value: `${completedCount} / ${engine.quests.length}` },
           { label: '진행률', value: `${progressPct}%` },

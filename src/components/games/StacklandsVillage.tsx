@@ -115,8 +115,8 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
     MobileHapticsPro.mediumImpact();
     try {
       const canvas = await createShareCardCanvas({
-        title: isKo ? "스택랜드 카드 빌리지" : "Stacklands Card Village",
-        slug: "stacklands-village",
+        title: isKo ? "카드 빌리지" : "Card Village",
+        slug: "card-village",
         score: `Moon ${state.moon}/${state.maxMoons} (Score: ${state.score})`,
         subtitle: isKo ? `인구: ${popCount}명 | 코인: ${state.coins}C` : `Pop: ${popCount} | Coins: ${state.coins}C`,
       });
@@ -151,12 +151,12 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
       try {
         const dateKey = new Date().toISOString().slice(0, 10);
         const current = loadArcadePassProgress(dateKey);
-        const updated = reportMissionProgress(current, "stacklands-village", 1);
+        const updated = reportMissionProgress(current, "card-village", 1);
         saveArcadePassProgress(updated);
       } catch {
         // ignore
       }
-      recordResult("stacklands-village", "w");
+      recordResult("card-village", "w");
       if (!celebratedRef.current) {
         celebratedRef.current = true;
         MobileHapticsPro.heavyImpact();
@@ -222,8 +222,8 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
         <div>
           <h1 className="text-xl font-black tracking-tight md:text-2xl">
             {isKo
-              ? "🃏 스택랜드 카드 빌리지 (Stacklands Card Village)"
-              : "🃏 Stacklands Card Village"}
+              ? "🃏 카드 빌리지 (Card Village)"
+              : "🃏 Card Village"}
           </h1>
           <p className="mt-1 text-xs text-muted-foreground md:text-sm">
             {isKo

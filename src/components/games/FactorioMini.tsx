@@ -89,7 +89,7 @@ const I18N: Record<
   }
 > = {
   ko: {
-    title: "팩토리오 미니",
+    title: "벨트 팩토리",
     subtitle: "채굴기·용광로·조립기·컨베이어 벨트를 연결해 연구실(🔬)에 과학 팩을 자동 공급하세요!",
     rpLabel: "연구 점수 (RP)",
     deliveredLabel: "납품 수량",
@@ -121,7 +121,7 @@ const I18N: Record<
     controlsHint: "타일 클릭/드래그: 설비 배치 · 동일 설비 재클릭 또는 [R]: 90° 회전 · 철판+구리판을 같은 조립기에 넣으면 적색 과학팩(65 RP) 합성!",
   },
   en: {
-    title: "Factorio Automation Mini",
+    title: "Belt Factory",
     subtitle: "Connect Miners, Smelters, Assemblers, and Conveyor Belts to feed the Research Lab!",
     rpLabel: "Research (RP)",
     deliveredLabel: "Delivered",
@@ -153,7 +153,7 @@ const I18N: Record<
     controlsHint: "Click/Drag tile: Place building · Click same building or [R]: Rotate 90° · Feed Iron + Copper plates into one Assembler for Science Packs (65 RP)!",
   },
   ja: {
-    title: "ファクトリオ ミニ",
+    title: "ベルトファクトリー",
     subtitle: "採掘機・溶鉱炉・組立機・コンベアを繋いで研究所(🔬)へ自動供給しよう！",
     rpLabel: "研究ポイント (RP)",
     deliveredLabel: "納品数",
@@ -185,7 +185,7 @@ const I18N: Record<
     controlsHint: "タイルクリック: 設置 · 同じ設備をクリックまたは[R]: 90°回転 · 鉄板+銅板を同じ組立機に入れると赤サイエンスパック(65 RP)を合成！",
   },
   zh: {
-    title: "异星工厂 迷你版",
+    title: "传送带工厂",
     subtitle: "连接采矿机、熔炉、组装机与传送带，向研究中心(🔬)全自动输送科技包！",
     rpLabel: "研究点数 (RP)",
     deliveredLabel: "已交付",
@@ -217,7 +217,7 @@ const I18N: Record<
     controlsHint: "点击网格：建造设施 · 再次点击同设施或按 [R]：旋转 90° · 将铁板与铜板汇入同一组装机即可合成高价值红瓶（65 RP）！",
   },
   fr: {
-    title: "Factorio Automation Mini",
+    title: "Belt Factory",
     subtitle: "Reliez foreuses, fours, assembleuses et convoyeurs pour alimenter le laboratoire !",
     rpLabel: "Recherche (RP)",
     deliveredLabel: "Livré",
@@ -249,7 +249,7 @@ const I18N: Record<
     controlsHint: "Clic sur case : Construire · Clic identique ou [R] : Pivoter 90° · Fer + Cuivre dans une assembleuse = Pack scientifique (65 RP) !",
   },
   es: {
-    title: "Factorio Automation Mini",
+    title: "Belt Factory",
     subtitle: "¡Conecta perforadoras, hornos, ensambladoras y cintas para abastecer el laboratorio!",
     rpLabel: "Investigación (RP)",
     deliveredLabel: "Entregado",
@@ -412,7 +412,7 @@ export default function FactorioMini({ locale = "ko" }: Props) {
       try {
         const dateKey = new Date().toISOString().slice(0, 10);
         const current = loadArcadePassProgress(dateKey);
-        const updated = reportMissionProgress(current, 'factorio-mini', 1);
+        const updated = reportMissionProgress(current, 'belt-factory', 1);
         saveArcadePassProgress(updated);
       } catch {
         // arcade pass fallback
@@ -511,7 +511,7 @@ export default function FactorioMini({ locale = "ko" }: Props) {
         // Report Arcade Pass mission progress on RP gain
         const dateKey = new Date().toISOString().slice(0, 10);
         const pass = loadArcadePassProgress(dateKey);
-        const updated = reportMissionProgress(pass, "factorio-mini", st.rp);
+        const updated = reportMissionProgress(pass, "belt-factory", st.rp);
         saveArcadePassProgress(updated);
       }
 
@@ -881,7 +881,7 @@ export default function FactorioMini({ locale = "ko" }: Props) {
             <div className="flex items-center gap-3">
               <img
                 src={FACTORIO_MINI_SPRITES.trophy}
-                alt="Factorio Trophy"
+                alt="Belt Factory Trophy"
                 width={40}
                 height={40}
                 className="size-10 object-contain animate-bounce drop-shadow-md"

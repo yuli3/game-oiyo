@@ -77,7 +77,7 @@ const COPY: Record<
   }
 > = {
   ko: {
-    title: '돔 키퍼 채굴 디펜스',
+    title: '드릴 돔 디펜스',
     subtitle: '지하 광산 채굴(Engine v5.0 보로노이 파쇄)과 유리 돔 레이저 방어를 오가며 유물 코어를 인양하세요.',
     wave: '웨이브',
     phase: '페이즈',
@@ -94,7 +94,7 @@ const COPY: Record<
     defenseTitle: '지상 외계 침공군 (타깃 클릭 시 돔 레이저 포격)',
   },
   en: {
-    title: 'Dome Keeper Drill Defense',
+    title: 'Drill Dome Defense',
     subtitle: 'Alternate between underground stratum mining (Engine v5.0 Voronoi Shatter) and surface Glass Dome laser defense.',
     wave: 'Wave',
     phase: 'Phase',
@@ -111,7 +111,7 @@ const COPY: Record<
     defenseTitle: 'Surface Alien Assault (Click invader to fire Dome Laser)',
   },
   ja: {
-    title: 'ドームキーパー採掘ディフェンス',
+    title: 'ドリルドーム防衛',
     subtitle: '地下鉱山の掘削（Engine v5.0 ボロノイ破砕）とガラスドームのレーザー防衛を切り替え、遺物コアを回収しよう。',
     wave: 'ウェーブ',
     phase: 'フェーズ',
@@ -128,7 +128,7 @@ const COPY: Record<
     defenseTitle: '地上エイリアン襲撃（標的クリックでレーザー砲撃）',
   },
   zh: {
-    title: '穹顶守护者采矿防卫',
+    title: '钻探穹顶防卫',
     subtitle: '在地下矿层钻探（Engine v5.0 泰森多边形破碎）与地表玻璃穹顶激光防卫之间切换，发掘远古遗物核心。',
     wave: '波次',
     phase: '阶段',
@@ -145,7 +145,7 @@ const COPY: Record<
     defenseTitle: '地表异形袭击（点击目标发射穹顶激光）',
   },
   fr: {
-    title: 'Dome Keeper : Défense & Forage',
+    title: 'Drill Dome Defense',
     subtitle: 'Alternez entre forage souterrain (Voronoi Shatter v5.0) et défense laser du dôme de verre.',
     wave: 'Vague',
     phase: 'Phase',
@@ -162,7 +162,7 @@ const COPY: Record<
     defenseTitle: 'Assaut Alien en Surface (Cliquez une cible pour tirer)',
   },
   es: {
-    title: 'Dome Keeper: Defensa y Perforación',
+    title: 'Drill Dome Defense',
     subtitle: 'Alterna entre la excavación subterránea (Voronoi Shatter v5.0) y la defensa láser de la cúpula.',
     wave: 'Oleada',
     phase: 'Fase',
@@ -204,12 +204,12 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
       try {
         const dateKey = new Date().toISOString().slice(0, 10);
         const current = loadArcadePassProgress(dateKey);
-        const updated = reportMissionProgress(current, 'dome-keeper', 1);
+        const updated = reportMissionProgress(current, 'drill-dome', 1);
         saveArcadePassProgress(updated);
       } catch {
         // ignore storage errors
       }
-      recordResult('dome-keeper', 'w');
+      recordResult('drill-dome', 'w');
     } else if (state.status === 'lost') {
       MobileHapticsPro.warning();
     }

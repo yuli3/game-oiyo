@@ -81,7 +81,7 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
       try {
         const dateKey = new Date().toISOString().slice(0, 10);
         const current = loadArcadePassProgress(dateKey);
-        const updated = reportMissionProgress(current, 'baba-rule-shifter', 1);
+        const updated = reportMissionProgress(current, 'rule-blocks', 1);
         saveArcadePassProgress(updated);
       } catch {
         // arcade pass fallback
@@ -229,7 +229,7 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
         return (
           <img
             src={BABA_IS_YOU_SPRITES.baba}
-            alt="Baba"
+            alt="Rule Blocks hero"
             className="size-8 object-contain drop-shadow-sm animate-bounce"
           />
         );
@@ -305,7 +305,7 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
         <div className="flex items-center gap-2">
           <img
             src={BABA_IS_YOU_SPRITES.baba}
-            alt="Baba"
+            alt="Rule Blocks hero"
             className="size-5 object-contain inline-block"
           />
           <span className="font-bold text-primary px-2 py-0.5 rounded bg-primary/10 border border-primary/20">

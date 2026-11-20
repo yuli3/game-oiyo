@@ -15,8 +15,8 @@ const humanize = (s: string) =>
   s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
 const AI_OPPONENT_GAMES = new Set([
-  'chess', 'checkers', 'gomoku', 'janggi', 'connect-four', 'reversi',
-  'blackjack', 'bad-north-tactics', 'tents-and-trees',
+  'chess', 'checkers', 'gomoku', 'janggi', 'four-in-a-row', 'reversi',
+  'blackjack', 'shield-isle-tactics', 'tents-and-trees',
 ]);
 
 export const GET: APIRoute = async () => {

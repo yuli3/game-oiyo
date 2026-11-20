@@ -69,7 +69,7 @@ type UILocale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
 type Status = "loading" | "playing" | "won" | "revealed" | "error";
 
 const DATA_BASE = "/data/korean-semantle";
-const GAME_ID = "korean-semantle";
+const GAME_ID = "word-warmth";
 const SAVE_KEY = "oiyo:korean-semantle:v1";
 const HINT_KEY_PREFIX = "oiyo:korean-semantle:hints:v1:";
 const SOUND_STORAGE_KEY = "korean_semantle_sound_muted";
@@ -121,7 +121,7 @@ const COPY: Record<UILocale, {
   restored: string;
 }> = {
   ko: {
-    title: "꼬맨틀",
+    title: "단어 온도",
     subtitle: "숨은 단어와 의미가 가까운 단어를 추측하세요",
     placeholder: "단어 입력",
     submit: "추측",
@@ -147,7 +147,7 @@ const COPY: Record<UILocale, {
     sound: "소리", restored: "오늘의 추측을 이어서 불러왔어요",
   },
   en: {
-    title: "Kkomantle",
+    title: "Word Warmth",
     subtitle: "Guess words semantically close to the hidden word",
     placeholder: "Type a word",
     submit: "Guess",
@@ -173,7 +173,7 @@ const COPY: Record<UILocale, {
     sound: "Sound", restored: "Today's guesses were restored",
   },
   ja: {
-    title: "꼬맨틀",
+    title: "単語温度",
     subtitle: "隠れた単語と意味が近い単語を推測しましょう",
     placeholder: "単語を入力",
     submit: "推測",
@@ -199,7 +199,7 @@ const COPY: Record<UILocale, {
     sound: "サウンド", restored: "今日の推測を復元しました",
   },
   zh: {
-    title: "꼬맨틀",
+    title: "词语温度",
     subtitle: "猜出与隐藏词语义相近的词",
     placeholder: "输入词语",
     submit: "猜测",
@@ -225,7 +225,7 @@ const COPY: Record<UILocale, {
     sound: "声音", restored: "已恢复今天的猜测",
   },
   fr: {
-    title: "Kkomantle",
+    title: "Word Warmth",
     subtitle: "Devinez des mots proches du sens du mot caché",
     placeholder: "Tapez un mot",
     submit: "Deviner",
@@ -251,7 +251,7 @@ const COPY: Record<UILocale, {
     sound: "Son", restored: "Les essais du jour ont été restaurés",
   },
   es: {
-    title: "Kkomantle",
+    title: "Word Warmth",
     subtitle: "Adivina palabras cercanas en significado a la palabra oculta",
     placeholder: "Escribe una palabra",
     submit: "Adivinar",
@@ -486,7 +486,7 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
         title: t.title,
         subtitle: `${puzzleId} · ${isWon ? "SOLVED" : "REVEALED"}`,
         score: isWon ? `${guesses.length} Guesses` : "Revealed",
-        slug: "korean-semantle",
+        slug: "word-warmth",
         qrUrl: typeof window !== "undefined" ? window.location.href : undefined,
         customStats: [
           { label: "GUESSES", value: guesses.length },

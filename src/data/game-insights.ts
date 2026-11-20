@@ -114,7 +114,7 @@ export const GAME_INSIGHTS: Record<string, GameInsight> = {
       es: ["En ajedrez, el valor de las piezas es solo un punto de partida para valorar los cambios. Un mal control del centro, un rey expuesto o un desarrollo lento pueden borrar una ventaja material.", "Una buena jugada resiste la respuesta más fuerte del rival. Para cada candidata, comprueba primero jaques, capturas y amenazas del rival antes de seguir tu plan."],
     },
   },
-  "connect-four": {
+  "four-in-a-row": {
     title: {
       ko: "한 줄이 아니라 두 위협 만들기",
       en: "Create two threats, not one",

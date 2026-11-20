@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import WordleGame from "../../components/games/WordleGame";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "다섯 글자 맞히기 — 매일 5글자 영단어 맞추기",
+    description: "Wordle 같은 5글자 영단어 맞히기. 매일 새로운 5글자 영단어를 6번 안에 맞춰보세요. 초록=정답 위치, 노란색=다른 위치, 회색=없음.",
+  },
+  en: {
+    title: "Five Letter Guess — Guess the Daily 5-Letter Word",
+    description: "A Wordle-style five-letter word game. Guess the hidden 5-letter word in 6 tries. Green = correct position, yellow = wrong position, grey = not in word.",
+  },
+  ja: {
+    title: "5文字ワード当て — 毎日の5文字英単語パズル",
+    description: "Wordleのような5文字英単語当て。 6回以内に隠された5文字の英単語を当ててください。緑=正解位置、黄=別の位置、灰=不在。",
+  },
+  fr: {
+    title: "Mot en 5 lettres — Devinez le mot du jour en 5 lettres",
+    description: "Un jeu de mots en 5 lettres façon Wordle. Devinez le mot de 5 lettres caché en 6 tentatives. Vert = bonne position, jaune = mauvaise position, gris = absent.",
+  },
+  es: {
+    title: "Palabra de 5 letras — Adivina la palabra de 5 letras del día",
+    description: "Un juego de 5 letras al estilo Wordle. Adivina la palabra de 5 letras en 6 intentos. Verde = posición correcta, amarillo = posición incorrecta, gris = ausente.",
+  },
+  zh: {
+    title: "五字母猜词 — 每日5字母英文猜字",
+    description: "类似 Wordle 的五字母猜词。 6次内猜出隐藏的5个字母英文单词。绿色=正确位置，黄色=不同位置，灰色=不存在。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["five-letter-guess"]}>
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
+    <WordleGame client:load locale={locale} />
+    <div class="mx-auto max-w-3xl px-4 mt-8">
+      <GameGuide slug="five-letter-guess" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    </div>
+  </div>
+</BaseLayout>

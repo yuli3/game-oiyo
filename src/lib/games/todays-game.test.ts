@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { dateKeyIndex, kstDateKey, kstPreviousDateKey, pickTodaysGame } from "./todays-game";
 
-const SLUGS = ["chess", "sudoku", "wordle", "minesweeper", "snake-game", "game-2048", "solitaire"];
+const SLUGS = ["chess", "sudoku", "five-letter-guess", "minesweeper", "snake-game", "game-2048", "solitaire"];
 
 describe("todays-game: KST date key", () => {
   it("rolls over at KST midnight, not UTC or device midnight", () => {

@@ -100,8 +100,8 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
       const secs = hud.survivalTime % 60;
       const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
       const canvas = await createShareCardCanvas({
-        title: locale === 'ko' ? '뱀파이어 서바이벌' : 'Vampire Survivor',
-        slug: 'vampire-survivor',
+        title: locale === 'ko' ? '나이트 호드' : 'Night Horde',
+        slug: 'night-horde',
         score: `${timeStr} (${hud.kills} Kills)`,
         subtitle: locale === 'ko' ? `생존 레벨 Lv.${hud.level} 달성!` : `Reached Level ${hud.level}!`,
       });
@@ -354,7 +354,7 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
               const { isNewBest, bestScore } = saveHighScore('vampire-survivor', s.killCount);
               if (isNewBest) setHighScore(bestScore);
               if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'vampire-survivor', score: s.killCount } }));
+                window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'night-horde', score: s.killCount } }));
               }
               if (s.survivalTime >= 60 || s.killCount >= 30) {
                 celebrate(containerRef.current, { preset: 'stardust' });

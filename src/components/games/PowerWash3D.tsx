@@ -327,8 +327,8 @@ export function PowerWash3D() {
     MobileHapticsPro.mediumImpact();
     try {
       const canvas = await createShareCardCanvas({
-        title: "파워워시 클린 3D",
-        slug: "powerwash-3d",
+        title: "압력 세척 3D",
+        slug: "pressure-wash-3d",
         score: `${gameState.totalCleanPercent}% (${gameState.stageTitle})`,
         subtitle: `보상: $${gameState.cashEarned} | 완료: ${completedCount}/${gameState.parts.length}`,
       });
@@ -708,7 +708,7 @@ export function PowerWash3D() {
           </div>
           <div>
             <h2 className="text-xl font-black tracking-tight text-foreground flex items-center gap-1.5">
-              <span>파워워시 클린 3D</span>
+              <span>압력 세척 3D</span>
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                 PRO 6-SYSTEM
               </span>

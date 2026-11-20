@@ -87,7 +87,7 @@ const ROWS = DEFAULT_ROWS;
 const SLOT_COUNT = ROWS + 1;
 const MULTIPLIERS = computeSlotMultipliers(ROWS);
 const PEGS = generatePegLayout(ROWS);
-const RECORD_KEY = 'plinko';
+const RECORD_KEY = 'ball-drop';
 
 // Wording is deliberately non-gambling. The mechanic (commit N points, ball
 // lands on a multiplier, gain N x multiplier) is a physics score game, but
@@ -96,11 +96,11 @@ const RECORD_KEY = 'plinko';
 // no wager/stake/win/refill vocabulary in any locale.
 const COPY = {
     ko: { title: "플린코", subtitle: "Physics Drop Game", drop: "떨어뜨리기", dropping: "떨어지는 중...", bet: "투입", balance: "점수", best: "최고 기록", won: "기록!", notEnough: "점수 부족 — 초기화하세요", shareCard: "결과 카드 복사", shareCopied: "✓ 카드 복사됨" },
-    en: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Drop", dropping: "Dropping...", bet: "Input", balance: "Score", best: "Best score", won: "Scored!", notEnough: "Not enough score — reset to start over", shareCard: "Share Card", shareCopied: "✓ Card Copied" },
+    en: { title: "Ball Drop", subtitle: "Physics Drop Game", drop: "Drop", dropping: "Dropping...", bet: "Input", balance: "Score", best: "Best score", won: "Scored!", notEnough: "Not enough score — reset to start over", shareCard: "Share Card", shareCopied: "✓ Card Copied" },
     ja: { title: "プリンコ", subtitle: "Physics Drop Game", drop: "落とす", dropping: "落下中...", bet: "投入", balance: "スコア", best: "最高記録", won: "記録！", notEnough: "スコア不足 — リセットしてください", shareCard: "結果カード共有", shareCopied: "✓ コピー完了" },
     zh: { title: "弹珠机", subtitle: "Physics Drop Game", drop: "投放", dropping: "掉落中...", bet: "投入", balance: "分数", best: "最高记录", won: "记录！", notEnough: "分数不足 — 请重置", shareCard: "分享战绩卡", shareCopied: "✓ 已复制卡片" },
-    fr: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Lâcher", dropping: "Chute...", bet: "Apport", balance: "Score", best: "Meilleur score", won: "Marqué !", notEnough: "Score insuffisant — réinitialisez", shareCard: "Partager", shareCopied: "✓ Copié" },
-    es: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Soltar", dropping: "Cayendo...", bet: "Aporte", balance: "Puntuación", best: "Mejor puntuación", won: "¡Anotado!", notEnough: "Puntuación insuficiente — reinicia", shareCard: "Compartir", shareCopied: "✓ Copiado" },
+    fr: { title: "Ball Drop", subtitle: "Physics Drop Game", drop: "Lâcher", dropping: "Chute...", bet: "Apport", balance: "Score", best: "Meilleur score", won: "Marqué !", notEnough: "Score insuffisant — réinitialisez", shareCard: "Partager", shareCopied: "✓ Copié" },
+    es: { title: "Ball Drop", subtitle: "Physics Drop Game", drop: "Soltar", dropping: "Cayendo...", bet: "Aporte", balance: "Puntuación", best: "Mejor puntuación", won: "¡Anotado!", notEnough: "Puntuación insuficiente — reinicia", shareCard: "Compartir", shareCopied: "✓ Copiado" },
 } as const;
 
 interface DropResult { slot: number; multiplier: number; score: number }
@@ -177,7 +177,7 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 subtitle: `${lastResult.multiplier}× MULTIPLIER`,
                 score: lastResult.score,
                 bestScore: best ?? undefined,
-                slug: 'plinko',
+                slug: 'ball-drop',
                 customStats: [
                     { label: 'MULTIPLIER', value: `${lastResult.multiplier}×` },
                     { label: t.balance, value: `${balance}` },

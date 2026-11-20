@@ -186,7 +186,7 @@ export default function MiniMotorways({ locale }: Props) {
     try {
       const dateKey = new Date().toISOString().slice(0, 10);
       const current = loadArcadePassProgress(dateKey);
-      const updated = reportMissionProgress(current, 'mini-motorways', trips);
+      const updated = reportMissionProgress(current, 'road-weaver', trips);
       saveArcadePassProgress(updated);
     } catch {
       // Safe fallback in SSR/test
@@ -197,12 +197,12 @@ export default function MiniMotorways({ locale }: Props) {
     try {
       const isVictory = state.status === 'victory';
       const canvas = createShareCardCanvas({
-        title: isKo ? '미니 모터웨이' : 'Mini Motorways',
+        title: isKo ? '로드 위버' : 'Road Weaver',
         subtitle: isVictory
           ? (isKo ? '무정체 도시 교통망 마스터' : 'Zero-Gridlock City Master')
           : (isKo ? `Week ${state.week} 운행 기록` : `Week ${state.week} Transit Record`),
         score: `${state.tripsCompleted} Trips`,
-        slug: 'mini-motorways',
+        slug: 'road-weaver',
         customStats: [
           { label: isKo ? '연결 주택' : 'Houses', value: `${state.connectedHousesCount} / 4` },
           { label: isKo ? '진행 주차' : 'Week', value: `W${state.week}` },

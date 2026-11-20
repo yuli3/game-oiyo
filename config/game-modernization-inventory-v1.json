@@ -284,7 +284,7 @@
       "componentLines": 221
     },
     {
-      "slug": "connect-four",
+      "slug": "four-in-a-row",
       "genre": "board",
       "generation": "G3",
       "component": "src/components/games/ConnectFour.tsx",
@@ -330,7 +330,7 @@
         "craft-review"
       ],
       "owner": "game",
-      "route": "src/pages/[...lang]/connect-four.astro",
+      "route": "src/pages/[...lang]/four-in-a-row.astro",
       "componentLines": 632
     },
     {
@@ -386,7 +386,7 @@
       "componentLines": 213
     },
     {
-      "slug": "kingdomino",
+      "slug": "kingdom-tiles",
       "genre": "board",
       "generation": "G3",
       "component": "src/components/games/Kingdomino.tsx",
@@ -431,7 +431,7 @@
         "accessibility-qa"
       ],
       "owner": "game",
-      "route": "src/pages/[...lang]/kingdomino.astro",
+      "route": "src/pages/[...lang]/kingdom-tiles.astro",
       "componentLines": 437
     },
     {
@@ -1030,7 +1030,7 @@
       "componentLines": 193
     },
     {
-      "slug": "wordle",
+      "slug": "five-letter-guess",
       "genre": "puzzle",
       "generation": "G3",
       "component": "src/components/games/WordleGame.tsx",
@@ -1076,7 +1076,7 @@
         "craft-review"
       ],
       "owner": "game",
-      "route": "src/pages/[...lang]/wordle.astro",
+      "route": "src/pages/[...lang]/five-letter-guess.astro",
       "componentLines": 62
     },
     {
@@ -1183,7 +1183,7 @@
       "componentLines": 1238
     },
     {
-      "slug": "korean-semantle",
+      "slug": "word-warmth",
       "genre": "puzzle",
       "generation": "G3",
       "component": "src/components/games/KoreanSemantle.tsx",
@@ -1223,7 +1223,7 @@
       "craftNote": "Ordered semantic bands, deliberately gated non-answer hints, durable daily guesses, streak and next-puzzle return cues, and transparent handcrafted-data disclosure make the word search fair, legible, and repeatable.",
       "dependencies": [],
       "owner": "game",
-      "route": "src/pages/[...lang]/korean-semantle.astro",
+      "route": "src/pages/[...lang]/word-warmth.astro",
       "componentLines": 543
     },
     {
@@ -2670,7 +2670,7 @@
       "componentLines": 596
     },
     {
-      "slug": "yahtzee",
+      "slug": "five-dice",
       "genre": "luck",
       "generation": "G3",
       "component": "src/components/games/Yahtzee.tsx",
@@ -2716,7 +2716,7 @@
         "craft-review"
       ],
       "owner": "game",
-      "route": "src/pages/[...lang]/yahtzee.astro",
+      "route": "src/pages/[...lang]/five-dice.astro",
       "componentLines": 382
     }
   ]

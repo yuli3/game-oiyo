@@ -124,7 +124,7 @@ export default function BadNorthTactics() {
       try {
         const dateKey = new Date().toISOString().slice(0, 10);
         const current = loadArcadePassProgress(dateKey);
-        const updated = reportMissionProgress(current, "bad-north-tactics", 1);
+        const updated = reportMissionProgress(current, "shield-isle-tactics", 1);
         saveArcadePassProgress(updated);
       } catch {
         // arcade pass fallback
@@ -715,7 +715,7 @@ export default function BadNorthTactics() {
             <Shield className="h-5 w-5" />
           </span>
           <div>
-            <h2 className="text-lg font-bold leading-none tracking-tight">배드 노스 미니</h2>
+            <h2 className="text-lg font-bold leading-none tracking-tight">실드 아일 택틱스</h2>
             <p className="text-xs text-muted-foreground mt-1">
               바이킹 침략선 상륙 저지 & 실시간 섬 방어 미니멀 RTS
             </p>

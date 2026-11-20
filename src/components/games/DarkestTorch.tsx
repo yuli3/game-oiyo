@@ -98,12 +98,12 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
       try {
         const dateKey = new Date().toISOString().slice(0, 10);
         const current = loadArcadePassProgress(dateKey);
-        const updated = reportMissionProgress(current, 'darkest-torch', 1);
+        const updated = reportMissionProgress(current, 'torch-expedition', 1);
         saveArcadePassProgress(updated);
       } catch {
         // ignore storage errors
       }
-      recordResult('darkest-torch', 'w');
+      recordResult('torch-expedition', 'w');
     } else if (state.status === 'lost') {
       MobileHapticsPro.warning();
     }
@@ -185,7 +185,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
   };
 
   const handleShare = async () => {
-    const text = `🕯️ ${isKo ? '다키스트 던전 횃불 원정' : 'Torchlight Stress Dungeon'}\nRoom ${state.room}/${state.maxRooms} | Torch: ${state.torch}% | Gold: ${state.gold} | Score: ${state.score}\nhttps://game.oiyo.net/${locale === 'en' ? '' : `${locale}/`}darkest-torch`;
+    const text = `🕯️ ${isKo ? '횃불 원정대' : 'Torch Expedition'}\nRoom ${state.room}/${state.maxRooms} | Torch: ${state.torch}% | Gold: ${state.gold} | Score: ${state.score}\nhttps://game.oiyo.net/${locale === 'en' ? '' : `${locale}/`}darkest-torch`;
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       await navigator.clipboard.writeText(text).catch(() => {});
     }
@@ -220,8 +220,8 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
           <div>
             <h1 className="text-xl font-black tracking-tight md:text-2xl">
               {isKo
-                ? '다키스트 던전 횃불 원정 (Torchlight Stress Dungeon)'
-                : 'Torchlight Stress Dungeon'}
+                ? '횃불 원정대 (Torch Expedition)'
+                : 'Torch Expedition'}
             </h1>
             <p className="mt-1 text-xs text-muted-foreground md:text-sm">
               {isKo

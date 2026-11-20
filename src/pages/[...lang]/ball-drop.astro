@@ -1,0 +1,51 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PlinkoComp from "../../components/games/Plinko";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "볼 드롭 — 핀볼판 물리 게임 무료 플레이",
+    description: "플린코(Plinko) 같은 핀판 공 떨어뜨리기. 핀 사이로 공을 떨어뜨려 배당 슬롯에 도착시키세요. matter.js 물리 기반의 무료 브라우저 플린코 게임.",
+  },
+  en: {
+    title: "Ball Drop — Free Physics Peg-Board Drop Game",
+    description: "A Plinko-style peg-board ball drop. Drop the ball through the pins and see which payout slot it lands in — a free browser Plinko game with real physics.",
+  },
+  ja: {
+    title: "ボールドロップ — 無料の物理ピンボードゲーム",
+    description: "プリンコ(Plinko)のようなピンボード落下ゲーム。 ピンの間にボールを落として配当スロットを狙おう。matter.js物理エンジンを使った無料ブラウザゲーム。",
+  },
+  fr: {
+    title: "Ball Drop — Jeu de plateau à picots gratuit",
+    description: "Un plateau à picots façon Plinko. Lâchez la bille entre les picots et voyez dans quelle case elle atterrit — un jeu Plinko gratuit avec une vraie physique.",
+  },
+  es: {
+    title: "Ball Drop — Juego gratis de tablero con clavijas",
+    description: "Un tablero de clavijas al estilo Plinko. Suelta la bola entre las clavijas y descubre en qué ranura de premio cae — un juego Plinko gratuito con física real.",
+  },
+  zh: {
+    title: "弹珠机 — 免费物理钉板游戏",
+    description: "类似 Plinko 的钉板落球游戏。 让小球穿过钉子落入奖励格子。基于matter.js真实物理引擎的免费浏览器弹珠机游戏。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
+    <PlinkoComp client:load locale={locale} />
+    <div class="mx-auto max-w-3xl px-4 mt-8">
+      <GameGuide slug="ball-drop" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    </div>
+  </div>
+</BaseLayout>

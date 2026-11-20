@@ -111,7 +111,7 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
       const { isNewBest, bestScore } = saveHighScore('into-the-breach', score);
       if (isNewBest) setHighScore(bestScore);
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'into-the-breach', score } }));
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'mech-grid-tactics', score } }));
       }
     }
   }, [gamePhase, powerGrid, currentTurn]);
@@ -736,10 +736,10 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
   const handleShareCard = useCallback(async () => {
     MobileHapticsPro.light();
     const canvas = createShareCardCanvas({
-      title: 'Into the Breach',
+      title: 'Mech Grid Tactics',
       subtitle: gamePhase === 'victory' ? '타임라인 수호 완료' : '전술 작전 기록',
       score: gamePhase === 'victory' ? '전력망 방어 성공' : `턴 ${currentTurn}/${maxTurns}`,
-      slug: 'into-the-breach',
+      slug: 'mech-grid-tactics',
       customStats: [
         { label: '전력망', value: `${powerGrid}/${maxPowerGrid}` },
         { label: '작전 턴', value: `${currentTurn}/${maxTurns}` },

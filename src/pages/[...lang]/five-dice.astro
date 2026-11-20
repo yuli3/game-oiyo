@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import YahtzeeComp from "../../components/games/Yahtzee";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "파이브 다이스 — 무료 온라인 주사위 게임",
+    description: "야찌(Yahtzee) 방식의 주사위 족보 게임. 주사위 5개로 즐기는 클래식 야찌 게임입니다. 13라운드 동안 트리플, 풀하우스, 스트레이트, 야찌를 노려 최고 점수에 도전하세요.",
+  },
+  en: {
+    title: "Five Dice — Free Online Dice Game",
+    description: "A Yahtzee-style dice scoring game. Play the classic Yahtzee dice game online. Roll five dice over 13 rounds, chase full houses, straights, and yahtzees for the top score.",
+  },
+  ja: {
+    title: "ファイブダイス — 無料オンラインダイスゲーム",
+    description: "ヤッツィー(Yahtzee)方式のダイスゲーム。 サイコロ5個で遊ぶクラシックなヤッツィー。13ラウンドでフルハウスやストレート、ヤッツィーを狙って最高得点に挑戦しましょう。",
+  },
+  fr: {
+    title: "Five Dice — Jeu de dés gratuit en ligne",
+    description: "Un jeu de dés façon Yahtzee. Jouez au Yahtzee classique en ligne. Lancez cinq dés pendant 13 manches et visez fulls, suites et yahtzees pour le meilleur score.",
+  },
+  es: {
+    title: "Five Dice — Juego de dados gratis en línea",
+    description: "Un juego de dados al estilo Yahtzee. Juega al clásico Yahtzee en línea. Lanza cinco dados durante 13 rondas y busca fulls, escaleras y yahtzees para el mejor puntaje.",
+  },
+  zh: {
+    title: "五骰计分 — 免费在线骰子游戏",
+    description: "类似 Yahtzee（快艇骰子）的骰子计分游戏。 在线畅玩经典快艇骰子游戏。13轮内掷五颗骰子，冲击葫芦、顺子和快艇，挑战最高分。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["five-dice"]}>
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
+    <YahtzeeComp client:load locale={locale} />
+    <div class="mx-auto max-w-3xl px-4 mt-8">
+      <GameGuide slug="five-dice" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    </div>
+  </div>
+</BaseLayout>
