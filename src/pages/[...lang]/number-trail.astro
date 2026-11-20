@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import NumberTrailComp from "../../components/games/NumberTrail";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "넘버 트레일 — 합 맞추기 경로 퍼즐",
+    description: "왼쪽 위에서 오른쪽 아래까지 칸을 이어 걸으며 지나간 숫자의 합을 목표와 정확히 맞추는 무료 논리 퍼즐. 매일 새 퍼즐.",
+  },
+  en: {
+    title: "Number Trail — Daily Sum Path Puzzle",
+    description: "Walk from corner to corner so the numbers you pass add up to exactly the target. A free daily logic puzzle with easy, medium and hard grids.",
+  },
+  ja: {
+    title: "ナンバートレイル — 合計を合わせる経路パズル",
+    description: "左上から右下まで歩き、通った数字の合計を目標にぴったり合わせる無料ロジックパズル。毎日新しい問題。",
+  },
+  zh: {
+    title: "数字小径 — 凑和路径谜题",
+    description: "从左上走到右下，让经过的数字之和正好等于目标。免费的每日逻辑谜题。",
+  },
+  fr: {
+    title: "Number Trail — Puzzle de chemin à somme",
+    description: "Marchez d'un coin à l'autre pour que les nombres traversés fassent exactement la cible. Puzzle logique quotidien gratuit.",
+  },
+  es: {
+    title: "Number Trail — Puzle de camino con suma",
+    description: "Camina de esquina a esquina para que los números sumen exactamente el objetivo. Puzle lógico diario gratis.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["number-trail"]}>
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
+    <NumberTrailComp client:load locale={locale} />
+    <div class="mx-auto max-w-3xl px-4 mt-8">
+      <GameGuide slug="number-trail" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

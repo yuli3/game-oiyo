@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ArrowWalkComp from "../../components/games/ArrowWalk";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "애로 워크 — 화살표 돌려 한붓그리기 퍼즐",
+    description: "화살표를 돌려 출발 칸에서 모든 칸을 한 번씩 지나 목표 칸에 멈추게 하는 무료 논리 퍼즐. 매일 새 퍼즐.",
+  },
+  en: {
+    title: "Arrow Walk — Daily Arrow Path Puzzle",
+    description: "Turn the arrows so one walk from the start visits every cell exactly once and stops on the goal. A free daily logic puzzle.",
+  },
+  ja: {
+    title: "アローウォーク — 矢印を回す一筆書きパズル",
+    description: "矢印を回して、スタートからすべてのマスを1回ずつ通りゴールで止まるようにする無料ロジックパズル。",
+  },
+  zh: {
+    title: "箭头漫步 — 旋转箭头一笔画谜题",
+    description: "旋转箭头，让从起点出发的路线恰好经过每格一次并停在终点。免费每日逻辑谜题。",
+  },
+  fr: {
+    title: "Arrow Walk — Puzzle de flèches quotidien",
+    description: "Tournez les flèches pour qu'une seule marche passe par chaque case et finisse sur l'étoile. Puzzle logique gratuit.",
+  },
+  es: {
+    title: "Arrow Walk — Puzle diario de flechas",
+    description: "Gira las flechas para que un solo paseo pase por cada casilla y termine en la estrella. Puzle lógico gratis.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["arrow-walk"]}>
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
+    <ArrowWalkComp client:load locale={locale} />
+    <div class="mx-auto max-w-3xl px-4 mt-8">
+      <GameGuide slug="arrow-walk" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
