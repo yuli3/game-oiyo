@@ -189,8 +189,8 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
   const handleShare = () => {
     const text =
       locale === "ko"
-        ? `💥 블록 블래스트 인피니트 - 최고 콤보 ${game.comboCount}연쇄! 점수: ${game.score}점! 지금 플레이: https://game.oiyo.net/block-blast`
-        : `💥 Block Blast Infinite - Combo Chain x${game.comboCount}! Score: ${game.score} pts! Play now: https://game.oiyo.net/block-blast`;
+        ? `💥 그리드 클리어 - 최고 콤보 ${game.comboCount}연쇄! 점수: ${game.score}점! 지금 플레이: https://game.oiyo.net/block-blast`
+        : `💥 Grid Clear - Combo Chain x${game.comboCount}! Score: ${game.score} pts! Play now: https://game.oiyo.net/block-blast`;
 
     navigator.clipboard?.writeText(text).then(() => {
       setShareCopied(true);
@@ -236,8 +236,8 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
           <div className="flex flex-col">
             <span className="text-xs font-bold text-foreground">
               {locale === "ko"
-                ? "Unity 6 3D 12스테이지 블록 블래스트 4개국어 에디션"
-                : "Unity 6 3D 12-Stage Block Blast Multi-Language Edition"}
+                ? "Unity 6 3D 12스테이지 그리드 클리어 4개국어 에디션"
+                : "Unity 6 3D 12-Stage Grid Clear Multi-Language Edition"}
             </span>
             <span className="text-xs text-muted-foreground">
               {locale === "ko"

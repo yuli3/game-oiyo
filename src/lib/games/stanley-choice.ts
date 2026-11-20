@@ -99,28 +99,28 @@ export const ROOM_DEFINITIONS: Record<RoomId, RoomDefinition> = {
   office_427: {
     id: 'office_427',
     title: '427호 사무실',
-    subtitle: '모니터에 뜬 지시를 키보드로 입력하던 스탠리의 직장',
+    subtitle: '모니터에 뜬 지시를 키보드로 입력하던 마일로의 직장',
     narratorText:
-      '이것은 스탠리라는 남자의 이야기입니다. 427호 사무실의 모니터에서 지시가 멈추자, 스탠리는 동료들이 사라졌음을 깨닫고 자리에서 일어났습니다.',
+      '이것은 마일로라는 남자의 이야기입니다. 427호 사무실의 모니터에서 지시가 멈추자, 마일로는 동료들이 사라졌음을 깨닫고 자리에서 일어났습니다.',
     visualScene: 'office',
     options: [
       {
         id: 'leave_office',
         label: '열린 문으로 나가 복도로 향한다',
         targetRoom: 'corridor_start',
-        narratorReaction: '스탠리는 사무실 문을 열고 밖으로 나섰습니다.',
+        narratorReaction: '마일로는 사무실 문을 열고 밖으로 나섰습니다.',
       },
       {
         id: 'close_door',
         label: '겁을 먹고 문을 굳게 닫은 채 책상에 머문다',
         targetEnding: 'ending_coward',
-        narratorReaction: '스탠리는 문을 잠갔습니다. 아무도 없는 방에서... 영원히 안전할 것입니다.',
+        narratorReaction: '마일로는 문을 잠갔습니다. 아무도 없는 방에서... 영원히 안전할 것입니다.',
       },
       {
         id: 'jump_window',
         label: '책상을 딛고 복도 옆 창문 밖으로 뛰어내린다',
         targetEnding: 'ending_window_escape',
-        narratorReaction: '잠깐, 스탠리? 거긴 갈 수 없는 창문인데... 어? 맵 밖으로 떨어졌잖아?!',
+        narratorReaction: '잠깐, 마일로? 거긴 갈 수 없는 창문인데... 어? 맵 밖으로 떨어졌잖아?!',
       },
     ],
   },
@@ -128,41 +128,41 @@ export const ROOM_DEFINITIONS: Record<RoomId, RoomDefinition> = {
     id: 'corridor_start',
     title: '중앙 복도',
     subtitle: '형광등이 깜빡이는 텅 빈 사무실 복도',
-    narratorText: '직원들은 단 한 명도 보이지 않았습니다. 스탠리는 복도를 따라 천천히 걸어갔습니다.',
+    narratorText: '직원들은 단 한 명도 보이지 않았습니다. 마일로는 복도를 따라 천천히 걸어갔습니다.',
     visualScene: 'hallway',
     options: [
       {
         id: 'advance_doors',
         label: '복도를 따라 두 개의 문이 있는 방으로 간다',
         targetRoom: 'two_doors',
-        narratorReaction: '스탠리는 계속 걸어가 두 개의 문이 있는 방에 도착했습니다.',
+        narratorReaction: '마일로는 계속 걸어가 두 개의 문이 있는 방에 도착했습니다.',
       },
       {
         id: 'enter_broom_closet',
         label: '벽에 작게 붙은 빗자루 보관함(Broom Closet) 문을 연다',
         targetRoom: 'broom_closet',
-        narratorReaction: '스탠리는 빗자루 보관함으로 들어갔습니다. 대체 왜 빗자루 보관함 따위에 들어간 거죠?',
+        narratorReaction: '마일로는 빗자루 보관함으로 들어갔습니다. 대체 왜 빗자루 보관함 따위에 들어간 거죠?',
       },
     ],
   },
   two_doors: {
     id: 'two_doors',
     title: '두 개의 문',
-    subtitle: 'The Stanley Parable 역사상 가장 상징적인 분기점',
-    narratorText: '스탠리가 두 개의 문 앞에 도달했을 때, 그는 왼쪽 문으로 들어갔습니다.',
+    subtitle: 'The Milo Parable 역사상 가장 상징적인 분기점',
+    narratorText: '마일로가 두 개의 문 앞에 도달했을 때, 그는 왼쪽 문으로 들어갔습니다.',
     visualScene: 'doors',
     options: [
       {
         id: 'door_left',
         label: '내레이터 말대로 [왼쪽 문]으로 들어간다',
         targetRoom: 'meeting_room',
-        narratorReaction: '스탠리는 망설임 없이 왼쪽 문으로 들어섰습니다. 아주 훌륭한 선택입니다.',
+        narratorReaction: '마일로는 망설임 없이 왼쪽 문으로 들어섰습니다. 아주 훌륭한 선택입니다.',
       },
       {
         id: 'door_right',
         label: '청개구리처럼 [오른쪽 문]으로 들어간다',
         targetRoom: 'employee_lounge',
-        narratorReaction: '이쪽은 회의실로 가는 길이 아닙니다. 스탠리는 그저 휴게실에 들르고 싶었을 뿐입니다.',
+        narratorReaction: '이쪽은 회의실로 가는 길이 아닙니다. 마일로는 그저 휴게실에 들르고 싶었을 뿐입니다.',
       },
     ],
   },
@@ -171,20 +171,20 @@ export const ROOM_DEFINITIONS: Record<RoomId, RoomDefinition> = {
     title: '대회의실',
     subtitle: '프레젠테이션 스크린이 꺼진 정적의 회의실',
     narratorText:
-      '회의실 역시 텅 비어 있었습니다. 스탠리는 벽 뒤편 사장실로 이어지는 계단 통로로 향했습니다.',
+      '회의실 역시 텅 비어 있었습니다. 마일로는 벽 뒤편 사장실로 이어지는 계단 통로로 향했습니다.',
     visualScene: 'meeting',
     options: [
       {
         id: 'goto_boss',
         label: '사장실로 이어지는 계단으로 올라간다',
         targetRoom: 'boss_office',
-        narratorReaction: '스탠리는 사장의 사무실을 향해 당당히 계단을 올랐습니다.',
+        narratorReaction: '마일로는 사장의 사무실을 향해 당당히 계단을 올랐습니다.',
       },
       {
         id: 'confusion_loop',
         label: '회의실 구석의 비상탈출 표지판 문으로 나간다',
         targetEnding: 'ending_confusion',
-        narratorReaction: '스탠리, 그 문은 대본에 없는 문인데?! 으악, 복도가 꼬여버렸습니다!',
+        narratorReaction: '마일로, 그 문은 대본에 없는 문인데?! 으악, 복도가 꼬여버렸습니다!',
       },
     ],
   },
@@ -193,7 +193,7 @@ export const ROOM_DEFINITIONS: Record<RoomId, RoomDefinition> = {
     title: '사장실',
     subtitle: '마호가니 책상과 벽난로 뒤 비밀 엘리베이터',
     narratorText:
-      '사장실의 책상 뒤에는 비밀 키패드가 있었습니다. 스탠리가 암호 2-8-4-5를 입력하자 벽난로가 열리며 비밀 엘리베이터가 나타났습니다.',
+      '사장실의 책상 뒤에는 비밀 키패드가 있었습니다. 마일로가 암호 2-8-4-5를 입력하자 벽난로가 열리며 비밀 엘리베이터가 나타났습니다.',
     visualScene: 'boss',
     options: [
       {
@@ -216,13 +216,13 @@ export const ROOM_DEFINITIONS: Record<RoomId, RoomDefinition> = {
         id: 'turn_off',
         label: '마인드 컨트롤 장치를 [OFF]로 끄고 자유를 찾는다',
         targetEnding: 'ending_freedom',
-        narratorReaction: '스탠리가 OFF 버튼을 누르자 천장이 열리며 따스한 햇빛이 쏟아져 들어왔습니다!',
+        narratorReaction: '마일로가 OFF 버튼을 누르자 천장이 열리며 따스한 햇빛이 쏟아져 들어왔습니다!',
       },
       {
         id: 'turn_on',
         label: '내레이터의 말을 무시하고 장치를 [ON]으로 켠다',
         targetEnding: 'ending_destruction',
-        narratorReaction: '안 돼! 무슨 짓을 한 겁니까 스탠리?! 자폭 카운트다운이 시작되었습니다!',
+        narratorReaction: '안 돼! 무슨 짓을 한 겁니까 마일로?! 자폭 카운트다운이 시작되었습니다!',
       },
     ],
   },
@@ -231,20 +231,20 @@ export const ROOM_DEFINITIONS: Record<RoomId, RoomDefinition> = {
     title: '직원 휴게실',
     subtitle: '푹신한 가죽 소파와 자판기가 놓인 안식처',
     narratorText:
-      '스탠리는 오른쪽 문을 지나 직원 휴게실에 도착했습니다. 내레이터는 스탠리에게 어서 회의실로 돌아가라고 재촉했습니다.',
+      '마일로는 오른쪽 문을 지나 직원 휴게실에 도착했습니다. 내레이터는 마일로에게 어서 회의실로 돌아가라고 재촉했습니다.',
     visualScene: 'lounge',
     options: [
       {
         id: 'stay_lounge',
         label: '소파에 드러누워 아무 일도 하지 않고 쉰다',
         targetEnding: 'ending_lounge',
-        narratorReaction: '스탠리는 소파에 앉았습니다. 그리고 영원히 일어나지 않았습니다.',
+        narratorReaction: '마일로는 소파에 앉았습니다. 그리고 영원히 일어나지 않았습니다.',
       },
       {
         id: 'goto_warehouse',
         label: '휴게실 옆문을 열고 거대한 창고로 나아간다',
         targetRoom: 'warehouse',
-        narratorReaction: '스탠리는 창고로 통하는 문을 열었습니다.',
+        narratorReaction: '마일로는 창고로 통하는 문을 열었습니다.',
       },
     ],
   },
@@ -259,13 +259,13 @@ export const ROOM_DEFINITIONS: Record<RoomId, RoomDefinition> = {
         id: 'ride_lift',
         label: '화물 리프트 탑승 버튼을 누르고 건너편으로 이동한다',
         targetRoom: 'cargo_lift',
-        narratorReaction: '스탠리는 덜컹거리는 화물 리프트에 탑승했습니다.',
+        narratorReaction: '마일로는 덜컹거리는 화물 리프트에 탑승했습니다.',
       },
       {
         id: 'jump_pit',
         label: '안전 난간을 뛰어넘어 깊은 바닥 심연으로 뛰어내린다',
         targetEnding: 'ending_warehouse_fall',
-        narratorReaction: '스탠리, 안 돼! 거긴 바닥이 없단 말입니다! 으아아아악!',
+        narratorReaction: '마일로, 안 돼! 거긴 바닥이 없단 말입니다! 으아아아악!',
       },
     ],
   },
@@ -286,7 +286,7 @@ export const ROOM_DEFINITIONS: Record<RoomId, RoomDefinition> = {
         id: 'jump_from_lift',
         label: '리프트 중간에서 뛰어내린다',
         targetEnding: 'ending_warehouse_fall',
-        narratorReaction: '스탠리는 또다시 중력을 시험하려 했습니다. 결과는 뻔했죠.',
+        narratorReaction: '마일로는 또다시 중력을 시험하려 했습니다. 결과는 뻔했죠.',
       },
     ],
   },
@@ -295,7 +295,7 @@ export const ROOM_DEFINITIONS: Record<RoomId, RoomDefinition> = {
     title: '빗자루 보관함',
     subtitle: '걸레와 먼지투성이 대걸레가 놓인 비좁은 벽장',
     narratorText:
-      '스탠리는 빗자루 보관함에 들어갔습니다. 내레이터가 말했습니다. "스탠리, 여긴 아무것도 없습니다. 그냥 나와요."',
+      '마일로는 빗자루 보관함에 들어갔습니다. 내레이터가 말했습니다. "마일로, 여긴 아무것도 없습니다. 그냥 나와요."',
     visualScene: 'closet',
     options: [
       {

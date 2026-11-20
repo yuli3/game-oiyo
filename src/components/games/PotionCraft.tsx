@@ -84,7 +84,7 @@ export default function PotionCraft() {
       const { isNewBest, bestScore } = saveHighScore('potion-craft', gold);
       if (isNewBest) setHighScore(bestScore);
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'potion-craft', score: gold } }));
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'potion-bench', score: gold } }));
       }
     }
   }, [gold]);
@@ -441,8 +441,8 @@ export default function PotionCraft() {
   const handleShare = async () => {
     MobileHapticsPro.medium();
     const canvas = createShareCardCanvas({
-      title: 'Potion Craft Alchemist',
-      slug: 'potion-craft',
+      title: 'Potion Bench Alchemist',
+      slug: 'potion-bench',
       score: `${gold}G`,
       subtitle: `Effects: ${activeEffects.length > 0 ? activeEffects.join(', ') : 'None'} • Customer: ${currentCustomer?.customerName || 'None'}`,
     });
@@ -728,7 +728,7 @@ export default function PotionCraft() {
           <TiltPotionButton
             onClick={handleShare}
             className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
-            ariaLabel="Share Potion Craft Record"
+            ariaLabel="Share Potion Bench Record"
           >
             {copied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
           </TiltPotionButton>

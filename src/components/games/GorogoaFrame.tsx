@@ -45,7 +45,7 @@ const I18N: Record<
   }
 > = {
   ko: {
-    title: "고르고아 프레임",
+    title: "프레임 위버",
     movesLabel: "조작 횟수",
     zoomInBtn: "🔍+ 확대",
     zoomOutBtn: "🔍- 축소",
@@ -60,7 +60,7 @@ const I18N: Record<
       "액자 클릭 후 다른 액자 클릭: 위치 교환 또는 창틀(스텐실) 겹치기 · 우측 상단 [🔍] 버튼: 액자 내부 풍경 확대/축소",
   },
   en: {
-    title: "Gorogoa Frame Weaver",
+    title: "Frame Weaver",
     movesLabel: "Moves",
     zoomInBtn: "🔍+ Zoom In",
     zoomOutBtn: "🔍- Zoom Out",
@@ -75,7 +75,7 @@ const I18N: Record<
       "Click a panel then another: Swap slots or Stack stencil cutout · Top-right [🔍] button: Zoom In/Out inside each panel",
   },
   ja: {
-    title: "ゴロゴア フレーム",
+    title: "フレームウィーバー",
     movesLabel: "手数",
     zoomInBtn: "🔍+ 拡大",
     zoomOutBtn: "🔍- 縮小",
@@ -90,7 +90,7 @@ const I18N: Record<
       "パネルを順にクリック: 位置入替または枠レイヤー重ね合わせ · 右上の[🔍]ボタン: パネル内の風景を拡大/縮小",
   },
   zh: {
-    title: "画中世界 帧界编织",
+    title: "画框编织",
     movesLabel: "步数",
     zoomInBtn: "🔍+ 放大",
     zoomOutBtn: "🔍- 缩小",
@@ -105,7 +105,7 @@ const I18N: Record<
       "依次点击两个画框：交换位置或叠加镂空图层 · 右上角 [🔍] 按钮：放大或缩小画框内部景物",
   },
   fr: {
-    title: "Gorogoa Frame Weaver",
+    title: "Frame Weaver",
     movesLabel: "Coups",
     zoomInBtn: "🔍+ Zoom +",
     zoomOutBtn: "🔍- Zoom -",
@@ -120,7 +120,7 @@ const I18N: Record<
       "Cliquez sur deux cadres : Échanger ou Superposer un calque · Bouton [🔍] : Zoomer/Dézoomer dans l'image",
   },
   es: {
-    title: "Gorogoa Frame Weaver",
+    title: "Frame Weaver",
     movesLabel: "Movimientos",
     zoomInBtn: "🔍+ Acercar",
     zoomOutBtn: "🔍- Alejar",
@@ -496,7 +496,7 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
       const pass = loadArcadePassProgress(dateKey);
       const updated = reportMissionProgress(
         pass,
-        "gorogoa-frame",
+        "frame-weaver",
         st.chapterIndex + 1
       );
       saveArcadePassProgress(updated);
@@ -612,7 +612,7 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
         <div className="flex items-center gap-3">
           <img
             src={GOROGOA_FRAME_SPRITES.frame}
-            alt="Gorogoa Stencil Frame"
+            alt="Frame Weaver stencil frame"
             width={40}
             height={40}
             className="size-10 object-contain drop-shadow-sm"
@@ -699,7 +699,7 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
           <div className="flex items-center gap-2.5">
             <img
               src={GOROGOA_FRAME_SPRITES.trophy}
-              alt="Gorogoa Trophy"
+              alt="Frame Weaver Trophy"
               width={44}
               height={44}
               className="size-11 object-contain animate-bounce drop-shadow-md"

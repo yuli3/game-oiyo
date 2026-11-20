@@ -130,7 +130,7 @@ export const LoopHero: React.FC = () => {
       const { isNewBest, bestScore } = saveHighScore('loop-hero', score);
       if (isNewBest) setHighScore(bestScore);
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'loop-hero', score } }));
+        window.dispatchEvent(new CustomEvent('oiyo:game-score', { detail: { slug: 'loop-road', score } }));
       }
     }
   }, [gameOver, loopCount, dayCount]);
@@ -404,8 +404,8 @@ export const LoopHero: React.FC = () => {
   const handleShare = async () => {
     MobileHapticsPro.medium();
     const canvas = createShareCardCanvas({
-      title: 'Loop Hero',
-      slug: 'loop-hero',
+      title: 'Loop Road',
+      slug: 'loop-road',
       score: loopCount,
       subtitle: `Day ${dayCount} • HP ${heroHp}/${heroMaxHp} • ATK ${heroAtk} • DEF ${heroDef}`,
     });

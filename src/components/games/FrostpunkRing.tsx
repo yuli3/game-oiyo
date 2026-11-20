@@ -123,12 +123,12 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
       try {
         const dateKey = new Date().toISOString().slice(0, 10);
         const current = loadArcadePassProgress(dateKey);
-        const updated = reportMissionProgress(current, 'frostpunk-ring', 1);
+        const updated = reportMissionProgress(current, 'heat-ring-city', 1);
         saveArcadePassProgress(updated);
       } catch {
         // ignore storage errors
       }
-      recordResult('frostpunk-ring', 'w');
+      recordResult('heat-ring-city', 'w');
       MobileHapticsPro.success();
       addTrauma(0.5);
       RetroChiptuneSynth.playPowerup(audioRef.current, 0.12);
@@ -136,7 +136,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
         celebrate(containerRef.current, { preset: 'stardust' });
       }
     } else if (state.status === 'lost') {
-      recordResult('frostpunk-ring', 'l');
+      recordResult('heat-ring-city', 'l');
       MobileHapticsPro.error();
       addTrauma(0.6);
       RetroChiptuneSynth.playGameOver(audioRef.current);
@@ -325,7 +325,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
   };
 
   const handleShare = async () => {
-    const text = `❄️ ${isKo ? '프로스트펑크 열기 도시' : 'Frostpunk Heat Ring City'}\nDay ${state.day}/${state.maxDays} (${state.ambientTempC}°C) | Coal: ${state.coal} | Hope: ${state.hope}% | Score: ${state.score}\nhttps://game.oiyo.net/${locale === 'en' ? '' : `${locale}/`}frostpunk-ring`;
+    const text = `❄️ ${isKo ? '히트 링 시티' : 'Heat Ring City'}\nDay ${state.day}/${state.maxDays} (${state.ambientTempC}°C) | Coal: ${state.coal} | Hope: ${state.hope}% | Score: ${state.score}\nhttps://game.oiyo.net/${locale === 'en' ? '' : `${locale}/`}frostpunk-ring`;
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       await navigator.clipboard.writeText(text).catch(() => {});
     }
@@ -352,8 +352,8 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
         <div>
           <h1 className="text-xl font-black tracking-tight md:text-2xl">
             {isKo
-              ? '❄️ 프로스트펑크 열기 도시 (Frostpunk Heat Ring City)'
-              : '❄️ Frostpunk Heat Ring City'}
+              ? '❄️ 히트 링 시티 (Heat Ring City)'
+              : '❄️ Heat Ring City'}
           </h1>
           <p className="mt-1 text-xs text-muted-foreground md:text-sm">
             {isKo
@@ -477,7 +477,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
             ref={canvasRef}
             width={350}
             height={350}
-            aria-label="Frostpunk concentric radial heat ring map"
+            aria-label="Heat Ring City concentric radial heat ring map"
             className="w-full max-w-sm rounded-2xl border border-border"
           />
 
@@ -658,7 +658,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
             {state.status === 'won' ? (
               <img
                 src={FROSTPUNK_RING_SPRITES.trophy}
-                alt="Frostpunk Trophy"
+                alt="Heat Ring City Trophy"
                 width={48}
                 height={48}
                 className="size-12 object-contain animate-bounce drop-shadow-md"

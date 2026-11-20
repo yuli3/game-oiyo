@@ -73,7 +73,7 @@ const COPY: Record<
   }
 > = {
   ko: {
-    title: '슬레이 더 스파이어 미니',
+    title: '타워 덱 로그',
     subtitle: '적의 다음 턴 의도(Intent)를 읽고 3에너지 카드 시너지로 첨탑 보스를 격파하세요',
     floorLabel: '층수',
     hpLabel: '체력',
@@ -133,7 +133,7 @@ const COPY: Record<
     },
   },
   en: {
-    title: 'Spire Deckbuilder Rogue',
+    title: 'Tower Deck Rogue',
     subtitle: 'Read Enemy Intents and chain 3-Energy card synergies to conquer the Spire Boss',
     floorLabel: 'Floor',
     hpLabel: 'HP',
@@ -193,7 +193,7 @@ const COPY: Record<
     },
   },
   ja: {
-    title: 'スレイ・ザ・スパイア ミニ',
+    title: 'タワーデッキローグ',
     subtitle: '敵の次ターンの意図(Intent)を読み、3エナジーのカードシナジーで尖塔ボスを討伐せよ',
     floorLabel: '階層',
     hpLabel: 'HP',
@@ -253,7 +253,7 @@ const COPY: Record<
     },
   },
   zh: {
-    title: '杀戮尖塔迷你版',
+    title: '塔顶卡牌肉鸽',
     subtitle: '预判敌人下回合意图(Intent)，用3点能量打出卡牌连锁击败尖塔首领',
     floorLabel: '层数',
     hpLabel: '生命',
@@ -313,7 +313,7 @@ const COPY: Record<
     },
   },
   es: {
-    title: 'Spire Deckbuilder Rogue',
+    title: 'Tower Deck Rogue',
     subtitle: 'Lee la intención enemiga y combina cartas con 3 de energía para conquistar la Aguja',
     floorLabel: 'Piso',
     hpLabel: 'PV',
@@ -373,7 +373,7 @@ const COPY: Record<
     },
   },
   fr: {
-    title: 'Spire Deckbuilder Rogue',
+    title: 'Tower Deck Rogue',
     subtitle: 'Lisez les intentions ennemies et enchaînez vos cartes avec 3 Énergies pour gravir la Flèche',
     floorLabel: 'Étage',
     hpLabel: 'PV',
@@ -479,7 +479,7 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
         title: "Spire Rogue",
         subtitle: `Floor ${state.floor + 1} / 5`,
         score: `${clearedCount * 120 + state.player.hp * 10} PTS`,
-        slug: "spire-rogue",
+        slug: "tower-deck-rogue",
         customStats: [
           { label: "Floor", value: `${state.floor + 1}F` },
           { label: "Deck Size", value: `${state.masterDeck.length} Cards` },
@@ -597,7 +597,7 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
           const clearedCount = next.map.filter((n) => n.cleared).length;
           const dateKey = new Date().toISOString().slice(0, 10);
           const progress = loadArcadePassProgress(dateKey);
-          saveArcadePassProgress(reportMissionProgress(progress, 'spire-rogue', clearedCount));
+          saveArcadePassProgress(reportMissionProgress(progress, 'tower-deck-rogue', clearedCount));
         }
         return next;
       });

@@ -116,7 +116,7 @@ const COPY: Record<
   }
 > = {
   ko: {
-    title: '수박 머지 3D 물리',
+    title: '과일 머지 드롭',
     subtitle: '같은 단계 과일을 부딪혀 체리(🍒)부터 대왕 수박(🍉)까지 연쇄 진화시키세요!',
     scoreLabel: '점수',
     bestLabel: '최고 점수',
@@ -142,7 +142,7 @@ const COPY: Record<
     },
   },
   en: {
-    title: 'Suika Fruit Drop Physics',
+    title: 'Fruit Merge Drop',
     subtitle: 'Drop and collide matching fruits to evolve from Cherry (🍒) to Giant Watermelon (🍉)!',
     scoreLabel: 'Score',
     bestLabel: 'Best',
@@ -168,7 +168,7 @@ const COPY: Record<
     },
   },
   ja: {
-    title: 'スイカマージ 3D物理',
+    title: 'フルーツマージドロップ',
     subtitle: '同じフルーツをぶつけてサクランボ(🍒)から巨大スイカ(🍉)へ進化させよう！',
     scoreLabel: 'スコア',
     bestLabel: 'ベスト',
@@ -194,7 +194,7 @@ const COPY: Record<
     },
   },
   zh: {
-    title: '合成大西瓜 3D物理',
+    title: '水果合成掉落',
     subtitle: '投落相同水果碰撞融合，从樱桃(🍒)一路进化合成超级大西瓜(🍉)！',
     scoreLabel: '得分',
     bestLabel: '最高分',
@@ -220,7 +220,7 @@ const COPY: Record<
     },
   },
   es: {
-    title: 'Suika Fruit Drop Physics',
+    title: 'Fruit Merge Drop',
     subtitle: '¡Suelta y combina frutas iguales desde la Cereza (🍒) hasta la Sandía Gigante (🍉)!',
     scoreLabel: 'Puntos',
     bestLabel: 'Récord',
@@ -246,7 +246,7 @@ const COPY: Record<
     },
   },
   fr: {
-    title: 'Suika Fruit Drop Physics',
+    title: 'Fruit Merge Drop',
     subtitle: 'Faites tomber et fusionner les fruits identiques de la Cerise (🍒) à la Pastèque Géante (🍉) !',
     scoreLabel: 'Score',
     bestLabel: 'Record',
@@ -398,7 +398,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
       const topFruit = FRUIT_TIERS[state.maxTierReached]?.emoji || '🍒';
       const canvas = await createShareCardCanvas({
         title: t.title,
-        slug: 'suika-drop',
+        slug: 'fruit-merge-drop',
         score: `${state.score} (${t.mergesLabel} ${state.mergesCount})`,
         subtitle: `${topFruit} ${t.fruits[FRUIT_TIERS[state.maxTierReached]?.nameKey || 'cherry']} 달성!`,
       });
@@ -522,7 +522,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
           const dateKey = new Date().toISOString().slice(0, 10);
           const progress = loadArcadePassProgress(dateKey);
           saveArcadePassProgress(
-            reportMissionProgress(progress, 'suika-drop', next.mergesCount)
+            reportMissionProgress(progress, 'fruit-merge-drop', next.mergesCount)
           );
         }
         return next;
@@ -723,7 +723,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
           <span className="text-xl">🍉</span>
           <div className="flex flex-col text-left">
             <span className="text-xs font-bold text-foreground">
-              {locale === "ko" ? "Unity 6 3D 12스테이지 수박 합체 물리 에디션" : "Unity 6 3D 12-Stage Suika Fruit Merge Physics Edition"}
+              {locale === "ko" ? "Unity 6 3D 12스테이지 수박 합체 물리 에디션" : "Unity 6 3D 12-Stage Fruit Merge Physics Edition"}
             </span>
             <span className="text-xs text-muted-foreground">
               {locale === "ko"
@@ -881,7 +881,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
                   <div className="relative flex size-20 items-center justify-center rounded-3xl bg-primary/20 p-2 border border-primary/40 shadow-xl">
                     <img
                       src={SUIKA_DROP_UI_SPRITES.trophy}
-                      alt="Suika Merge Trophy"
+                      alt="Fruit Merge Trophy"
                       className="size-14 object-contain animate-bounce"
                       draggable={false}
                     />

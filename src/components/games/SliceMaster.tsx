@@ -262,14 +262,14 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
   const handleShareCard = useCallback(async () => {
     nativeHaptics.trigger("light");
     const canvas = createShareCardCanvas({
-      title: "Slice Master 3D",
+      title: "Blade Drop 3D",
       score: `${game.score} PTS`,
       customStats: [
         { label: "Level", value: `Stage ${level}` },
         { label: "Sliced", value: `${game.sliceCount}` },
         { label: "Stones", value: `${metaState.sharpnessStones} 🪨` },
       ],
-      slug: "slice-master",
+      slug: "blade-drop-3d",
     });
     const ok = await copyShareCardToClipboard(canvas);
     if (ok) {

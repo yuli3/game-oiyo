@@ -6,7 +6,7 @@ describe('buildGameMetaDescription', () => {
     const result = buildGameMetaDescription({
       title: '스이카 드롭 (수박 게임)',
       locale: 'ko',
-      pathname: '/ko/suika-drop/',
+      pathname: '/ko/fruit-merge-drop/',
     });
     expect(result.length).toBeGreaterThanOrEqual(75);
     expect(result.length).toBeLessThanOrEqual(145);

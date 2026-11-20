@@ -98,7 +98,7 @@ const COPY: Record<
   }
 > = {
   ko: {
-    title: '폴리 브릿지 트러스 물리',
+    title: '트러스 브리지 빌더',
     subtitle: '예산($) 안에서 도로·목재 트러스·강철 케이블을 삼각형 구조로 설계해 중장비 트럭을 도하시키세요',
     budgetLabel: '예산',
     stressLabel: '최대 응력',
@@ -122,7 +122,7 @@ const COPY: Record<
     },
   },
   en: {
-    title: 'Poly Bridge Truss Architect',
+    title: 'Truss Bridge Builder',
     subtitle: 'Design triangular Road, Wood Truss, and Steel Cable structures within budget so the heavy truck crosses safely',
     budgetLabel: 'Budget',
     stressLabel: 'Peak Stress',
@@ -146,7 +146,7 @@ const COPY: Record<
     },
   },
   ja: {
-    title: 'ポリブリッジ トラス物理',
+    title: 'トラス橋ビルダー',
     subtitle: '予算($)内で道路・木製トラス・鋼鉄ケーブルを三角形に組み、大型トラックを渡らせよう',
     budgetLabel: '予算',
     stressLabel: '最大応力',
@@ -170,7 +170,7 @@ const COPY: Record<
     },
   },
   zh: {
-    title: '建桥专家：桁架物理',
+    title: '桁架桥梁建造',
     subtitle: '在预算($)内运用道路、木材桁架与钢索构建三角形力学结构，护送重卡安全过江',
     budgetLabel: '预算',
     stressLabel: '峰值应力',
@@ -194,7 +194,7 @@ const COPY: Record<
     },
   },
   es: {
-    title: 'Poly Bridge Truss Architect',
+    title: 'Truss Bridge Builder',
     subtitle: 'Diseña estructuras triangulares de Carretera, Madera y Acero dentro del presupuesto para cruzar el camión',
     budgetLabel: 'Presupuesto',
     stressLabel: 'Tensión Máx',
@@ -218,7 +218,7 @@ const COPY: Record<
     },
   },
   fr: {
-    title: 'Poly Bridge Truss Architect',
+    title: 'Truss Bridge Builder',
     subtitle: 'Concevez des treillis triangulaires en Route, Bois et Acier dans le budget imparti pour faire traverser le camion',
     budgetLabel: 'Budget',
     stressLabel: 'Tension Max',
@@ -347,7 +347,7 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
             const dateKey = new Date().toISOString().slice(0, 10);
             const progress = loadArcadePassProgress(dateKey);
             saveArcadePassProgress(
-              reportMissionProgress(progress, 'poly-bridge', next.levelsCleared)
+              reportMissionProgress(progress, 'truss-bridge', next.levelsCleared)
             );
           } else if (next.phase === 'collapsed' && prev.phase !== 'collapsed') {
             MobileHapticsPro.error();
@@ -516,8 +516,8 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
     MobileHapticsPro.medium();
     const lvlName = t.levels[BRIDGE_LEVELS[state.levelIndex].nameKey];
     const canvas = createShareCardCanvas({
-      title: 'Poly Bridge Truss Architect',
-      slug: 'poly-bridge',
+      title: 'Truss Bridge Builder',
+      slug: 'truss-bridge',
       score: `${lvlName} Cleared`,
       subtitle: `Budget: $${state.spent}/$${state.budget} • Peak Stress: ${Math.round(state.maxStressPeak * 100)}%`,
     });
@@ -546,7 +546,7 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
         <div className="flex items-center gap-2.5">
           <img
             src={POLY_BRIDGE_SPRITES.girder}
-            alt="Poly Bridge Truss"
+            alt="Truss Bridge Builder"
             width={40}
             height={40}
             className="size-10 object-contain drop-shadow-sm"

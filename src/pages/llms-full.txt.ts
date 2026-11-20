@@ -16,7 +16,7 @@ const humanize = (s: string) =>
 
 const AI_OPPONENT_GAMES = new Set([
   'chess', 'checkers', 'gomoku', 'janggi', 'connect-four', 'reversi',
-  'blackjack', 'bad-north-tactics', 'tents-and-trees',
+  'blackjack', 'shield-isle-tactics', 'tents-and-trees',
 ]);
 
 export const GET: APIRoute = async () => {

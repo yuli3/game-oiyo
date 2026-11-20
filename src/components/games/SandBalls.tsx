@@ -93,10 +93,10 @@ export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
     MobileHapticsPro.medium();
     const loadPct = Math.min(100, Math.round((gameState.collectedCount / gameState.truckCapacity) * 100));
     const canvas = createShareCardCanvas({
-      title: 'Sand Balls 3D',
+      title: 'Sand Dig 3D',
       subtitle: `Stage ${gameState.level} Cleared`,
       score: `${gameState.collectedCount} Balls`,
-      slug: 'sand-balls',
+      slug: 'sand-dig',
       customStats: [
         { label: 'Level', value: `Stage ${gameState.level}` },
         { label: 'Truck Fill', value: `${loadPct}%` },
@@ -488,13 +488,13 @@ export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
         isImmersive ? "fixed inset-0 z-50 overflow-y-auto rounded-none w-screen h-screen bg-background" : ""
       }`}
     >
-      {/* Unity 6 3D 12-Stage Sand Balls Physics Launch Banner */}
+      {/* Unity 6 3D 12-Stage Sand Dig Physics Launch Banner */}
       <div className="w-full rounded-xl border border-primary/40 bg-primary/10 p-3 px-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span className="text-xl">🏖️</span>
           <div className="flex flex-col text-left">
             <span className="text-xs font-bold text-foreground">
-              {locale === "ko" ? "Unity 6 3D 12스테이지 모래 조각 물리 에디션" : "Unity 6 3D 12-Stage Sand Balls Physics Edition"}
+              {locale === "ko" ? "Unity 6 3D 12스테이지 모래 조각 물리 에디션" : "Unity 6 3D 12-Stage Sand Dig Physics Edition"}
             </span>
             <span className="text-xs text-muted-foreground">
               {locale === "ko"
@@ -521,7 +521,7 @@ export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
             <img src={SAND_BALLS_SPRITES.truck} alt="" className="size-7 object-contain" draggable={false} />
           </span>
           <div>
-            <h2 className="text-lg font-bold leading-none tracking-tight">샌드 볼스 3D</h2>
+            <h2 className="text-lg font-bold leading-none tracking-tight">샌드 디그</h2>
             <p className="text-xs text-muted-foreground mt-1">
               실시간 모래 절삭 지형 & 구체 물리 낙하 시뮬레이션
             </p>
