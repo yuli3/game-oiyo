@@ -7,7 +7,7 @@
         "http://localhost:8080/en/",
         "http://localhost:8080/ko/",
         "http://localhost:8080/ko/chess/",
-        "http://localhost:8080/ko/wordle/",
+        "http://localhost:8080/ko/five-letter-guess/",
         "http://localhost:8080/ko/sudoku/",
         "http://localhost:8080/ko/game-2048/",
         "http://localhost:8080/ko/solitaire/"
