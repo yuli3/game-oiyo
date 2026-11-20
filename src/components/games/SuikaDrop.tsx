@@ -54,6 +54,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 function TiltSuikaButton({
   children,
   onClick,
@@ -738,8 +739,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors shrink-0"
         >
-          <span>{locale === "ko" ? "3D 실행" : "Play 3D"}</span>
-          <span className="text-xs">↗</span>
+          <UnityEditionLabel />
         </a>
       </div>
 

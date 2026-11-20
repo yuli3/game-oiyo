@@ -31,6 +31,7 @@ import {
 import { nativeHaptics } from "../../lib/haptics/native-bridge";
 import { GameStatTile } from "../ui/game/GameStatTile";
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 const CANVAS_W = 700;
 const CANVAS_H = 540;
 
@@ -791,8 +792,7 @@ export default function SwatBreach({ locale = "ko" }: Props) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors shrink-0"
         >
-          <span>{lang === "ko" ? "3D 작전 개시" : lang === "ja" ? "3D作戦開始" : lang === "es" ? "Desplegar 3D" : "Deploy 3D"}</span>
-          <span className="text-xs">↗</span>
+          <UnityEditionLabel />
         </a>
       </div>
 

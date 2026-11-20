@@ -22,6 +22,7 @@ import {
 } from '../../lib/games/dome-keeper';
 import type { Locale } from '../../lib/i18n';
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 interface Props {
   locale?: Locale;
 }
@@ -375,8 +376,7 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
             href="/prototypes/dome-keeper-unity/index.html"
             className="inline-flex items-center gap-1 rounded-xl border border-primary/50 bg-primary/15 px-3 py-1.5 text-xs font-black text-primary shadow hover:bg-primary/25 transition-colors"
           >
-            <span>🛰️</span>
-            <span>{locale === 'ko' ? 'Unity 실시간 에디션' : 'Play Unity Edition'}</span>
+            <UnityEditionLabel />
           </a>
           <TiltDomeButton
             onClick={onPreset}

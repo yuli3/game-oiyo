@@ -28,6 +28,7 @@ import {
   type Run,
 } from "../../lib/games/two-hands";
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 const FUSE_MS = 3200;
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 const BUTTON = "min-h-16 rounded-xl border border-border bg-card text-sm font-bold text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60";
@@ -366,8 +367,7 @@ export default function TwoHands({ locale }: { locale: Locale }) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
           >
-            <span>3D 실행</span>
-            <span className="text-xs">↗</span>
+            <UnityEditionLabel />
           </a>
         </div>
         <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">

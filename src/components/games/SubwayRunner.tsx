@@ -27,6 +27,7 @@ import {
 } from "@/lib/games/subway-runner";
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 function TiltRunnerButton({
   children,
   className = "",
@@ -399,8 +400,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
         >
-          <span>3D 실행</span>
-          <span className="text-xs">↗</span>
+          <UnityEditionLabel />
         </a>
       </div>
 

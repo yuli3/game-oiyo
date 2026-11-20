@@ -46,6 +46,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 function getPercentageWidthClass(pct: number): string {
   if (pct >= 95) return 'w-full';
   if (pct >= 90) return 'w-11/12';
@@ -301,8 +302,7 @@ export default function CyberHighway3D() {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
           >
-            <span>3D 실행</span>
-            <span className="text-xs">↗</span>
+            <UnityEditionLabel />
           </a>
         </div>
       )}

@@ -54,6 +54,7 @@ import {
 import { celebrate } from '../../lib/games/celebration';
 import { BORDER_INSPECTOR_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 interface BorderInspectorProps {
   lang?: string;
 }
@@ -650,7 +651,7 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
             href="/prototypes/border-inspector-unity/index.html"
             className="rounded-lg border border-primary/50 bg-primary/15 px-3 py-1 text-xs font-black text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
           >
-            🛰️ Unity 3D 실시간 에디션 (12스테이지)
+            <UnityEditionLabel />
           </a>
           <button
             type="button"

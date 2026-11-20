@@ -20,6 +20,7 @@ import { Button } from "../ui/button";
 import { BLOCK_BLAST_UI_SPRITES } from "../../lib/games/sprites";
 import { Volume2, VolumeX } from "lucide-react";
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 interface BlockBlastProps {
   locale?: string;
 }
@@ -252,8 +253,7 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
         >
-          <span>{locale === "ko" ? "3D 실행" : "Play 3D"}</span>
-          <span className="text-xs">↗</span>
+          <UnityEditionLabel />
         </a>
       </div>
 

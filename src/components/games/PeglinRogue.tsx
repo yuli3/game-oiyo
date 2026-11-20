@@ -21,6 +21,7 @@ import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth, 
 import { getSpriteUrl, PEGLIN_ROGUE_SPRITES } from "@/lib/games/sprites";
 import { Maximize2, Minimize2, Share2, Check, RotateCcw, Target, Volume2, VolumeX } from "lucide-react";
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 function TiltPeglinButton({
   children,
   onClick,
@@ -300,8 +301,7 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors"
         >
-          <span>{locale === "ko" ? "3D 실행" : "Play 3D"}</span>
-          <span className="text-xs">↗</span>
+          <UnityEditionLabel />
         </a>
       </div>
 

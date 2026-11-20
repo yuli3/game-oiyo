@@ -432,7 +432,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
     {
         if (_motorwayCount <= 0)
         {
-            SetStatus("No expressways left!");
+            SetStatus("No Motorways remaining!");
             return;
         }
         if (a == b) return;
@@ -665,7 +665,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
     {
         var bold = new GUIStyle(GUI.skin.box) { fontSize = 14, fontStyle = FontStyle.Bold };
         GUI.Box(new Rect(14, 12, 470, 62), "");
-        GUI.Label(new Rect(24, 18, 450, 24), $"ROAD WEAVER  |  TRIPS: {_trips}  |  WEEK {_week} ({Mathf.CeilToInt(WeekDuration - _weekTimer)}s)", bold);
+        GUI.Label(new Rect(24, 18, 450, 24), $"MINI MOTORWAYS UNITY  |  TRIPS: {_trips}  |  WEEK {_week} ({Mathf.CeilToInt(WeekDuration - _weekTimer)}s)", bold);
         GUI.Label(new Rect(24, 44, 450, 22), $"Roads: {_roadTiles}  •  Bridges: {_bridges}  •  Motorways: {_motorwayCount}  •  Mode: {(_motorwayMode ? "MOTORWAY (Click 2 tiles)" : (_eraseMode ? "ERASE" : "DRAW ROAD"))}");
 
         if (GUI.Button(new Rect(500, 14, 110, 28), _eraseMode ? "Mode: Erase ✓" : "Erase (E)"))

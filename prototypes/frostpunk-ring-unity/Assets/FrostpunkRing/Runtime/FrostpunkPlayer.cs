@@ -521,7 +521,7 @@ public sealed class FrostpunkPlayer : MonoBehaviour
 
         GUI.Box(new Rect(14, 12, Screen.width - 28, 68), "");
         GUI.Label(new Rect(26, 18, 560, 24),
-            $"HEAT RING CITY  |  DAY {_day}/{MaxDays} ({Mathf.CeilToInt(DayLengthSec - _dayTimer)}s)  |  TEMP: {amb}°C  |  HOPE: {Mathf.RoundToInt(_hope)}%", bold);
+            $"FROSTPUNK UNITY  |  DAY {_day}/{MaxDays} ({Mathf.CeilToInt(DayLengthSec - _dayTimer)}s)  |  TEMP: {amb}°C  |  HOPE: {Mathf.RoundToInt(_hope)}%", bold);
         GUI.Label(new Rect(26, 44, 720, 22),
             $"Coal: {Mathf.FloorToInt(_coal)}   Wood: {Mathf.FloorToInt(_wood)}   Citizens: {_citizens} (Sick: {_sick})   Stress: {Mathf.RoundToInt(_stress)}%   •  A/D or Right-Drag Orbit Camera");
 
