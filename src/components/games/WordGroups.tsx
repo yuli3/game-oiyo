@@ -416,7 +416,7 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
       <div className="not-prose mx-auto flex w-full max-w-lg flex-col gap-4 py-3">
         {!isImmersive && (
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <img src={WORD_GROUPS_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+            <img src={WORD_GROUPS_SPRITES.keyart} alt={t.title} className="h-20 w-full object-cover sm:h-44" />
           </div>
         )}
         <header className="relative space-y-1 pr-24">

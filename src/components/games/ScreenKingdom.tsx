@@ -708,7 +708,7 @@ export default function ScreenKingdom({ locale = "en" }: { locale?: Locale }) {
       }
       onPointerDown={arm}
     >
-      <header className="flex items-start justify-between gap-4">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <img src={SCREEN_KINGDOM_UI_SPRITES.castle} alt="Castle" className="size-12 object-contain drop-shadow" />
@@ -725,8 +725,8 @@ export default function ScreenKingdom({ locale = "en" }: { locale?: Locale }) {
               />
             )}
           </h2>
-          <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
-          <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
+          <p className="line-clamp-2 text-sm leading-6 text-muted-foreground sm:line-clamp-none">{copy.lead}</p>
+          <p className="hidden text-xs leading-5 text-muted-foreground sm:block">{copy.keys}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button

@@ -243,7 +243,7 @@ export default function ShadowArchitect({ locale = "ko" }: { locale?: string }) 
     <GameContainer title={t.title} subtitle={t.sub}>
       <div ref={stageRef} className="space-y-4">
         {!active && (
-          <img src="/games/shadow-architect-keyart.webp" alt="" width={1730} height={909} decoding="async" className="aspect-[1.9/1] w-full rounded-2xl object-cover" />
+          <img src="/games/shadow-architect-keyart.webp" alt="" width={1730} height={909} decoding="async" className="aspect-[1.9/1] max-h-24 w-full rounded-2xl object-cover sm:max-h-none" />
         )}
         <div className="grid grid-cols-3 gap-2 text-center text-sm">
           <div className="rounded-xl bg-muted p-2"><b>{t.match}</b><br />{match.percent}%</div>
