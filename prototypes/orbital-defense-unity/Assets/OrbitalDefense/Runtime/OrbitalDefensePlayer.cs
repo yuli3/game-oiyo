@@ -984,6 +984,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         int w = Screen.width;
         int h = Screen.height;
 
@@ -1108,7 +1109,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
         GUILayout.Label($"<b>{GetText("포탑 배치/업그레이드", "Build / Upgrade Turret", "砲塔建設/強化", "Construir / Mejorar")} (Slot #{slot.id})</b>");
         GUI.color = Color.white;
         GUILayout.FlexibleSpace();
-        if (GUILayout.Button("✕", GUILayout.Width(30), GUILayout.Height(24))) selectedSlotId = -1;
+        if (GUILayout.Button("×", GUILayout.Width(30), GUILayout.Height(24))) selectedSlotId = -1;
         GUILayout.EndHorizontal();
 
         GUILayout.Space(6);
@@ -1295,7 +1296,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
         GUILayout.Label($"<size=20><b>{GetText("섹터 선택 (12 Sectors)", "Select Sector (12 Sectors)", "セクター選択 (全12セクター)", "Seleccionar Sector (12 Sectores)")}</b></size>");
         GUI.color = Color.white;
         GUILayout.FlexibleSpace();
-        if (GUILayout.Button("✕", GUILayout.Width(35), GUILayout.Height(28)))
+        if (GUILayout.Button("×", GUILayout.Width(35), GUILayout.Height(28)))
         {
             showStageSelect = false;
         }

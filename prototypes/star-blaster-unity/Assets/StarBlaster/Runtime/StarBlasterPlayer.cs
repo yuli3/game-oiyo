@@ -1218,6 +1218,7 @@ public class StarBlasterPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         int w = Screen.width;
         int h = Screen.height;
 
@@ -1482,7 +1483,7 @@ public class StarBlasterPlayer : MonoBehaviour
         GUILayout.Label($"<size=20><b>{GetText("스테이지 선택 (12 Stages)", "Select Stage (12 Stages)", "ステージ選択 (全12ステージ)", "Seleccionar Etapa (12 Etapas)")}</b></size>");
         GUI.color = Color.white;
         GUILayout.FlexibleSpace();
-        if (GUILayout.Button("✕", GUILayout.Width(35), GUILayout.Height(28)))
+        if (GUILayout.Button("×", GUILayout.Width(35), GUILayout.Height(28)))
         {
             showStageSelect = false;
         }

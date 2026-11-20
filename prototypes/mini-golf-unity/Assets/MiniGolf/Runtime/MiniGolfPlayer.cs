@@ -519,6 +519,7 @@ public class MiniGolfPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         DrawHeaderHUD();
         DrawAimGuide();
 

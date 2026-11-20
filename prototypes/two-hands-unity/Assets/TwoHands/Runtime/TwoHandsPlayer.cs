@@ -889,6 +889,7 @@ public class TwoHandsPlayer : MonoBehaviour
     // --- OnGUI Real-Time Multi-Language HUD & Modals ---
     private void OnGUI()
     {
+        OiyoUiFont.Apply();
         DrawHUD();
         DrawMobileTouchControls();
 
@@ -933,7 +934,7 @@ public class TwoHandsPlayer : MonoBehaviour
         // Distance & Score & Lives
         GUILayout.BeginVertical();
         GUILayout.Label($"{GetLocalizedText("DISTANCE", "진행 거리", "距離", "DISTANCIA")}: <b>{(int)currentDistance}m / {(int)st.targetDistance}m</b>", GetLabelStyle(13, Color.white));
-        GUILayout.Label($"{GetLocalizedText("SCORE", "점수", "スコア", "PUNTOS")}: <b>{score}</b> · {"❤️".Repeat(lives)}", GetLabelStyle(13, Color.yellow));
+        GUILayout.Label($"{GetLocalizedText("SCORE", "점수", "スコア", "PUNTOS")}: <b>{score}</b> · {"♥".Repeat(lives)}", GetLabelStyle(13, Color.yellow));
         GUILayout.EndVertical();
 
         GUILayout.Space(15);
@@ -945,7 +946,7 @@ public class TwoHandsPlayer : MonoBehaviour
         if (GUILayout.Button("JA", GetButtonStyle(currentLang == Language.JA))) currentLang = Language.JA;
         if (GUILayout.Button("ES", GetButtonStyle(currentLang == Language.ES))) currentLang = Language.ES;
 
-        if (GUILayout.Button(soundEnabled ? "🔊" : "🔇", GUILayout.Width(35), GUILayout.Height(30))) soundEnabled = !soundEnabled;
+        if (GUILayout.Button(soundEnabled ? GetLocalizedText("SOUND ON", "소리 켬", "サウンド オン", "SONIDO SÍ") : GetLocalizedText("SOUND OFF", "소리 끔", "サウンド オフ", "SONIDO NO"), GUILayout.Height(30))) soundEnabled = !soundEnabled;
         if (GUILayout.Button(GetLocalizedText("STAGES", "스테이지", "ステージ", "ETAPAS"), GUILayout.Height(30))) showStageSelect = !showStageSelect;
         GUILayout.EndHorizontal();
 
@@ -955,10 +956,9 @@ public class TwoHandsPlayer : MonoBehaviour
         // Controls Guidance Bar
         GUI.Label(new Rect(10, Screen.height - 35, Screen.width - 20, 25),
             GetLocalizedText(
-                "조작: [왼손: A / D] ◄► [오른손: ◀ / ▶] · 모바일: 하단 좌/우 터치",
-                "Controls: [Left: A / D] ◄► [Right: ◀ / ▶] · Mobile: Touch Bottom L/R",
-                "操作: [左手: A / D] ◄► [右手: ◀ / ▶] · モバイル: 画面下部タッチ",
-                "Controles: [Izq: A / D] ◄► [Der: ◀ / ▶] · Móvil: Tocar abajo"),
+                "Controls: [Left: A / D] ◀▶ [Right: ◀ / ▶] · Mobile: Touch Bottom L/R", "조작: [왼손: A / D] ◀▶ [오른손: ◀ / ▶] · 모바일: 하단 좌/우 터치",
+                "操作: [左手: A / D] ◀▶ [右手: ◀ / ▶] · モバイル: 画面下部タッチ",
+                "Controles: [Izq: A / D] ◀▶ [Der: ◀ / ▶] · Móvil: Tocar abajo"),
             GetLabelStyle(12, Color.gray));
     }
 
@@ -988,7 +988,7 @@ public class TwoHandsPlayer : MonoBehaviour
         GUI.Box(rect, $"<b>{GetLocalizedText("SELECT STAGE", "스테이지 선택", "ステージ選択", "SELECCIONAR ETAPA")} (1~12)</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label(GetLocalizedText("12개 양손 인지 조율 전장 중 도전할 스테이지를 선택하세요.", "Select from 12 bilateral brain coordination stages.", "12の両手認知調和ステージから挑戦を選択してください。", "Selecciona entre 12 etapas de coordinación cerebral bilateral."), GetLabelStyle(12, Color.gray));
+        GUILayout.Label(GetLocalizedText("Select from 12 bilateral brain coordination stages.", "12개 양손 인지 조율 전장 중 도전할 스테이지를 선택하세요.", "12の両手認知調和ステージから挑戦を選択してください。", "Selecciona entre 12 etapas de coordinación cerebral bilateral."), GetLabelStyle(12, Color.gray));
 
         GUILayout.Space(10);
         int cols = 3;
@@ -1014,7 +1014,7 @@ public class TwoHandsPlayer : MonoBehaviour
         }
 
         GUILayout.FlexibleSpace();
-        if (GUILayout.Button(GetLocalizedText("닫기", "Close", "閉じる", "Cerrar"), GUILayout.Height(36)))
+        if (GUILayout.Button(GetLocalizedText("Close", "닫기", "閉じる", "Cerrar"), GUILayout.Height(36)))
         {
             showStageSelect = false;
         }
@@ -1030,28 +1030,28 @@ public class TwoHandsPlayer : MonoBehaviour
         GUI.Box(rect, $"<b>🏆 {GetLocalizedText("STAGE CLEAR!", "스테이지 클리어!", "ステージクリア！", "¡ETAPA SUPERADA!")}</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label($"{GetLocalizedText("스테이지", "Stage", "ステージ", "Etapa")} {currentStageIndex + 1} {GetLocalizedStageTitle(stages[currentStageIndex])}", GetLabelStyle(15, Color.green));
+        GUILayout.Label($"{GetLocalizedText("Stage", "스테이지", "ステージ", "Etapa")} {currentStageIndex + 1} {GetLocalizedStageTitle(stages[currentStageIndex])}", GetLabelStyle(15, Color.green));
         GUILayout.Space(8);
-        GUILayout.Label($"{GetLocalizedText("최종 점수", "Final Score", "最終スコア", "Puntuación Final")}: <b>{score}</b>", GetLabelStyle(14, Color.white));
-        GUILayout.Label($"{GetLocalizedText("듀얼 싱크 횟수", "Dual Syncs", "デュアルシンク回数", "Sincronías Duales")}: <b>{dualSyncCount}회</b>", GetLabelStyle(14, Color.yellow));
+        GUILayout.Label($"{GetLocalizedText("Final Score", "최종 점수", "最終スコア", "Puntuación Final")}: <b>{score}</b>", GetLabelStyle(14, Color.white));
+        GUILayout.Label($"{GetLocalizedText("Dual Syncs", "듀얼 싱크 횟수", "デュアルシンク回数", "Sincronías Duales")}: <b>{dualSyncCount}회</b>", GetLabelStyle(14, Color.yellow));
 
         GUILayout.Space(15);
         GUILayout.BeginHorizontal();
         if (currentStageIndex < stages.Count - 1)
         {
-            if (GUILayout.Button(GetLocalizedText("다음 스테이지 ▶", "Next Stage ▶", "次のステージ ▶", "Siguiente Etapa ▶"), GUILayout.Height(44)))
+            if (GUILayout.Button(GetLocalizedText("Next Stage ▶", "다음 스테이지 ▶", "次のステージ ▶", "Siguiente Etapa ▶"), GUILayout.Height(44)))
             {
                 StartStage(currentStageIndex + 1);
             }
         }
         else
         {
-            if (GUILayout.Button(GetLocalizedText("피날레 정복 완료! (다시하기)", "Grand Finale Completed! (Restart)", "フィナーレ制覇達成！（再挑戦）", "¡Gran Final Completado!"), GUILayout.Height(44)))
+            if (GUILayout.Button(GetLocalizedText("Grand Finale Completed! (Restart)", "피날레 정복 완료! (다시하기)", "フィナーレ制覇達成！（再挑戦）", "¡Gran Final Completado!"), GUILayout.Height(44)))
             {
                 StartStage(0);
             }
         }
-        if (GUILayout.Button(GetLocalizedText("다시 도전", "Retry", "リトライ", "Reintentar"), GUILayout.Height(44)))
+        if (GUILayout.Button(GetLocalizedText("Retry", "다시 도전", "リトライ", "Reintentar"), GUILayout.Height(44)))
         {
             StartStage(currentStageIndex);
         }
@@ -1068,19 +1068,19 @@ public class TwoHandsPlayer : MonoBehaviour
         GUI.Box(rect, $"<b>💀 {GetLocalizedText("GAME OVER", "게임 오버", "ゲームオーバー", "FIN DEL JUEGO")}</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label(GetLocalizedText("장애물에 충돌하여 에너지가 소진되었습니다!", "Energy depleted due to collisions!", "障害物に衝突しエネルギーが尽きました！", "¡Energía agotada por colisiones!"), GetLabelStyle(14, Color.red));
+        GUILayout.Label(GetLocalizedText("Energy depleted due to collisions!", "장애물에 충돌하여 에너지가 소진되었습니다!", "障害物に衝突しエネルギーが尽きました！", "¡Energía agotada por colisiones!"), GetLabelStyle(14, Color.red));
         GUILayout.Space(8);
-        GUILayout.Label($"{GetLocalizedText("달성 거리", "Distance Reached", "到達距離", "Distancia Alcanzada")}: <b>{(int)currentDistance}m</b>", GetLabelStyle(14, Color.white));
-        GUILayout.Label($"{GetLocalizedText("도달 점수", "Reached Score", "スコア", "Puntuación")}: <b>{score}</b>", GetLabelStyle(13, Color.yellow));
+        GUILayout.Label($"{GetLocalizedText("Distance Reached", "달성 거리", "到達距離", "Distancia Alcanzada")}: <b>{(int)currentDistance}m</b>", GetLabelStyle(14, Color.white));
+        GUILayout.Label($"{GetLocalizedText("Reached Score", "도달 점수", "スコア", "Puntuación")}: <b>{score}</b>", GetLabelStyle(13, Color.yellow));
 
         GUILayout.Space(15);
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button(GetLocalizedText("다시 시도", "Retry", "リトライ", "Reintentar"), GUILayout.Height(44)))
+        if (GUILayout.Button(GetLocalizedText("Retry", "다시 시도", "リトライ", "Reintentar"), GUILayout.Height(44)))
         {
             lives = 3;
             StartStage(currentStageIndex);
         }
-        if (GUILayout.Button(GetLocalizedText("스테이지 선택", "Stage Select", "ステージ選択", "Elegir Etapa"), GUILayout.Height(44)))
+        if (GUILayout.Button(GetLocalizedText("Stage Select", "스테이지 선택", "ステージ選択", "Elegir Etapa"), GUILayout.Height(44)))
         {
             lives = 3;
             showStageSelect = true;

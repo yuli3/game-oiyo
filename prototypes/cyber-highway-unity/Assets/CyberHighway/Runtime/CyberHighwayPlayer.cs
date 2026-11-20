@@ -1044,6 +1044,7 @@ public class CyberHighwayPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         int w = Screen.width;
         int h = Screen.height;
 
@@ -1323,7 +1324,7 @@ public class CyberHighwayPlayer : MonoBehaviour
         GUILayout.Label($"<size=20><b>{GetText("섹터 선택 (12 Sectors)", "Select Sector (12 Sectors)", "セクター選択 (全12セクター)", "Seleccionar Sector (12 Sectores)")}</b></size>");
         GUI.color = Color.white;
         GUILayout.FlexibleSpace();
-        if (GUILayout.Button("✕", GUILayout.Width(35), GUILayout.Height(28)))
+        if (GUILayout.Button("×", GUILayout.Width(35), GUILayout.Height(28)))
         {
             showStageSelect = false;
         }

@@ -1142,6 +1142,7 @@ public class PaperFlightPlayer : MonoBehaviour
 
     private void OnGUI()
     {
+        OiyoUiFont.Apply();
         InitGUIStyles();
 
         // 1. Top Header Bar

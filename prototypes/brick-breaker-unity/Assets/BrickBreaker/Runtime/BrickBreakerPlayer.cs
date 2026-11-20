@@ -1153,6 +1153,7 @@ public class BrickBreakerPlayer : MonoBehaviour
     // --- OnGUI Real-Time Multi-Language HUD & Modals ---
     private void OnGUI()
     {
+        OiyoUiFont.Apply();
         DrawHUD();
 
         if (toastTimer > 0f)
@@ -1196,7 +1197,7 @@ public class BrickBreakerPlayer : MonoBehaviour
         GUILayout.BeginVertical();
         GUILayout.Label($"{GetLocalizedText("SCORE", "점수", "スコア", "PUNTOS")}: <b>{score}</b>", GetLabelStyle(14, Color.white));
         string comboStr = combo > 1 ? $" <color=#ff8800>({combo}x COMBO!)</color>" : "";
-        GUILayout.Label($"{GetLocalizedText("LIVES", "생명", "ライフ", "VIDAS")}: {"❤️".Repeat(lives)}{comboStr}", GetLabelStyle(13, Color.yellow));
+        GUILayout.Label($"{GetLocalizedText("LIVES", "생명", "ライフ", "VIDAS")}: {"♥".Repeat(lives)}{comboStr}", GetLabelStyle(13, Color.yellow));
         GUILayout.EndVertical();
 
         GUILayout.Space(15);
@@ -1208,7 +1209,7 @@ public class BrickBreakerPlayer : MonoBehaviour
         if (GUILayout.Button("JA", GetButtonStyle(currentLang == Language.JA))) currentLang = Language.JA;
         if (GUILayout.Button("ES", GetButtonStyle(currentLang == Language.ES))) currentLang = Language.ES;
 
-        if (GUILayout.Button(soundEnabled ? "🔊" : "🔇", GUILayout.Width(35), GUILayout.Height(30))) soundEnabled = !soundEnabled;
+        if (GUILayout.Button(soundEnabled ? GetLocalizedText("SOUND ON", "소리 켬", "サウンド オン", "SONIDO SÍ") : GetLocalizedText("SOUND OFF", "소리 끔", "サウンド オフ", "SONIDO NO"), GUILayout.Height(30))) soundEnabled = !soundEnabled;
         if (GUILayout.Button(GetLocalizedText("STAGES", "스테이지", "ステージ", "ETAPAS"), GUILayout.Height(30))) showStageSelect = !showStageSelect;
         GUILayout.EndHorizontal();
 
@@ -1235,7 +1236,7 @@ public class BrickBreakerPlayer : MonoBehaviour
         GUI.Box(rect, $"<b>{GetLocalizedText("SELECT STAGE", "스테이지 선택", "ステージ選択", "SELECCIONAR ETAPA")} (1~12)</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label(GetLocalizedText("12개 고유 챌린지 스테이지 중 원하는 전장을 선택하세요.", "Select from 12 distinct challenge formations.", "12のステージから挑戦したい戦場を選択してください。", "Selecciona entre 12 formaciones de desafío distintas."), GetLabelStyle(12, Color.gray));
+        GUILayout.Label(GetLocalizedText("Select from 12 distinct challenge formations.", "12개 고유 챌린지 스테이지 중 원하는 전장을 선택하세요.", "12のステージから挑戦したい戦場を選択してください。", "Selecciona entre 12 formaciones de desafío distintas."), GetLabelStyle(12, Color.gray));
 
         GUILayout.Space(10);
         int cols = 3;
@@ -1261,7 +1262,7 @@ public class BrickBreakerPlayer : MonoBehaviour
         }
 
         GUILayout.FlexibleSpace();
-        if (GUILayout.Button(GetLocalizedText("닫기", "Close", "閉じる", "Cerrar"), GUILayout.Height(36)))
+        if (GUILayout.Button(GetLocalizedText("Close", "닫기", "閉じる", "Cerrar"), GUILayout.Height(36)))
         {
             showStageSelect = false;
         }
@@ -1277,28 +1278,28 @@ public class BrickBreakerPlayer : MonoBehaviour
         GUI.Box(rect, $"<b>🏆 {GetLocalizedText("STAGE CLEAR!", "스테이지 클리어!", "ステージクリア！", "¡ETAPA SUPERADA!")}</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label($"{GetLocalizedText("스테이지", "Stage", "ステージ", "Etapa")} {currentStageIndex + 1} {GetLocalizedStageTitle(stages[currentStageIndex])}", GetLabelStyle(15, Color.green));
+        GUILayout.Label($"{GetLocalizedText("Stage", "스테이지", "ステージ", "Etapa")} {currentStageIndex + 1} {GetLocalizedStageTitle(stages[currentStageIndex])}", GetLabelStyle(15, Color.green));
         GUILayout.Space(8);
-        GUILayout.Label($"{GetLocalizedText("최종 점수", "Final Score", "最終スコア", "Puntuación Final")}: <b>{score}</b>", GetLabelStyle(14, Color.white));
-        GUILayout.Label($"{GetLocalizedText("최대 콤보", "Max Combo", "最大コンボ", "Combo Máximo")}: <b>{maxCombo}x</b>", GetLabelStyle(14, Color.yellow));
+        GUILayout.Label($"{GetLocalizedText("Final Score", "최종 점수", "最終スコア", "Puntuación Final")}: <b>{score}</b>", GetLabelStyle(14, Color.white));
+        GUILayout.Label($"{GetLocalizedText("Max Combo", "최대 콤보", "最大コンボ", "Combo Máximo")}: <b>{maxCombo}x</b>", GetLabelStyle(14, Color.yellow));
 
         GUILayout.Space(15);
         GUILayout.BeginHorizontal();
         if (currentStageIndex < stages.Count - 1)
         {
-            if (GUILayout.Button(GetLocalizedText("다음 스테이지 ▶", "Next Stage ▶", "次のステージ ▶", "Siguiente Etapa ▶"), GUILayout.Height(44)))
+            if (GUILayout.Button(GetLocalizedText("Next Stage ▶", "다음 스테이지 ▶", "次のステージ ▶", "Siguiente Etapa ▶"), GUILayout.Height(44)))
             {
                 StartStage(currentStageIndex + 1);
             }
         }
         else
         {
-            if (GUILayout.Button(GetLocalizedText("전설 피날레 완료! (다시하기)", "Grand Finale Completed! (Restart)", "グランドフィナーレ達成！（再挑戦）", "¡Gran Final Completado!"), GUILayout.Height(44)))
+            if (GUILayout.Button(GetLocalizedText("Grand Finale Completed! (Restart)", "전설 피날레 완료! (다시하기)", "グランドフィナーレ達成！（再挑戦）", "¡Gran Final Completado!"), GUILayout.Height(44)))
             {
                 StartStage(0);
             }
         }
-        if (GUILayout.Button(GetLocalizedText("다시 도전", "Retry", "リトライ", "Reintentar"), GUILayout.Height(44)))
+        if (GUILayout.Button(GetLocalizedText("Retry", "다시 도전", "リトライ", "Reintentar"), GUILayout.Height(44)))
         {
             StartStage(currentStageIndex);
         }
@@ -1315,19 +1316,19 @@ public class BrickBreakerPlayer : MonoBehaviour
         GUI.Box(rect, $"<b>💀 {GetLocalizedText("GAME OVER", "게임 오버", "ゲームオーバー", "FIN DEL JUEGO")}</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label(GetLocalizedText("모든 공을 놓쳤습니다!", "All balls were lost!", "すべてのボールを落としました！", "¡Se perdieron todas las bolas!"), GetLabelStyle(14, Color.red));
+        GUILayout.Label(GetLocalizedText("All balls were lost!", "모든 공을 놓쳤습니다!", "すべてのボールを落としました！", "¡Se perdieron todas las bolas!"), GetLabelStyle(14, Color.red));
         GUILayout.Space(8);
-        GUILayout.Label($"{GetLocalizedText("도달 점수", "Reached Score", "スコア", "Puntuación")}: <b>{score}</b>", GetLabelStyle(14, Color.white));
-        GUILayout.Label($"{GetLocalizedText("도달 스테이지", "Reached Stage", "到達ステージ", "Etapa Alcanzada")}: Stage {currentStageIndex + 1}", GetLabelStyle(13, Color.yellow));
+        GUILayout.Label($"{GetLocalizedText("Reached Score", "도달 점수", "スコア", "Puntuación")}: <b>{score}</b>", GetLabelStyle(14, Color.white));
+        GUILayout.Label($"{GetLocalizedText("Reached Stage", "도달 스테이지", "到達ステージ", "Etapa Alcanzada")}: Stage {currentStageIndex + 1}", GetLabelStyle(13, Color.yellow));
 
         GUILayout.Space(15);
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button(GetLocalizedText("다시 시도", "Retry", "リトライ", "Reintentar"), GUILayout.Height(44)))
+        if (GUILayout.Button(GetLocalizedText("Retry", "다시 시도", "リトライ", "Reintentar"), GUILayout.Height(44)))
         {
             lives = 3;
             StartStage(currentStageIndex);
         }
-        if (GUILayout.Button(GetLocalizedText("스테이지 선택", "Stage Select", "ステージ選択", "Elegir Etapa"), GUILayout.Height(44)))
+        if (GUILayout.Button(GetLocalizedText("Stage Select", "스테이지 선택", "ステージ選択", "Elegir Etapa"), GUILayout.Height(44)))
         {
             lives = 3;
             showStageSelect = true;

@@ -882,6 +882,7 @@ public class PeglinRoguePlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         // Custom Modern High-Contrast RPG HUD
         GUI.skin.label.fontSize = 14;
         GUI.skin.button.fontSize = 13;
@@ -1032,7 +1033,7 @@ public class PeglinRoguePlayer : MonoBehaviour
             }
 
             GUILayout.Space(8);
-            if (GUILayout.Button("❌ CLOSE", GUILayout.Height(30)))
+            if (GUILayout.Button("× CLOSE", GUILayout.Height(30)))
             {
                 showStageSelect = false;
             }

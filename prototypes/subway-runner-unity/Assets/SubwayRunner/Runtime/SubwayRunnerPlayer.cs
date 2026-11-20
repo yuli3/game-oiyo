@@ -930,6 +930,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
     // --- OnGUI Real-Time Multi-Language HUD & Modals ---
     private void OnGUI()
     {
+        OiyoUiFont.Apply();
         DrawHUD();
         DrawMobileControls();
 
@@ -975,7 +976,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
         GUILayout.BeginVertical();
         GUILayout.Label($"{GetLocalizedText("DISTANCE", "질주 거리", "距離", "DISTANCIA")}: <b>{(int)currentDistance}m / {(int)st.targetDistance}m</b>", GetLabelStyle(13, Color.white));
         string multStr = multiplierTimer > 0f ? " <color=#ffaa00>(2X!)</color>" : "";
-        GUILayout.Label($"🪙 <b>{coins}</b>{multStr} · {GetLocalizedText("SCORE", "점수", "スコア", "PUNTOS")}: <b>{score}</b> · {"❤️".Repeat(lives)}", GetLabelStyle(13, Color.yellow));
+        GUILayout.Label($"🪙 <b>{coins}</b>{multStr} · {GetLocalizedText("SCORE", "점수", "スコア", "PUNTOS")}: <b>{score}</b> · {"♥".Repeat(lives)}", GetLabelStyle(13, Color.yellow));
         GUILayout.EndVertical();
 
         GUILayout.Space(15);
@@ -987,7 +988,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
         if (GUILayout.Button("JA", GetButtonStyle(currentLang == Language.JA))) currentLang = Language.JA;
         if (GUILayout.Button("ES", GetButtonStyle(currentLang == Language.ES))) currentLang = Language.ES;
 
-        if (GUILayout.Button(soundEnabled ? "🔊" : "🔇", GUILayout.Width(35), GUILayout.Height(30))) soundEnabled = !soundEnabled;
+        if (GUILayout.Button(soundEnabled ? GetLocalizedText("SOUND ON", "소리 켬", "サウンド オン", "SONIDO SÍ") : GetLocalizedText("SOUND OFF", "소리 끔", "サウンド オフ", "SONIDO NO"), GUILayout.Height(30))) soundEnabled = !soundEnabled;
         if (GUILayout.Button(GetLocalizedText("STAGES", "스테이지", "ステージ", "ETAPAS"), GUILayout.Height(30))) showStageSelect = !showStageSelect;
         GUILayout.EndHorizontal();
 
@@ -1000,15 +1001,14 @@ public class SubwayRunnerPlayer : MonoBehaviour
             GUILayout.BeginArea(new Rect(10, 80, 200, 60));
             if (magnetTimer > 0f) GUILayout.Label($"🧲 MAGNET: {magnetTimer:F1}s", GetLabelStyle(13, Color.red));
             if (jetpackTimer > 0f) GUILayout.Label($"🚀 JETPACK: {jetpackTimer:F1}s", GetLabelStyle(13, Color.cyan));
-            if (multiplierTimer > 0f) GUILayout.Label($"⭐ 2X BOOST: {multiplierTimer:F1}s", GetLabelStyle(13, Color.yellow));
+            if (multiplierTimer > 0f) GUILayout.Label($"★ 2X BOOST: {multiplierTimer:F1}s", GetLabelStyle(13, Color.yellow));
             GUILayout.EndArea();
         }
 
         // Control Guidance
         GUI.Label(new Rect(10, Screen.height - 35, Screen.width - 20, 25),
             GetLocalizedText(
-                "조작: [A/D 또는 ◀/▶: 차선 이동] [W/▲/Space: 점프] [S/▼: 슬라이드]",
-                "Controls: [A/D or ◀/▶: Lane] [W/▲/Space: Jump] [S/▼: Slide]",
+                "Controls: [A/D or ◀/▶: Lane] [W/▲/Space: Jump] [S/▼: Slide]", "조작: [A/D 또는 ◀/▶: 차선 이동] [W/▲/Space: 점프] [S/▼: 슬라이드]",
                 "操作: [A/D または ◀/▶: 車線変更] [W/▲/Space: ジャンプ] [S/▼: スライド]",
                 "Controles: [A/D o ◀/▶: Carril] [W/▲/Espacio: Saltar] [S/▼: Deslizar]"),
             GetLabelStyle(12, Color.gray));
@@ -1055,7 +1055,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
         GUI.Box(rect, $"<b>{GetLocalizedText("SELECT STAGE", "스테이지 선택", "ステージ選択", "SELECCIONAR ETAPA")} (1~12)</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label(GetLocalizedText("12개 테마별 지하철 파쿠르 전장 중 도전할 스테이지를 선택하세요.", "Select from 12 subway parkour challenge stages.", "12の地下鉄パルクールステージから挑戦を選択してください。", "Selecciona entre 12 etapas de parkour de metro."), GetLabelStyle(12, Color.gray));
+        GUILayout.Label(GetLocalizedText("Select from 12 subway parkour challenge stages.", "12개 테마별 지하철 파쿠르 전장 중 도전할 스테이지를 선택하세요.", "12の地下鉄パルクールステージから挑戦を選択してください。", "Selecciona entre 12 etapas de parkour de metro."), GetLabelStyle(12, Color.gray));
 
         GUILayout.Space(10);
         int cols = 3;
@@ -1081,7 +1081,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
         }
 
         GUILayout.FlexibleSpace();
-        if (GUILayout.Button(GetLocalizedText("닫기", "Close", "閉じる", "Cerrar"), GUILayout.Height(36)))
+        if (GUILayout.Button(GetLocalizedText("Close", "닫기", "閉じる", "Cerrar"), GUILayout.Height(36)))
         {
             showStageSelect = false;
         }
@@ -1097,28 +1097,28 @@ public class SubwayRunnerPlayer : MonoBehaviour
         GUI.Box(rect, $"<b>🏆 {GetLocalizedText("STAGE CLEAR!", "스테이지 클리어!", "ステージクリア！", "¡ETAPA SUPERADA!")}</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label($"{GetLocalizedText("스테이지", "Stage", "ステージ", "Etapa")} {currentStageIndex + 1} {GetLocalizedStageTitle(stages[currentStageIndex])}", GetLabelStyle(15, Color.green));
+        GUILayout.Label($"{GetLocalizedText("Stage", "스테이지", "ステージ", "Etapa")} {currentStageIndex + 1} {GetLocalizedStageTitle(stages[currentStageIndex])}", GetLabelStyle(15, Color.green));
         GUILayout.Space(8);
-        GUILayout.Label($"{GetLocalizedText("최종 점수", "Final Score", "最終スコア", "Puntuación Final")}: <b>{score}</b>", GetLabelStyle(14, Color.white));
-        GUILayout.Label($"{GetLocalizedText("수집 코인", "Collected Coins", "獲得コイン", "Monedas")}: <b>{coins}개</b>", GetLabelStyle(14, Color.yellow));
+        GUILayout.Label($"{GetLocalizedText("Final Score", "최종 점수", "最終スコア", "Puntuación Final")}: <b>{score}</b>", GetLabelStyle(14, Color.white));
+        GUILayout.Label($"{GetLocalizedText("Collected Coins", "수집 코인", "獲得コイン", "Monedas")}: <b>{coins}개</b>", GetLabelStyle(14, Color.yellow));
 
         GUILayout.Space(15);
         GUILayout.BeginHorizontal();
         if (currentStageIndex < stages.Count - 1)
         {
-            if (GUILayout.Button(GetLocalizedText("다음 스테이지 ▶", "Next Stage ▶", "次のステージ ▶", "Siguiente Etapa ▶"), GUILayout.Height(44)))
+            if (GUILayout.Button(GetLocalizedText("Next Stage ▶", "다음 스테이지 ▶", "次のステージ ▶", "Siguiente Etapa ▶"), GUILayout.Height(44)))
             {
                 StartStage(currentStageIndex + 1);
             }
         }
         else
         {
-            if (GUILayout.Button(GetLocalizedText("그랑프리 피날레 완료! (다시하기)", "Grand Prix Completed! (Restart)", "グランプリ制覇達成！（再挑戦）", "¡Gran Prix Completado!"), GUILayout.Height(44)))
+            if (GUILayout.Button(GetLocalizedText("Grand Prix Completed! (Restart)", "그랑프리 피날레 완료! (다시하기)", "グランプリ制覇達成！（再挑戦）", "¡Gran Prix Completado!"), GUILayout.Height(44)))
             {
                 StartStage(0);
             }
         }
-        if (GUILayout.Button(GetLocalizedText("다시 도전", "Retry", "リトライ", "Reintentar"), GUILayout.Height(44)))
+        if (GUILayout.Button(GetLocalizedText("Retry", "다시 도전", "リトライ", "Reintentar"), GUILayout.Height(44)))
         {
             StartStage(currentStageIndex);
         }
@@ -1135,19 +1135,19 @@ public class SubwayRunnerPlayer : MonoBehaviour
         GUI.Box(rect, $"<b>💀 {GetLocalizedText("GAME OVER", "게임 오버", "ゲームオーバー", "FIN DEL JUEGO")}</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label(GetLocalizedText("충돌로 인해 파쿠르가 중단되었습니다!", "Parkour halted due to collision!", "衝突によりパルクールが中断しました！", "¡Parkour detenido por choque!"), GetLabelStyle(14, Color.red));
+        GUILayout.Label(GetLocalizedText("Parkour halted due to collision!", "충돌로 인해 파쿠르가 중단되었습니다!", "衝突によりパルクールが中断しました！", "¡Parkour detenido por choque!"), GetLabelStyle(14, Color.red));
         GUILayout.Space(8);
-        GUILayout.Label($"{GetLocalizedText("질주 거리", "Distance Run", "到達距離", "Distancia")}: <b>{(int)currentDistance}m</b>", GetLabelStyle(14, Color.white));
-        GUILayout.Label($"{GetLocalizedText("수집 코인", "Coins", "コイン", "Monedas")}: <b>{coins}개</b>", GetLabelStyle(13, Color.yellow));
+        GUILayout.Label($"{GetLocalizedText("Distance Run", "질주 거리", "到達距離", "Distancia")}: <b>{(int)currentDistance}m</b>", GetLabelStyle(14, Color.white));
+        GUILayout.Label($"{GetLocalizedText("Coins", "수집 코인", "コイン", "Monedas")}: <b>{coins}개</b>", GetLabelStyle(13, Color.yellow));
 
         GUILayout.Space(15);
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button(GetLocalizedText("다시 질주", "Retry", "リトライ", "Reintentar"), GUILayout.Height(44)))
+        if (GUILayout.Button(GetLocalizedText("Retry", "다시 질주", "リトライ", "Reintentar"), GUILayout.Height(44)))
         {
             lives = 3;
             StartStage(currentStageIndex);
         }
-        if (GUILayout.Button(GetLocalizedText("스테이지 선택", "Stage Select", "ステージ選択", "Elegir Etapa"), GUILayout.Height(44)))
+        if (GUILayout.Button(GetLocalizedText("Stage Select", "스테이지 선택", "ステージ選択", "Elegir Etapa"), GUILayout.Height(44)))
         {
             lives = 3;
             showStageSelect = true;

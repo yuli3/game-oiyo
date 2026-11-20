@@ -1372,6 +1372,7 @@ public class BlockBlastPlayer : MonoBehaviour
     // GUI HUD & Modals
     private void OnGUI()
     {
+        OiyoUiFont.Apply();
         GUI.skin.label.fontSize = 15;
         GUI.skin.button.fontSize = 14;
 
@@ -1556,7 +1557,7 @@ public class BlockBlastPlayer : MonoBehaviour
 
         if (currentStageIdx < stages.Count - 1)
         {
-            string nextText = currentLang == Language.KO ? "다음 스테이지 ➔" : "Next Stage ➔";
+            string nextText = currentLang == Language.KO ? "다음 스테이지 →" : "Next Stage →";
             if (GUILayout.Button(nextText, GUILayout.Height(42)))
             {
                 LoadStage(currentStageIdx + 1);

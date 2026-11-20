@@ -750,6 +750,7 @@ public class SpacePinballPlayer : MonoBehaviour
 
     private void OnGUI()
     {
+        OiyoUiFont.Apply();
         InitGUIStyles();
 
         // 1. Top Header Bar

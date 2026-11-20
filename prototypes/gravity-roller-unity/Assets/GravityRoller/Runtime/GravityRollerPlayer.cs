@@ -979,6 +979,7 @@ public class GravityRollerPlayer : MonoBehaviour
 
     private void OnGUI()
     {
+        OiyoUiFont.Apply();
         InitGUIStyles();
 
         // 1. Top Header Bar
@@ -1041,7 +1042,7 @@ public class GravityRollerPlayer : MonoBehaviour
         // Lives
         GUILayout.BeginVertical(GUILayout.Width(90));
         GUILayout.Label(GetText("lives"), hudLabelStyle);
-        GUILayout.Label("❤️".Repeat(lives), hudValueStyle);
+        GUILayout.Label("♥".Repeat(lives), hudValueStyle);
         GUILayout.EndVertical();
 
         // Tilt
