@@ -824,8 +824,8 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
           {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </button>
         <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
-        <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
-        <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
+        <p className="line-clamp-2 text-sm leading-6 text-muted-foreground sm:line-clamp-none">{copy.lead}</p>
+        <p className="hidden text-xs leading-5 text-muted-foreground sm:block">{copy.keys}</p>
       </header>
       {/* Ink Steps Progress Bar */}
       <div className="space-y-1">

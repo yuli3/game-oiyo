@@ -193,7 +193,7 @@ export default function RivalsMind({locale="ko"}:{locale?:string}){const{ref:sta
  },[state.phase,state.playerHealth,state.rivalHealth,state.round,state.seed]);
  const reset=()=>{window.clearTimeout(impactTimer.current);impactTimer.current=undefined;setImpact(null);setState(createRivalsMind((state.seed+state.round+1)%1_000_003));setStarted(true);recordAchievementEvent("rivals-mind","played");};
  const result=state.phase==="won"?t.won:state.phase==="lost"?t.lost:t.draw;
- return <GameContainer title={t.title} subtitle={t.sub}><div className="space-y-4">{!started&&<img src="/games/rivals-mind-keyart.webp" alt="" width={1730} height={909} decoding="async" className="aspect-[1.9/1] w-full rounded-2xl object-cover"/>}
+ return <GameContainer title={t.title} subtitle={t.sub}><div className="space-y-4">{!started&&<img src="/games/rivals-mind-keyart.webp" alt="" width={1730} height={909} decoding="async" className="aspect-[1.9/1] max-h-24 w-full rounded-2xl object-cover sm:max-h-none"/>}
   <div ref={stageRef} className="relative overflow-hidden rounded-2xl border border-border bg-muted/40 p-5">
    <div className="mb-5 flex justify-between items-center text-xs font-bold uppercase tracking-widest">
      <div className="flex items-center gap-1.5">

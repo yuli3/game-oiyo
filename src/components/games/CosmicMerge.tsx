@@ -1491,7 +1491,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
             <div className="max-w-md w-full max-h-full rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-2xl flex flex-col">
               {/* Codex Header */}
               <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
-                <img src={COSMIC_MERGE_SPRITES.keyart} alt={t.title} className="h-28 w-full object-cover" />
+                <img src={COSMIC_MERGE_SPRITES.keyart} alt={t.title} className="h-20 w-full object-cover sm:h-28" />
               </div>
               <div className="flex items-center justify-between pb-3 border-b border-border/60">
                 <div>

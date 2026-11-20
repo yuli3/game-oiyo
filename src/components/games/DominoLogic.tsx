@@ -671,7 +671,7 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
       <GameContainer title={t.title} subtitle={board ? board.dateKey : t.preparing}>
         {!isImmersive && (
           <div className="mb-4 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <img src={DOMINO_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+            <img src={DOMINO_SPRITES.keyart} alt={t.title} className="h-20 w-full object-cover sm:h-44" />
           </div>
         )}
         <div className="mb-4 flex flex-wrap gap-2">

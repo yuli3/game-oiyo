@@ -611,7 +611,7 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         >
             <GameContainer title={t.title} subtitle={t.subtitle} onReset={() => startGame(difficulty)}>
                 <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
-                    <img src={WATER_SORT_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+                    <img src={WATER_SORT_SPRITES.keyart} alt={t.title} className="h-20 w-full object-cover sm:h-44" />
                 </div>
                 <div className="flex flex-col items-center">
                     <p className="mb-5 text-center text-sm font-medium text-muted-foreground">{t.desc}</p>

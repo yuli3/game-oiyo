@@ -680,8 +680,8 @@ export default function ConstellationShepherd({ locale = "en" }: { locale?: Loca
           <img src={CONSTELLATION_SHEPHERD_UI_SPRITES.star} alt="" className="size-6 object-contain" />
           {copy.title}
         </h2>
-        <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
-        <p className="text-xs text-muted-foreground">{copy.keys}</p>
+        <p className="line-clamp-2 text-sm leading-6 text-muted-foreground sm:line-clamp-none">{copy.lead}</p>
+        <p className="hidden text-xs text-muted-foreground sm:block">{copy.keys}</p>
       </header>
       <div className="grid grid-cols-2 gap-2 text-center text-sm">
         <div className="rounded-xl bg-muted p-2">

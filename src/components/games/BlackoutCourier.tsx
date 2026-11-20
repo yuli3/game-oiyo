@@ -369,7 +369,7 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
     >
       <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
         <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
-          <img src={BLACKOUT_COURIER_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+          <img src={BLACKOUT_COURIER_SPRITES.keyart} alt={t.title} className="h-20 w-full object-cover sm:h-44" />
         </div>
         <div className="mb-4 flex flex-wrap gap-2">
           <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>

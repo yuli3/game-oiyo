@@ -782,8 +782,8 @@ export default function SentenceDungeon({ locale = "en" }: { locale?: Locale }) 
               />
             )}
           </h2>
-          <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
-          <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
+          <p className="line-clamp-2 text-sm leading-6 text-muted-foreground sm:line-clamp-none">{copy.lead}</p>
+          <p className="hidden text-xs leading-5 text-muted-foreground sm:block">{copy.keys}</p>
         </header>
         <div className="grid grid-cols-2 gap-2 text-center text-sm">
           <div className="rounded-xl bg-muted p-2">

@@ -645,11 +645,11 @@ export default function SubwayConductor({ locale = "en" }: { locale?: Locale }) 
       }`}
       onPointerDown={arm}
     >
-      <header className="flex items-start justify-between gap-4">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
-          <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
-          <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
+          <p className="line-clamp-2 text-sm leading-6 text-muted-foreground sm:line-clamp-none">{copy.lead}</p>
+          <p className="hidden text-xs leading-5 text-muted-foreground sm:block">{copy.keys}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <button
