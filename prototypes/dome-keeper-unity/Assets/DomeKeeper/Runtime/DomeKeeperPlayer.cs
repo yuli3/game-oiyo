@@ -897,7 +897,7 @@ public class DomeKeeperPlayer : MonoBehaviour
         if (_mode == GameMode.Title)
         {
             GUI.Box(new Rect(w * 0.5f - 250, h * 0.5f - 140, 500, 280), "");
-            GUI.Label(new Rect(w * 0.5f - 230, h * 0.5f - 120, 460, 50), "DOME KEEPER — UNITY", _titleStyle);
+            GUI.Label(new Rect(w * 0.5f - 230, h * 0.5f - 120, 460, 50), "DRILL DOME DEFENSE", _titleStyle);
             GUI.Label(new Rect(w * 0.5f - 230, h * 0.5f - 60, 460, 80),
                 "WASD / Drag: Jetpack Drill & Tether Ore back to Center Shaft\nMouse Aim + Click/Space: Fire Dome Laser during Wave Defense\n1-4 Keys: Live Upgrades (Drill / Jetpack / Laser / Armor)",
                 _subStyle);
