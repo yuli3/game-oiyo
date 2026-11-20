@@ -1,0 +1,7 @@
+Noto Sans KR, JP and SC (weight 500)
+Copyright © 2014–2021 Adobe and Google. Licensed under SIL Open Font License 1.1; see OFL.txt.
+
+Subsets were produced through the Google Fonts API (text= parameter) from the
+strings in Runtime/FkLocale.cs, converted from WOFF to TTF with fontTools, and
+renamed to "OIYO Firefly Korean", "OIYO Firefly Japanese" and "OIYO Firefly Chinese SC".
+Regenerate with scripts/build-fonts.py after changing any visible text.

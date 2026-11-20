@@ -1,0 +1,4 @@
+Images are OIYO's own game art copied from game-oiyo public/assets/sprites
+(firefly-choir, spirit-vale, common, windward-horizons, mallow-isle, fx) and
+public/games/constellation-shepherd-floor.jpg (stone). WebP files were converted to PNG
+because Unity does not import WebP. Glow and white textures are generated at runtime.

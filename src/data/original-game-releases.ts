@@ -14,6 +14,13 @@ export interface OriginalGameRelease {
 const names = (ko: string, en: string, ja: string, zh: string, fr: string, es: string): Copy => ({ ko, en, ja, zh, fr, es });
 
 export const ORIGINAL_GAME_RELEASES: Record<string, OriginalGameRelease> = {
+  "firefly-keeper": {
+    slug: "firefly-keeper", prototype: "firefly-keeper-unity/index.html",
+    name: names("반딧불 등지기", "Firefly Keeper", "ほたるの灯守り", "萤火守灯人", "Gardien des lucioles", "Guardián de luciérnagas"),
+    title: names("반딧불 등지기 — 열두 밤의 등불 퍼즐 액션 (Unity)", "Firefly Keeper — 12-Night Lantern Puzzle Action (Unity)", "ほたるの灯守り — 十二夜の灯りパズルアクション (Unity)", "萤火守灯人 — 十二夜灯笼解谜动作 (Unity)", "Gardien des lucioles — Action-puzzle en 12 nuits (Unity)", "Guardián de luciérnagas — Acción y puzle en 12 noches (Unity)"),
+    description: names("그믐밤 숲에서 반딧불을 줄줄이 이끌어 등불을 밝히는 무료 Unity 게임. 그림자를 피하고, 부적 문을 열고, 바람과 이슬을 다루며 12밤과 보스 그믐 그림자에 도전하세요.", "Lead a glowing trail of fireflies through a moonless wood to light the lanterns. Dodge shadows, open charm gates, ride the wind, and face the Newmoon Shade across 12 nights. Free Unity game.", "新月の森でほたるの列を導き、灯をともす無料Unityゲーム。影をよけ、お札の門をひらき、風と露をあやつって十二夜と新月の影に挑もう。", "在无月森林中带领一串萤火虫点亮灯笼的免费Unity游戏。躲开影子、打开符咒之门、驾驭风与露水，挑战十二夜与朔月之影。", "Guidez une file de lucioles dans un bois sans lune pour allumer les lanternes. Évitez les ombres, ouvrez les portes-talismans et affrontez l'Ombre de nouvelle lune en 12 nuits. Jeu Unity gratuit.", "Guía una fila de luciérnagas por un bosque sin luna para encender los faroles. Esquiva sombras, abre puertas de talismán y enfréntate a la Sombra de luna nueva en 12 noches. Juego Unity gratis."),
+    controls: names("화면을 누른 채 끌면 그 방향으로 움직여요. 키보드는 방향키·WASD, Shift로 살금살금.", "Hold and drag anywhere to steer. Keyboard: arrows or WASD, Shift to sneak.", "画面を押したまま引くとその方向へ動きます。キーボードは矢印・WASD、Shiftでそっと。", "按住屏幕拖动即可朝该方向移动。键盘：方向键或WASD，Shift慢行。", "Maintenez et glissez pour vous diriger. Clavier : flèches ou WASD, Maj pour avancer doucement.", "Mantén y arrastra para moverte. Teclado: flechas o WASD, Mayús para ir despacio."),
+  },
   "one-room-spaceship": {
     slug: "one-room-spaceship", prototype: "one-room-spaceship.html",
     name: names("한 칸짜리 우주선", "One-Room Spaceship", "ワンルーム宇宙船", "单舱飞船", "Vaisseau une pièce", "Nave de una habitación"),
