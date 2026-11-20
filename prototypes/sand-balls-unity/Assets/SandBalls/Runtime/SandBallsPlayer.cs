@@ -195,10 +195,10 @@ public class SandBallsPlayer : MonoBehaviour
 
     void CreateMaterials()
     {
-        ballMatColored = new Material(Shader.Find("Sprites/Default"));
+        ballMatColored = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
         ballMatColored.color = new Color(0.2f, 0.85f, 1f);
 
-        ballMatDormant = new Material(Shader.Find("Sprites/Default"));
+        ballMatDormant = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
         ballMatDormant.color = new Color(0.55f, 0.58f, 0.65f);
     }
 
@@ -213,7 +213,7 @@ public class SandBallsPlayer : MonoBehaviour
         sandTexture.filterMode = FilterMode.Point;
         sandTexture.wrapMode = TextureWrapMode.Clamp;
 
-        var mat = new Material(Shader.Find("Unlit/Transparent"));
+        var mat = new Material(OiyoShaders.Safe(Shader.Find("Unlit/Transparent")));
         mat.mainTexture = sandTexture;
         sandQuadGo.GetComponent<MeshRenderer>().material = mat;
 
@@ -229,7 +229,7 @@ public class SandBallsPlayer : MonoBehaviour
         wall.name = "Wall";
         wall.transform.position = pos;
         wall.transform.localScale = scale;
-        var m = new Material(Shader.Find("Sprites/Default"));
+        var m = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
         m.color = new Color(0.28f, 0.25f, 0.22f);
         wall.GetComponent<MeshRenderer>().material = m;
     }
@@ -245,7 +245,7 @@ public class SandBallsPlayer : MonoBehaviour
         bed.transform.SetParent(truckGo.transform, false);
         bed.transform.localPosition = new Vector3(-0.6f, -0.1f, -0.1f);
         bed.transform.localScale = new Vector3(2.6f, 0.7f, 1.2f);
-        var bedMat = new Material(Shader.Find("Sprites/Default"));
+        var bedMat = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
         bedMat.color = new Color(0.15f, 0.55f, 0.95f);
         bed.GetComponent<MeshRenderer>().material = bedMat;
 
@@ -255,7 +255,7 @@ public class SandBallsPlayer : MonoBehaviour
         cab.transform.SetParent(truckGo.transform, false);
         cab.transform.localPosition = new Vector3(1.1f, 0.15f, -0.1f);
         cab.transform.localScale = new Vector3(1.0f, 1.1f, 1.1f);
-        var cabMat = new Material(Shader.Find("Sprites/Default"));
+        var cabMat = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
         cabMat.color = new Color(0.95f, 0.65f, 0.15f);
         cab.GetComponent<MeshRenderer>().material = cabMat;
 
@@ -272,7 +272,7 @@ public class SandBallsPlayer : MonoBehaviour
         wheel.transform.localPosition = localPos;
         wheel.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
         wheel.transform.localScale = new Vector3(0.55f, 0.15f, 0.55f);
-        var m = new Material(Shader.Find("Sprites/Default"));
+        var m = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
         m.color = new Color(0.15f, 0.15f, 0.18f);
         wheel.GetComponent<MeshRenderer>().material = m;
     }
@@ -592,7 +592,7 @@ public class SandBallsPlayer : MonoBehaviour
             gGo.name = "MultiplierGate_x" + g.multiplier;
             gGo.transform.position = new Vector3(g.pos.x, g.pos.y, -0.1f);
             gGo.transform.localScale = new Vector3(g.size.x, g.size.y, 0.3f);
-            var m = new Material(Shader.Find("Sprites/Default"));
+            var m = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
             m.color = (g.multiplier >= 3) ? new Color(1.0f, 0.85f, 0.15f, 0.7f) : new Color(0.2f, 0.8f, 1.0f, 0.7f);
             gGo.GetComponent<MeshRenderer>().material = m;
             g.go = gGo;
@@ -612,7 +612,7 @@ public class SandBallsPlayer : MonoBehaviour
             bGo.transform.position = new Vector3(b.pos.x, b.pos.y, -0.1f);
             bGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
             bGo.transform.localScale = new Vector3(b.radius * 2f, 0.2f, b.radius * 2f);
-            var m = new Material(Shader.Find("Sprites/Default"));
+            var m = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
             m.color = new Color(0.9f, 0.3f, 1.0f);
             bGo.GetComponent<MeshRenderer>().material = m;
             b.go = bGo;
@@ -633,7 +633,7 @@ public class SandBallsPlayer : MonoBehaviour
             spGo.name = "Spinner";
             spGo.transform.position = new Vector3(sp.center.x, sp.center.y, -0.1f);
             spGo.transform.localScale = new Vector3(sp.length, 0.35f, 0.4f);
-            var m = new Material(Shader.Find("Sprites/Default"));
+            var m = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
             m.color = new Color(0.95f, 0.4f, 0.2f);
             spGo.GetComponent<MeshRenderer>().material = m;
             sp.go = spGo;
@@ -653,7 +653,7 @@ public class SandBallsPlayer : MonoBehaviour
         float rad = 0.19f;
         ballGo.transform.localScale = Vector3.one * (rad * 2f);
 
-        var mat = new Material(Shader.Find("Sprites/Default"));
+        var mat = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
         mat.color = isColored ? col : new Color(0.55f, 0.58f, 0.65f);
         ballGo.GetComponent<MeshRenderer>().material = mat;
 

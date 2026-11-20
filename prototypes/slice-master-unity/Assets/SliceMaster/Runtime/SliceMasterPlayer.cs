@@ -120,11 +120,11 @@ public class SliceMasterPlayer : MonoBehaviour
     {
         Shader diffuse = Shader.Find("Mobile/Diffuse") ?? Shader.Find("Standard");
 
-        bladeMat = new Material(diffuse) { color = new Color(0.92f, 0.94f, 0.96f) }; // Steel
-        handleMat = new Material(diffuse) { color = new Color(0.35f, 0.18f, 0.12f) }; // Mahogany
-        goldMat = new Material(diffuse) { color = new Color(0.95f, 0.8f, 0.2f) }; // Brass
-        hazardMat = new Material(diffuse) { color = new Color(0.85f, 0.15f, 0.25f) }; // Red Iron Spikes
-        boardMat = new Material(diffuse) { color = new Color(0.6f, 0.45f, 0.3f) }; // Wooden cutting board
+        bladeMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.92f, 0.94f, 0.96f) }; // Steel
+        handleMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.35f, 0.18f, 0.12f) }; // Mahogany
+        goldMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.95f, 0.8f, 0.2f) }; // Brass
+        hazardMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.85f, 0.15f, 0.25f) }; // Red Iron Spikes
+        boardMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.6f, 0.45f, 0.3f) }; // Wooden cutting board
     }
 
     void BuildKnife()
@@ -224,7 +224,7 @@ public class SliceMasterPlayer : MonoBehaviour
             go.transform.position = ft.position;
             go.transform.localScale = new Vector3(0.5f, 0.75f, 2.0f);
 
-            Material mat = new Material(Shader.Find("Mobile/Diffuse") ?? Shader.Find("Standard"));
+            Material mat = new Material(OiyoShaders.Safe(Shader.Find("Mobile/Diffuse") ?? Shader.Find("Standard")));
             mat.color = Color.Lerp(new Color(0.3f, 0.8f, 0.4f), new Color(1.0f, 0.85f, 0.2f), (float)m / (mults.Length - 1));
             go.GetComponent<MeshRenderer>().sharedMaterial = mat;
 
@@ -251,7 +251,7 @@ public class SliceMasterPlayer : MonoBehaviour
         var left = GameObject.CreatePrimitive(isHazard ? PrimitiveType.Cylinder : PrimitiveType.Cube);
         left.transform.position = pos - new Vector3(size.x * 0.25f, 0, 0);
         left.transform.localScale = new Vector3(size.x * 0.5f, size.y, size.z);
-        Material mat = new Material(Shader.Find("Mobile/Diffuse") ?? Shader.Find("Standard")) { color = col };
+        Material mat = new Material(OiyoShaders.Safe(Shader.Find("Mobile/Diffuse") ?? Shader.Find("Standard"))) { color = col };
         left.GetComponent<MeshRenderer>().sharedMaterial = mat;
         target.leftHalf = left;
 

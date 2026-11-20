@@ -97,7 +97,7 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
     static Material MakeMat(Color c)
     {
         var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard") ?? Shader.Find("Unlit/Color");
-        var m = new Material(shader);
+        var m = new Material(OiyoShaders.Safe(shader));
         m.color = c;
         return m;
     }

@@ -479,19 +479,19 @@ public class BlockBlastPlayer : MonoBehaviour
         Shader litShader = Shader.Find("Universal Render Pipeline/Lit");
         if (litShader == null) litShader = Shader.Find("Standard");
 
-        baseBlockMat = new Material(litShader);
+        baseBlockMat = new Material(OiyoShaders.Safe(litShader));
         baseBlockMat.color = Color.white;
 
-        boardSlotMat = new Material(litShader);
+        boardSlotMat = new Material(OiyoShaders.Safe(litShader));
         boardSlotMat.color = new Color(0.08f, 0.12f, 0.18f, 0.9f);
 
-        boardBorderMat = new Material(litShader);
+        boardBorderMat = new Material(OiyoShaders.Safe(litShader));
         boardBorderMat.color = new Color(0.04f, 0.06f, 0.10f, 1f);
 
-        ghostBlockMat = new Material(litShader);
+        ghostBlockMat = new Material(OiyoShaders.Safe(litShader));
         ghostBlockMat.color = new Color(0.2f, 1f, 0.8f, 0.45f);
 
-        shardMat = new Material(litShader);
+        shardMat = new Material(OiyoShaders.Safe(litShader));
         shardMat.color = Color.white;
     }
 
@@ -716,7 +716,7 @@ public class BlockBlastPlayer : MonoBehaviour
         Shader litShader = Shader.Find("Universal Render Pipeline/Lit");
         if (litShader == null) litShader = Shader.Find("Standard");
 
-        var mat = new Material(litShader);
+        var mat = new Material(OiyoShaders.Safe(litShader));
         mat.color = GetColorForCellType(type);
         return mat;
     }

@@ -24,6 +24,7 @@ public static class BlockBlastBuild
 
     public static void WebGL()
     {
+        EnsureAlwaysIncludedShaders("Standard", "Unlit/Color");
         Prepare();
         PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Gzip;
         PlayerSettings.WebGL.decompressionFallback = true;
@@ -51,5 +52,27 @@ public static class BlockBlastBuild
             html = System.Text.RegularExpressions.Regex.Replace(html, "<title>[^<]*</title>", "<title>Grid Clear · OIYO</title>");
             File.WriteAllText(indexHtmlPath, html);
         }
+    }
+
+    // Keep every built-in shader the runtime asks Shader.Find for in the WebGL build.
+    static void EnsureAlwaysIncludedShaders(params string[] names)
+    {
+        var assets = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/GraphicsSettings.asset");
+        if (assets == null || assets.Length == 0) return;
+        var so = new SerializedObject(assets[0]);
+        var list = so.FindProperty("m_AlwaysIncludedShaders");
+        foreach (var name in names)
+        {
+            var shader = Shader.Find(name);
+            if (shader == null) continue;
+            bool present = false;
+            for (int i = 0; i < list.arraySize; i++)
+                if (list.GetArrayElementAtIndex(i).objectReferenceValue == shader) { present = true; break; }
+            if (present) continue;
+            list.InsertArrayElementAtIndex(list.arraySize);
+            list.GetArrayElementAtIndex(list.arraySize - 1).objectReferenceValue = shader;
+        }
+        so.ApplyModifiedProperties();
+        AssetDatabase.SaveAssets();
     }
 }
