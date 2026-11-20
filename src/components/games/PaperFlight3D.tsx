@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { PAPER_FLIGHT_TEXT } from "../../lib/games/text/paper-flight-3d";
 import * as THREE from "three";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
@@ -79,7 +81,8 @@ function TiltFlightButton({
   );
 }
 
-export default function PaperFlight3D() {
+export default function PaperFlight3D({ locale: pageLocale }: { locale?: string } = {}) {
+  const { t } = useGameText(PAPER_FLIGHT_TEXT, pageLocale);
   const engineRef = useRef<PaperFlightEngine | null>(null);
   if (!engineRef.current) {
     engineRef.current = new PaperFlightEngine(Date.now());
@@ -385,11 +388,11 @@ export default function PaperFlight3D() {
 
   const currentBiome = getBiomeForZ(plane.z);
   const biomeNames: Record<string, string> = {
-    study: '서재 복도 (Study Room)',
-    park: '햇살 공원 (Sunny Park)',
-    clouds: '구름 왕국 (Cloud Realm)',
-    canyon: '황혼의 협곡 (Sunset Canyon)',
-    aurora: '오로라 성운 (Celestial Aurora)',
+    study: t("서재 복도 (Study Room)"),
+    park: t("햇살 공원 (Sunny Park)"),
+    clouds: t("구름 왕국 (Cloud Realm)"),
+    canyon: t("황혼의 협곡 (Sunset Canyon)"),
+    aurora: t("오로라 성운 (Celestial Aurora)"),
   };
 
   const speedKmh = Math.floor(plane.airspeed * 3.6);
@@ -440,16 +443,16 @@ export default function PaperFlight3D() {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-1 rounded-full bg-card/90 border border-border text-xs font-semibold text-primary">
-              {biomeNames[currentBiome]}
+              {t(biomeNames[currentBiome])}
             </span>
             {plane.inThermal && (
               <span className="px-2 py-0.5 rounded-full bg-info/20 border border-info text-info text-xs font-bold animate-pulse">
-                상승기류 ↑
+                {t("상승기류 ↑")}
               </span>
             )}
             {plane.isStalled && (
               <span className="px-2 py-0.5 rounded-full bg-destructive/20 border border-destructive text-destructive text-xs font-bold animate-bounce">
-                실속 경고 (STALL)
+                {t("실속 경고 (STALL)")}
               </span>
             )}
           </div>
@@ -463,17 +466,17 @@ export default function PaperFlight3D() {
           <div className="px-3 py-1.5 rounded-xl bg-card/90 border border-border flex items-center gap-3 text-xs font-medium text-foreground">
             <div className="flex items-center gap-1.5">
               <img src={PAPER_FLIGHT_UI_SPRITES.ring} alt="" className="size-4 object-contain" />
-              <span>링</span>
+              <span>{t("링")}</span>
               <span className="font-bold text-warning">{rings}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <img src={PAPER_FLIGHT_UI_SPRITES.glider} alt="" className="size-4 object-contain" />
-              <span>학</span>
+              <span>{t("학")}</span>
               <span className="font-bold text-chart-3">{cranes}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <img src={PAPER_FLIGHT_UI_SPRITES.boost} alt="" className="size-4 object-contain" />
-              <span>점수</span>
+              <span>{t("점수")}</span>
               <span className="font-bold text-primary">{score}</span>
             </div>
           </div>
@@ -484,7 +487,7 @@ export default function PaperFlight3D() {
               MobileHapticsPro.selection();
               setSoundEnabled(!soundEnabled);
             }}
-            ariaLabel="음소거 토글"
+            ariaLabel={t("음소거 토글")}
           >
             {soundEnabled ? <Volume2 className="size-4" /> : <VolumeX className="size-4 text-muted-foreground" />}
           </TiltFlightButton>
@@ -492,7 +495,7 @@ export default function PaperFlight3D() {
           <TiltFlightButton
             className="p-2 rounded-xl bg-card/90 border border-border text-foreground hover:bg-muted transition-colors"
             onClick={handleShare}
-            ariaLabel="비행 기록 공유"
+            ariaLabel={t("비행 기록 공유")}
           >
             {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
           </TiltFlightButton>
@@ -510,14 +513,14 @@ export default function PaperFlight3D() {
       {/* Left Flight Instrument Gauge */}
       <div className="absolute left-4 bottom-24 md:bottom-8 flex flex-col gap-2 pointer-events-none">
         <div className="px-3 py-2 rounded-xl bg-card/90 border border-border flex items-center justify-between w-32">
-          <span className="text-xs text-muted-foreground">시속</span>
+          <span className="text-xs text-muted-foreground">{t("시속")}</span>
           <span className="text-sm font-bold text-foreground font-mono">
             {speedKmh} <span className="text-xs text-muted-foreground">km/h</span>
           </span>
         </div>
 
         <div className="px-3 py-2 rounded-xl bg-card/90 border border-border flex items-center justify-between w-32">
-          <span className="text-xs text-muted-foreground">고도</span>
+          <span className="text-xs text-muted-foreground">{t("고도")}</span>
           <span className="text-sm font-bold text-foreground font-mono">
             {Math.max(0, Math.floor(plane.y))} <span className="text-xs text-muted-foreground">m</span>
           </span>
@@ -526,7 +529,7 @@ export default function PaperFlight3D() {
         <div className="px-3 py-2 rounded-xl bg-card/90 border border-border flex flex-col gap-1 w-32">
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground flex items-center gap-1">
-              <Zap className="size-3 text-warning" /> 부스트
+              <Zap className="size-3 text-warning" /> {t("부스트")}
             </span>
             <span className="text-xs font-mono font-bold text-warning">{Math.floor(plane.stamina)}%</span>
           </div>
@@ -551,7 +554,7 @@ export default function PaperFlight3D() {
               handleTouchControl('pitchDown', true);
             }}
             onTouchEnd={() => handleTouchControl('pitchDown', false)}
-            aria-label="기수 하강"
+            aria-label={t("기수 하강")}
           >
             <ArrowUp className="size-5" />
           </button>
@@ -565,7 +568,7 @@ export default function PaperFlight3D() {
               handleTouchControl('rollLeft', true);
             }}
             onTouchEnd={() => handleTouchControl('rollLeft', false)}
-            aria-label="좌측 뱅킹"
+            aria-label={t("좌측 뱅킹")}
           >
             <ArrowLeft className="size-5" />
           </button>
@@ -578,7 +581,7 @@ export default function PaperFlight3D() {
               handleTouchControl('pitchUp', true);
             }}
             onTouchEnd={() => handleTouchControl('pitchUp', false)}
-            aria-label="기수 상승"
+            aria-label={t("기수 상승")}
           >
             <ArrowDown className="size-5" />
           </button>
@@ -591,7 +594,7 @@ export default function PaperFlight3D() {
               handleTouchControl('rollRight', true);
             }}
             onTouchEnd={() => handleTouchControl('rollRight', false)}
-            aria-label="우측 뱅킹"
+            aria-label={t("우측 뱅킹")}
           >
             <ArrowRight className="size-5" />
           </button>
@@ -605,7 +608,7 @@ export default function PaperFlight3D() {
             handleTouchControl('boost', true);
           }}
           onTouchEnd={() => handleTouchControl('boost', false)}
-          aria-label="부스트"
+          aria-label={t("부스트")}
         >
           <Zap className="size-6 fill-current" />
         </button>
@@ -625,18 +628,18 @@ export default function PaperFlight3D() {
               />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-foreground">종이비행기 3D</h2>
+              <h2 className="text-2xl font-black text-foreground">{t("종이비행기 3D")}</h2>
               <p className="text-xs text-muted-foreground mt-1">
-                Paper Flight 3D — 공기역학 활강 & 상승기류 비행 시뮬레이터
+                {t("Paper Flight 3D — 공기역학 활강 & 상승기류 비행 시뮬레이터")}
               </p>
             </div>
 
             <div className="w-full bg-muted/50 rounded-xl p-3 text-xs text-muted-foreground flex flex-col gap-1.5 text-left">
-              <div>• <b>방향키 위/아래 (W/S)</b>: 기수 하강(가속 다이브) / 기수 상승(양력 상승)</div>
-              <div>• <b>방향키 좌/우 (A/D)</b>: 뱅킹 선회 조종</div>
-              <div>• <b>스페이스바 (Space)</b>: 날개 펄럭임 부스트 (스태미나 소모)</div>
-              <div>• <b>파란 기둥 (상승기류)</b>: 고도 급상승 복원</div>
-              <div>• <b>황금 링 & 종이학</b>: 속도 폭발 및 보너스 점수</div>
+              <div>• <b>{t("방향키 위/아래 (W/S)")}</b>{t(": 기수 하강(가속 다이브) / 기수 상승(양력 상승)")}</div>
+              <div>• <b>{t("방향키 좌/우 (A/D)")}</b>{t(": 뱅킹 선회 조종")}</div>
+              <div>• <b>{t("스페이스바 (Space)")}</b>{t(": 날개 펄럭임 부스트 (스태미나 소모)")}</div>
+              <div>• <b>{t("파란 기둥 (상승기류)")}</b>{t(": 고도 급상승 복원")}</div>
+              <div>• <b>{t("황금 링 & 종이학")}</b>{t(": 속도 폭발 및 보너스 점수")}</div>
             </div>
 
             <TiltFlightButton
@@ -644,7 +647,7 @@ export default function PaperFlight3D() {
               onClick={handleLaunch}
             >
               <Play className="size-4 fill-current" />
-              비행 활주 시작
+              {t("비행 활주 시작")}
             </TiltFlightButton>
           </div>
         </div>
@@ -667,26 +670,26 @@ export default function PaperFlight3D() {
 
               <div>
                 <h2 className="text-2xl font-black text-foreground">
-                  {status === 'cleared' ? '대장정 완주 성공!' : '착륙 완료'}
+                  {status === 'cleared' ? t("대장정 완주 성공!") : t("착륙 완료")}
                 </h2>
                 <p className="text-xs text-muted-foreground mt-1">
                   {status === 'cleared'
-                    ? '종이비행기가 오로라 성운 너머 최종 결승선을 통과했습니다!'
-                    : '활공을 마치고 지면에 부드럽게 안착했습니다.'}
+                    ? t("종이비행기가 오로라 성운 너머 최종 결승선을 통과했습니다!")
+                    : t("활공을 마치고 지면에 부드럽게 안착했습니다.")}
                 </p>
               </div>
 
               <div className="grid grid-cols-3 gap-2 w-full">
                 <div className="p-3 rounded-xl bg-muted/50 flex flex-col">
-                  <span className="text-xs text-muted-foreground">비행 거리</span>
+                  <span className="text-xs text-muted-foreground">{t("비행 거리")}</span>
                   <span className="text-lg font-black text-foreground">{distance}m</span>
                 </div>
                 <div className="p-3 rounded-xl bg-muted/50 flex flex-col">
-                  <span className="text-xs text-muted-foreground">통과한 링</span>
-                  <span className="text-lg font-black text-chart-5">{rings}개</span>
+                  <span className="text-xs text-muted-foreground">{t("통과한 링")}</span>
+                  <span className="text-lg font-black text-chart-5">{t("{0}개", rings)}</span>
                 </div>
                 <div className="p-3 rounded-xl bg-muted/50 flex flex-col">
-                  <span className="text-xs text-muted-foreground">최종 점수</span>
+                  <span className="text-xs text-muted-foreground">{t("최종 점수")}</span>
                   <span className="text-lg font-black text-primary">{score}</span>
                 </div>
               </div>
@@ -697,14 +700,14 @@ export default function PaperFlight3D() {
                   onClick={handleRestart}
                 >
                   <RotateCcw className="size-4" />
-                  다시 비행하기
+                  {t("다시 비행하기")}
                 </TiltFlightButton>
                 <TiltFlightButton
                   className="min-h-12 rounded-xl border border-border bg-card px-4 font-bold text-sm text-foreground flex items-center justify-center gap-1.5 shadow-xs hover:bg-muted"
                   onClick={handleShare}
                 >
                   {copied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
-                  <span>{copied ? "복사됨!" : "공유 카드"}</span>
+                  <span>{copied ? t("복사됨!") : t("공유 카드")}</span>
                 </TiltFlightButton>
               </div>
             </div>

@@ -148,7 +148,7 @@ export const ROOM_DEFINITIONS: Record<RoomId, RoomDefinition> = {
   two_doors: {
     id: 'two_doors',
     title: '두 개의 문',
-    subtitle: 'The Milo Parable 역사상 가장 상징적인 분기점',
+    subtitle: '이 이야기에서 가장 상징적인 분기점',
     narratorText: '마일로가 두 개의 문 앞에 도달했을 때, 그는 왼쪽 문으로 들어갔습니다.',
     visualScene: 'doors',
     options: [

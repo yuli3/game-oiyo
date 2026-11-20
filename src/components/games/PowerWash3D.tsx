@@ -52,6 +52,8 @@ import {
 } from "../../lib/games/share-card";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { getSpriteUrl, POWER_WASH_SPRITES } from "../../lib/games/sprites";
+import { useGameText } from "../../lib/games/game-text";
+import { PRESSURE_WASH_TEXT } from "../../lib/games/text/pressure-wash-3d";
 
 function TiltWashButton({
   children,
@@ -101,8 +103,10 @@ interface WaterParticle {
   maxLife: number;
 }
 
-export function PowerWash3D() {
-  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: "ko" });
+export function PowerWash3D({ locale: pageLocale }: { locale?: string } = {}) {
+  const { t, locale } = useGameText(PRESSURE_WASH_TEXT, pageLocale);
+  const loc = locale as "ko" | "en" | "ja" | "zh" | "fr" | "es";
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: loc });
 
   // 1. 메타 영구 세이브 로드 및 엔진 초기화
   const [metaSave, setMetaSave] = useState<PowerWashMetaSave>(() => loadPowerWashMeta());
@@ -327,10 +331,10 @@ export function PowerWash3D() {
     MobileHapticsPro.mediumImpact();
     try {
       const canvas = await createShareCardCanvas({
-        title: "압력 세척 3D",
+        title: t("압력 세척 3D"),
         slug: "pressure-wash-3d",
-        score: `${gameState.totalCleanPercent}% (${gameState.stageTitle})`,
-        subtitle: `보상: $${gameState.cashEarned} | 완료: ${completedCount}/${gameState.parts.length}`,
+        score: `${gameState.totalCleanPercent}% (${t(gameState.stageTitle)})`,
+        subtitle: t("보상: ${0} | 완료: {1}/{2}", gameState.cashEarned, completedCount, gameState.parts.length),
       });
       const copied = await copyShareCardToClipboard(canvas);
       if (copied) {
@@ -708,12 +712,12 @@ export function PowerWash3D() {
           </div>
           <div>
             <h2 className="text-xl font-black tracking-tight text-foreground flex items-center gap-1.5">
-              <span>압력 세척 3D</span>
+              <span>{t("압력 세척 3D")}</span>
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                 PRO 6-SYSTEM
               </span>
             </h2>
-            <p className="text-xs text-muted-foreground">{gameState.stageTitle}</p>
+            <p className="text-xs text-muted-foreground">{t(gameState.stageTitle)}</p>
           </div>
         </div>
 
@@ -725,7 +729,7 @@ export function PowerWash3D() {
             className="relative flex items-center gap-1.5 rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted"
           >
             <ScrollText className="h-4 w-4 text-primary" />
-            <span>정화 의뢰</span>
+            <span>{t("정화 의뢰")}</span>
             {unclaimedQuestsCount > 0 && (
               <span className="flex size-4 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground animate-pulse">
                 {unclaimedQuestsCount}
@@ -739,7 +743,7 @@ export function PowerWash3D() {
             className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted"
           >
             <Wrench className="h-4 w-4 text-warning" />
-            <span>정비소 튜닝</span>
+            <span>{t("정비소 튜닝")}</span>
           </TiltWashButton>
 
           {/* 지갑 잔액 배지 */}
@@ -751,19 +755,19 @@ export function PowerWash3D() {
           <TiltWashButton
             onClick={handleTriggerHighlight}
             className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted"
-            title="오염 하이라이트 스캔 (단축키: F / Tab)"
+            title={t("오염 하이라이트 스캔 (단축키: F / Tab)")}
           >
             <Eye className="h-4 w-4 text-destructive" />
-            <span className="hidden sm:inline">스캔 [F]</span>
+            <span className="hidden sm:inline">{t("스캔 [F]")}</span>
           </TiltWashButton>
 
           <TiltWashButton
             onClick={handleToggleOrientation}
             className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted"
-            title="노즐 각도 회전 (단축키: Q / R)"
+            title={t("노즐 각도 회전 (단축키: Q / R)")}
           >
             <RotateCcw className="h-4 w-4" />
-            <span className="hidden sm:inline">회전 [Q]</span>
+            <span className="hidden sm:inline">{t("회전 [Q]")}</span>
           </TiltWashButton>
 
           <TiltWashButton
@@ -789,13 +793,13 @@ export function PowerWash3D() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-black text-primary">{currentDialogue.name.ko}</span>
+            <span className="text-xs font-black text-primary">{currentDialogue.name[loc]}</span>
             <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-xs font-semibold text-primary">
-              {currentDialogue.title.ko}
+              {currentDialogue.title[loc]}
             </span>
           </div>
           <p className="text-xs text-foreground mt-0.5 line-clamp-2">
-            "{currentDialogue.text.ko}"
+            "{currentDialogue.text[loc]}"
           </p>
         </div>
       </div>
@@ -841,7 +845,7 @@ export function PowerWash3D() {
           <div>
             <span className="text-xs text-muted-foreground">MUTANT STRIPPED</span>
             <p className="text-base font-black text-foreground">
-              {gameState.mutantStrippedCount}개 박리
+              {t("{0}개 박리", gameState.mutantStrippedCount)}
             </p>
           </div>
         </div>
@@ -867,7 +871,7 @@ export function PowerWash3D() {
             className="pointer-events-none absolute left-1/2 top-5 -translate-x-1/2 animate-bounce rounded-full border border-primary bg-card/90 px-4 py-1.5 text-xs font-bold text-primary shadow-md flex items-center gap-1.5"
           >
             <Sparkles className="h-4 w-4 text-warning" />
-            <span>DING! {dingBanner.name} 100% 세척 완료! (+${dingBanner.reward})</span>
+            <span>{t("DING! {0} 100% 세척 완료! (+${1})", t(dingBanner.name), dingBanner.reward)}</span>
           </div>
         )}
 
@@ -890,7 +894,7 @@ export function PowerWash3D() {
             </div>
             <h3 className="text-2xl font-black text-foreground">JOB COMPLETE! 100% CLEAN</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-              {gameState.stageTitle}의 모든 찌든 때를 완벽하게 세척했습니다!
+              {t("{0}의 모든 찌든 때를 완벽하게 세척했습니다!", t(gameState.stageTitle))}
             </p>
             <div className="my-3 grid grid-cols-2 gap-4 border border-border rounded-lg p-3 bg-card/70 text-left w-full max-w-xs shadow-xs">
               <div>
@@ -910,13 +914,13 @@ export function PowerWash3D() {
                 onClick={handleShareScore}
               >
                 {isCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
-                <span>{isCopied ? "복사됨!" : "기록 공유"}</span>
+                <span>{isCopied ? t("복사됨!") : t("기록 공유")}</span>
               </TiltWashButton>
               <TiltWashButton
                 className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90"
                 onClick={() => handleSelectStage((gameState.stageIndex + 1) % 3)}
               >
-                다음 의뢰 오브젝트 세척하기
+                {t("다음 의뢰 오브젝트 세척하기")}
                 <ChevronRight className="h-4 w-4" />
               </TiltWashButton>
             </div>
@@ -943,7 +947,7 @@ export function PowerWash3D() {
               <div className="relative flex size-10 shrink-0 items-center justify-center rounded-lg bg-card border border-border overflow-hidden">
                 <img
                   src={isSoap ? POWER_WASH_SPRITES.foam : POWER_WASH_SPRITES.nozzle}
-                  alt={spec.name}
+                  alt={t(spec.name)}
                   className="size-8 object-contain"
                   draggable={false}
                 />
@@ -954,17 +958,17 @@ export function PowerWash3D() {
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="flex w-full items-center justify-between gap-1">
-                  <span className="text-xs font-bold text-foreground truncate">{spec.name}</span>
+                  <span className="text-xs font-bold text-foreground truncate">{t(spec.name)}</span>
                   <span className="text-xs font-mono text-muted-foreground">[{idx + 1}]</span>
                 </div>
                 <span className="text-xs text-muted-foreground line-clamp-1">
                   {nozId === "0deg"
-                    ? "초고압 찌든때/타르 분쇄"
+                    ? t("초고압 찌든때/타르 분쇄")
                     : nozId === "15deg"
-                    ? "표준 밸런스 부채꼴"
+                    ? t("표준 밸런스 부채꼴")
                     : nozId === "40deg"
-                    ? "광역 빠른 먼지/이끼 제거"
-                    : "비누 거품 도포 (녹 2.5배)"}
+                    ? t("광역 빠른 먼지/이끼 제거")
+                    : t("비누 거품 도포 (녹 2.5배)")}
                 </span>
               </div>
             </TiltWashButton>
@@ -977,7 +981,7 @@ export function PowerWash3D() {
         <div className="flex items-center gap-1.5">
           <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
           <span>
-            세척 팁: 비누 거품[4]을 먼저 뿌린 뒤 15°[2] 또는 40°[3] 노즐로 헹구면 찌든 때가 2.5배 빠르게 지워집니다. 덜 닦인 곳은 [F] 스캔!
+            {t("세척 팁: 비누 거품[4]을 먼저 뿌린 뒤 15°[2] 또는 40°[3] 노즐로 헹구면 찌든 때가 2.5배 빠르게 지워집니다. 덜 닦인 곳은 [F] 스캔!")}
           </span>
         </div>
       </div>
@@ -989,7 +993,7 @@ export function PowerWash3D() {
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <ScrollText className="h-5 w-5 text-primary" />
-                <h3 className="text-base font-black">마을 정화 의뢰서</h3>
+                <h3 className="text-base font-black">{t("마을 정화 의뢰서")}</h3>
               </div>
               <TiltWashButton
                 onClick={() => setIsQuestModalOpen(false)}
@@ -1009,10 +1013,10 @@ export function PowerWash3D() {
                   >
                     <div className="flex-1 pr-2">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-foreground">{q.title.ko}</span>
+                        <span className="text-xs font-bold text-foreground">{q.title[loc]}</span>
                         <span className="text-xs font-bold text-warning">+${q.rewardCash}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">{q.desc.ko}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{q.desc[loc]}</p>
                       <div className="mt-1.5 flex items-center gap-2">
                         <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
                           <div
@@ -1029,7 +1033,7 @@ export function PowerWash3D() {
                     <div>
                       {q.isClaimed ? (
                         <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">
-                          수령 완료
+                          {t("수령 완료")}
                         </span>
                       ) : (
                         <TiltWashButton
@@ -1041,7 +1045,7 @@ export function PowerWash3D() {
                               : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
                           }`}
                         >
-                          보상 수령
+                          {t("보상 수령")}
                         </TiltWashButton>
                       )}
                     </div>
@@ -1060,7 +1064,7 @@ export function PowerWash3D() {
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <Wrench className="h-5 w-5 text-warning" />
-                <h3 className="text-base font-black">정비공 마이크의 장비 튜닝소</h3>
+                <h3 className="text-base font-black">{t("정비공 마이크의 장비 튜닝소")}</h3>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1 rounded-lg border border-warning/40 bg-warning/10 px-2 py-0.5 text-xs font-bold text-warning">
@@ -1094,12 +1098,12 @@ export function PowerWash3D() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-foreground">{def.name.ko}</span>
+                          <span className="text-xs font-bold text-foreground">{def.name[loc]}</span>
                           <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-xs font-bold text-primary">
                             LV {curLv} / {def.maxLevel}
                           </span>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">{def.desc.ko}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{def.desc[loc]}</p>
                       </div>
                     </div>
 

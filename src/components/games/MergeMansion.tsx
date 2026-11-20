@@ -1,3 +1,5 @@
+import { useGameText, translateGameText } from "../../lib/games/game-text";
+import { MERGE_COTTAGE_TEXT } from "../../lib/games/text/merge-cottage";
 import { useState, useRef, useCallback, useEffect } from 'react';
 import {
   MergeMansionEngine,
@@ -36,7 +38,9 @@ function TiltMergeCell({
   onDragStart,
   onDrop,
   onClick,
+  t,
 }: {
+  t: (source: string, ...args: Array<string | number>) => string;
   item: MergeItem | null;
   def: (typeof CHAIN_DEFINITIONS)[keyof typeof CHAIN_DEFINITIONS]['items'][number] | null;
   isSelected: boolean;
@@ -80,7 +84,7 @@ function TiltMergeCell({
           {/* Spawner Badge */}
           {item.isSpawner && (
             <span className="absolute top-1 left-1 px-1 py-0.5 rounded bg-warning text-foreground font-black text-xs scale-75 origin-top-left shadow-xs">
-              ⚡생성
+              {t("⚡생성")}
             </span>
           )}
 
@@ -96,7 +100,7 @@ function TiltMergeCell({
             {sprite ? (
               <img
                 src={sprite}
-                alt={def.name.ko}
+                alt={t(def.name.ko)}
                 className="size-full object-contain filter drop-shadow-xs select-none pointer-events-none"
                 draggable={false}
               />
@@ -117,7 +121,8 @@ function TiltMergeCell({
   );
 }
 
-export default function MergeMansion() {
+export default function MergeMansion({ locale: pageLocale }: { locale?: string } = {}) {
+  const { t, locale } = useGameText(MERGE_COTTAGE_TEXT, pageLocale);
   const engineRef = useRef<MergeMansionEngine | null>(null);
   if (!engineRef.current) {
     engineRef.current = new MergeMansionEngine();
@@ -141,11 +146,11 @@ export default function MergeMansion() {
     }
   }, [stars, completedCount]);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-  const [message, setMessage] = useState<string>('스포너를 눌러 도구를 만들고, 같은 도구를 합쳐보세요!');
+  const [message, setMessage] = useState<string>(() => translateGameText(MERGE_COTTAGE_TEXT, locale, '스포너를 눌러 도구를 만들고, 같은 도구를 합쳐보세요!'));
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [shareCardCopied, setShareCardCopied] = useState(false);
 
-  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: 'ko' });
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: locale as 'ko' | 'en' | 'ja' | 'zh' | 'fr' | 'es' });
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -259,10 +264,10 @@ export default function MergeMansion() {
       if (res.success) {
         playSfx('tap');
         MobileHapticsPro.light();
-        setMessage(`생성기에서 새로운 아이템을 소환했습니다! (잔여 에너지: ${engine.energy})`);
+        setMessage(t('생성기에서 새로운 아이템을 소환했습니다! (잔여 에너지: {0})', engine.energy));
       } else {
         MobileHapticsPro.warning();
-        setMessage(res.reason || '소환할 수 없습니다.');
+        setMessage(t(res.reason || '소환할 수 없습니다.'));
       }
       updateState();
       return;
@@ -274,10 +279,10 @@ export default function MergeMansion() {
         setSelectedIdx(idx);
         MobileHapticsPro.light();
         const def = CHAIN_DEFINITIONS[item.chain].items[item.tier - 1];
-        setMessage(`'${def.name.ko}' 선택됨. 빈 칸으로 이동하거나 같은 아이템과 합치세요.`);
+        setMessage(t("'{0}' 선택됨. 빈 칸으로 이동하거나 같은 아이템과 합치세요.", t(def.name.ko)));
       } else if (item?.isCobwebbed) {
         MobileHapticsPro.warning();
-        setMessage('거미줄에 갇혀 있습니다! 동일한 레벨의 아이템을 끌어다 합치면 해제됩니다.');
+        setMessage(t('거미줄에 갇혀 있습니다! 동일한 레벨의 아이템을 끌어다 합치면 해제됩니다.'));
       }
       return;
     }
@@ -294,11 +299,11 @@ export default function MergeMansion() {
     if (res.action === 'merged') {
       playSfx('merge');
       MobileHapticsPro.impact();
-      setMessage(`합성 성공! Lv.${res.newTier} 아이템을 제작했습니다! (+${res.starsEarned} 별)`);
+      setMessage(t('합성 성공! Lv.{0} 아이템을 제작했습니다! (+{1} 별)', res.newTier ?? '', res.starsEarned ?? 0));
     } else if (res.action === 'unlockedCobweb') {
       playSfx('unlock');
       MobileHapticsPro.success();
-      setMessage(`거미줄 해제! Lv.${res.newTier} 아이템이 잠금 해제되었습니다!`);
+      setMessage(t('거미줄 해제! Lv.{0} 아이템이 잠금 해제되었습니다!', res.newTier ?? ''));
     } else if (res.action === 'moved') {
       playSfx('tap');
       MobileHapticsPro.light();
@@ -331,11 +336,11 @@ export default function MergeMansion() {
     if (res.action === 'merged') {
       playSfx('merge');
       MobileHapticsPro.impact();
-      setMessage(`합성 성공! Lv.${res.newTier} 아이템 제작 (+${res.starsEarned} 별)`);
+      setMessage(t('합성 성공! Lv.{0} 아이템 제작 (+{1} 별)', res.newTier ?? '', res.starsEarned ?? 0));
     } else if (res.action === 'unlockedCobweb') {
       playSfx('unlock');
       MobileHapticsPro.success();
-      setMessage(`거미줄 해제! Lv.${res.newTier} 잠금 해제!`);
+      setMessage(t('거미줄 해제! Lv.{0} 잠금 해제!', res.newTier ?? ''));
     } else if (res.action === 'moved') {
       playSfx('tap');
       MobileHapticsPro.light();
@@ -350,14 +355,14 @@ export default function MergeMansion() {
     if (res.success) {
       playSfx('quest');
       MobileHapticsPro.success();
-      setMessage('저택 구역 복원 퀘스트 완료! 별과 보너스 에너지를 획득했습니다!');
+      setMessage(t('저택 구역 복원 퀘스트 완료! 별과 보너스 에너지를 획득했습니다!'));
       updateState();
       if (containerRef.current) {
         celebrate(containerRef.current, { preset: 'stardust' });
       }
     } else {
       MobileHapticsPro.warning();
-      setMessage(res.reason || '퀘스트를 완료할 수 없습니다.');
+      setMessage(t(res.reason || '퀘스트를 완료할 수 없습니다.'));
     }
   };
 
@@ -367,13 +372,13 @@ export default function MergeMansion() {
     try {
       const canvas = createShareCardCanvas({
         title: 'Merge Cottage',
-        subtitle: '저택 복원 머지 퍼즐',
+        subtitle: t('저택 복원 머지 퍼즐'),
         score: `${stars} STARS`,
         slug: 'merge-cottage',
         customStats: [
-          { label: '복원 구역', value: `${completedCount} / ${engine.quests.length}` },
-          { label: '진행률', value: `${progressPct}%` },
-          { label: '잔여 에너지', value: `${energy}` },
+          { label: t('복원 구역'), value: `${completedCount} / ${engine.quests.length}` },
+          { label: t('진행률'), value: `${progressPct}%` },
+          { label: t('잔여 에너지'), value: `${energy}` },
         ],
       });
       const success = await copyShareCardToClipboard(canvas);
@@ -397,7 +402,7 @@ export default function MergeMansion() {
     engine.completedQuests = [];
     engine.quests.forEach((q) => (q.completed = false));
     setSelectedIdx(null);
-    setMessage('보드가 초기화되었습니다. 즐거운 합성 되세요!');
+    setMessage(t('보드가 초기화되었습니다. 즐거운 합성 되세요!'));
     updateState();
   };
 
@@ -427,7 +432,7 @@ export default function MergeMansion() {
               height={20}
               className="size-5 object-contain select-none pointer-events-none"
             />
-            <span className="text-xs text-muted-foreground">에너지</span>
+            <span className="text-xs text-muted-foreground">{t("에너지")}</span>
             <span className="text-sm font-black text-foreground font-mono">
               {energy}/{engine.maxEnergy}
             </span>
@@ -442,7 +447,7 @@ export default function MergeMansion() {
               height={20}
               className="size-5 object-contain select-none pointer-events-none"
             />
-            <span className="text-xs text-muted-foreground">복원 별</span>
+            <span className="text-xs text-muted-foreground">{t("복원 별")}</span>
             <span className="text-sm font-black text-primary font-mono">{stars}</span>
           </div>
 
@@ -452,8 +457,8 @@ export default function MergeMansion() {
               type="button"
               className="p-2 rounded-xl bg-card border border-border text-foreground hover:bg-muted"
               onClick={() => setSoundEnabled(!soundEnabled)}
-              title="음소거 토글 (M)"
-              aria-label="음소거 토글"
+              title={t("음소거 토글 (M)")}
+              aria-label={t("음소거 토글")}
             >
               {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
             </button>
@@ -461,8 +466,8 @@ export default function MergeMansion() {
               type="button"
               className="p-2 rounded-xl bg-card border border-border text-foreground hover:bg-muted"
               onClick={handleShareCard}
-              title="소셜 공유 카드"
-              aria-label="소셜 공유 카드"
+              title={t("소셜 공유 카드")}
+              aria-label={t("소셜 공유 카드")}
             >
               <Share2 className="w-4 h-4" />
             </button>
@@ -482,7 +487,7 @@ export default function MergeMansion() {
         <div className="flex items-center gap-3 w-full sm:w-64">
           <div className="flex flex-col w-full gap-1">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground font-medium">대저택 복구율</span>
+              <span className="text-muted-foreground font-medium">{t("대저택 복구율")}</span>
               <span className="font-bold text-primary">{progressPct}%</span>
             </div>
             <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
@@ -499,9 +504,9 @@ export default function MergeMansion() {
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between text-xs px-1 text-muted-foreground">
           <span className="font-semibold text-foreground flex items-center gap-1.5">
-            🏡 대저택 복원 의뢰 ({completedCount}/{engine.quests.length} 완료)
+            {t("🏡 대저택 복원 의뢰 ({0}/{1} 완료)", completedCount, engine.quests.length)}
           </span>
-          <span>아이템을 합쳐 의뢰를 완수하세요</span>
+          <span>{t("아이템을 합쳐 의뢰를 완수하세요")}</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -521,8 +526,8 @@ export default function MergeMansion() {
                 }`}
               >
                 <div className="flex flex-col gap-1 min-w-0 pr-2">
-                  <span className="text-xs text-muted-foreground truncate">{quest.area}</span>
-                  <span className="text-sm font-bold text-foreground truncate">{quest.titleKey}</span>
+                  <span className="text-xs text-muted-foreground truncate">{t(quest.area)}</span>
+                  <span className="text-sm font-bold text-foreground truncate">{t(quest.titleKey)}</span>
                   <div className="flex items-center gap-2 mt-1">
                     {quest.requiredItems.map((req, idx) => {
                       const itemDef = CHAIN_DEFINITIONS[req.chain].items[req.tier - 1];
@@ -540,7 +545,7 @@ export default function MergeMansion() {
                           }`}
                         >
                           {reqSprite ? (
-                            <img src={reqSprite} alt={itemDef.name.ko} className="size-3.5 object-contain inline-block" />
+                            <img src={reqSprite} alt={t(itemDef.name.ko)} className="size-3.5 object-contain inline-block" />
                           ) : (
                             <span>{itemDef.emoji}</span>
                           )}
@@ -558,7 +563,7 @@ export default function MergeMansion() {
                   onClick={() => handleCompleteQuest(quest.id)}
                 >
                   <CheckCircle2 />
-                  복원 (+{quest.starsReward}⭐)
+                  {t("복원 (+{0}⭐)", quest.starsReward)}
                 </Button>
               </div>
             );
@@ -573,7 +578,7 @@ export default function MergeMansion() {
                 className="size-12 drop-shadow-md select-none pointer-events-none"
               />
               <div className="flex items-center gap-1.5">
-                <Sparkles className="w-5 h-5" /> 모든 저택 구역이 완벽히 복원되었습니다! 축하합니다!
+                <Sparkles className="w-5 h-5" /> {t("모든 저택 구역이 완벽히 복원되었습니다! 축하합니다!")}
               </div>
             </div>
           )}
@@ -585,7 +590,7 @@ export default function MergeMansion() {
         <span className="truncate">{message}</span>
         {selectedItem && (
           <span className="font-semibold text-primary ml-2 shrink-0">
-            {CHAIN_DEFINITIONS[selectedItem.chain].items[selectedItem.tier - 1].name.ko} (Lv.{selectedItem.tier})
+            {t(CHAIN_DEFINITIONS[selectedItem.chain].items[selectedItem.tier - 1].name.ko)} (Lv.{selectedItem.tier})
           </span>
         )}
       </div>
@@ -607,6 +612,7 @@ export default function MergeMansion() {
 
           return (
             <TiltMergeCell
+                  t={t}
               key={idx}
               item={item}
               def={def}
@@ -623,13 +629,13 @@ export default function MergeMansion() {
       {/* Footer Info & Controls */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t border-border w-full">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <span>도움말: 동일 레벨 아이템을 드래그하거나 순서대로 클릭하면 다음 레벨로 합성됩니다.</span>
+          <span>{t("도움말: 동일 레벨 아이템을 드래그하거나 순서대로 클릭하면 다음 레벨로 합성됩니다.")}</span>
         </div>
 
         <div className="flex items-center gap-2">
           {shareCardCopied && (
             <span className="text-xs font-bold text-primary animate-in fade-in">
-              ✓ 결과 카드 복사 완료!
+              {t("✓ 결과 카드 복사 완료!")}
             </span>
           )}
           <Button
@@ -638,7 +644,7 @@ export default function MergeMansion() {
             onClick={handleRestart}
           >
             <RotateCcw className="w-4 h-4" />
-            보드 재설정
+            {t("보드 재설정")}
           </Button>
         </div>
       </div>

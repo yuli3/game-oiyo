@@ -7,6 +7,8 @@ import {
   type Ingredient,
 } from '../../lib/games/potion-craft';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { useGameText } from '../../lib/games/game-text';
+import { POTION_BENCH_TEXT } from '../../lib/games/text/potion-bench';
 import { celebrate } from '../../lib/games/celebration';
 import {
   createShareCardCanvas,
@@ -68,7 +70,12 @@ interface BoilingBubble {
   life: number;
 }
 
-export default function PotionCraft() {
+export default function PotionCraft({ locale: pageLocale }: { locale?: string } = {}) {
+  const { t } = useGameText(POTION_BENCH_TEXT, pageLocale);
+  const effectLabel = (effect: string) => {
+    const node = engineRef.current?.state.effectNodes.find((n) => n.effect === effect);
+    return node ? t(node.name) : effect;
+  };
   const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const [copied, setCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -264,7 +271,7 @@ export default function PotionCraft() {
     if (success) {
       playASMR('cork');
       MobileHapticsPro.selection();
-      setFeedbackMsg(`${engineRef.current.state.ingredients[id].name}을 절구에 넣었습니다. 빻아주세요!`);
+      setFeedbackMsg(t('{0}을 절구에 넣었습니다. 빻아주세요!', t(engineRef.current.state.ingredients[id].name)));
       syncState();
     }
   };
@@ -285,7 +292,7 @@ export default function PotionCraft() {
     MobileHapticsPro.medium();
     const success = engineRef.current.addToCauldron();
     if (success) {
-      setFeedbackMsg('가마솥에 재료를 넣었습니다. 국자로 저어주세요!');
+      setFeedbackMsg(t('가마솥에 재료를 넣었습니다. 국자로 저어주세요!'));
       syncState();
     }
   };
@@ -299,9 +306,9 @@ export default function PotionCraft() {
     if (engineRef.current.state.isFailed) {
       playASMR('fail');
       MobileHapticsPro.error();
-      setFeedbackMsg('해골 지대에 닿아 물약이 끓어 넘치며 파괴되었습니다! 가마솥을 비우세요.');
+      setFeedbackMsg(t('해골 지대에 닿아 물약이 끓어 넘치며 파괴되었습니다! 가마솥을 비우세요.'));
     } else if (success) {
-      setFeedbackMsg('국자를 저어 물약 병을 궤적을 따라 이동시켰습니다.');
+      setFeedbackMsg(t('국자를 저어 물약 병을 궤적을 따라 이동시켰습니다.'));
     }
     syncState();
   };
@@ -312,7 +319,7 @@ export default function PotionCraft() {
     playASMR('water');
     MobileHapticsPro.selection();
     engineRef.current.addWater(0.3);
-    setFeedbackMsg('물을 부어 중심 방향으로 물약 병을 희석·이동시켰습니다.');
+    setFeedbackMsg(t('물을 부어 중심 방향으로 물약 병을 희석·이동시켰습니다.'));
     syncState();
   };
 
@@ -405,7 +412,7 @@ export default function PotionCraft() {
     if (!brew.success || !brew.brewedEffect) {
       playASMR('fail');
       MobileHapticsPro.error();
-      setFeedbackMsg(brew.message);
+      setFeedbackMsg(t(brew.message));
       syncState();
       return;
     }
@@ -418,11 +425,11 @@ export default function PotionCraft() {
         playASMR('coin');
         MobileHapticsPro.heavy();
         celebrate(containerRef.current, { preset: 'sparks' });
-        setFeedbackMsg(serve.feedback);
+        setFeedbackMsg(t(serve.feedback));
       } else {
         playASMR('fail');
         MobileHapticsPro.error();
-        setFeedbackMsg(serve.feedback);
+        setFeedbackMsg(t(serve.feedback));
       }
       syncState();
     }, 300);
@@ -434,7 +441,7 @@ export default function PotionCraft() {
     playASMR('water');
     MobileHapticsPro.medium();
     engineRef.current.resetCauldron();
-    setFeedbackMsg('가마솥을 깨끗하게 비우고 새로 시작합니다.');
+    setFeedbackMsg(t('가마솥을 깨끗하게 비우고 새로 시작합니다.'));
     syncState();
   };
 
@@ -444,7 +451,7 @@ export default function PotionCraft() {
       title: 'Potion Bench Alchemist',
       slug: 'potion-bench',
       score: `${gold}G`,
-      subtitle: `Effects: ${activeEffects.length > 0 ? activeEffects.join(', ') : 'None'} • Customer: ${currentCustomer?.customerName || 'None'}`,
+      subtitle: `${activeEffects.length > 0 ? activeEffects.map(effectLabel).join(', ') : '-'} • ${currentCustomer ? t(currentCustomer.customerName) : '-'}`,
     });
     const success = await copyShareCardToClipboard(canvas);
     if (success) {
@@ -576,7 +583,7 @@ export default function PotionCraft() {
 
         ctx.fillStyle = '#78350f';
         ctx.font = 'bold 11px sans-serif';
-        ctx.fillText(node.name, nx, ny + nr + 13);
+        ctx.fillText(t(node.name), nx, ny + nr + 13);
       }
 
       // 4. Draw Current Trajectory Path (Dotted Path)
@@ -690,7 +697,7 @@ export default function PotionCraft() {
       <div className="w-full bg-card/90 border border-border rounded-xl p-3 mb-2 flex flex-wrap items-center justify-between shadow-lg gap-2">
         <div className="flex items-center gap-3">
           <div className="flex flex-col">
-            <span className="text-xs font-bold text-muted-foreground tracking-wider">연금술사 작업실</span>
+            <span className="text-xs font-bold text-muted-foreground tracking-wider">{t('연금술사 작업실')}</span>
             <div className="text-xl font-black text-warning font-mono flex items-center gap-1.5">
               <img
                 src={getSpriteUrl('coin', 64)}
@@ -707,8 +714,8 @@ export default function PotionCraft() {
         {currentCustomer && (
           <div className="flex-1 mx-2 sm:mx-4 bg-muted/60 border border-border/80 rounded-lg p-2 text-xs flex items-center justify-between gap-3">
             <div>
-              <span className="font-bold text-primary mr-1.5">👤 {currentCustomer.customerName}:</span>
-              <span className="text-foreground">"{currentCustomer.requestText}"</span>
+              <span className="font-bold text-primary mr-1.5">👤 {t(currentCustomer.customerName)}:</span>
+              <span className="text-foreground">"{t(currentCustomer.requestText)}"</span>
             </div>
             <div className="text-right shrink-0 flex items-center gap-1.5">
               <img
@@ -718,7 +725,7 @@ export default function PotionCraft() {
                 draggable={false}
               />
               <span className="px-2 py-0.5 rounded bg-warning/20 text-warning font-bold font-mono">
-                보수: +{currentCustomer.rewardGold}G
+                {t('보수: +{0}G', currentCustomer.rewardGold)}
               </span>
             </div>
           </div>
@@ -745,7 +752,7 @@ export default function PotionCraft() {
             onClick={handleResetCauldron}
             className="px-3 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-bold rounded-lg transition-all"
           >
-            가마솥 비우기 ↺
+            {t('가마솥 비우기 ↺')}
           </TiltPotionButton>
         </div>
       </div>
@@ -764,8 +771,8 @@ export default function PotionCraft() {
         {/* Active Effect Floating Badge */}
         {activeEffects.length > 0 && (
           <div className="absolute bottom-3 left-4 bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-xs font-bold shadow-md flex items-center gap-1 pointer-events-none">
-            <span>✨ 효능 접촉:</span>
-            <span>{activeEffects.join(', ')}</span>
+            <span>{t('✨ 효능 접촉:')}</span>
+            <span>{activeEffects.map(effectLabel).join(', ')}</span>
           </div>
         )}
       </div>
@@ -776,13 +783,13 @@ export default function PotionCraft() {
         <div className="bg-card/90 border border-border rounded-xl p-3 flex flex-col justify-between shadow-md">
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="font-bold text-xs text-foreground">1. 절구통 (Mortar)</span>
+              <span className="font-bold text-xs text-foreground">{t('1. 절구통 (Mortar)')}</span>
               <span className="text-xs font-mono text-muted-foreground">
-                {Math.round(grindProgress * 100)}% 분쇄
+                {t('{0}% 분쇄', Math.round(grindProgress * 100))}
               </span>
             </div>
             <p className="text-xs text-muted-foreground mb-2">
-              {activeIngredient ? `${inventory[activeIngredient].name} · 원을 그려 빻기` : '약초를 선택하세요'}
+              {activeIngredient ? t('{0} · 원을 그려 빻기', t(inventory[activeIngredient].name)) : t('약초를 선택하세요')}
             </p>
             <div
               onPointerDown={handleMortarPointerDown}
@@ -790,7 +797,7 @@ export default function PotionCraft() {
               onPointerUp={handleMortarPointerUp}
               onPointerCancel={handleMortarPointerUp}
               role="slider"
-              aria-label="절구통 회전 분쇄"
+              aria-label={t('절구통 회전 분쇄')}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={Math.round(grindProgress * 100)}
@@ -823,14 +830,14 @@ export default function PotionCraft() {
               disabled={!activeIngredient || grindProgress >= 1}
               className="flex-1 py-1.5 bg-muted hover:bg-muted/80 text-foreground font-bold text-xs rounded border border-border disabled:opacity-40"
             >
-              🔨 빻기
+              {t('🔨 빻기')}
             </TiltPotionButton>
             <TiltPotionButton
               onClick={handleAddToCauldron}
               disabled={!activeIngredient}
               className="flex-1 py-1.5 bg-primary text-primary-foreground font-bold text-xs rounded disabled:opacity-40"
             >
-              투입 ➔
+              {t('투입 ➔')}
             </TiltPotionButton>
           </div>
         </div>
@@ -845,21 +852,21 @@ export default function PotionCraft() {
                   alt="Cauldron"
                   className="size-4 object-contain"
                 />
-                2. 가마솥 (Cauldron)
+                {t('2. 가마솥 (Cauldron)')}
               </span>
               <span className={`text-xs font-bold ${isFailed ? 'text-destructive' : 'text-primary'}`}>
-                {isFailed ? '⚠️ 파괴됨' : '정상 가동'}
+                {isFailed ? t('⚠️ 파괴됨') : t('정상 가동')}
               </span>
             </div>
             <p className="text-xs text-muted-foreground mb-2">
-              국자를 빙글빙글 돌려 궤적을 전진시키고 물로 희석하세요.
+              {t('국자를 빙글빙글 돌려 궤적을 전진시키고 물로 희석하세요.')}
             </p>
             <div
               onPointerDown={handleCauldronPointerDown}
               onPointerMove={handleCauldronPointerMove}
               onPointerUp={handleCauldronPointerUp}
               onPointerCancel={handleCauldronPointerUp}
-              aria-label="가마솥 국자 회전 젓기"
+              aria-label={t('가마솥 국자 회전 젓기')}
               className={`mx-auto mb-2.5 flex size-16 touch-none select-none items-center justify-center rounded-full border-2 border-dashed ${
                 !isFailed
                   ? 'border-warning bg-warning/10 cursor-grab active:cursor-grabbing'
@@ -881,14 +888,14 @@ export default function PotionCraft() {
               disabled={isFailed}
               className="flex-1 py-1.5 bg-muted hover:bg-muted/80 text-foreground font-bold text-xs rounded border border-border disabled:opacity-40"
             >
-              🥄 젓기
+              {t('🥄 젓기')}
             </TiltPotionButton>
             <TiltPotionButton
               onClick={handleAddWater}
               disabled={isFailed}
               className="flex-1 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold text-xs rounded disabled:opacity-40"
             >
-              💧 물 붓기
+              {t('💧 물 붓기')}
             </TiltPotionButton>
           </div>
         </div>
@@ -897,13 +904,13 @@ export default function PotionCraft() {
         <div className="bg-card/90 border border-border rounded-xl p-3 flex flex-col justify-between shadow-md">
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="font-bold text-xs text-foreground">3. 조제 & 서빙</span>
+              <span className="font-bold text-xs text-foreground">{t('3. 조제 & 서빙')}</span>
               <span className="text-xs text-warning font-bold">
-                {activeEffects.length > 0 ? '완성 가능!' : '효능 미달'}
+                {activeEffects.length > 0 ? t('완성 가능!') : t('효능 미달')}
               </span>
             </div>
             <p className="text-xs text-muted-foreground mb-3">
-              원하는 효능 노드에 닿았을 때 불을 지펴 손님에게 물약을 판매하세요.
+              {t('원하는 효능 노드에 닿았을 때 불을 지펴 손님에게 물약을 판매하세요.')}
             </p>
           </div>
 
@@ -917,7 +924,7 @@ export default function PotionCraft() {
               alt="Potion"
               className="size-4 object-contain"
             />
-            <span>불 지피기 & 서빙 (Serve)</span>
+            <span>{t('불 지피기 & 서빙 (Serve)')}</span>
           </TiltPotionButton>
         </div>
       </div>
@@ -925,7 +932,7 @@ export default function PotionCraft() {
       {/* Herb Garden Inventory Shelf */}
       <div className="w-full max-w-2xl mt-2 bg-card/60 border border-border rounded-xl p-3">
         <span className="text-xs font-bold text-muted-foreground tracking-wider mb-2 block">
-          🌿 약초 선반 (HERB GARDEN) — 클릭하여 절구에 투입
+          {t('🌿 약초 선반 (HERB GARDEN) — 클릭하여 절구에 투입')}
         </span>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {(Object.keys(inventory) as IngredientId[]).map((id) => {
@@ -950,21 +957,21 @@ export default function PotionCraft() {
                   <div className="flex items-center gap-1.5">
                     <img
                       src={spriteUrl}
-                      alt={ing.name}
+                      alt={t(ing.name)}
                       className="size-4 object-contain"
                     />
-                    <span className="text-xs font-bold text-foreground">{ing.name.split(' ')[0]}</span>
+                    <span className="text-xs font-bold text-foreground">{t(ing.name).split(' (')[0].split('（')[0]}</span>
                   </div>
                   <span className="text-xs font-mono font-bold text-primary">x{ing.count}</span>
                 </div>
                 <span className="text-xs text-muted-foreground mt-1">
                   {id === 'terraria'
-                    ? '동남쪽 궤적'
+                    ? t('동남쪽 궤적')
                     : id === 'waterbloom'
-                    ? '북동쪽 궤적'
+                    ? t('북동쪽 궤적')
                     : id === 'firebell'
-                    ? '남서쪽 궤적'
-                    : '북서쪽 궤적'}
+                    ? t('남서쪽 궤적')
+                    : t('북서쪽 궤적')}
                 </span>
               </button>
             );
