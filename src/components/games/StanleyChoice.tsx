@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { NARRATOR_DOOR_TEXT } from "../../lib/games/text/narrator-door";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
@@ -29,7 +31,8 @@ function TiltStanleyButton({ children, className = '', ...props }: React.ButtonH
   );
 }
 
-export default function StanleyChoice() {
+export default function StanleyChoice({ locale: pageLocale }: { locale?: string } = {}) {
+  const { t } = useGameText(NARRATOR_DOOR_TEXT, pageLocale);
   const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<StanleyChoiceEngine>(new StanleyChoiceEngine());
@@ -224,14 +227,14 @@ export default function StanleyChoice() {
     MobileHapticsPro.click();
     const endingData = ENDINGS_CATALOG.find((e) => e.id === currentEnding);
     const canvas = await createShareCardCanvas({
-      title: 'THE STANLEY PARABLE',
-      subtitle: endingData?.title || '수수께끼의 엔딩 도달',
+      title: 'THE END',
+      subtitle: t(endingData?.title || '수수께끼의 엔딩 도달'),
       score: `${completionPct}%`,
       slug: 'narrator-door',
       customStats: [
-        { label: '도달 엔딩', value: endingData?.code || 'END' },
-        { label: '엔딩 수집율', value: `${completionPct}%` },
-        { label: '현재 방', value: currentRoom.title },
+        { label: t('도달 엔딩'), value: endingData?.code || 'END' },
+        { label: t('엔딩 수집율'), value: `${completionPct}%` },
+        { label: t('현재 방'), value: t(currentRoom.title) },
       ],
       playerTitle: 'PARABLE EXPLORER',
     });
@@ -364,7 +367,7 @@ export default function StanleyChoice() {
         ctx.fillStyle = '#f8fafc';
         ctx.font = 'bold 12px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('왼쪽 문', leftX + doorW / 2, doorY + 28);
+        ctx.fillText(t('왼쪽 문'), leftX + doorW / 2, doorY + 28);
 
         // Right Door Frame & Door
         const isRightHover = hoveredOptionId === 'door_right';
@@ -382,7 +385,7 @@ export default function StanleyChoice() {
         ctx.fillStyle = '#f8fafc';
         ctx.font = 'bold 12px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('오른쪽 문', rightX + doorW / 2, doorY + 28);
+        ctx.fillText(t('오른쪽 문'), rightX + doorW / 2, doorY + 28);
       } else if (room.visualScene === 'office') {
         // Office 427 Desk & Monitor
         const deskY = vpY + 30 + bob;
@@ -468,7 +471,7 @@ export default function StanleyChoice() {
         ctx.fillStyle = '#94a3b8';
         ctx.font = '11px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(room.title, vpX, doorY + 30);
+        ctx.fillText(t(room.title), vpX, doorY + 30);
       }
 
       // Narrator Audio Waveform Visualizer in top corner
@@ -509,10 +512,10 @@ export default function StanleyChoice() {
           />
           <div className="flex flex-col">
             <span className="text-xs font-bold text-primary tracking-wider flex items-center gap-1.5">
-              <span>🎙️ 내레이터 (THE NARRATOR)</span>
+              <span>{t('🎙️ 내레이터 (THE NARRATOR)')}</span>
             </span>
             <span className="text-xs text-muted-foreground mt-0.5">
-              {currentRoom.title} — {currentRoom.subtitle}
+              {t(currentRoom.title)} — {t(currentRoom.subtitle)}
             </span>
           </div>
         </div>
@@ -523,7 +526,7 @@ export default function StanleyChoice() {
             onClick={() => setShowCodex(!showCodex)}
             className="px-3 py-1.5 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
-            <span>📜 엔딩 ({unlockedEndings.length}/8)</span>
+            <span>{t('📜 엔딩 ({0}/8)', unlockedEndings.length)}</span>
             <span className="font-mono text-primary">{completionPct}%</span>
           </button>
 
@@ -532,14 +535,14 @@ export default function StanleyChoice() {
             onClick={handleRestart}
             className="px-3 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-xs font-bold transition-all active:scale-95"
           >
-            리셋 ↺
+            {t('리셋 ↺')}
           </button>
 
           <button
             type="button"
             onClick={togglePortal}
             className="p-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-muted/80 transition-colors"
-            title={isImmersive ? '포털 축소' : '100dvh 전체화면'}
+            title={isImmersive ? t('포털 축소') : t('100dvh 전체화면')}
           >
             {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
@@ -553,7 +556,7 @@ export default function StanleyChoice() {
         {/* Narrator Subtitle Overlay at Bottom of Canvas */}
         <div className="absolute bottom-3 left-4 right-4 bg-background/90 border border-border/80 rounded-lg p-2.5 backdrop-blur-md shadow-lg pointer-events-none">
           <p className="text-xs font-medium text-foreground leading-relaxed text-center">
-            "{narratorSubtitle}"
+            "{t(narratorSubtitle)}"
           </p>
         </div>
 
@@ -568,13 +571,13 @@ export default function StanleyChoice() {
               />
             </div>
             <span className="text-xs font-mono font-bold text-primary tracking-widest uppercase mb-1">
-              THE STANLEY PARABLE
+              THE END
             </span>
             <h2 className="text-2xl font-extrabold text-foreground mb-2">
-              {ENDINGS_CATALOG.find((e) => e.id === currentEnding)?.title}
+              {t(ENDINGS_CATALOG.find((e) => e.id === currentEnding)?.title ?? '')}
             </h2>
             <p className="text-muted-foreground text-sm max-w-md mb-6 leading-relaxed">
-              {ENDINGS_CATALOG.find((e) => e.id === currentEnding)?.desc}
+              {t(ENDINGS_CATALOG.find((e) => e.id === currentEnding)?.desc ?? '')}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <TiltStanleyButton
@@ -582,7 +585,7 @@ export default function StanleyChoice() {
                 onClick={handleRestart}
                 className="px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg shadow-lg text-sm transition-all"
               >
-                사무실 427로 리셋 ↺
+                {t('사무실 427로 리셋 ↺')}
               </TiltStanleyButton>
               <TiltStanleyButton
                 type="button"
@@ -590,14 +593,14 @@ export default function StanleyChoice() {
                 className="px-4 py-2.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground font-semibold rounded-lg text-sm border border-border flex items-center gap-1.5"
               >
                 {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Camera className="w-4 h-4" />}
-                <span>{isCopied ? '복사 완료!' : '결과 카드 공유'}</span>
+                <span>{isCopied ? t('복사 완료!') : t('결과 카드 공유')}</span>
               </TiltStanleyButton>
               <TiltStanleyButton
                 type="button"
                 onClick={() => setShowCodex(true)}
                 className="px-4 py-2.5 bg-muted hover:bg-muted/80 text-foreground font-semibold rounded-lg text-sm border border-border"
               >
-                도감 확인
+                {t('도감 확인')}
               </TiltStanleyButton>
             </div>
           </div>
@@ -617,9 +620,9 @@ export default function StanleyChoice() {
               className="w-full text-left p-3 rounded-xl border border-border bg-card/80 hover:bg-primary/10 hover:border-primary transition-all text-sm font-semibold flex items-center justify-between group shadow-sm"
             >
               <span className="text-foreground group-hover:text-primary transition-colors">
-                👉 {option.label}
+                👉 {t(option.label)}
               </span>
-              <span className="text-xs text-muted-foreground font-mono">선택</span>
+              <span className="text-xs text-muted-foreground font-mono">{t("선택")}</span>
             </TiltStanleyButton>
           ))}
         </div>
@@ -631,16 +634,16 @@ export default function StanleyChoice() {
           <div className="bg-card border border-border rounded-2xl max-w-lg w-full p-5 shadow-2xl max-h-128 overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
               <div>
-                <h3 className="text-lg font-bold text-foreground">엔딩 수집 도감 (ENDINGS TREE)</h3>
+                <h3 className="text-lg font-bold text-foreground">{t("엔딩 수집 도감 (ENDINGS TREE)")}</h3>
                 <p className="text-xs text-muted-foreground">
-                  총 8개의 서로 다른 철학적 엔딩을 모두 찾아보세요.
+                  {t('총 8개의 서로 다른 철학적 엔딩을 모두 찾아보세요.')}
                 </p>
               </div>
               <button
                 onClick={() => setShowCodex(false)}
                 className="text-muted-foreground hover:text-foreground text-sm font-bold px-2 py-1"
               >
-                ✕ 닫기
+                {t('✕ 닫기')}
               </button>
             </div>
 
@@ -658,14 +661,14 @@ export default function StanleyChoice() {
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-bold text-sm text-foreground">
-                        {isUnlocked ? end.title : '??? (미발견 엔딩)'}
+                        {isUnlocked ? t(end.title) : t('??? (미발견 엔딩)')}
                       </span>
                       <span className="text-xs font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">
                         {end.code}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {isUnlocked ? end.desc : '특정 분기에서 내레이터의 지시를 시험해보세요.'}
+                      {isUnlocked ? t(end.desc) : t('특정 분기에서 내레이터의 지시를 시험해보세요.')}
                     </p>
                   </div>
                 );
@@ -676,7 +679,7 @@ export default function StanleyChoice() {
               onClick={() => setShowCodex(false)}
               className="w-full mt-4 py-2.5 bg-primary text-primary-foreground font-bold rounded-lg text-sm"
             >
-              확인
+              {t('확인')}
             </button>
           </div>
         </div>
