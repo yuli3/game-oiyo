@@ -26,7 +26,7 @@ import {
   type SongTrack,
 } from "../../lib/games/beat-slice";
 
-import UnityEditionLabel from "../ui/game/UnityEditionLabel";
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 interface Particle {
   x: number;
   y: number;
@@ -760,14 +760,7 @@ export default function BeatSlice3D() {
       <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 w-full">
         <div className="flex items-center gap-2.5">
           <span className="text-2xl select-none" aria-hidden="true">⚔️</span>
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-foreground">
-              Unity 6 3D 12트랙 비트 슬라이스 4개국어 에디션
-            </span>
-            <span className="text-xs text-muted-foreground">
-              3D 듀얼 세이버 • 110~200 BPM 12트랙 & 피버 모드 & 블록 절단 물리 • 4개국어(KO/EN/JA/ES)
-            </span>
-          </div>
+          <UnityEditionBlurb />
         </div>
         <a
           href="/prototypes/beat-slice-unity/index.html"

@@ -46,7 +46,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 
-import UnityEditionLabel from "../ui/game/UnityEditionLabel";
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 function getPercentageWidthClass(pct: number): string {
   if (pct >= 95) return 'w-full';
   if (pct >= 90) return 'w-11/12';
@@ -287,14 +287,7 @@ export default function CyberHighway3D() {
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 w-full">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl select-none" aria-hidden="true">🏎️</span>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-foreground">
-                Unity 6 3D 12섹터 사이버 하이웨이 4개국어 에디션
-              </span>
-              <span className="text-xs text-muted-foreground">
-                3D 사이버 슈퍼카 • 260km/h 니트로 부스트 & 니어 미스 & 경찰 추격전 • 4개국어(KO/EN/JA/ES)
-              </span>
-            </div>
+            <UnityEditionBlurb />
           </div>
           <a
             href="/prototypes/cyber-highway-unity/index.html"

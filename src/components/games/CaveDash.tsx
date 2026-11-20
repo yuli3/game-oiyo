@@ -36,7 +36,7 @@ import {
   downloadShareCard,
 } from "../../lib/games/share-card";
 
-import UnityEditionLabel from "../ui/game/UnityEditionLabel";
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 type CaveArt = Record<keyof typeof CAVE_DASH_SPRITES, HTMLImageElement>;
 function loadCaveArt(): CaveArt | null {
   if (typeof Image === "undefined") return null;
@@ -563,14 +563,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
         <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 w-full">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl select-none" aria-hidden="true">🚀</span>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-foreground">
-                Unity 6 3D 12스테이지 동굴 대시 4개국어 에디션
-              </span>
-              <span className="text-xs text-muted-foreground">
-                3D 동굴 글라이더 • 중력 역전 & 레이저 & 심연의 지룡 보스전 • 4개국어(KO/EN/JA/ES)
-              </span>
-            </div>
+            <UnityEditionBlurb />
           </div>
           <a
             href="/prototypes/cave-dash-unity/index.html"

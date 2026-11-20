@@ -20,7 +20,7 @@ import { Button } from "../ui/button";
 import { BLOCK_BLAST_UI_SPRITES } from "../../lib/games/sprites";
 import { Volume2, VolumeX } from "lucide-react";
 
-import UnityEditionLabel from "../ui/game/UnityEditionLabel";
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 interface BlockBlastProps {
   locale?: string;
 }
@@ -234,18 +234,7 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-lg">
             💎
           </span>
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-foreground">
-              {locale === "ko"
-                ? "Unity 6 3D 12스테이지 그리드 클리어 4개국어 에디션"
-                : "Unity 6 3D 12-Stage Grid Clear Multi-Language Edition"}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {locale === "ko"
-                ? "3D 크리스탈 네온 • 실시간 콤보 폭파 & 12스테이지 도전 • 4개국어(KO/EN/JA/ES)"
-                : "3D Crystal Neon • Real-time Combo Shatter & 12 Challenges • Multi-Language"}
-            </span>
-          </div>
+          <UnityEditionBlurb />
         </div>
         <a
           href="/prototypes/block-blast-unity/index.html"

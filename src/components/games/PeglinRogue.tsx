@@ -21,7 +21,7 @@ import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, RetroChiptuneSynth, 
 import { getSpriteUrl, PEGLIN_ROGUE_SPRITES } from "@/lib/games/sprites";
 import { Maximize2, Minimize2, Share2, Check, RotateCcw, Target, Volume2, VolumeX } from "lucide-react";
 
-import UnityEditionLabel from "../ui/game/UnityEditionLabel";
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 function TiltPeglinButton({
   children,
   onClick,
@@ -286,14 +286,7 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
       <div className="flex w-full items-center justify-between rounded-xl border border-primary/40 bg-primary/10 p-2.5 px-3.5 shadow-sm">
         <div className="flex items-center gap-2.5">
           <span className="text-xl">🔮</span>
-          <div className="flex flex-col text-left">
-            <span className="text-xs font-bold text-foreground">
-              {locale === "ko" ? "Unity 6 3D 12스테이지 파칭코 던전" : "Unity 6 3D 12-Stage Pachinko Dungeon"}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {locale === "ko" ? "3D 탄성 반사 물리 • 크릿/폭탄 펙 • 12종 보스전" : "3D Bouncing Physics • Crit/Bomb Pegs • 12 Boss Encounters"}
-            </span>
-          </div>
+          <UnityEditionBlurb />
         </div>
         <a
           href="/prototypes/peglin-rogue-unity/index.html"

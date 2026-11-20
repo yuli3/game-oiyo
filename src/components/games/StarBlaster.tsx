@@ -30,7 +30,7 @@ import {
   STAR_BLASTER_UI_SPRITES,
 } from "../../lib/games/sprites";
 
-import UnityEditionLabel from "../ui/game/UnityEditionLabel";
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 type BlasterArt = Record<keyof typeof STAR_BLASTER_SPRITES, HTMLImageElement> & { sparkSheet: HTMLImageElement };
 
 function loadBlasterArt(): BlasterArt | null {
@@ -753,14 +753,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
       <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 w-full">
         <div className="flex items-center gap-2.5">
           <span className="text-2xl select-none" aria-hidden="true">🛸</span>
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-foreground">
-              Unity 6 3D 12스테이지 스타 블래스터 4개국어 에디션
-            </span>
-            <span className="text-xs text-muted-foreground">
-              3D 우주 슈팅 • 4단계 무기 강화 & 유도 미사일 & 거대 모함 보스전 • 4개국어(KO/EN/JA/ES)
-            </span>
-          </div>
+          <UnityEditionBlurb />
         </div>
         <a
           href="/prototypes/star-blaster-unity/index.html"

@@ -71,7 +71,7 @@ import {
   type SquadType,
 } from "../../lib/games/bad-north";
 
-import UnityEditionLabel from "../ui/game/UnityEditionLabel";
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 interface Particle {
   x: number;
   y: number;
@@ -689,14 +689,7 @@ export default function BadNorthTactics() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-lg">
             🛡️
           </span>
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-foreground">
-              Unity 6 3D 12개 섬 군도 방어 전술 RTS 에디션
-            </span>
-            <span className="text-xs text-muted-foreground">
-              3D 섬 디오라마 • 바이킹 상륙선 접안 & 3대 병과 방진 • 4개국어(KO/EN/JA/ES)
-            </span>
-          </div>
+          <UnityEditionBlurb />
         </div>
         <a
           href="/prototypes/bad-north-tactics-unity/index.html"

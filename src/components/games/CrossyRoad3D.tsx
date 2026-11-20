@@ -4,7 +4,7 @@ import { celebrate } from '../../lib/games/celebration';
 import { CROSSY_ROAD_SPRITES } from '../../lib/games/sprites';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 
-import UnityEditionLabel from "../ui/game/UnityEditionLabel";
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 function TiltCrossyActionButton({
   onClick,
   className,
@@ -503,14 +503,7 @@ export default function CrossyRoad3D() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-lg">
             🐔
           </span>
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-foreground">
-              Unity 6 3D 12스테이지 복셀 길 건너기 4개국어 에디션
-            </span>
-            <span className="text-xs text-muted-foreground">
-              3D 복셀 치킨 • 통나무 뗏목 표류 & 고속열차 회피 • 4개국어(KO/EN/JA/ES)
-            </span>
-          </div>
+          <UnityEditionBlurb />
         </div>
         <a
           href="/prototypes/crossy-road-unity/index.html"

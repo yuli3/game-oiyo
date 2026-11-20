@@ -28,7 +28,7 @@ import {
   type Run,
 } from "../../lib/games/two-hands";
 
-import UnityEditionLabel from "../ui/game/UnityEditionLabel";
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 const FUSE_MS = 3200;
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 const BUTTON = "min-h-16 rounded-xl border border-border bg-card text-sm font-bold text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60";
@@ -352,14 +352,7 @@ export default function TwoHands({ locale }: { locale: Locale }) {
         <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl select-none" aria-hidden="true">🧠</span>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-foreground">
-                Unity 6 3D 12스테이지 양손 뇌 반사 조율 4개국어 에디션
-              </span>
-              <span className="text-xs text-muted-foreground">
-                3D 듀얼 트랙 러너 • 양손 동시 싱크 게이트 & 쉴드 • 4개국어(KO/EN/JA/ES)
-              </span>
-            </div>
+            <UnityEditionBlurb />
           </div>
           <a
             href="/prototypes/two-hands-unity/index.html"

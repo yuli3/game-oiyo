@@ -25,7 +25,7 @@ import {
   downloadShareCard,
 } from "../../lib/games/share-card";
 
-import UnityEditionLabel from "../ui/game/UnityEditionLabel";
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 function TiltSandButton({
   children,
   onClick,
@@ -493,16 +493,7 @@ export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
       <div className="w-full rounded-xl border border-primary/40 bg-primary/10 p-3 px-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span className="text-xl">🏖️</span>
-          <div className="flex flex-col text-left">
-            <span className="text-xs font-bold text-foreground">
-              {locale === "ko" ? "Unity 6 3D 12스테이지 모래 조각 물리 에디션" : "Unity 6 3D 12-Stage Sand Dig Physics Edition"}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {locale === "ko"
-                ? "실시간 3D 모래 절삭 • 컬러 감염 • x2/x3 증폭 게이트 • 4개국어(KO/EN/JA/ES)"
-                : "Real-time 3D Sand Carving • Color Awakening • x2/x3 Multipliers • Multi-Language"}
-            </span>
-          </div>
+          <UnityEditionBlurb />
         </div>
         <a
           href="/prototypes/sand-balls-unity/index.html"
