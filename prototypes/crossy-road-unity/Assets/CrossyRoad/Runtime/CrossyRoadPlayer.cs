@@ -349,37 +349,37 @@ public class CrossyRoadPlayer : MonoBehaviour
         Shader lit = Shader.Find("Universal Render Pipeline/Lit");
         if (lit == null) lit = Shader.Find("Standard");
 
-        grassMat = new Material(lit);
+        grassMat = new Material(OiyoShaders.Safe(lit));
         grassMat.color = new Color(0.32f, 0.72f, 0.28f);
 
-        roadMat = new Material(lit);
+        roadMat = new Material(OiyoShaders.Safe(lit));
         roadMat.color = new Color(0.22f, 0.24f, 0.28f);
 
-        railMat = new Material(lit);
+        railMat = new Material(OiyoShaders.Safe(lit));
         railMat.color = new Color(0.42f, 0.32f, 0.24f);
 
-        riverMat = new Material(lit);
+        riverMat = new Material(OiyoShaders.Safe(lit));
         riverMat.color = new Color(0.18f, 0.52f, 0.88f, 0.9f);
 
-        treeMat = new Material(lit);
+        treeMat = new Material(OiyoShaders.Safe(lit));
         treeMat.color = new Color(0.18f, 0.55f, 0.22f);
 
-        woodMat = new Material(lit);
+        woodMat = new Material(OiyoShaders.Safe(lit));
         woodMat.color = new Color(0.55f, 0.35f, 0.18f);
 
-        chickenMat = new Material(lit);
+        chickenMat = new Material(OiyoShaders.Safe(lit));
         chickenMat.color = new Color(0.98f, 0.98f, 0.98f);
 
-        beakMat = new Material(lit);
+        beakMat = new Material(OiyoShaders.Safe(lit));
         beakMat.color = new Color(1.0f, 0.65f, 0.05f);
 
-        crestMat = new Material(lit);
+        crestMat = new Material(OiyoShaders.Safe(lit));
         crestMat.color = new Color(0.95f, 0.15f, 0.15f);
 
-        coinMat = new Material(lit);
+        coinMat = new Material(OiyoShaders.Safe(lit));
         coinMat.color = new Color(1.0f, 0.85f, 0.10f);
 
-        trainMat = new Material(lit);
+        trainMat = new Material(OiyoShaders.Safe(lit));
         trainMat.color = new Color(0.92f, 0.25f, 0.25f);
     }
 
@@ -599,7 +599,7 @@ public class CrossyRoadPlayer : MonoBehaviour
                 vGo.name = "Vehicle";
                 vGo.transform.position = new Vector3(veh.x, 0.45f, lane.worldZ);
                 vGo.transform.localScale = new Vector3(veh.width, 0.8f, 1.0f);
-                vGo.GetComponent<Renderer>().material = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
+                vGo.GetComponent<Renderer>().material = new Material(OiyoShaders.Safe(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard")));
                 vGo.GetComponent<Renderer>().material.color = veh.color;
                 veh.go = vGo;
 
@@ -960,7 +960,7 @@ public class CrossyRoadPlayer : MonoBehaviour
             eaglePos = currentPos + new Vector3(-8f, 12f, -8f);
             eagleGo.transform.position = eaglePos;
             eagleGo.transform.localScale = new Vector3(2.2f, 0.5f, 1.4f);
-            eagleGo.GetComponent<Renderer>().material = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
+            eagleGo.GetComponent<Renderer>().material = new Material(OiyoShaders.Safe(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard")));
             eagleGo.GetComponent<Renderer>().material.color = new Color(0.2f, 0.15f, 0.1f);
         }
 

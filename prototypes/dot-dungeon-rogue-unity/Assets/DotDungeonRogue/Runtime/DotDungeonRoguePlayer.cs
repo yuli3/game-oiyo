@@ -142,11 +142,11 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         Shader diffuse = Shader.Find("Mobile/Diffuse");
         if (diffuse == null) diffuse = Shader.Find("Standard");
 
-        wallMat = new Material(diffuse);
-        floorMat = new Material(diffuse);
-        stairsMat = new Material(diffuse) { color = new Color(1.0f, 0.85f, 0.2f) };
-        chestMat = new Material(diffuse) { color = new Color(0.95f, 0.6f, 0.15f) };
-        heroMat = new Material(diffuse) { color = new Color(0.2f, 0.65f, 1.0f) };
+        wallMat = new Material(OiyoShaders.Safe(diffuse));
+        floorMat = new Material(OiyoShaders.Safe(diffuse));
+        stairsMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(1.0f, 0.85f, 0.2f) };
+        chestMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.95f, 0.6f, 0.15f) };
+        heroMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.2f, 0.65f, 1.0f) };
     }
 
     void InitHeroVisual()
@@ -333,7 +333,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         go.transform.localScale = new Vector3(scale, scale, scale);
         go.transform.position = new Vector3(x * TileSize, scale * 0.5f, y * TileSize);
 
-        Material mat = new Material(Shader.Find("Mobile/Diffuse") ?? Shader.Find("Standard"));
+        Material mat = new Material(OiyoShaders.Safe(Shader.Find("Mobile/Diffuse") ?? Shader.Find("Standard")));
         mat.color = col;
         go.GetComponent<MeshRenderer>().sharedMaterial = mat;
 

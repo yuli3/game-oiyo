@@ -104,7 +104,7 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
     static Material MakeMat(Color c)
     {
         var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard") ?? Shader.Find("Unlit/Color");
-        var mat = new Material(shader);
+        var mat = new Material(OiyoShaders.Safe(shader));
         mat.color = c;
         return mat;
     }

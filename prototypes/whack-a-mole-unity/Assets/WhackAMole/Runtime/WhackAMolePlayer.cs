@@ -378,31 +378,31 @@ public class WhackAMolePlayer : MonoBehaviour
         Shader lit = Shader.Find("Universal Render Pipeline/Lit");
         if (lit == null) lit = Shader.Find("Standard");
 
-        tableMat = new Material(lit);
+        tableMat = new Material(OiyoShaders.Safe(lit));
         tableMat.color = new Color(0.18f, 0.42f, 0.25f); // Carnival Felt Green
 
-        holeMat = new Material(lit);
+        holeMat = new Material(OiyoShaders.Safe(lit));
         holeMat.color = new Color(0.04f, 0.05f, 0.08f); // Black Hole Depth
 
-        moleMat = new Material(lit);
+        moleMat = new Material(OiyoShaders.Safe(lit));
         moleMat.color = new Color(0.48f, 0.32f, 0.18f); // Warm Mole Brown
 
-        goldenMat = new Material(lit);
+        goldenMat = new Material(OiyoShaders.Safe(lit));
         goldenMat.color = new Color(1.0f, 0.85f, 0.10f); // Shiny Gold
 
-        bombMat = new Material(lit);
+        bombMat = new Material(OiyoShaders.Safe(lit));
         bombMat.color = new Color(0.95f, 0.18f, 0.18f); // Danger Red
 
-        helmetMat = new Material(lit);
+        helmetMat = new Material(OiyoShaders.Safe(lit));
         helmetMat.color = new Color(0.92f, 0.80f, 0.10f); // Construction Hard Hat
 
-        crownMat = new Material(lit);
+        crownMat = new Material(OiyoShaders.Safe(lit));
         crownMat.color = new Color(0.98f, 0.84f, 0.0f); // Royal Gold
 
-        malletWoodMat = new Material(lit);
+        malletWoodMat = new Material(OiyoShaders.Safe(lit));
         malletWoodMat.color = new Color(0.68f, 0.45f, 0.25f); // Oak Mallet
 
-        noseMat = new Material(lit);
+        noseMat = new Material(OiyoShaders.Safe(lit));
         noseMat.color = new Color(0.95f, 0.65f, 0.65f); // Pink Nose
     }
 
@@ -872,7 +872,7 @@ public class WhackAMolePlayer : MonoBehaviour
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.transform.position = s.pos;
             go.transform.localScale = Vector3.one * s.scale;
-            go.GetComponent<Renderer>().material = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
+            go.GetComponent<Renderer>().material = new Material(OiyoShaders.Safe(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard")));
             go.GetComponent<Renderer>().material.color = color;
             s.go = go;
 

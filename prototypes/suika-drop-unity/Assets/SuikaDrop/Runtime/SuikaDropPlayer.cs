@@ -1011,7 +1011,7 @@ public class SuikaDropPlayer : MonoBehaviour
         if (showStageSelect)
         {
             Rect modalRect = new Rect(Screen.width * 0.5f - 260, 105, 520, 420);
-            GUI.Box(modalRect, "<b>SELECT SUIKA STAGE (1~12)</b>");
+            GUI.Box(modalRect, "<b>SELECT STAGE (1~12)</b>");
             GUILayout.BeginArea(new Rect(modalRect.x + 15, modalRect.y + 35, modalRect.width - 30, modalRect.height - 45));
 
             int colsCount = 2;

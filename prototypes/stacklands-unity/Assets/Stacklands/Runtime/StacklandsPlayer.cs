@@ -69,7 +69,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
     static Material MakeMat(Color c)
     {
         var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard") ?? Shader.Find("Unlit/Color");
-        var m = new Material(shader);
+        var m = new Material(OiyoShaders.Safe(shader));
         m.color = c;
         return m;
     }
@@ -635,7 +635,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
         }
 
         GUI.Box(new Rect(14, 12, 430, 62), "");
-        GUI.Label(new Rect(24, 18, 410, 24), $"STACKLANDS UNITY  |  MOON {_moon}/{MaxMoons}  |  COINS: {_coins}  |  FOOD: {berries}", bold);
+        GUI.Label(new Rect(24, 18, 410, 24), $"CARD VILLAGE  |  MOON {_moon}/{MaxMoons}  |  COINS: {_coins}  |  FOOD: {berries}", bold);
         GUI.Label(new Rect(24, 44, 410, 22), $"Villagers: {villagers}  •  Next Moon: {Mathf.CeilToInt(MoonDuration - _moonTimer)}s  •  Click Purple Pad (3c) for Pack");
 
         if (_bannerTimer > 0f)

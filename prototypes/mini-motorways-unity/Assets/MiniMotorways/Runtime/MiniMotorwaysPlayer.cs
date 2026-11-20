@@ -103,7 +103,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
     static Material MakeMat(Color c)
     {
         var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard") ?? Shader.Find("Unlit/Color");
-        var m = new Material(shader);
+        var m = new Material(OiyoShaders.Safe(shader));
         m.color = c;
         return m;
     }
@@ -334,7 +334,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
                 if (!_motorwayStart.HasValue)
                 {
                     _motorwayStart = cellPos.Value;
-                    SetStatus("Select destination cell for Motorway end!");
+                    SetStatus("Select destination cell for Expressway end!");
                 }
                 else
                 {
@@ -432,7 +432,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
     {
         if (_motorwayCount <= 0)
         {
-            SetStatus("No Motorways remaining!");
+            SetStatus("No roads remaining!");
             return;
         }
         if (a == b) return;
@@ -450,7 +450,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
         arc.GetComponent<Renderer>().material = _motorwayMat;
 
         _motorways.Add(new Motorway { Start = a, End = b, ArcGo = arc });
-        SetStatus("Express Motorway opened!");
+        SetStatus("Expressway opened!");
     }
 
     void SpawnNewBuildingsForWeek()
@@ -665,15 +665,15 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
     {
         var bold = new GUIStyle(GUI.skin.box) { fontSize = 14, fontStyle = FontStyle.Bold };
         GUI.Box(new Rect(14, 12, 470, 62), "");
-        GUI.Label(new Rect(24, 18, 450, 24), $"MINI MOTORWAYS UNITY  |  TRIPS: {_trips}  |  WEEK {_week} ({Mathf.CeilToInt(WeekDuration - _weekTimer)}s)", bold);
-        GUI.Label(new Rect(24, 44, 450, 22), $"Roads: {_roadTiles}  •  Bridges: {_bridges}  •  Motorways: {_motorwayCount}  •  Mode: {(_motorwayMode ? "MOTORWAY (Click 2 tiles)" : (_eraseMode ? "ERASE" : "DRAW ROAD"))}");
+        GUI.Label(new Rect(24, 18, 450, 24), $"ROAD WEAVER  |  TRIPS: {_trips}  |  WEEK {_week} ({Mathf.CeilToInt(WeekDuration - _weekTimer)}s)", bold);
+        GUI.Label(new Rect(24, 44, 450, 22), $"Roads: {_roadTiles}  •  Bridges: {_bridges}  •  Expressways: {_motorwayCount}  •  Mode: {(_motorwayMode ? "MOTORWAY (Click 2 tiles)" : (_eraseMode ? "ERASE" : "DRAW ROAD"))}");
 
         if (GUI.Button(new Rect(500, 14, 110, 28), _eraseMode ? "Mode: Erase ✓" : "Erase (E)"))
         {
             _eraseMode = !_eraseMode;
             _motorwayMode = false;
         }
-        if (GUI.Button(new Rect(618, 14, 130, 28), _motorwayMode ? "Motorway ✓" : $"Motorway (M) [{_motorwayCount}]"))
+        if (GUI.Button(new Rect(618, 14, 130, 28), _motorwayMode ? "Expressway ✓" : $"Expressway (M) [{_motorwayCount}]"))
         {
             _motorwayMode = !_motorwayMode;
             _eraseMode = false;
@@ -695,7 +695,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
                 _bridges += 1;
                 _pendingUpgradeChoice = false;
             }
-            if (GUI.Button(new Rect(Screen.width * 0.5f + 10, Screen.height * 0.5f - 10, 175, 48), "+8 Road Tiles\n+1 Express Motorway"))
+            if (GUI.Button(new Rect(Screen.width * 0.5f + 10, Screen.height * 0.5f - 10, 175, 48), "+8 Road Tiles\n+1 Expressway"))
             {
                 _roadTiles += 8;
                 _motorwayCount += 1;

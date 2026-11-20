@@ -103,8 +103,15 @@ public class AimTrainerPlayer : MonoBehaviour
     private AudioSource audioSource;
     private bool soundEnabled = true;
 
+    // WebGL has no system fonts, so IMGUI's built-in font shows Hangul/Kana as blanks.
+    // Subset Noto Sans fonts live in Resources/AT/Fonts (see scripts/build-fonts.py).
+    private Font fontKo, fontJa;
+
     private void Awake()
     {
+        fontKo = Resources.Load<Font>("AT/Fonts/AtKR");
+        fontJa = Resources.Load<Font>("AT/Fonts/AtJP");
+        if (fontJa == null) fontJa = fontKo;
         InitCamera();
         InitAudio();
         InitStages();
@@ -816,6 +823,8 @@ public class AimTrainerPlayer : MonoBehaviour
     // --- OnGUI Real-Time Multi-Language HUD & Modals ---
     private void OnGUI()
     {
+        var uiFont = currentLang == Language.JA ? fontJa : fontKo;
+        if (uiFont != null) GUI.skin.font = uiFont;
         DrawHUD();
 
         if (toastTimer > 0f)
@@ -870,12 +879,12 @@ public class AimTrainerPlayer : MonoBehaviour
 
         // Language Buttons & Sound
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("🌐 KO", GetButtonStyle(currentLang == Language.KO))) currentLang = Language.KO;
+        if (GUILayout.Button("KO", GetButtonStyle(currentLang == Language.KO))) currentLang = Language.KO;
         if (GUILayout.Button("EN", GetButtonStyle(currentLang == Language.EN))) currentLang = Language.EN;
         if (GUILayout.Button("JA", GetButtonStyle(currentLang == Language.JA))) currentLang = Language.JA;
         if (GUILayout.Button("ES", GetButtonStyle(currentLang == Language.ES))) currentLang = Language.ES;
 
-        if (GUILayout.Button(soundEnabled ? "🔊" : "🔇", GUILayout.Width(35), GUILayout.Height(30))) soundEnabled = !soundEnabled;
+        if (GUILayout.Button(soundEnabled ? GetLocalizedText("SOUND ON", "소리 켬", "サウンド オン", "SONIDO SÍ") : GetLocalizedText("SOUND OFF", "소리 끔", "サウンド オフ", "SONIDO NO"), GUILayout.Height(30))) soundEnabled = !soundEnabled;
         if (GUILayout.Button(GetLocalizedText("STAGES", "스테이지", "ステージ", "ETAPAS"), GUILayout.Height(30))) showStageSelect = !showStageSelect;
         GUILayout.EndHorizontal();
 
@@ -885,8 +894,7 @@ public class AimTrainerPlayer : MonoBehaviour
         // Crosshair Guidance
         GUI.Label(new Rect(10, Screen.height - 35, Screen.width - 20, 25),
             GetLocalizedText(
-                "조작: [마우스 클릭: 정밀 사격] · 표적 중심 저격 시 불스아이 보너스 획득",
-                "Controls: [Mouse Click: Precision Fire] · Hit target centers for Bullseye bonus",
+                "Controls: [Mouse Click: Precision Fire] · Hit target centers for Bullseye bonus", "조작: [마우스 클릭: 정밀 사격] · 표적 중심 저격 시 불스아이 보너스 획득",
                 "操作: [マウスクリック: 精密射撃] · 的の中心射撃でブルズアイボーナス獲得",
                 "Controles: [Clic: Fuego de Precisión] · Acierta al centro para bonificación de diana"),
             GetLabelStyle(12, Color.gray));
@@ -909,7 +917,7 @@ public class AimTrainerPlayer : MonoBehaviour
         GUI.Box(rect, $"<b>{GetLocalizedText("SELECT STAGE", "스테이지 선택", "ステージ選択", "SELECCIONAR ETAPA")} (1~12)</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label(GetLocalizedText("12개 에임 트레이너 사격장 중 도전할 스테이지를 선택하세요.", "Select from 12 shooting range training formations.", "12のエイム訓練射撃場から挑戦を選択してください。", "Selecciona entre 12 campos de entrenamiento de tiro."), GetLabelStyle(12, Color.gray));
+        GUILayout.Label(GetLocalizedText("Select from 12 shooting range training formations.", "12개 에임 트레이너 사격장 중 도전할 스테이지를 선택하세요.", "12のエイム訓練射撃場から挑戦を選択してください。", "Selecciona entre 12 campos de entrenamiento de tiro."), GetLabelStyle(12, Color.gray));
 
         GUILayout.Space(10);
         int cols = 3;
@@ -935,7 +943,7 @@ public class AimTrainerPlayer : MonoBehaviour
         }
 
         GUILayout.FlexibleSpace();
-        if (GUILayout.Button(GetLocalizedText("닫기", "Close", "閉じる", "Cerrar"), GUILayout.Height(36)))
+        if (GUILayout.Button(GetLocalizedText("Close", "닫기", "閉じる", "Cerrar"), GUILayout.Height(36)))
         {
             showStageSelect = false;
         }
@@ -948,35 +956,35 @@ public class AimTrainerPlayer : MonoBehaviour
         float h = 290;
         Rect rect = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
 
-        GUI.Box(rect, $"<b>🏆 {GetLocalizedText("STAGE CLEAR!", "스테이지 클리어!", "ステージクリア！", "¡ETAPA SUPERADA!")}</b>");
+        GUI.Box(rect, $"<b>{GetLocalizedText("STAGE CLEAR!", "스테이지 클리어!", "ステージクリア！", "¡ETAPA SUPERADA!")}</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label($"{GetLocalizedText("스테이지", "Stage", "ステージ", "Etapa")} {currentStageIndex + 1} {GetLocalizedStageTitle(stages[currentStageIndex])}", GetLabelStyle(15, Color.green));
+        GUILayout.Label($"{GetLocalizedText("Stage", "스테이지", "ステージ", "Etapa")} {currentStageIndex + 1} {GetLocalizedStageTitle(stages[currentStageIndex])}", GetLabelStyle(15, Color.green));
         GUILayout.Space(8);
         float accuracy = shotsFired > 0 ? ((float)shotsHit / shotsFired) * 100f : 100f;
         int avgReaction = reactionTimes.Count > 0 ? (int)(GetSum(reactionTimes) / reactionTimes.Count) : 0;
 
-        GUILayout.Label($"{GetLocalizedText("최종 점수", "Final Score", "最終スコア", "Puntuación Final")}: <b>{score}</b>", GetLabelStyle(14, Color.white));
-        GUILayout.Label($"{GetLocalizedText("사격 정확도", "Accuracy", "命中率", "Precisión")}: <b>{accuracy:F1}%</b> · REACTION: <b>{avgReaction}ms</b>", GetLabelStyle(13, Color.yellow));
-        GUILayout.Label($"{GetLocalizedText("최대 콤보", "Max Combo", "最大コンボ", "Combo Máximo")}: <b>{maxCombo}x</b>", GetLabelStyle(13, Color.cyan));
+        GUILayout.Label($"{GetLocalizedText("Final Score", "최종 점수", "最終スコア", "Puntuación Final")}: <b>{score}</b>", GetLabelStyle(14, Color.white));
+        GUILayout.Label($"{GetLocalizedText("Accuracy", "사격 정확도", "命中率", "Precisión")}: <b>{accuracy:F1}%</b> · REACTION: <b>{avgReaction}ms</b>", GetLabelStyle(13, Color.yellow));
+        GUILayout.Label($"{GetLocalizedText("Max Combo", "최대 콤보", "最大コンボ", "Combo Máximo")}: <b>{maxCombo}x</b>", GetLabelStyle(13, Color.cyan));
 
         GUILayout.Space(15);
         GUILayout.BeginHorizontal();
         if (currentStageIndex < stages.Count - 1)
         {
-            if (GUILayout.Button(GetLocalizedText("다음 스테이지 ▶", "Next Stage ▶", "次のステージ ▶", "Siguiente Etapa ▶"), GUILayout.Height(44)))
+            if (GUILayout.Button(GetLocalizedText("Next Stage ▶", "다음 스테이지 ▶", "次のステージ ▶", "Siguiente Etapa ▶"), GUILayout.Height(44)))
             {
                 StartStage(currentStageIndex + 1);
             }
         }
         else
         {
-            if (GUILayout.Button(GetLocalizedText("스나이퍼 피날레 완료! (다시하기)", "Grand Master Completed! (Restart)", "スナイパー制覇達成！（再挑戦）", "¡Gran Maestro Completado!"), GUILayout.Height(44)))
+            if (GUILayout.Button(GetLocalizedText("Grand Master Completed! (Restart)", "스나이퍼 피날레 완료! (다시하기)", "スナイパー制覇達成！（再挑戦）", "¡Gran Maestro Completado!"), GUILayout.Height(44)))
             {
                 StartStage(0);
             }
         }
-        if (GUILayout.Button(GetLocalizedText("다시 도전", "Retry", "リトライ", "Reintentar"), GUILayout.Height(44)))
+        if (GUILayout.Button(GetLocalizedText("Retry", "다시 도전", "リトライ", "Reintentar"), GUILayout.Height(44)))
         {
             StartStage(currentStageIndex);
         }
@@ -990,20 +998,20 @@ public class AimTrainerPlayer : MonoBehaviour
         float h = 260;
         Rect rect = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
 
-        GUI.Box(rect, $"<b>💀 {GetLocalizedText("GAME OVER", "게임 오버", "ゲームオーバー", "FIN DEL JUEGO")}</b>");
+        GUI.Box(rect, $"<b>{GetLocalizedText("GAME OVER", "게임 오버", "ゲームオーバー", "FIN DEL JUEGO")}</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label(GetLocalizedText("목표 점수에 도달하지 못했습니다!", "Target score was not reached in time!", "制限時間内に目標スコアへ届きませんでした！", "¡No se alcanzó la puntuación objetivo a tiempo!"), GetLabelStyle(14, Color.red));
+        GUILayout.Label(GetLocalizedText("Target score was not reached in time!", "목표 점수에 도달하지 못했습니다!", "制限時間内に目標スコアへ届きませんでした！", "¡No se alcanzó la puntuación objetivo a tiempo!"), GetLabelStyle(14, Color.red));
         GUILayout.Space(8);
-        GUILayout.Label($"{GetLocalizedText("달성 점수", "Reached Score", "スコア", "Puntuación")}: <b>{score}</b> / {stages[currentStageIndex].targetScore}", GetLabelStyle(14, Color.white));
+        GUILayout.Label($"{GetLocalizedText("Reached Score", "달성 점수", "スコア", "Puntuación")}: <b>{score}</b> / {stages[currentStageIndex].targetScore}", GetLabelStyle(14, Color.white));
 
         GUILayout.Space(15);
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button(GetLocalizedText("다시 도전", "Retry", "リトライ", "Reintentar"), GUILayout.Height(44)))
+        if (GUILayout.Button(GetLocalizedText("Retry", "다시 도전", "リトライ", "Reintentar"), GUILayout.Height(44)))
         {
             StartStage(currentStageIndex);
         }
-        if (GUILayout.Button(GetLocalizedText("스테이지 선택", "Stage Select", "ステージ選択", "Elegir Etapa"), GUILayout.Height(44)))
+        if (GUILayout.Button(GetLocalizedText("Stage Select", "스테이지 선택", "ステージ選択", "Elegir Etapa"), GUILayout.Height(44)))
         {
             showStageSelect = true;
         }

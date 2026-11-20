@@ -109,13 +109,13 @@ public class MiniGolfPlayer : MonoBehaviour
     {
         Shader diffuse = Shader.Find("Mobile/Diffuse") ?? Shader.Find("Standard");
 
-        greenMat = new Material(diffuse) { color = new Color(0.24f, 0.62f, 0.32f) }; // Putting Green
-        borderMat = new Material(diffuse) { color = new Color(0.45f, 0.32f, 0.2f) }; // Wood Cushion
-        bunkerMat = new Material(diffuse) { color = new Color(0.85f, 0.78f, 0.55f) }; // Sand Bunker
-        waterMat = new Material(diffuse) { color = new Color(0.18f, 0.45f, 0.75f) }; // Water Hazard
-        ballMat = new Material(diffuse) { color = Color.white };
-        cupMat = new Material(diffuse) { color = new Color(0.15f, 0.15f, 0.18f) };
-        flagMat = new Material(diffuse) { color = new Color(0.95f, 0.25f, 0.2f) }; // Red Flag
+        greenMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.24f, 0.62f, 0.32f) }; // Putting Green
+        borderMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.45f, 0.32f, 0.2f) }; // Wood Cushion
+        bunkerMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.85f, 0.78f, 0.55f) }; // Sand Bunker
+        waterMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.18f, 0.45f, 0.75f) }; // Water Hazard
+        ballMat = new Material(OiyoShaders.Safe(diffuse)) { color = Color.white };
+        cupMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.15f, 0.15f, 0.18f) };
+        flagMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.95f, 0.25f, 0.2f) }; // Red Flag
     }
 
     void BuildBall()

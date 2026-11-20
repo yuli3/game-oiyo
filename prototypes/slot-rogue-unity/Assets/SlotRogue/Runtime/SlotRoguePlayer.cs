@@ -149,12 +149,12 @@ public class SlotRoguePlayer : MonoBehaviour
     {
         Shader diffuse = Shader.Find("Mobile/Diffuse") ?? Shader.Find("Standard");
 
-        cabinetMat = new Material(diffuse) { color = new Color(0.2f, 0.12f, 0.28f) };
-        frameMat = new Material(diffuse) { color = new Color(0.95f, 0.75f, 0.2f) };
+        cabinetMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.2f, 0.12f, 0.28f) };
+        frameMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.95f, 0.75f, 0.2f) };
 
         for (int i = 0; i < SymbolCatalog.Length; i++)
         {
-            symbolMats[i] = new Material(diffuse) { color = SymbolCatalog[i].color };
+            symbolMats[i] = new Material(OiyoShaders.Safe(diffuse)) { color = SymbolCatalog[i].color };
         }
     }
 

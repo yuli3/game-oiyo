@@ -154,28 +154,28 @@ public class TownscaperIslandPlayer : MonoBehaviour
         Shader unlitColor = Shader.Find("Mobile/Diffuse");
         if (unlitColor == null) unlitColor = Shader.Find("Standard");
 
-        seaMat = new Material(unlitColor);
+        seaMat = new Material(OiyoShaders.Safe(unlitColor));
         seaMat.color = new Color(0.18f, 0.52f, 0.65f); // Azure ocean
 
-        quayMat = new Material(unlitColor);
+        quayMat = new Material(OiyoShaders.Safe(unlitColor));
         quayMat.color = new Color(0.75f, 0.77f, 0.78f); // Grey stone quay
 
         for (int i = 0; i < PaletteColors.Length; i++)
         {
-            buildingMats[i] = new Material(unlitColor);
+            buildingMats[i] = new Material(OiyoShaders.Safe(unlitColor));
             buildingMats[i].color = PaletteColors[i];
         }
 
-        roofMat = new Material(unlitColor);
+        roofMat = new Material(OiyoShaders.Safe(unlitColor));
         roofMat.color = new Color(0.68f, 0.28f, 0.22f); // Terracotta shingle
 
-        gardenMat = new Material(unlitColor);
+        gardenMat = new Material(OiyoShaders.Safe(unlitColor));
         gardenMat.color = new Color(0.35f, 0.68f, 0.32f); // Lush courtyard green
 
-        windowMat = new Material(unlitColor);
+        windowMat = new Material(OiyoShaders.Safe(unlitColor));
         windowMat.color = new Color(0.15f, 0.20f, 0.28f); // Dark reflective window
 
-        beamMat = new Material(unlitColor);
+        beamMat = new Material(OiyoShaders.Safe(unlitColor));
         beamMat.color = new Color(1.0f, 0.95f, 0.5f);
     }
 

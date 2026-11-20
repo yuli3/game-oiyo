@@ -82,7 +82,7 @@ public sealed class FrostpunkPlayer : MonoBehaviour
     static Material MakeMat(Color c)
     {
         var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard") ?? Shader.Find("Unlit/Color");
-        var m = new Material(shader);
+        var m = new Material(OiyoShaders.Safe(shader));
         m.color = c;
         return m;
     }
@@ -521,7 +521,7 @@ public sealed class FrostpunkPlayer : MonoBehaviour
 
         GUI.Box(new Rect(14, 12, Screen.width - 28, 68), "");
         GUI.Label(new Rect(26, 18, 560, 24),
-            $"FROSTPUNK UNITY  |  DAY {_day}/{MaxDays} ({Mathf.CeilToInt(DayLengthSec - _dayTimer)}s)  |  TEMP: {amb}°C  |  HOPE: {Mathf.RoundToInt(_hope)}%", bold);
+            $"HEAT RING CITY  |  DAY {_day}/{MaxDays} ({Mathf.CeilToInt(DayLengthSec - _dayTimer)}s)  |  TEMP: {amb}°C  |  HOPE: {Mathf.RoundToInt(_hope)}%", bold);
         GUI.Label(new Rect(26, 44, 720, 22),
             $"Coal: {Mathf.FloorToInt(_coal)}   Wood: {Mathf.FloorToInt(_wood)}   Citizens: {_citizens} (Sick: {_sick})   Stress: {Mathf.RoundToInt(_stress)}%   •  A/D or Right-Drag Orbit Camera");
 

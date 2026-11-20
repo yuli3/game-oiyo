@@ -392,48 +392,48 @@ public class BadNorthPlayer : MonoBehaviour
         Shader lit = Shader.Find("Universal Render Pipeline/Lit");
         if (lit == null) lit = Shader.Find("Standard");
 
-        beachMat = new Material(lit);
+        beachMat = new Material(OiyoShaders.Safe(lit));
         beachMat.color = new Color(0.88f, 0.82f, 0.65f); // Nordic Sand
 
-        lowlandMat = new Material(lit);
+        lowlandMat = new Material(OiyoShaders.Safe(lit));
         lowlandMat.color = new Color(0.24f, 0.55f, 0.32f); // Island Grass
 
-        cliffMat = new Material(lit);
+        cliffMat = new Material(OiyoShaders.Safe(lit));
         cliffMat.color = new Color(0.38f, 0.42f, 0.46f); // Grey Slate Cliff
 
-        waterMat = new Material(lit);
+        waterMat = new Material(OiyoShaders.Safe(lit));
         waterMat.color = new Color(0.14f, 0.36f, 0.52f, 0.9f);
 
-        houseWallMat = new Material(lit);
+        houseWallMat = new Material(OiyoShaders.Safe(lit));
         houseWallMat.color = new Color(0.58f, 0.48f, 0.38f);
 
-        houseRoofMat = new Material(lit);
+        houseRoofMat = new Material(OiyoShaders.Safe(lit));
         houseRoofMat.color = new Color(0.82f, 0.32f, 0.22f);
 
-        burningMat = new Material(lit);
+        burningMat = new Material(OiyoShaders.Safe(lit));
         burningMat.color = new Color(0.95f, 0.45f, 0.10f);
 
         // Player Squad Mats
-        swordMat = new Material(lit);
+        swordMat = new Material(OiyoShaders.Safe(lit));
         swordMat.color = new Color(0.25f, 0.55f, 0.95f); // Blue Swords
 
-        archerMat = new Material(lit);
+        archerMat = new Material(OiyoShaders.Safe(lit));
         archerMat.color = new Color(0.18f, 0.82f, 0.44f); // Green Archers
 
-        pikeMat = new Material(lit);
+        pikeMat = new Material(OiyoShaders.Safe(lit));
         pikeMat.color = new Color(0.95f, 0.72f, 0.12f); // Gold Pikes
 
         // Raider Mats
-        raiderMat = new Material(lit);
+        raiderMat = new Material(OiyoShaders.Safe(lit));
         raiderMat.color = new Color(0.85f, 0.22f, 0.22f); // Red Militia
 
-        shieldMat = new Material(lit);
+        shieldMat = new Material(OiyoShaders.Safe(lit));
         shieldMat.color = new Color(0.65f, 0.20f, 0.20f);
 
-        berserkerMat = new Material(lit);
+        berserkerMat = new Material(OiyoShaders.Safe(lit));
         berserkerMat.color = new Color(0.45f, 0.10f, 0.10f);
 
-        bossMat = new Material(lit);
+        bossMat = new Material(OiyoShaders.Safe(lit));
         bossMat.color = new Color(0.95f, 0.85f, 0.10f); // Gold Warlord
     }
 
