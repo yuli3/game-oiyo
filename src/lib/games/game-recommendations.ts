@@ -172,6 +172,7 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
   "dot-dungeon-rogue": { emoji: "🗡️", cat: "arcade", name: {"ko":"도트 던전 로그","en":"Dot Dungeon Rogue","ja":"ドットダンジョンローグ","zh":"点点地牢肉鸽","fr":"Dot Dungeon Rogue","es":"Dot Dungeon Rogue"} },
   "dot-miner": { emoji: "⛏️", cat: "arcade", name: {"ko":"도트 마이너","en":"Dot Miner","ja":"ドットマイナー","zh":"点点采矿者","fr":"Dot Miner","es":"Dot Miner"} },
   "dot-farm": { emoji: "🌾", cat: "arcade", name: {"ko":"도트 팜","en":"Dot Farm","ja":"ドットファーム","zh":"点点农场","fr":"Dot Farm","es":"Dot Farm"} },
+  "firefly-keeper": { emoji: "🏮", cat: "arcade", name: {"ko":"반딧불 등지기","en":"Firefly Keeper","ja":"ほたるの灯守り","zh":"萤火守灯人","fr":"Gardien des lucioles","es":"Guardián de luciérnagas"} },
   "hanyang-timeslip": { emoji: "⏳", cat: "arcade", name: {"ko":"한양 타임슬립","en":"Hanyang Timeslip","ja":"漢陽タイムスリップ","zh":"汉阳时光穿越","fr":"Hanyang Timeslip","es":"Hanyang Timeslip"} },
   "dot-fishing": { emoji: "🎣", cat: "arcade", name: {"ko":"도트 피싱","en":"Dot Fishing","ja":"ドットフィッシング","zh":"点点钓鱼","fr":"Dot Fishing","es":"Dot Fishing"} },
   "dot-tower": { emoji: "🏰", cat: "arcade", name: {"ko":"도트 타워","en":"Dot Tower","ja":"ドットタワー","zh":"点点塔防","fr":"Dot Tower","es":"Dot Tower"} },
@@ -188,6 +189,7 @@ export const CURATED_CLUSTERS: Record<string, string[]> = {
   // Dot Retro Arcade Cluster
   "dot-fishing": ["cat-fishing", "dot-farm", "dot-dungeon-rogue", "dot-runner"],
   "dot-farm": ["dot-fishing", "townscaper-island", "dot-miner", "cheese-factory"],
+  "firefly-keeper": ["hanyang-timeslip", "spirit-vale", "constellation-shepherd", "echo-shift"],
   "hanyang-timeslip": ["dot-dungeon-rogue", "dot-farm", "border-inspector", "dot-runner"],
   "dot-dungeon-rogue": ["dot-tower", "dot-runner", "vampire-survivor", "emberdeep"],
   "dot-tower": ["dot-jumpking", "dot-dungeon-rogue", "dome-keeper", "bad-north-tactics"],
