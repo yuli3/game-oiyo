@@ -52,7 +52,7 @@ namespace FireflyKeeper.Editor
                 html = html.Replace("canvas.style.width = \"960px\";", "canvas.style.width = \"100vw\";")
                            .Replace("canvas.style.height = \"600px\";", "canvas.style.height = \"100dvh\";")
                            .Replace("<title>Unity Web Player | Firefly Keeper</title>", "<title>Firefly Keeper · OIYO</title>")
-                           .Replace("</head>", "<style>html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#05090f;touch-action:none;}#unity-container{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;display:flex;align-items:center;justify-content:center;background:#05090f;}#unity-canvas{width:100vw!important;height:100dvh!important;background:#05090f;touch-action:none;}#unity-footer{display:none!important;}</style></head>");
+                           .Replace("</head>", "<style>html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#05090f;touch-action:none;}#unity-container{position:fixed!important;inset:0!important;transform:none!important;width:100vw!important;height:100dvh!important;display:flex;align-items:center;justify-content:center;background:#05090f;}#unity-canvas{width:100vw!important;height:100dvh!important;background:#05090f;touch-action:none;}#unity-footer{display:none!important;}</style></head>");
                 File.WriteAllText(indexHtmlPath, html);
             }
         }
