@@ -83,7 +83,7 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
       const { isNewBest, bestScore } = saveHighScore("mini-metro", game.passengersDelivered);
       if (isNewBest) setHighScore(bestScore);
       if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "mini-metro", score: game.passengersDelivered } }));
+        window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "subway-sketch", score: game.passengersDelivered } }));
       }
     }
   }, [game.status, game.passengersDelivered]);
@@ -216,8 +216,8 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
   const handleShare = async () => {
     MobileHapticsPro.medium();
     const canvas = createShareCardCanvas({
-      title: "Mini Metro Web",
-      slug: "mini-metro",
+      title: "Subway Sketch",
+      slug: "subway-sketch",
       score: game.passengersDelivered,
       subtitle: `Day ${game.day} | ${game.lines.length} Lines • ${game.stations.length} Stations`,
     });
@@ -226,7 +226,7 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } else {
-      downloadShareCard(canvas, `mini-metro-day${game.day}.png`);
+      downloadShareCard(canvas, `subway-sketch-day${game.day}.png`);
     }
   };
 
@@ -245,7 +245,7 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
       <div className="flex w-full flex-wrap items-center justify-between border-b border-border pb-3 gap-2">
         <div>
           <h2 className="text-xl font-bold tracking-tight">
-            {locale === "ko" ? "미니 메트로 웹" : "Mini Metro Web"}
+            {locale === "ko" ? "지하철 노선 스케치" : "Subway Sketch"}
           </h2>
           <p className="text-xs text-muted-foreground">
             {locale === "ko"

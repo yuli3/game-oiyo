@@ -24,3 +24,14 @@
 /sitemap.xml  /sitemap-index.xml  301
 /:lang/psychology-wordle  https://blog.oiyo.net/:lang/psychology-wordle/  301
 /:lang/psychology-wordle/  https://blog.oiyo.net/:lang/psychology-wordle/  301
+# 2026-11-20 renamed games (names matched commercial titles)
+/:lang/dot-jumpking  /:lang/charge-climb/  301
+/:lang/dot-jumpking/  /:lang/charge-climb/  301
+/:lang/mini-metro  /:lang/subway-sketch/  301
+/:lang/mini-metro/  /:lang/subway-sketch/  301
+/:lang/peglin-rogue  /:lang/peg-dungeon/  301
+/:lang/peglin-rogue/  /:lang/peg-dungeon/  301
+/:lang/spell-tower  /:lang/word-stack/  301
+/:lang/spell-tower/  /:lang/word-stack/  301
+/:lang/backpack-hero  /:lang/satchel-crawl/  301
+/:lang/backpack-hero/  /:lang/satchel-crawl/  301

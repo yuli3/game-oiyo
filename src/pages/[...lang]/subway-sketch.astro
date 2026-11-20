@@ -13,27 +13,27 @@ const { locale } = Astro.props as { locale: Locale };
 
 const meta: Record<Locale, { title: string; description: string }> = {
   ko: {
-    title: "미니 메트로 웹 — 미니멀 절차적 지하철 노선망 설계 시뮬레이터",
+    title: "지하철 노선 스케치 — 미니멀 절차적 지하철 노선망 설계 시뮬레이터",
     description: "팽창하는 도시의 역들을 효율적인 지하철 노선으로 연결하여 승객을 목적지까지 운송하는 미니멀 전략 시뮬레이션 게임.",
   },
   en: {
-    title: "Mini Metro Web — Minimalist Procedural Subway Line Simulator",
+    title: "Subway Sketch — Minimalist Procedural Subway Line Simulator",
     description: "Design efficient subway networks across an expanding city. Connect stations and manage trains to prevent overcrowding.",
   },
   ja: {
-    title: "ミニメトロ ウェブ — ミニマル地下鉄路線網設計シミュレーター",
+    title: "地下鉄スケッチ — ミニマル地下鉄路線網設計シミュレーター",
     description: "急成長する都市の駅同士を地下鉄路線で結び、乗客をスムーズに目的地へ運ぶミニマル交通設計シミュレーション。",
   },
   zh: {
-    title: "迷你地铁 网页版 — 极简程序化地铁网络规划模拟器",
+    title: "地铁线路速写 — 极简程序化地铁网络规划模拟器",
     description: "在不断扩张的城市中规划高效的地铁线路，连接车站并调度列车，避免车站因拥挤而瘫痪。",
   },
   fr: {
-    title: "Mini Metro Web — Simulateur minimaliste de réseau de métro",
+    title: "Subway Sketch — Simulateur minimaliste de réseau de métro",
     description: "Dessinez les lignes de métro d'une ville en pleine croissance. Reliez les stations et gérez les rames pour éviter la saturation.",
   },
   es: {
-    title: "Mini Metro Web — Simulador minimalista de líneas de metro",
+    title: "Subway Sketch — Simulador minimalista de líneas de metro",
     description: "Diseña redes de metro eficientes en una ciudad en expansión. Conecta estaciones y gestiona trenes para evitar aglomeraciones.",
   },
 };
@@ -45,7 +45,7 @@ const m = meta[locale] ?? meta.en;
   <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
     <MiniMetro client:load locale={locale} />
     <div class="mx-auto max-w-3xl px-4 mt-8">
-      <GameGuide slug="mini-metro" locale={locale} name={m.title.split(" — ")[0]} />
+      <GameGuide slug="subway-sketch" locale={locale} name={m.title.split(" — ")[0]} />
     </div>
   </div>
 </BaseLayout>

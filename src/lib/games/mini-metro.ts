@@ -1,5 +1,5 @@
 /**
- * Pure simulation engine for 『미니 메트로 웹 (Mini Metro Web)』
+ * Pure simulation engine for 『지하철 노선 스케치 (Subway Sketch)』
  *
  * Procedural minimalist transit line simulation:
  * Station spawning, passenger routing, multi-line trains, and crowding dynamics.

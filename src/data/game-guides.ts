@@ -3786,11 +3786,11 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       { q: { ko: "펫 데이터는 어디에 저장되나요?", en: "Where is my pet saved?", ja: "ペットのデータはどこに保存されますか？", zh: "宠物数据保存在哪里？", fr: "Où mon animal est-il sauvegardé ?", es: "¿Dónde se guarda mi mascota?" }, a: { ko: "펫의 상태·나이·경험치는 이 브라우저의 localStorage에만 저장됩니다. 계정도, 서버 동기화도, 실제 화폐도 없습니다.", en: "Your pet's state, age and XP are stored only in this browser's localStorage. There is no account, server sync or real currency.", ja: "ペットの状態・年齢・経験値はこのブラウザのlocalStorageにのみ保存されます。アカウント、サーバー同期、実通貨はありません。", zh: "宠物的状态、年龄和经验只保存在本浏览器的localStorage中。没有账号、服务器同步或真实货币。", fr: "L'état, l'âge et l'XP de votre animal sont conservés uniquement dans le localStorage de ce navigateur. Aucun compte, synchro serveur ni argent réel.", es: "El estado, la edad y la XP de tu mascota se guardan solo en el localStorage de este navegador. No hay cuenta, sincronización ni dinero real." } },
     ],
   },
-  "dot-jumpking": {
-    origin: { ko: "'점프 킹' 장르의 미니 버전입니다. 점프 힘을 얼마나 모을지가 전부인 리스크 관리 게임으로, 원작처럼 한 번의 실수로 추락할 수 있습니다.", en: "A mini take on the 'Jump King' genre — it's all about how much jump power you commit, and one bad leap can send you falling.", ja: "「ジャンプキング」ジャンルのミニ版。ジャンプ力をどれだけ溜めるかが全てで、1回のミスで落下します。", zh: "“Jump King”类玩法的迷你版——蓄多少力起跳就是一切，一次失误就可能坠落。", fr: "Une mini-version du genre « Jump King » : tout est dans la charge du saut, et un mauvais bond vous fait chuter.", es: "Una miniversión del género 'Jump King': todo depende de cuánta potencia cargues, y un mal salto te hace caer." },
+  "charge-climb": {
+    origin: { ko: "차지 클라임은 OIYO가 만든 차지 점프 등반 게임입니다. 점프 힘을 얼마나 모을지가 전부인 리스크 관리 게임이라, 한 번 잘못 뛰면 아래로 떨어질 수 있습니다.", en: "Charge Climb is an original OIYO charge-jump climber. It's all about how much jump power you commit, and one bad leap can send you falling.", ja: "チャージクライムはOIYOオリジナルのチャージジャンプ登攀ゲーム。ジャンプ力をどれだけ溜めるかが全てで、1回のミスで落下します。", zh: "蓄力攀登是 OIYO 原创的蓄力跳跃攀爬游戏——蓄多少力起跳就是一切，一次失误就可能坠落。", fr: "Charge Climb est un jeu d'escalade à saut chargé original d'OIYO : tout est dans la charge du saut, et un mauvais bond vous fait chuter.", es: "Charge Climb es un juego original de OIYO de escalada con salto cargado: todo depende de cuánta potencia cargues, y un mal salto te hace caer." },
     how: { ko: "화면을 꾹 눌러 힘을 모으고, 놓으면 누른 방향으로 점프합니다. 플랫폼을 밟고 최대한 높이 올라가세요.", en: "Hold the screen to charge power; release to jump toward where you hold. Land on platforms and climb as high as you can.", ja: "画面を長押しでチャージ、離すと押した方向へジャンプ。足場に乗って高く登りましょう。", zh: "按住屏幕蓄力，松开朝按住的方向跳。踩住平台尽量往上爬。", fr: "Maintenez l'écran pour charger ; relâchez pour sauter vers ce point. Grimpez le plus haut possible.", es: "Mantén la pantalla para cargar; suelta para saltar hacia ese punto. Sube lo más alto que puedas." },
     faqs: [
-      { q: { ko: "한 번 실수하면 떨어지나요?", en: "Does one mistake drop me?", ja: "一度のミスで落ちますか？", zh: "一次失误就会掉下去吗？", fr: "Une seule erreur me fait chuter ?", es: "¿Un solo error me hace caer?" }, a: { ko: "네. 점프 힘을 잘못 모으면 원작 '점프 킹'처럼 아래 플랫폼으로 떨어져 진행을 잃습니다. 그게 이 장르의 핵심 긴장감입니다.", en: "Yes. Mis-charge a jump and you fall to a lower platform and lose progress, just like the original Jump King — that tension is the point of the genre.", ja: "はい。ジャンプの溜めを誤ると原作『Jump King』のように下の足場へ落ち、進行を失います。その緊張感がこのジャンルの核心です。", zh: "会。蓄力失误就会像原作《Jump King》一样掉到下方平台、丢失进度——这种紧张感正是这个类型的核心。", fr: "Oui. Une charge de saut ratée vous fait tomber sur une plateforme inférieure et perdre votre progression, comme dans Jump King — cette tension est le sel du genre.", es: "Sí. Si cargas mal el salto caes a una plataforma inferior y pierdes progreso, igual que en Jump King: esa tensión es la gracia del género." } },
+      { q: { ko: "한 번 실수하면 떨어지나요?", en: "Does one mistake drop me?", ja: "一度のミスで落ちますか？", zh: "一次失误就会掉下去吗？", fr: "Une seule erreur me fait chuter ?", es: "¿Un solo error me hace caer?" }, a: { ko: "네. 점프 힘을 잘못 모으면 아래 플랫폼으로 떨어져 진행을 잃습니다. 그게 이 장르의 핵심 긴장감입니다.", en: "Yes. Mis-charge a jump and you fall to a lower platform and lose progress — that tension is the point of the genre.", ja: "はい。ジャンプの溜めを誤ると下の足場へ落ち、進行を失います。その緊張感がこのジャンルの核心です。", zh: "会。蓄力失误就会掉到下方平台、丢失进度——这种紧张感正是这个类型的核心。", fr: "Oui. Une charge de saut ratée vous fait tomber sur une plateforme inférieure et perdre votre progression — cette tension est le sel du genre.", es: "Sí. Si cargas mal el salto caes a una plataforma inferior y pierdes progreso: esa tensión es la gracia del género." } },
       { q: { ko: "최고 높이가 저장되나요?", en: "Is my best height saved?", ja: "最高到達点は保存されますか？", zh: "最高高度会保存吗？", fr: "Ma meilleure hauteur est-elle sauvegardée ?", es: "¿Se guarda mi altura máxima?" }, a: { ko: "도달한 최고 높이는 이 브라우저의 localStorage에만 저장됩니다. 계정도 온라인 순위표도 없습니다.", en: "Your best height reached is stored only in this browser's localStorage. There is no account or online leaderboard.", ja: "到達した最高高度はこのブラウザのlocalStorageにのみ保存されます。アカウントもオンラインランキングもありません。", zh: "到达的最高高度只保存在本浏览器的localStorage中。没有账号，也没有在线排行榜。", fr: "Votre meilleure hauteur atteinte est conservée uniquement dans le localStorage de ce navigateur. Aucun compte ni classement en ligne.", es: "Tu mejor altura alcanzada se guarda solo en el localStorage de este navegador. No hay cuenta ni clasificación en línea." } },
     ],
   },
@@ -4572,14 +4572,14 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
-  "mini-metro": {
+  "subway-sketch": {
     origin: {
-      ko: "미니 메트로(Mini Metro Web)는 인디 게임 명작 Dinosaur Polo Club의 미니멀 지하철 시뮬레이터에서 영감을 받아 제작된 웹 기반 교통망 설계 시뮬레이션입니다. 급성장하는 가상 도시 속에서 기하학적 도형으로 표현된 역과 승객들을 연결하여 과밀로 인한 도시 마비를 방지하는 지적인 시뮬레이터입니다.",
-      en: "Mini Metro Web is a minimalist transit strategy simulation inspired by Dinosaur Polo Club's masterpiece. Connect geometric stations across an expanding procedural city and route passengers efficiently to prevent overcrowding collapse.",
-      ja: "ミニメトロ（Mini Metro Web）は、Dinosaur Polo Clubの名作ミニマル地下鉄シミュレーターに着想を得たWeb交通網設計ゲームです。幾何学模様で表現された駅と乗客を路線でつなぎ、都市の過密崩壊を防ぎます。",
-      zh: "迷你地铁（Mini Metro Web）是一款受 Dinosaur Polo Club 经典极简地铁模拟器启发的网页交通规划策略游戏。在不断扩张的程序化都市中用不同颜色的线路连接几何车站，疏导乘客防止站点瘫痪。",
-      fr: "Mini Metro Web est une simulation de stratégie de transport minimaliste inspirée du chef-d'œuvre de Dinosaur Polo Club. Reliez des stations géométriques dans une ville en expansion pour éviter la saturation du réseau.",
-      es: "Mini Metro Web es una simulación de estrategia de transporte minimalista inspirada en la obra maestra de Dinosaur Polo Club. Conecta estaciones geométricas en una ciudad en expansión y evita el colapso por aglomeración.",
+      ko: "지하철 노선 스케치는 OIYO가 만든 웹 교통망 설계 퍼즐입니다. 도형으로 표시된 역이 계속 생기는 도시에서 색깔 노선으로 역을 이어 승객을 목적지까지 보내고, 한 역에 사람이 너무 몰려 멈추기 전에 노선을 다시 그려야 합니다.",
+      en: "Subway Sketch is an original OIYO transit-planning puzzle. Shape-coded stations keep appearing across a growing city; draw colored lines to carry passengers to matching stops, and redraw the network before any station overflows.",
+      ja: "地下鉄スケッチはOIYOオリジナルの路線設計パズルです。図形で示された駅が増え続ける街で、色付き路線で駅をつなぎ乗客を目的地へ運び、駅があふれる前に路線を引き直します。",
+      zh: "地铁线路速写是 OIYO 原创的网页交通规划益智游戏。城市里不断出现以图形标记的车站，用彩色线路把它们连起来送乘客到目的地，并在车站拥堵前重新规划线路。",
+      fr: "Subway Sketch est un puzzle original d'OIYO sur la planification de transports. Des stations en forme de symboles apparaissent dans une ville qui grandit : tracez des lignes colorées pour acheminer les passagers et redessinez le réseau avant la saturation.",
+      es: "Subway Sketch es un puzle original de OIYO sobre planificación de transporte. Aparecen estaciones con formas en una ciudad que crece: traza líneas de colores para llevar a los pasajeros y rediseña la red antes de que se sature.",
     },
     how: {
       ko: "상단에서 편집할 노선(1호선 빨강, 2호선 파랑, 3호선 초록)을 선택한 뒤, 지도 상의 역들을 차례로 클릭하여 노선을 연결합니다. 열차는 연결된 역 사이를 자동으로 왕복하며 대기 중인 승객을 태우고 해당 역 도형과 일치하는 승객을 하차시킵니다. 한 역에 승객이 6명 이상 누적되면 경고 타이머가 돌며, 15초 내에 해소하지 못하면 게임이 종료됩니다.",
@@ -4628,14 +4628,14 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
-  "peglin-rogue": {
+  "peg-dungeon": {
     origin: {
-      ko: "페글린 로그(Peglin Roguelike)는 글로벌 인디 게임 명작 Peglin과 클래식 파칭코 Peggle에서 영감을 받은 물리 기반 덱빌더 로그라이크입니다. 구슬을 발사해 핀을 타격하고 연쇄 반응을 일으켜 몬스터를 쓰러뜨리는 독창적인 전투 방식을 웹 환경에 완벽히 이식했습니다.",
-      en: "Peglin Rogue is a physics-based deckbuilder roguelike inspired by indie gems Peglin and Peggle. Fire orbs onto pegboards to trigger satisfying chain reactions, detonating bombs and critical strikes to defeat RPG dungeon bosses.",
-      ja: "ペグリン ローグ（Peglin Roguelike）は、世界的ヒット作『Peglin』やパチンコ名作『Peggle』に着想を得た物理演算デッキ構築ローグライクです。オーブを落としてピンを弾き、連鎖ダメージを蓄積してダンジョンの敵を討伐します。",
-      zh: "弹珠地牢（Peglin Rogue）是一款受独立名作《Peglin》与经典弹珠台游戏启发的物理卡牌构筑肉鸽游戏。发射弹珠在钉板上弹跳触发连锁爆破，将收集的伤害化为重炮痛击怪物。",
-      fr: "Peglin Rogue est un deckbuilder roguelike physique inspiré de Peglin et Peggle. Lancez des orbes sur des grilles de picots pour provoquer des réactions en chaîne explosives et terrasser les monstres.",
-      es: "Peglin Rogue es un roguelike de construcción de mazos basado en físicas inspirado en Peglin y Peggle. Dispara orbes sobre tableros de clavijas para desencadenar explosiones en cadena y vencer a los jefes.",
+      ko: "페그 던전은 OIYO가 만든 구슬 물리 로그라이크입니다. 구슬을 쏘아 핀판의 페그를 연달아 맞히면 피해가 쌓이고, 폭탄·치명타 페그로 연쇄를 키워 던전 몬스터를 쓰러뜨립니다.",
+      en: "Peg Dungeon is an original OIYO physics roguelike. Fire an orb into a pegboard, chain hits to stack damage, and use bomb and crit pegs to grow combos that knock out dungeon monsters.",
+      ja: "ペグダンジョンはOIYOオリジナルの物理ローグライクです。オーブを撃ってピンを連続で弾き、ダメージを溜め、爆弾・クリティカルペグで連鎖を伸ばしてダンジョンの敵を倒します。",
+      zh: "钉板地牢是 OIYO 原创的弹珠物理肉鸽游戏。发射弹珠连续撞击钉板累积伤害，借助炸弹钉和暴击钉扩大连锁，击倒地牢怪物。",
+      fr: "Peg Dungeon est un roguelike physique original d'OIYO. Lancez une orbe sur une grille de picots, enchaînez les impacts pour cumuler les dégâts et utilisez bombes et picots critiques contre les monstres du donjon.",
+      es: "Peg Dungeon es un roguelike de físicas original de OIYO. Lanza un orbe a un tablero de clavijas, encadena impactos para acumular daño y usa bombas y clavijas críticas contra los monstruos de la mazmorra.",
     },
     how: {
       ko: "화면을 터치하거나 마우스를 움직여 상단 대포의 발사 각도를 조절한 뒤 구슬을 발사합니다. 구슬이 떨어지며 일반 펙(6점), 폭탄(30점), 크리티컬(1.6배), 리프레시(펙 재생)를 타격하여 턴 대미지를 모읍니다. 구슬이 하단으로 빠져나가면 모인 대미지로 적을 공격하며, 살아남은 적의 반격으로부터 HP를 지켜내야 합니다.",
@@ -4796,14 +4796,14 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
-  "spell-tower": {
+  "word-stack": {
     origin: {
-      ko: "스펠 타워(SpellTower Web)는 모바일 인디 거장 Zach Gage가 개발하여 수많은 올해의 게임 상을 휩쓴 글로벌 명작 'SpellTower'에서 영감을 받은 단어 퍼즐입니다. 테트리스 스타일의 블록 낙하 중력 물리와 전통적인 스크래블 단어 찾기를 결합하여, 한 단어를 맞출 때마다 탑이 무너져 내리는 독창적인 쾌감을 선사합니다.",
-      en: "SpellTower Web is a word puzzle game inspired by Zach Gage's award-winning mobile masterpiece 'SpellTower'. Combining Tetris-like falling block gravity physics with deep word-search mechanics, clearing words triggers satisfying multi-tile cascade collapses.",
-      ja: "スペルタワー（SpellTower Web）は、数々のゲームアワードを受賞したインディーの鬼才Zach Gageの名作『SpellTower』に着想を得たワードパズルゲームです。テトリスのようなブロック落下重力物理と単語探しが融合し、単語を揃えるたびに塔が崩れ落ちる爽快感を楽しめます。",
-      zh: "拼字高塔（SpellTower Web）受独立游戏大师 Zach Gage 荣获诸多年度大奖的经典作品《SpellTower》启发。将俄罗斯方块式的重力下落消除与传统拼字寻词紧密结合，每次成功拼词都将引发令人上瘾的多米诺坍塌连击。",
-      fr: "SpellTower Web est un jeu de lettres inspiré du chef-d'œuvre mobile primé de Zach Gage. Alliant la gravité de chute de blocs style Tetris et la recherche de mots, chaque mot trouvé déclenche des effondrements en cascade.",
-      es: "SpellTower Web es un juego de palabras inspirado en la galardonada obra maestra de Zach Gage. Combinando la gravedad de bloques tipo Tetris con la búsqueda de palabras, cada acierto desencadena colapsos en cascada.",
+      ko: "워드 스택은 OIYO가 만든 영어 단어 퍼즐입니다. 쌓인 글자 블록에서 이웃한 글자를 이어 단어를 만들면 블록이 사라지고 위 블록이 떨어집니다. 새 줄이 올라와 천장에 닿기 전에 탑을 낮추세요.",
+      en: "Word Stack is an original OIYO word puzzle. Link neighboring letter tiles into words to clear them and let the tiles above fall; keep the stack low before new rows push it to the ceiling.",
+      ja: "ワードスタックはOIYOオリジナルの英単語パズルです。隣り合う文字をつないで単語を作るとブロックが消え、上のブロックが落ちてきます。新しい行が天井に届く前に塔を低く保ちましょう。",
+      zh: "叠字塔是 OIYO 原创的英文单词益智游戏。连接相邻字母组成单词即可消除方块，上方方块随之落下；在新行把字母堆顶到天花板之前把它压低。",
+      fr: "Word Stack est un jeu de lettres original d'OIYO. Reliez des lettres voisines pour former des mots, faites tomber les blocs du dessus et gardez la pile basse avant que de nouvelles rangées n'atteignent le plafond.",
+      es: "Word Stack es un juego de palabras original de OIYO. Une letras vecinas para formar palabras, deja caer los bloques de arriba y mantén la pila baja antes de que nuevas filas lleguen al techo.",
     },
     how: {
       ko: "인접한 글자 타일들을 상하좌우 및 대각선(8방향)으로 순서대로 탭하여 3글자 이상의 유효한 영단어를 만듭니다. 단어를 제출하면 해당 타일들이 사라지며 그 위에 있던 블록들이 중력에 의해 아래로 쏟아져 내립니다. 또한 단어 타일과 맞닿아 있는 해골(☠) 방해 블록들도 함께 연쇄 폭발하여 소멸합니다. 단어를 제출할 때마다 바닥에서 새 블록 줄이 솟아오르며, 탑이 0번 행(천장)에 닿으면 게임이 종료됩니다.",
@@ -4964,14 +4964,14 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
-  "backpack-hero": {
+  "satchel-crawl": {
     origin: {
-      ko: "백팩 히어로 웹(Backpack Hero Web)은 인벤토리 가방 정리라는 정적인 행위를 로그라이크 덱빌딩 전투의 핵심 전투력으로 승화시켜 글로벌 스팀과 닌텐도 스위치에서 폭발적인 인기를 얻은 Jaspel의 명작 'Backpack Hero'를 순수 웹으로 구현한 게임입니다. 아이템의 공간적 위치, 90도 회전, 인접 타일 간의 기하학적 시너지를 계산하는 전략적 두뇌 퍼즐과 턴제 전투가 결합되었습니다.",
-      en: "Backpack Hero Web brings Jaspel's breakout inventory-management roguelike to the mobile web. Where traditional RPGs treat item management as a chore, Backpack Hero turns your grid bag into the primary engine of power—where placement, rotation, and spatial adjacency dictate your combat synergy.",
-      ja: "バックパック・ヒーロー Web（Backpack Hero Web）は、アイテム整理をデッキ構築バトルの中心に据えて世界的な大ヒットを記録した名作『Backpack Hero』のWebリメイクです。アイテムのグリッド配置、90度回転、隣接シナジーが勝敗を分ける奥深いパズルRPGです。",
-      zh: "背包英雄网页版（Backpack Hero Web）重塑了将“背包空间整理”升华为肉鸽卡组构筑核心玩法的独立神作《Backpack Hero》。不仅是装备数值的比拼，更是一场关于空间邻接、旋转与几何协同增益的极致脑力风暴。",
-      fr: "Backpack Hero Web adapte le hit indépendant révolutionnaire où l'organisation spatiale de votre sac à dos détermine votre puissance de combat dans un RPG roguelike au tour par tour.",
-      es: "Backpack Hero Web adapta el aclamado éxito indie donde la gestión espacial de la mochila es el motor central de combate en un RPG roguelike por turnos.",
+      ko: "가방 던전은 OIYO가 만든 가방 정리형 턴제 던전 RPG입니다. 제한된 칸의 가방에 무기·방패·물약을 돌려 넣고, 붙여 둔 아이템끼리 생기는 효과를 이용해 층마다 적을 물리칩니다.",
+      en: "Satchel Crawl is an original OIYO turn-based dungeon RPG about packing. Rotate weapons, shields and potions into a small grid satchel, and use the bonuses that adjacent items give each other to beat each floor.",
+      ja: "かばんダンジョンはOIYOオリジナルの、かばん整理型ターン制ダンジョンRPGです。限られたマスに武器・盾・薬を回転させて詰め、隣接アイテムの効果を活かして各階の敵を倒します。",
+      zh: "背囊地牢是 OIYO 原创的背包整理型回合制地牢 RPG。把武器、盾牌和药水旋转放进有限的格子背囊，利用相邻物品之间的加成击败每层敌人。",
+      fr: "Satchel Crawl est un RPG de donjon au tour par tour original d'OIYO. Faites pivoter armes, boucliers et potions dans une petite sacoche quadrillée et exploitez les bonus entre objets adjacents pour vaincre chaque étage.",
+      es: "Satchel Crawl es un RPG de mazmorras por turnos original de OIYO. Gira armas, escudos y pociones dentro de una pequeña bolsa en cuadrícula y aprovecha las bonificaciones entre objetos adyacentes para superar cada piso.",
     },
     how: {
       ko: "배낭 안의 무기, 방어구, 물약 아이템을 탭하여 에너지를 소모해 발동합니다. 무기는 적의 체력을 깎고, 방패는 적의 반격을 막아낼 방어도를 쌓아줍니다. 전투 승리 후에는 새로운 전리품을 획득하고, 잠긴 슬롯(🔒)을 클릭하여 배낭 공간을 확장할 수 있습니다. 아이템을 선택하고 'R' 키 또는 회전 버튼을 눌러 90° 회전시키며 인접 시너지(예: 보석과 무기 같은 행/열 배치, 투구 아래 무기 배치)를 극대화하세요.",
