@@ -1032,6 +1032,7 @@ public class CrossyRoadPlayer : MonoBehaviour
     // GUI HUD & Modals
     private void OnGUI()
     {
+        OiyoUiFont.Apply();
         GUI.skin.label.fontSize = 15;
         GUI.skin.button.fontSize = 14;
 
@@ -1206,7 +1207,7 @@ public class CrossyRoadPlayer : MonoBehaviour
 
         if (currentStageIdx < stages.Count - 1)
         {
-            string nextTxt = currentLang == Language.KO ? "다음 스테이지 ➔" : "Next Stage ➔";
+            string nextTxt = currentLang == Language.KO ? "다음 스테이지 →" : "Next Stage →";
             if (GUILayout.Button(nextTxt, GUILayout.Height(42)))
             {
                 LoadStage(currentStageIdx + 1);

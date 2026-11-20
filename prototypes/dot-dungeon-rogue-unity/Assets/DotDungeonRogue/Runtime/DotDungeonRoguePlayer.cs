@@ -802,6 +802,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         DrawHUD();
         DrawFloatingTexts();
 

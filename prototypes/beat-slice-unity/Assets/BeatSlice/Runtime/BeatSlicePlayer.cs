@@ -929,6 +929,7 @@ public class BeatSlicePlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         int w = Screen.width;
         int h = Screen.height;
 
@@ -1197,7 +1198,7 @@ public class BeatSlicePlayer : MonoBehaviour
         GUILayout.Label($"<size=20><b>{GetText("트랙 선택 (12 Tracks)", "Select Track (12 Tracks)", "トラック選択 (全12曲)", "Seleccionar Pista (12 Pistas)")}</b></size>");
         GUI.color = Color.white;
         GUILayout.FlexibleSpace();
-        if (GUILayout.Button("✕", GUILayout.Width(35), GUILayout.Height(28)))
+        if (GUILayout.Button("×", GUILayout.Width(35), GUILayout.Height(28)))
         {
             showStageSelect = false;
         }

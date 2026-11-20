@@ -572,6 +572,7 @@ public class SlotRoguePlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         DrawHeaderHUD();
         DrawSymbolsOverlay();
 

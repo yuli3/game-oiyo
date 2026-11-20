@@ -884,6 +884,7 @@ public class SuikaDropPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         GUI.skin.label.fontSize = 13;
         GUI.skin.button.fontSize = 12;
 
@@ -1038,7 +1039,7 @@ public class SuikaDropPlayer : MonoBehaviour
             }
 
             GUILayout.Space(6);
-            if (GUILayout.Button("❌ CLOSE", GUILayout.Height(28)))
+            if (GUILayout.Button("× CLOSE", GUILayout.Height(28)))
             {
                 showStageSelect = false;
             }

@@ -726,6 +726,7 @@ public class TownscaperIslandPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         DrawTopHeader();
         DrawBottomBar();
 

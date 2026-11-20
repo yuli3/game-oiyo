@@ -839,7 +839,7 @@ public class BadNorthPlayer : MonoBehaviour
         sq.braceTimer = 0f;
 
         PlayTone(380f, 0.12f, "sine");
-        SpawnFloatingText("➔ MOVE", target, Color.white);
+        SpawnFloatingText("→ MOVE", target, Color.white);
     }
 
     private void UpdateWaveSpawning()
@@ -1466,6 +1466,7 @@ public class BadNorthPlayer : MonoBehaviour
     // GUI HUD & Modals
     private void OnGUI()
     {
+        OiyoUiFont.Apply();
         GUI.skin.label.fontSize = 15;
         GUI.skin.button.fontSize = 14;
 
@@ -1622,7 +1623,7 @@ public class BadNorthPlayer : MonoBehaviour
 
         if (currentStageIdx < stages.Count - 1)
         {
-            string nextTxt = currentLang == Language.KO ? "다음 섬으로 항해 ➔" : "Sail to Next Island ➔";
+            string nextTxt = currentLang == Language.KO ? "다음 섬으로 항해 →" : "Sail to Next Island →";
             if (GUILayout.Button(nextTxt, GUILayout.Height(42)))
             {
                 LoadIsland(currentStageIdx + 1);

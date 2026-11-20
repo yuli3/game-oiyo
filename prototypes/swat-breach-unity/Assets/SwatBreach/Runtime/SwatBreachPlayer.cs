@@ -1267,6 +1267,7 @@ public class SwatBreachPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         GUI.skin.label.fontSize = 13;
         GUI.skin.button.fontSize = 12;
 
@@ -1450,7 +1451,7 @@ public class SwatBreachPlayer : MonoBehaviour
             }
 
             GUILayout.Space(6);
-            if (GUILayout.Button("❌ CLOSE", GUILayout.Height(28)))
+            if (GUILayout.Button("× CLOSE", GUILayout.Height(28)))
             {
                 showMissionSelect = false;
             }

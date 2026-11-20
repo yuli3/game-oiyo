@@ -1,0 +1,7 @@
+Noto Sans KR and Noto Sans JP (weight 500)
+Copyright © 2014–2021 Adobe and Google. Licensed under SIL Open Font License 1.1; see OFL.txt.
+
+OiyoUI.ttf is a subset made through the Google Fonts API (text= parameter) from the
+strings in Assets/*/Runtime/*.cs: Noto Sans KR, with glyphs it lacks merged in from
+Noto Sans JP, then renamed to "OIYO UI". Regenerate with scripts/build-fonts.py after
+changing any visible text.

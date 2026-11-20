@@ -520,6 +520,7 @@ public class SliceMasterPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         DrawHeaderHUD();
 
         if (isGameOver) DrawGameOverBanner();
@@ -551,7 +552,7 @@ public class SliceMasterPlayer : MonoBehaviour
 
         string comboStr = comboCount > 1 ? " | 🔥 콤보 x" + comboCount : "";
         GUI.Label(new Rect(20, 12, 420, 24), "Stage " + (currentStageIndex + 1) + ". " + def.titleKo + " (" + def.titleEn + ")", stageTitle);
-        GUI.Label(new Rect(20, 34, 450, 22), "⭐ 점수: " + score + "점 | 🔪 슬라이스: " + totalSliced + "/" + def.targetCount + comboStr, subTitle);
+        GUI.Label(new Rect(20, 34, 450, 22), "★ 점수: " + score + "점 | 🔪 슬라이스: " + totalSliced + "/" + def.targetCount + comboStr, subTitle);
 
         if (GUI.Button(new Rect(w - 180, 15, 75, 42), "🗺️ 스테이지"))
         {
