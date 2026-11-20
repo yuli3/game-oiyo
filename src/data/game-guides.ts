@@ -2673,7 +2673,7 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
     how: {
       ko: "가로·세로·깊이 중 양쪽 유리가 열린 축만 누를 수 있습니다. 그 한 걸음이 겉과 안을 함께 옮깁니다. 출구 칸으로 걸어 들어가면 이기고, 시작 칸이 출구여도 이미 이긴 것은 아닙니다. 금이 간 칸이나 안의 빈칸으로 들어가면 지고, 걸음 8도 집니다. 보기 버튼은 판을 바꾸지 않습니다.",
       en: "You can press across, upright, or depth only when that seam is open on both shells. That one step moves the outside and the inside together. Walking onto the exit cells wins; starting on an exit would not. A cracked cell or an inner void loses, as does step 8. The view button does not change the board.",
-      ja: "横・縦・奥行きは、その継ぎ目が両側で開いているときだけ押せます。その一歩が外側と内側を一緒に動かします。出口のマスへ歩き入ると勝ちで、開始地点が出구でも最初から勝ちではありません。ひびのマスか内側の空洞へ入るか、8歩で負けです。視点ボタンは盤面を変えません。",
+      ja: "横・縦・奥行きは、その継ぎ目が両側で開いているときだけ押せます。その一歩が外側と内側を一緒に動かします。出口のマスへ歩き入ると勝ちで、開始地点が出口でも最初から勝ちではありません。ひびのマスか内側の空洞へ入るか、8歩で負けです。視点ボタンは盤面を変えません。",
       zh: "只有两侧玻璃都开着的横向、纵向或纵深才能按。这一步会同时移动外侧和内侧。走进出口才算赢；即使起点是出口也不算已经获胜。走进裂痕或内侧空洞，或走到第8步，都会输。视角按钮不改变棋盘。",
       fr: "Largeur, hauteur ou profondeur ne se pressent que si le joint est ouvert des deux côtés. Ce pas déplace l'extérieur et l'intérieur ensemble. Entrer sur les sorties gagne ; commencer dessus ne gagne pas. Une case fêlée ou un vide intérieur perd, tout comme le 8e pas. Le bouton de vue ne change pas le plateau.",
       es: "Ancho, alto o profundidad solo se pulsan si esa junta está abierta en las dos caras. Ese paso mueve el exterior y el interior juntos. Entrar en las salidas gana; empezar sobre una salida no gana. Una casilla rajada o un vacío interior pierde, igual que el paso 8. El botón de vista no cambia el tablero.",
@@ -4188,7 +4188,7 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
         a: {
           ko: "브라우저 로컬 스토리지에 안전하게 영구 저장됩니다. 로그인이나 회원가입 없이 언제든 다시 접속해 자신의 신기록을 경신할 수 있습니다.",
           en: "It is saved locally and securely in your browser's localStorage. You can return anytime to beat your record without needing an account or login.",
-          ja: "ブラウザ의 localStorage에 안전하게 영구 저장됩니다. 로그인이나 회원가입 없이 언제든 다시 접속해 자신의 신기록을 경신할 수 있습니다.",
+          ja: "ブラウザのlocalStorageに安全に保存されます。ログインや会員登録なしで、いつでも戻って自己ベストを更新できます。",
           zh: "数据安全永久地保存在浏览器本地 localStorage 中，无需注册登录即可随时重返游戏挑战个人历史最佳成绩。",
           fr: "Il est stocké en toute sécurité dans le stockage local de votre navigateur. Vous pouvez revenir à tout moment battre votre record sans compte ni connexion.",
           es: "Se guarda de forma local y segura en el almacenamiento de tu navegador, permitiéndote volver en cualquier momento a superar tu récord sin necesidad de registro.",
@@ -4705,7 +4705,7 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
     how: {
       ko: "좌우 방향키(또는 화면 좌우 스와이프)로 3개 레인 사이를 순식간에 변경합니다. 위 방향키나 점프 버튼으로 허들 배리어를 뛰어넘고, 아래 방향키나 슬라이딩 버튼으로 고가 장애물 아래로 미끄러져 통과하세요. 정면에 나타나는 거대한 열차는 반드시 좌우로 피해가야 하며, 황금 코인을 모아 최고 점수를 갱신하세요.",
       en: "Use Left/Right arrows (or swipe left/right) to switch lanes. Press Up to jump over hurdles, and Down to slide under overhead gantries. Oncoming train cars cannot be jumped and must be dodged by switching lanes. Collect golden stars to boost your score.",
-      ja: "左右キー（または画面の左右スワイプ）で瞬時に3レーン間を移動します。上キーでハードルを飛び越え、下キーで高架バーの下をスライ딩で潜り抜けます。迫りくる列車は左右に回避し、ゴールドコインを集めてハイスコアを目指しましょう。",
+      ja: "左右キー（または画面の左右スワイプ）で瞬時に3レーン間を移動します。上キーでハードルを飛び越え、下キーで高架バーの下をスライディングで潜り抜けます。迫りくる列車は左右に回避し、ゴールドコインを集めてハイスコアを目指しましょう。",
       zh: "通过左右按键（或屏幕左右滑动）在3条轨道间变道。上键或跳跃按钮飞跃跨栏，下键或滑行按钮俯身穿过高架障碍。迎面而来的火车无法跃过，必须变道躲避。沿途收集金币刷新最高纪录。",
       fr: "Utilisez les flèches gauche/droite pour changer de voie. Appuyez sur Haut pour sauter les haies et sur Bas pour glisser sous les portiques. Évitez les trains de face en changeant de voie et amassez des pièces d'or.",
       es: "Usa las flechas izquierda/derecha para cambiar de carril. Pulsa Arriba para saltar vallas y Abajo para deslizarte bajo obstáculos altos. Esquiva los trenes cambiando de carril y recoge monedas de oro.",
@@ -5297,7 +5297,7 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
         a: {
           ko: "에너지 쉴드는 레이저 1발당 1겹씩 흡수합니다. 따라서 아르테미스 미사일(Artemis Missile)은 쉴드를 완전히 무시하고 관통하므로 먼저 적의 '쉴드실(Shields)'을 직접 미사일로 타격하여 쉴드 발생 장치 자체를 고장 내세요. 쉴드가 무력화되면 버스트 레이저로 적의 '무기실(Weapons)'을 집중 포격하여 반격을 봉쇄하는 것이 교과서적인 전술입니다.",
           en: "Energy shields absorb one incoming laser bolt per active layer. However, missiles (like the Artemis Missile) completely bypass shields! Use missiles to directly strike the enemy's Shield room to disable their generator. Once their shields collapse, unleash your Burst Laser volleys into their Weapons room to prevent them from firing back.",
-          ja: "シールドは通常レーザーを1発につき1枚吸収します。しかしミサイル（Artemis Missile）はシールドを完全に貫通して直接命中します！ まずミサイルで敵の『シールド室』を破壊してシールド発生器そのものを停止させ、無防備になったところへバーストレーザーを『兵器室』に叩き込んで反撃を阻止するのが定석です。",
+          ja: "シールドは通常レーザーを1発につき1枚吸収します。しかしミサイル（Artemis Missile）はシールドを完全に貫通して直接命中します！ まずミサイルで敵の『シールド室』を破壊してシールド発生器そのものを停止させ、無防備になったところへバーストレーザーを『兵器室』に叩き込んで反撃を阻止するのが定石です。",
           zh: "能量护盾每层可抵消一束常规激光。但阿尔忒弥斯导弹具备纯粹护盾穿透特性！先使用导弹精确穿透直击敌舰‘护盾室（Shields）’，彻底摧毁其供电与发生器。待其护盾崩解瓦解后，立刻用连发激光集火其‘武器室（Weapons）’，彻底瘫痪敌舰的一切反击手段。",
           fr: "Les boucliers absorbent un tir laser par couche. Les missiles traversent les boucliers : ciblez d'abord la salle des boucliers ennemie avec un missile pour couper leur alimentation, puis détruisez leur salle d'armes avec vos lasers.",
           es: "Los escudos absorben un impacto láser por capa. Los misiles atraviesan los escudos por completo: apunta primero a su sala de escudos con un misil para apagar su generador y luego bombardea su sala de armas con láseres.",
@@ -5328,7 +5328,7 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
     how: {
       ko: "매 턴 시작 시 적들이 노리는 공격 방향(붉은 점선 및 조준선)을 확인하세요. 하단에서 아군 메카를 선택하고 '이동(MOVE)'으로 원하는 위치를 선점한 뒤 '공격(ATTACK)'을 실행합니다. 적을 처치하지 못하더라도 공격의 넉백(밀쳐내기) 효과로 적의 공격 방향을 건물 밖으로 비틀거나 다른 유닛/장애물과 충돌시켜 추가 대미지를 줄 수 있습니다. 물 타일로 빠뜨리면 즉사합니다. 4턴 동안 전력망(Power Grid)을 지켜내면 승리합니다.",
       en: "At the start of each turn, read the enemy's telegraphed attack trajectories (red dashed lines and crosshairs). Select your mechs and tap 'MOVE' to position them, then 'ATTACK'. Even without destroying an enemy outright, your attacks push targets by 1 tile, deflecting attacks away from power grid buildings or causing collision damage against obstacles and other units. Pushing units into water instantly drowns them. Survive 4 turns to win.",
-      ja: "ターン開始時に敵の攻撃予告線（赤の破線と照準）を確認しましょう。下部でメ카を選択し『MOVE』で移動後、『ATTACK』で攻撃します。敵を一撃で倒せなくても、ノックバックで攻撃方向を建物からそらしたり、障害物や他の敵に衝突させて衝突ダメージを与えられます。水域に落とせば即座に撃破できます。4ターンの間電力網を守り抜けば勝利です。",
+      ja: "ターン開始時に敵の攻撃予告線（赤の破線と照準）を確認しましょう。下部でメカを選択し『MOVE』で移動後、『ATTACK』で攻撃します。敵を一撃で倒せなくても、ノックバックで攻撃方向を建物からそらしたり、障害物や他の敵に衝突させて衝突ダメージを与えられます。水域に落とせば即座に撃破できます。4ターンの間電力網を守り抜けば勝利です。",
       zh: "每回合开始时仔细查看敌方的攻击红线与预兆瞄准标尺。选择己方机甲，先点击'MOVE'走位卡点，再点击'ATTACK'发动攻击。哪怕无法直接消灭敌人，机甲攻击附带的击退推移也能改变敌人的朝向与弹道，使其攻击偏离城市电网，或撞向障碍物造成额外碰撞伤害。推入水区可直接秒杀。坚守 4 回合保全电网即可获胜。",
       fr: "Observez les lignes d'attaque ennemies en rouge au début du tour. Sélectionnez vos méchas, déplacez-les avec 'MOVE' et attaquez avec 'ATTACK'. Utilisez la poussée pour dévier les tirs ciblant les bâtiments, infliger des dégâts de collision ou noyer les ennemis dans l'eau. Protégez le réseau pendant 4 tours pour vaincre.",
       es: "Observa las líneas de ataque rojas del enemigo al inicio del turno. Selecciona tus mechas, muévelos con 'MOVE' y ataca con 'ATTACK'. Usa el empuje para desviar proyectiles fuera de los edificios, causar daño de colisión o ahogar enemigos en el agua. Defiende la red durante 4 turnos para ganar.",
@@ -5724,7 +5724,7 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
         a: {
           ko: "네! 원형 방패를 든 푸른색 바이킹은 정면 화살의 약 75%를 튕겨냅니다. 방패병이 다가올 때는 궁병만으로 상대하기보다 창병 방진으로 들이받게 하거나 보병으로 맞붙여 방패를 무력화하는 병과 상성 전술이 필수적입니다.",
           en: "Yes! Blue-garbed Vikings with round shields deflect roughly 75% of frontal arrows. Counter them by holding a pike wall or engaging with Infantry in close quarters rather than relying on ranged archery alone.",
-          ja: "はい！ 青い衣装の盾持ちバイキングは正面からの矢の約75%を弾きます。盾持ちに対しては弓兵だけでなく、槍兵の防陣で迎え撃つか歩兵で白兵戦を挑むのが定석です。",
+          ja: "はい！ 青い衣装の盾持ちバイキングは正面からの矢の約75%を弾きます。盾持ちに対しては弓兵だけでなく、槍兵の防陣で迎え撃つか歩兵で白兵戦を挑むのが定石です。",
           zh: "是的！手持圆盾的蓝色海盗会弹开约 75% 的正面飞矢。面对持盾者切勿单靠弓兵盲目输出，应果断以枪兵方阵拒敌或派步兵近身绞杀，善用兵种克制方能克敌制胜。",
           fr: "Oui ! Les Vikings au bouclier dévient 75 % des flèches. Bloquez-les plutôt avec des piquiers ou engagez-les au corps à corps avec votre infanterie.",
           es: "¡Sí! Los vikingos con escudo desvían el 75 % de las flechas. Enfréntalos con una pared de picas o infantería en combate cuerpo a cuerpo.",
@@ -6391,7 +6391,7 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
     how: {
       ko: "1) 손패에서 무료 카드인 『🐿️ 다람쥐』를 선택한 뒤 아군 전선의 빈 레인을 클릭해 배치하세요. 2) 피(🩸) 비용이 필요한 상위 야수(담비·다이어 울프·살무사·사마귀 신)를 손패에서 선택하고, 이미 전선에 나와 있는 다람쥐(또는 다른 아군)를 필요한 피 개수만큼 클릭해 제물로 바치면 그 자리에 상위 야수가 소환됩니다! 3) 『🔔 전투 종 울리기』를 누르면 아군 야수가 정면 공격을 수행하며, 빈 레인을 타격한 피해만큼 천칭이 +방향으로 기울어 +5에 도달하면 즉시 승리합니다.",
       en: "1) Select a 0-cost '🐿️ Squirrel' from your hand and click an empty Player Row lane to place it. 2) Select a Blood-cost beast (Stoat, Dire Wolf, Adder, Mantis God) in your hand, then click living creatures on your row to sacrifice them and summon the beast! 3) Click '🔔 RING COMBAT BELL' to strike across the 4 lanes—tipping the scale to +5 wins immediately.",
-      ja: "1) 手札からコスト0の『🐿️ リス』を選び、自군レーンの空きマスに配置します。2) 血(🩸)コストが必要な上位獣を手札で選び、盤面のリスを必要数クリックして生贄に捧げると召喚完了です！ 3) 『🔔 戦闘の鐘を鳴らす』で攻撃し、天秤を+5まで傾ければ勝利となります。",
+      ja: "1) 手札からコスト0の『🐿️ リス』を選び、自軍レーンの空きマスに配置します。2) 血(🩸)コストが必要な上位獣を手札で選び、盤面のリスを必要数クリックして生贄に捧げると召喚完了です！ 3) 『🔔 戦闘の鐘を鳴らす』で攻撃し、天秤を+5まで傾ければ勝利となります。",
       zh: "1) 从手牌选中 0 费的“🐿️ 松鼠”，点击己方前排空位放置。2) 在手牌中选中需要鲜血（🩸）的野兽，然后点击场上已有的松鼠献祭即可完成上位召唤！3) 点击“🔔 敲响战斗钟”发起对位进攻，溢出的直接伤害会推动天平，达到 +5 立即获胜。",
       fr: "1) Placez un « 🐿️ Écureuil » gratuit sur une voie libre. 2) Sélectionnez une bête coûtant du Sang (🩸) puis cliquez sur vos créatures en jeu pour les sacrifier. 3) Sonnez la cloche « 🔔 RING COMBAT BELL » pour attaquer et atteindre +5 sur la balance.",
       es: "1) Coloca una «🐿️ Ardilla» gratuita en un carril vacío. 2) Selecciona una bestia con coste de Sangre (🩸) y haz clic en tus criaturas en mesa para sacrificarlas. 3) Toca la campana «🔔 RING COMBAT BELL» para atacar y llevar la balanza a +5.",

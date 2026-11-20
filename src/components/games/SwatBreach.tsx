@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { SWAT_BREACH_TEXT } from "../../lib/games/text/swat-breach";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useDynamicDifficultyPro, useCardTiltPro } from "../../lib/games/engine-suite-unified";
@@ -209,6 +211,7 @@ const OFFSET_X = 40;
 const OFFSET_Y = 22;
 
 export default function SwatBreach({ locale = "ko" }: Props) {
+  const { t: tx } = useGameText(SWAT_BREACH_TEXT, locale);
   const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const lang: Locale = (locale in I18N ? locale : "en") as Locale;
   const t = I18N[lang];
@@ -795,7 +798,7 @@ export default function SwatBreach({ locale = "ko" }: Props) {
             className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary/20 text-primary border border-primary/40 hover:bg-primary/30 transition-colors"
           >
             <Award className="w-3.5 h-3.5" />
-            <span>작전지령 ({quests.filter((q) => q.completed && !q.claimed).length})</span>
+            <span>{tx("작전지령 ({0})", quests.filter((q) => q.completed && !q.claimed).length)}</span>
           </button>
 
           <button
@@ -804,7 +807,7 @@ export default function SwatBreach({ locale = "ko" }: Props) {
             className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-chart-4/20 text-chart-4 border border-chart-4/40 hover:bg-chart-4/30 transition-colors"
           >
             <Wrench className="w-3.5 h-3.5" />
-            <span>무기고 ({metaState.tacticalTokens} 🎖️)</span>
+            <span>{tx("무기고 ({0} 🎖️)", metaState.tacticalTokens)}</span>
           </button>
 
           <button
@@ -819,28 +822,28 @@ export default function SwatBreach({ locale = "ko" }: Props) {
 
       {/* TOC Radio Comms HUD */}
       <div className="w-full px-4 py-1.5 bg-muted/20 border-b border-border/80 flex items-center gap-2 text-xs">
-        <span className="font-bold text-primary whitespace-nowrap">[{curComms.sender.ko}]</span>
-        <span className="text-foreground/90 truncate">{curComms.message.ko}</span>
+        <span className="font-bold text-primary whitespace-nowrap">[{curComms.sender[lang]}]</span>
+        <span className="text-foreground/90 truncate">{curComms.message[lang]}</span>
       </div>
 
       {/* Stats Bar */}
       <div className="w-full grid grid-cols-4 gap-2 px-4 py-2 bg-muted/10 border-b border-border/40 text-center">
         <GameStatTile
-          label="작전 상태"
+          label={tx("작전 상태")}
           value={
             uiPhase === "planning"
-              ? "설계 중"
+              ? tx("설계 중")
               : uiPhase === "executing"
-              ? "돌입 교전"
+              ? tx("돌입 교전")
               : uiPhase === "victory"
-              ? "확보 완료"
-              : "작전 실패"
+              ? tx("확보 완료")
+              : tx("작전 실패")
           }
           icon="📋"
         />
-        <GameStatTile label={t.suspectsLabel} value={`${uiSuspectsLeft}명 잔여`} icon="👺" />
-        <GameStatTile label={t.hostagesLabel} value={`${uiHostagesRescued} / ${uiHostagesTotal}명`} icon="🕊️" />
-        <GameStatTile label="작전 훈장" value={`${metaState.tacticalTokens} 🎖️`} icon="⭐" />
+        <GameStatTile label={t.suspectsLabel} value={tx("{0}명 잔여", uiSuspectsLeft)} icon="👺" />
+        <GameStatTile label={t.hostagesLabel} value={tx("{0} / {1}명", uiHostagesRescued, uiHostagesTotal)} icon="🕊️" />
+        <GameStatTile label={tx("작전 훈장")} value={`${metaState.tacticalTokens} 🎖️`} icon="⭐" />
       </div>
 
       {/* Floorplan Canvas Viewport */}
@@ -892,7 +895,7 @@ export default function SwatBreach({ locale = "ko" }: Props) {
                 : "bg-card text-muted-foreground border-border hover:bg-muted"
             }`}
           >
-            📍 경로 지정
+            {tx("📍 경로 지정")}
           </button>
 
           <button
@@ -904,7 +907,7 @@ export default function SwatBreach({ locale = "ko" }: Props) {
                 : "bg-card text-muted-foreground border-border hover:bg-muted"
             }`}
           >
-            💥 섬광탄
+            {tx("💥 섬광탄")}
           </button>
         </div>
 
@@ -972,7 +975,7 @@ export default function SwatBreach({ locale = "ko" }: Props) {
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <Award className="w-5 h-5 text-primary" />
-                <h3 className="font-bold text-foreground">SWAT 전술 작전 지령</h3>
+                <h3 className="font-bold text-foreground">{tx("SWAT 전술 작전 지령")}</h3>
               </div>
               <button
                 type="button"
@@ -996,13 +999,13 @@ export default function SwatBreach({ locale = "ko" }: Props) {
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-foreground">{q.title.ko}</span>
+                    <span className="text-xs font-bold text-foreground">{q.title[lang]}</span>
                     <span className="text-xs font-semibold text-chart-4">+{q.rewardTokens} 🎖️</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">{q.description.ko}</p>
+                  <p className="text-xs text-muted-foreground">{q.description[lang]}</p>
                   <div className="flex items-center justify-between pt-1">
                     <div className="text-xs text-muted-foreground">
-                      진행도: {q.current} / {q.target}
+                      {tx("진행도: {0} / {1}", q.current, q.target)}
                     </div>
                     {q.completed && !q.claimed ? (
                       <button
@@ -1010,12 +1013,12 @@ export default function SwatBreach({ locale = "ko" }: Props) {
                         onClick={() => handleClaimQuest(q.id)}
                         className="px-2.5 py-1 rounded bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-colors"
                       >
-                        보상 수령
+                        {tx("보상 수령")}
                       </button>
                     ) : q.claimed ? (
-                      <span className="text-xs text-muted-foreground font-semibold">수령 완료</span>
+                      <span className="text-xs text-muted-foreground font-semibold">{tx("수령 완료")}</span>
                     ) : (
-                      <span className="text-xs text-muted-foreground">진행 중</span>
+                      <span className="text-xs text-muted-foreground">{tx("진행 중")}</span>
                     )}
                   </div>
                 </div>
@@ -1032,10 +1035,10 @@ export default function SwatBreach({ locale = "ko" }: Props) {
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <Wrench className="w-5 h-5 text-chart-4" />
-                <h3 className="font-bold text-foreground">SWAT 본부 무기고 5대 영구 연구소</h3>
+                <h3 className="font-bold text-foreground">{tx("SWAT 본부 무기고 5대 영구 연구소")}</h3>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-chart-4">{metaState.tacticalTokens} 🎖️ 작전 훈장</span>
+                <span className="text-xs font-bold text-chart-4">{tx("{0} 🎖️ 작전 훈장", metaState.tacticalTokens)}</span>
                 <button
                   type="button"
                   onClick={() => setShowArmoryModal(false)}
@@ -1062,12 +1065,12 @@ export default function SwatBreach({ locale = "ko" }: Props) {
                       <span className="text-2xl">{def.icon}</span>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-foreground">{def.name.ko}</span>
+                          <span className="text-xs font-bold text-foreground">{def.name[lang]}</span>
                           <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-bold">
                             Lv.{currentLvl}/{def.maxLevel}
                           </span>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">{def.desc.ko}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{def.desc[lang]}</p>
                       </div>
                     </div>
 
@@ -1077,7 +1080,7 @@ export default function SwatBreach({ locale = "ko" }: Props) {
                       disabled={isMax || !canAfford}
                       className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {isMax ? "최대 레벨" : `${cost} 🎖️ 연구`}
+                      {isMax ? tx("최대 레벨") : tx("{0} 🎖️ 연구", cost)}
                     </button>
                   </div>
                 );

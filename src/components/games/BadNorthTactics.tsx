@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { SHIELD_ISLE_TEXT } from "../../lib/games/text/shield-isle-tactics";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Shield,
@@ -83,7 +85,8 @@ interface Particle {
   maxLife: number;
 }
 
-export default function BadNorthTactics() {
+export default function BadNorthTactics({ locale: pageLocale }: { locale?: string } = {}) {
+  const { t } = useGameText(SHIELD_ISLE_TEXT, pageLocale);
   const [engine] = useState(() => new BadNorthEngine(9, 9));
   const [gameState, setGameState] = useState<BadNorthState>(() => engine.getState());
   const [isPaused, setIsPaused] = useState(false);
@@ -708,9 +711,9 @@ export default function BadNorthTactics() {
             <Shield className="h-5 w-5" />
           </span>
           <div>
-            <h2 className="text-lg font-bold leading-none tracking-tight">실드 아일 택틱스</h2>
+            <h2 className="text-lg font-bold leading-none tracking-tight">{t("실드 아일 택틱스")}</h2>
             <p className="text-xs text-muted-foreground mt-1">
-              바이킹 침략선 상륙 저지 & 실시간 섬 방어 미니멀 RTS
+              {t("바이킹 침략선 상륙 저지 & 실시간 섬 방어 미니멀 RTS")}
             </p>
           </div>
         </div>
@@ -732,7 +735,7 @@ export default function BadNorthTactics() {
             type="button"
             className="rounded-lg border border-border bg-background p-2 text-foreground transition hover:bg-muted"
             onClick={() => setIsPaused((p) => !p)}
-            aria-label={isPaused ? "재개" : "일시정지"}
+            aria-label={isPaused ? t("재개") : t("일시정지")}
           >
             {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
           </button>
@@ -742,7 +745,7 @@ export default function BadNorthTactics() {
             type="button"
             className="rounded-lg border border-border bg-background p-2 text-foreground transition hover:bg-muted"
             onClick={() => setIsMuted((m) => !m)}
-            aria-label={isMuted ? "음소거 해제" : "음소거"}
+            aria-label={isMuted ? t("음소거 해제") : t("음소거")}
           >
             {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
           </button>
@@ -752,7 +755,7 @@ export default function BadNorthTactics() {
             type="button"
             className="rounded-lg border border-border bg-background p-2 text-foreground transition hover:bg-muted"
             onClick={handleReset}
-            aria-label="섬 재생성 및 재시작"
+            aria-label={t("섬 재생성 및 재시작")}
           >
             <RotateCcw className="h-4 w-4" />
           </button>
@@ -821,12 +824,12 @@ export default function BadNorthTactics() {
             </div>
             <h3 className="text-2xl font-black text-foreground">ISLAND DEFENDED!</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-              모든 바이킹 침략선을 격퇴하고 평화로운 섬을 지켜냈습니다!
+              {t("모든 바이킹 침략선을 격퇴하고 평화로운 섬을 지켜냈습니다!")}
             </p>
             <div className="my-3 grid grid-cols-2 gap-4 border border-border rounded-lg p-3 bg-card/60 text-left">
               <div>
                 <p className="text-xs text-muted-foreground">HOUSES SAVED</p>
-                <p className="text-lg font-bold text-success">{gameState.housesSaved} 채</p>
+                <p className="text-lg font-bold text-success">{t("{0} 채", gameState.housesSaved)}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">COINS REWARD</p>
@@ -839,7 +842,7 @@ export default function BadNorthTactics() {
               onClick={handleReset}
             >
               <RotateCcw className="h-4 w-4" />
-              다음 섬 방어하기
+              {t("다음 섬 방어하기")}
             </button>
           </div>
         )}
@@ -856,7 +859,7 @@ export default function BadNorthTactics() {
             </div>
             <h3 className="text-2xl font-black text-destructive">ISLAND FALLEN</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-              모든 가옥이 불타거나 방어 분대가 전멸하였습니다.
+              {t("모든 가옥이 불타거나 방어 분대가 전멸하였습니다.")}
             </p>
             <button
               type="button"
@@ -864,7 +867,7 @@ export default function BadNorthTactics() {
               onClick={handleReset}
             >
               <RotateCcw className="h-4 w-4" />
-              섬 방어 재도전
+              {t("섬 방어 재도전")}
             </button>
           </div>
         )}
@@ -905,21 +908,21 @@ export default function BadNorthTactics() {
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-bold">
                       {sq.type === "infantry"
-                        ? "보병 분대"
+                        ? t("보병 분대")
                         : sq.type === "archers"
-                        ? "궁병 분대"
-                        : "창병 분대"}
+                        ? t("궁병 분대")
+                        : t("창병 분대")}
                     </span>
                     <span className="text-xs text-muted-foreground font-mono">[{idx + 1}]</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {sq.type === "infantry"
-                      ? "밀치기 검술 (낙하 치명타)"
+                      ? t("밀치기 검술 (낙하 치명타)")
                       : sq.type === "archers"
-                      ? "원거리 곡사 화살 사격"
+                      ? t("원거리 곡사 화살 사격")
                       : sq.isBraced
-                      ? "방진 고정 (돌격 즉사 차단)"
-                      : "이동 중 (정지 시 방진)"}
+                      ? t("방진 고정 (돌격 즉사 차단)")
+                      : t("이동 중 (정지 시 방진)")}
                   </p>
                 </div>
               </div>
@@ -941,7 +944,7 @@ export default function BadNorthTactics() {
       <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-3">
         <div className="flex items-center gap-1.5">
           <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-          <span>전술 가이드: 분대 클릭 후 섬 타일을 터치하여 이동. 창병은 정지 시 방진, 보병은 적을 바다로 밀쳐냅니다.</span>
+          <span>{t("전술 가이드: 분대 클릭 후 섬 타일을 터치하여 이동. 창병은 정지 시 방진, 보병은 적을 바다로 밀쳐냅니다.")}</span>
         </div>
       </div>
     </div>
