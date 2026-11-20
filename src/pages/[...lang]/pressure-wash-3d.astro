@@ -43,7 +43,7 @@ const m = meta[locale] ?? meta.en;
 
 <BaseLayout title={m.title} description={m.description} heading={m.title}>
   <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
-    <PowerWash3D client:load />
+    <PowerWash3D client:only="react" />
     <div class="mx-auto max-w-3xl px-4 mt-8">
       <GameGuide slug="pressure-wash-3d" locale={locale} name={m.title.split(" — ")[0]} />
     </div>

@@ -23,6 +23,7 @@ import {
   type SymbolKey,
 } from '../../lib/games/slot-rogue';
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 interface Props {
   locale: string;
 }
@@ -252,7 +253,7 @@ export default function SlotRogue({ locale }: Props) {
             href="/prototypes/slot-rogue-unity/index.html"
             className="flex items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/15 px-3 py-2 text-xs font-black text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
           >
-            🎰 Unity 3D 10스테이지 슬롯머신
+            <UnityEditionLabel />
           </a>
           <button
             type="button"

@@ -22,6 +22,7 @@ import { GravityRoller3DScene } from './GravityRoller3DScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { GRAVITY_ROLLER_3D_UI_SPRITES } from '../../lib/games/sprites';
 
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 interface Props {
   locale?: string;
 }
@@ -322,14 +323,7 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 w-full">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl select-none" aria-hidden="true">🔮</span>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-foreground">
-                Unity 6 3D 12스테이지 그래비티 롤러 마블 메이즈 4개국어 에디션
-              </span>
-              <span className="text-xs text-muted-foreground">
-                3D 물리 롤링 & 보드 틸트 & 범퍼/부스터/함정구멍 • 보석 수집 • 4개국어(KO/EN/JA/ES) • 무한 롤링
-              </span>
-            </div>
+            <UnityEditionBlurb />
           </div>
           <a
             href="/prototypes/gravity-roller-unity/index.html"
@@ -337,8 +331,7 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
           >
-            <span>3D 실행</span>
-            <span className="text-xs">↗</span>
+            <UnityEditionLabel />
           </a>
         </div>
       )}

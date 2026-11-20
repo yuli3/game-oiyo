@@ -9,6 +9,8 @@
  * 5. MobileHapticEngine - Native mobile vibration feedback
  */
 
+import { vibrationAllowed } from "../haptics/user-activation";
+
 // ============================================================================
 // 1. Procedural Adaptive Battle BGM (Zero Network Payload)
 // ============================================================================
@@ -429,7 +431,7 @@ export class LaserBeamEffect {
 // ============================================================================
 
 export function triggerMobileHaptic(type: 'light' | 'medium' | 'heavy' | 'warning'): void {
-  if (typeof window === 'undefined' || typeof navigator === 'undefined' || !navigator.vibrate) {
+  if (typeof window === 'undefined' || !vibrationAllowed()) {
     return;
   }
   try {

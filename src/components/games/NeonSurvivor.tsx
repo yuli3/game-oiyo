@@ -52,6 +52,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 interface Props {
   locale?: Locale;
 }
@@ -1276,7 +1277,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
                   href="/prototypes/neon-unity/index.html"
                   className="inline-flex items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/15 px-3.5 py-2 text-xs font-black text-primary hover:bg-primary/25 transition-colors"
                 >
-                  <span>🛰️ {locale === 'ko' ? 'Unity G3 에디션 실행' : locale === 'ja' ? 'Unity G3版を起動' : locale === 'zh' ? '启动 Unity G3 版' : 'Unity G3 Edition'}</span>
+                  <UnityEditionLabel />
                 </a>
               </div>
 

@@ -244,14 +244,14 @@ export default function ChronoDetective({ locale }: Props) {
         <div className="mb-4 flex flex-col items-center gap-2 rounded-2xl border border-primary bg-primary/10 p-4 text-center">
           <img
             src={CHRONO_DETECTIVE_SPRITES.trophy}
-            alt="Obra Dinn Fate Ledger Trophy"
+            alt="Fate Ledger Trophy"
             width={56}
             height={56}
             className="size-14 object-contain animate-bounce drop-shadow-md"
           />
           <h3 className="text-lg font-extrabold text-primary">
             {isKo
-              ? '[3인의 법칙 달성!] 상선 오브라 딘 호의 3대 비극과 진범이 장부에 영구 기록되었습니다!'
+              ? '[3인의 법칙 달성!] 상선 메멘토 호의 3대 비극과 진범이 장부에 영구 기록되었습니다!'
               : '[Rule of Three Complete!] All 3 Maritime Fates Have Been Permanently Sealed in the Ledger!'}
           </h3>
         </div>

@@ -7,6 +7,8 @@
  * - Directional 8-way swipe gesture recognizer
  */
 
+import { vibrationAllowed } from "../haptics/user-activation";
+
 export interface DragPhysicsState {
   offset: number;
   velocity: number;
@@ -70,7 +72,7 @@ export class MotionGestureController {
    * Triggers tiered native mobile haptic vibrations.
    */
   public static triggerHaptic(tier: 'light' | 'medium' | 'heavy' | 'selection' | 'success' | 'warning'): void {
-    if (typeof window === 'undefined' || typeof navigator === 'undefined' || !navigator.vibrate) {
+    if (typeof window === 'undefined' || !vibrationAllowed()) {
       return;
     }
 

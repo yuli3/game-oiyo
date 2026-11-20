@@ -1,3 +1,5 @@
+import { vibrationAllowed } from "../haptics/user-activation";
+
 // Vibration patterns shared by the games, so the same event feels the same in every game
 // (studio standard 01-quality-bar.md F2: success 15ms, fail [30,40,30]).
 // One viewer preference turns haptics off for all games. 2026-10-23
@@ -20,7 +22,7 @@ type Vibrate = (pattern: number | number[]) => boolean;
 
 function defaultVibrate(): Vibrate | null {
   if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return null;
-  return (pattern) => navigator.vibrate(pattern);
+  return (pattern) => (vibrationAllowed() ? navigator.vibrate(pattern) : false);
 }
 
 export interface Haptics {

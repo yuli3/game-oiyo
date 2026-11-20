@@ -31,6 +31,7 @@ import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-u
 import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 import { getSpriteUrl, MINI_GOLF_SPRITES } from '../../lib/games/sprites';
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 function TiltGolfButton({
   children,
   onClick,
@@ -572,7 +573,7 @@ export default function MiniGolf({ locale }: Props) {
             href="/prototypes/mini-golf-unity/index.html"
             className="flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-lg border border-primary/50 bg-primary/15 text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
           >
-            🛰️ Unity 3D 12홀 챔피언십 에디션
+            <UnityEditionLabel />
           </a>
           <button
             type="button"

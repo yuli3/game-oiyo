@@ -19,6 +19,7 @@ import {
   type TownscaperState,
 } from '../../lib/games/townscaper-island';
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 interface Props {
   locale: string;
 }
@@ -302,7 +303,7 @@ export default function TownscaperIsland({ locale }: Props) {
             href="/prototypes/townscaper-island-unity/index.html"
             className="inline-flex items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/15 px-3 py-1.5 text-xs font-black text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
           >
-            🛰️ Unity 3D 12스테이지 건축 에디션
+            <UnityEditionLabel />
           </a>
           <span className="rounded-xl bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground">
             🧱 {isKo ? `총 블록: ${state.totalBlocks}개` : `Blocks: ${state.totalBlocks}`}
