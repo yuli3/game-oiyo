@@ -967,7 +967,11 @@ const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; de
   },
 ];
 
+// 2026-11-20 UI 점검: 57개 전부에 NEW를 달면 신작 표시가 의미를 잃고 첫 화면이 길어져요.
+// 앞쪽 8개만 신작 칸에 두고, 나머지는 아래 장르 칸에서 그대로 찾을 수 있어요.
+const NEW_RELEASES_SHOWN = 8;
 const newReleaseGames = NEW_RELEASES_CONFIG
+  .slice(0, NEW_RELEASES_SHOWN)
   .map((config) => {
     const game = GAMES.find((g) => g.slug === config.slug);
     return game ? { game, tag: config.tag, desc: config.desc } : null;
@@ -1199,21 +1203,21 @@ const cardJsonLd = {
                 format="webp"
                 loading="lazy"
                 decoding="async"
-                class="absolute inset-0 h-full w-full object-cover opacity-35 transition-transform duration-500 group-hover:scale-105 group-hover:opacity-40"
+                class="absolute inset-0 h-full w-full object-cover opacity-70 transition-transform duration-500 group-hover:scale-105 group-hover:opacity-80"
               />
             ) : (
               <span class="absolute right-4 bottom-4 text-7xl opacity-20 transition-transform duration-300 group-hover:scale-110" aria-hidden="true">
                 {g.emoji}
               </span>
             )}
-            <span class="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" aria-hidden="true" />
+            <span class="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" aria-hidden="true" />
             
-            <div class="relative z-10 flex items-center justify-between">
-              <span class="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-0.5 text-xs font-black tracking-wide text-primary-foreground shadow-xs">
+            <div class="relative z-10 flex items-center justify-between gap-2">
+              <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-2.5 py-0.5 text-xs font-black tracking-wide text-primary-foreground shadow-xs">
                 <span>✦</span>
                 <span>{newReleaseLabels.badge}</span>
               </span>
-              <span class="text-xs font-bold text-muted-foreground">
+              <span class="min-w-0 truncate rounded-full bg-background/80 px-2 py-0.5 text-xs font-bold text-muted-foreground">
                 {tag[locale] ?? tag.en}
               </span>
             </div>
@@ -1266,14 +1270,14 @@ const cardJsonLd = {
                 format="webp"
                 loading="lazy"
                 decoding="async"
-                class="absolute inset-0 h-full w-full object-cover opacity-25 transition-transform duration-500 group-hover:scale-105 group-hover:opacity-35"
+                class="absolute inset-0 h-full w-full object-cover opacity-70 transition-transform duration-500 group-hover:scale-105 group-hover:opacity-80"
               />
             ) : (
               <span class="absolute right-3 bottom-3 text-6xl opacity-15 transition-transform duration-300 group-hover:scale-110" aria-hidden="true">
                 {g.emoji}
               </span>
             )}
-            <span class="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" aria-hidden="true" />
+            <span class="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" aria-hidden="true" />
 
             <div class="relative z-10 flex items-center justify-between">
               <span class="inline-flex items-center gap-1 rounded-md bg-secondary border border-border px-1.5 py-0.5 text-xs font-bold text-foreground">
