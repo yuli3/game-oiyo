@@ -100,3 +100,18 @@
 /darkest-torch/  /torch-expedition/  301
 /stacklands-village  /card-village/  301
 /stacklands-village/  /card-village/  301
+# 2026-11-20 renamed games, wave 3 (names matched commercial titles)
+/:lang/wordle  /:lang/five-letter-guess/  301
+/:lang/wordle/  /:lang/five-letter-guess/  301
+/:lang/connect-four  /:lang/four-in-a-row/  301
+/:lang/connect-four/  /:lang/four-in-a-row/  301
+/:lang/yahtzee  /:lang/five-dice/  301
+/:lang/yahtzee/  /:lang/five-dice/  301
+/:lang/tamagotchi  /:lang/pocket-pet/  301
+/:lang/tamagotchi/  /:lang/pocket-pet/  301
+/:lang/plinko  /:lang/ball-drop/  301
+/:lang/plinko/  /:lang/ball-drop/  301
+/:lang/kingdomino  /:lang/kingdom-tiles/  301
+/:lang/kingdomino/  /:lang/kingdom-tiles/  301
+/:lang/korean-semantle  /:lang/word-warmth/  301
+/:lang/korean-semantle/  /:lang/word-warmth/  301

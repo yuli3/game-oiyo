@@ -38,7 +38,7 @@ describe("game-recommendations", () => {
   });
 
   it("never includes the target game itself", () => {
-    for (const slug of ["chess", "night-horde", "grid-clear", "wordle"]) {
+    for (const slug of ["chess", "night-horde", "grid-clear", "five-letter-guess"]) {
       const recs = getGameRecommendations(slug, "en", 4);
       expect(recs.map((r) => r.slug)).not.toContain(slug);
     }

@@ -70,7 +70,7 @@ export function resolveRankTier(slug: string, score: number): string {
     if (score >= 512) return "APPRENTICE";
     return "NOVICE";
   }
-  if (slug === "wordle") {
+  if (slug === "five-letter-guess") {
     if (score === 1) return "LUCKY GENIUS";
     if (score <= 3) return "GENIUS";
     if (score <= 4) return "MASTER";

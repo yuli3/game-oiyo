@@ -273,7 +273,7 @@
         "note": "8 flagship games — technical gates + 390px playtest + craft review (2026-08-27, Codex) plus 2026-09-07 VFX/motion wave guardrail re-verification (390px / 6 locales / reduced-motion / mute). See company-brain/projects/game/vfx-motion-wave-verification-2026-09-07.md. Content-depth follow-ups tracked separately (skyward-atlas GameGuide entry; ja/zh/fr/es GAME_INSIGHTS for minesweeper/chess/blackjack; dot-runner FAQ)."
       }
     },
-    "korean-semantle": {
+    "word-warmth": {
       "technicalGates": {
         "verifiedAt": "2026-08-27T11:40:47Z",
         "commit": "91ca604d89bc8ec168e8b329c11064c70da05d6b",

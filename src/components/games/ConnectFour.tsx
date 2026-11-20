@@ -68,7 +68,7 @@ const i18n: Record<Locale, {
   yellow: string;
 }> = {
   ko: {
-    title: "커넥트 포",
+    title: "사목",
     player: "플레이어",
     turn: "의 차례",
     wins: "승리!",
@@ -80,7 +80,7 @@ const i18n: Record<Locale, {
     column: "열", columnFull: "가득 참", empty: "빈 칸", red: "빨간 말", yellow: "노란 말",
   },
   en: {
-    title: "Connect Four",
+    title: "Four in a Row",
     player: "Player",
     turn: "'s turn",
     wins: " wins!",
@@ -92,7 +92,7 @@ const i18n: Record<Locale, {
     column: "Column", columnFull: "full", empty: "empty", red: "red disc", yellow: "yellow disc",
   },
   ja: {
-    title: "コネクトフォー",
+    title: "四目並べ",
     player: "プレイヤー",
     turn: "のターン",
     wins: "の勝利！",
@@ -104,7 +104,7 @@ const i18n: Record<Locale, {
     column: "列", columnFull: "満杯", empty: "空き", red: "赤いコマ", yellow: "黄色いコマ",
   },
   fr: {
-    title: "Puissance 4",
+    title: "Quatre en ligne",
     player: "Joueur",
     turn: " à jouer",
     wins: " gagne !",
@@ -116,7 +116,7 @@ const i18n: Record<Locale, {
     column: "Colonne", columnFull: "pleine", empty: "vide", red: "jeton rouge", yellow: "jeton jaune",
   },
   es: {
-    title: "Conecta Cuatro",
+    title: "Cuatro en raya",
     player: "Jugador",
     turn: " juega",
     wins: " gana!",
@@ -404,7 +404,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
         title: t.title,
         subtitle: mode === "ai" ? `VS AI (${aiInfo.level[level]})` : "2 PLAYERS",
         score: `${moveCount} MOVES`,
-        slug: "connect-four",
+        slug: "four-in-a-row",
         qrUrl: typeof window !== "undefined" ? window.location.href : undefined,
         customStats: [
           { label: "RESULT", value: winResultText },

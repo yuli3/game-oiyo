@@ -21,7 +21,7 @@
 - https://game.oiyo.net/en/chess/ — chess vs AI
 - https://game.oiyo.net/en/gomoku/ — gomoku (five in a row) vs AI
 - https://game.oiyo.net/en/sudoku/ — sudoku
-- https://game.oiyo.net/en/yahtzee/ — yahtzee (dice)
+- https://game.oiyo.net/en/five-dice/ — yahtzee (dice)
 - https://game.oiyo.net/en/janggi/ — korean chess (janggi) vs AI
 
 ## Publisher

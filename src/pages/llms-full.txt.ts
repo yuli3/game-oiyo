@@ -15,7 +15,7 @@ const humanize = (s: string) =>
   s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
 const AI_OPPONENT_GAMES = new Set([
-  'chess', 'checkers', 'gomoku', 'janggi', 'connect-four', 'reversi',
+  'chess', 'checkers', 'gomoku', 'janggi', 'four-in-a-row', 'reversi',
   'blackjack', 'shield-isle-tactics', 'tents-and-trees',
 ]);
 

@@ -75,7 +75,7 @@ const formatTime = (ms: number) =>
 
 const COPY = {
   ko: {
-    title: "워들 데일리 퍼즐",
+    title: "다섯 글자 맞히기 데일리 퍼즐",
     subtitle: "매일 새로운 5글자 영단어 퍼즐",
     loading: "단어 불러오는 중…",
     fail: "단어 데이터를 불러오지 못했어요",
@@ -104,7 +104,7 @@ const COPY = {
     hint: "실제 키보드 또는 화면 자판을 사용하세요.",
   },
   en: {
-    title: "Wordle Daily Puzzle",
+    title: "Five Letter Guess Daily",
     subtitle: "Daily 5-letter word puzzle",
     loading: "Loading words…",
     fail: "Failed to load word data",
@@ -133,7 +133,7 @@ const COPY = {
     hint: "Use your physical keyboard or the keys on screen.",
   },
   ja: {
-    title: "ワードル デイリーパズル",
+    title: "5文字ワード当て デイリーパズル",
     subtitle: "毎日新しい5文字の英単語パズル",
     loading: "単語を読み込み中…",
     fail: "単語データを読み込めません",
@@ -162,7 +162,7 @@ const COPY = {
     hint: "キーボードまたは画面のキーを使用してください。",
   },
   zh: {
-    title: "Wordle 每日单词",
+    title: "五字母猜词 每日",
     subtitle: "每日5字母英文单词谜题",
     loading: "正在加载单词…",
     fail: "无法加载单词数据",
@@ -191,7 +191,7 @@ const COPY = {
     hint: "请使用实体键盘或屏幕键盘。",
   },
   fr: {
-    title: "Wordle Quotidien",
+    title: "Mot en 5 lettres du jour",
     subtitle: "Mot anglais quotidien en 5 lettres",
     loading: "Chargement des mots…",
     fail: "Échec du chargement des mots",
@@ -220,7 +220,7 @@ const COPY = {
     hint: "Utilisez le clavier physique ou les touches à l’écran.",
   },
   es: {
-    title: "Wordle Diario",
+    title: "Palabra de 5 letras diaria",
     subtitle: "Palabra inglesa diaria de 5 letras",
     loading: "Cargando palabras…",
     fail: "No se pudieron cargar las palabras",
@@ -477,7 +477,7 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
         setError(t.fail);
         setLoading(false);
       });
-    setStats(getStreak("wordle"));
+    setStats(getStreak("five-letter-guess"));
   }, [t.fail]);
 
   // Elapsed Timer
@@ -518,9 +518,9 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
       }
       if (!recorded.current && game.mode === "daily") {
         recorded.current = true;
-        setStats(recordStreak("wordle", game.status === "won"));
+        setStats(recordStreak("five-letter-guess", game.status === "won"));
         if (game.status === "won") {
-          recordDailyPuzzleClear("wordle", dailyDate);
+          recordDailyPuzzleClear("five-letter-guess", dailyDate);
           setGuessDist((prev) => {
             const count = game.guesses.length;
             const next = { ...prev, [count]: (prev[count] ?? 0) + 1 };
@@ -676,7 +676,7 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
     const challengeUrl = buildChallengeUrl({
       baseUrl: origin,
       locale,
-      slug: "wordle",
+      slug: "five-letter-guess",
       seed: game.seed,
       score: game.status === "won" ? game.guesses.length : undefined,
     });
@@ -706,7 +706,7 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
         subtitle: "5-LETTER WORD PUZZLE",
         score: game.guesses.length,
         bestScore: stats?.maxStreak ?? 1,
-        slug: "wordle",
+        slug: "five-letter-guess",
         seedCode: seedCode || encodeSeed(game.seed),
         qrUrl: typeof window !== "undefined" ? window.location.href : undefined,
         durationSeconds: Math.floor(elapsed / 1000),
@@ -884,7 +884,7 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
         </div>
 
         {/* Wordle 5x6 Board Grid */}
-        <div className="grid gap-1.5 py-1" role="grid" aria-label="Wordle Grid">
+        <div className="grid gap-1.5 py-1" role="grid" aria-label="Palabra de 5 letras Grid">
           {display.map((word, row) => {
             const submitted = row < game.guesses.length;
             const marks = submitted ? evaluateWordleGuess(word, target) : [];
@@ -971,7 +971,7 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
       <DailyPuzzleCalendarModal
         isOpen={isCalendarOpen}
         onClose={() => setIsCalendarOpen(false)}
-        gameSlug="wordle"
+        gameSlug="five-letter-guess"
         gameTitle={t.title}
         onSelectDate={(selectedDate) => {
           setDailyDate(selectedDate);

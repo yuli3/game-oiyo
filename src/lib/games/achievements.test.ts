@@ -95,7 +95,7 @@ describe("achievements: cross-store snapshot", () => {
     recordResult("chess", "w");
     recordBest("sudoku", 42, "seconds");
     recordDailyWin("kurodoko", "2026-07-18", "2026-07-17");
-    recordStreak("wordle", false);
+    recordStreak("five-letter-guess", false);
 
     expect(buildAchievementSnapshot()).toMatchObject({
       totalWins: 2,

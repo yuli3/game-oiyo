@@ -27,40 +27,40 @@ const formatSeconds = (seconds: number) => `${Math.floor(seconds / 60)}:${String
 
 const COPY = {
     ko: {
-        title: '야찌 (Yahtzee)', subtitle: 'Dice Strategy',
+        title: '파이브 다이스', subtitle: 'Dice Strategy',
         round: (n: number) => `라운드 ${n} / 13`, rollsLeft: (n: number) => `남은 굴림 ${n}`,
         total: '총점', best: '최고 기록', roll: '주사위 굴리기 🎲', rollFirst: '먼저 주사위를 굴리세요',
         gameOver: '게임 종료!', playAgain: '다시 하기', holdHint: '주사위를 눌러 고정/해제',
-        upper: '상단 섹션', lower: '하단 섹션', bonus: '보너스 (63점 이상 +35)', yahtzeeBonus: '야찌 보너스',
-        rules: '규칙 보기', joker: '추가 야찌! 같은 눈의 상단 칸을 먼저 채워야 합니다.',
+        upper: '상단 섹션', lower: '하단 섹션', bonus: '보너스 (63점 이상 +35)', yahtzeeBonus: '파이브 다이스 보너스',
+        rules: '규칙 보기', joker: '추가 파이브 다이스! 같은 눈의 상단 칸을 먼저 채워야 합니다.',
         time: '시간', sound: '소리', recommendation: '추천', upperReason: '상단 보너스에 유리', scoreReason: '현재 최고 점수', jokerReason: '공식 조커 규칙', breakdown: '결과 분석', zeroes: '0점 칸', nextGoal: '다음 목표', points: '점',
-        rulesBody: ['13라운드 동안 매 라운드 주사위 5개를 최대 3번 굴립니다.', '굴림 사이에 주사위를 눌러 고정할 수 있습니다.', '굴림 후 점수표에서 한 칸을 선택해 채점합니다(빈 칸은 0점 처리 가능).', '상단(1~6) 합계가 63점 이상이면 +35 보너스.', '야찌(같은 눈 5개)는 50점, 이후 추가 야찌마다 +100 보너스.'],
-        cats: { aces: '1 (Aces)', twos: '2 (Twos)', threes: '3 (Threes)', fours: '4 (Fours)', fives: '5 (Fives)', sixes: '6 (Sixes)', threeOfAKind: '트리플', fourOfAKind: '포카드', fullHouse: '풀하우스', smallStraight: '스몰 스트레이트', largeStraight: '라지 스트레이트', yahtzee: '야찌!', chance: '찬스' },
+        rulesBody: ['13라운드 동안 매 라운드 주사위 5개를 최대 3번 굴립니다.', '굴림 사이에 주사위를 눌러 고정할 수 있습니다.', '굴림 후 점수표에서 한 칸을 선택해 채점합니다(빈 칸은 0점 처리 가능).', '상단(1~6) 합계가 63점 이상이면 +35 보너스.', '파이브 다이스(같은 눈 5개)는 50점, 이후 추가 파이브 다이스마다 +100 보너스.'],
+        cats: { aces: '1 (Aces)', twos: '2 (Twos)', threes: '3 (Threes)', fours: '4 (Fours)', fives: '5 (Fives)', sixes: '6 (Sixes)', threeOfAKind: '트리플', fourOfAKind: '포카드', fullHouse: '풀하우스', smallStraight: '스몰 스트레이트', largeStraight: '라지 스트레이트', yahtzee: '파이브 다이스!', chance: '찬스' },
     },
     en: {
-        title: 'Yahtzee', subtitle: 'Dice Strategy',
+        title: 'Five Dice', subtitle: 'Dice Strategy',
         round: (n: number) => `Round ${n} / 13`, rollsLeft: (n: number) => `Rolls left ${n}`,
         total: 'Total', best: 'Best', roll: 'Roll Dice 🎲', rollFirst: 'Roll the dice first',
         gameOver: 'Game Over!', playAgain: 'Play Again', holdHint: 'Tap a die to hold/release it',
-        upper: 'Upper Section', lower: 'Lower Section', bonus: 'Bonus (63+ → +35)', yahtzeeBonus: 'Yahtzee Bonus',
-        rules: 'Rules', joker: 'Extra Yahtzee! Score the matching upper box first.',
+        upper: 'Upper Section', lower: 'Lower Section', bonus: 'Bonus (63+ → +35)', yahtzeeBonus: 'Five Dice Bonus',
+        rules: 'Rules', joker: 'Extra Five Dice! Score the matching upper box first.',
         time: 'Time', sound: 'Sound', recommendation: 'Suggested', upperReason: 'helps the upper bonus', scoreReason: 'highest score now', jokerReason: 'official Joker rule', breakdown: 'Breakdown', zeroes: 'Zero boxes', nextGoal: 'Next target', points: 'pts',
-        rulesBody: ['Play 13 rounds; each round roll five dice up to 3 times.', 'Tap dice between rolls to hold them.', 'After rolling, pick one scorecard category (you may take a 0).', 'Upper section (1–6) totalling 63+ earns a +35 bonus.', 'Yahtzee (five of a kind) scores 50; each extra yahtzee adds +100.'],
-        cats: { aces: 'Aces', twos: 'Twos', threes: 'Threes', fours: 'Fours', fives: 'Fives', sixes: 'Sixes', threeOfAKind: '3 of a Kind', fourOfAKind: '4 of a Kind', fullHouse: 'Full House', smallStraight: 'Small Straight', largeStraight: 'Large Straight', yahtzee: 'Yahtzee!', chance: 'Chance' },
+        rulesBody: ['Play 13 rounds; each round roll five dice up to 3 times.', 'Tap dice between rolls to hold them.', 'After rolling, pick one scorecard category (you may take a 0).', 'Upper section (1–6) totalling 63+ earns a +35 bonus.', 'Five Dice (five of a kind) scores 50; each extra five-dice roll adds +100.'],
+        cats: { aces: 'Aces', twos: 'Twos', threes: 'Threes', fours: 'Fours', fives: 'Fives', sixes: 'Sixes', threeOfAKind: '3 of a Kind', fourOfAKind: '4 of a Kind', fullHouse: 'Full House', smallStraight: 'Small Straight', largeStraight: 'Large Straight', yahtzee: 'Five Dice!', chance: 'Chance' },
     },
     ja: {
-        title: 'ヤッツィー', subtitle: 'Dice Strategy',
+        title: 'ファイブダイス', subtitle: 'Dice Strategy',
         round: (n: number) => `ラウンド ${n} / 13`, rollsLeft: (n: number) => `残り ${n} 回`,
         total: '合計', best: 'ベスト', roll: 'サイコロを振る 🎲', rollFirst: 'まずサイコロを振ってください',
         gameOver: 'ゲーム終了！', playAgain: 'もう一度', holdHint: 'サイコロをタップでホールド/解除',
-        upper: '上段セクション', lower: '下段セクション', bonus: 'ボーナス (63点以上 +35)', yahtzeeBonus: 'ヤッツィーボーナス',
-        rules: 'ルール', joker: '追加ヤッツィー！同じ目の上段を先に記入します。',
+        upper: '上段セクション', lower: '下段セクション', bonus: 'ボーナス (63点以上 +35)', yahtzeeBonus: 'ファイブダイスボーナス',
+        rules: 'ルール', joker: '追加ファイブダイス！同じ目の上段を先に記入します。',
         time: '時間', sound: '音', recommendation: 'おすすめ', upperReason: '上段ボーナスに有利', scoreReason: '現在の最高点', jokerReason: '公式ジョーカールール', breakdown: '結果分析', zeroes: '0点の枠', nextGoal: '次の目標', points: '点',
-        rulesBody: ['13ラウンド、各ラウンドで5個のサイコロを最大3回振ります。', '振る合間にサイコロをタップしてホールドできます。', '振った後、スコア表から1つのカテゴリを選んで記入します(0点も可)。', '上段(1〜6)の合計が63点以上で+35ボーナス。', 'ヤッツィー(同じ目5個)は50点、以降の追加ヤッツィーは+100。'],
-        cats: { aces: '1の目', twos: '2の目', threes: '3の目', fours: '4の目', fives: '5の目', sixes: '6の目', threeOfAKind: 'スリーカード', fourOfAKind: 'フォーカード', fullHouse: 'フルハウス', smallStraight: 'Sストレート', largeStraight: 'Lストレート', yahtzee: 'ヤッツィー！', chance: 'チャンス' },
+        rulesBody: ['13ラウンド、各ラウンドで5個のサイコロを最大3回振ります。', '振る合間にサイコロをタップしてホールドできます。', '振った後、スコア表から1つのカテゴリを選んで記入します(0点も可)。', '上段(1〜6)の合計が63点以上で+35ボーナス。', 'ファイブダイス(同じ目5個)は50点、以降の追加ファイブダイスは+100。'],
+        cats: { aces: '1の目', twos: '2の目', threes: '3の目', fours: '4の目', fives: '5の目', sixes: '6の目', threeOfAKind: 'スリーカード', fourOfAKind: 'フォーカード', fullHouse: 'フルハウス', smallStraight: 'Sストレート', largeStraight: 'Lストレート', yahtzee: 'ファイブダイス！', chance: 'チャンス' },
     },
     zh: {
-        title: '快艇骰子 (Yahtzee)', subtitle: 'Dice Strategy',
+        title: '五骰计分', subtitle: 'Dice Strategy',
         round: (n: number) => `第 ${n} / 13 轮`, rollsLeft: (n: number) => `剩余 ${n} 次`,
         total: '总分', best: '最高分', roll: '掷骰子 🎲', rollFirst: '请先掷骰子',
         gameOver: '游戏结束！', playAgain: '再来一局', holdHint: '点击骰子锁定/解锁',
@@ -71,26 +71,26 @@ const COPY = {
         cats: { aces: '一点', twos: '二点', threes: '三点', fours: '四点', fives: '五点', sixes: '六点', threeOfAKind: '三条', fourOfAKind: '四条', fullHouse: '葫芦', smallStraight: '小顺', largeStraight: '大顺', yahtzee: '快艇！', chance: '全选' },
     },
     fr: {
-        title: 'Yahtzee', subtitle: 'Dice Strategy',
+        title: 'Five Dice', subtitle: 'Dice Strategy',
         round: (n: number) => `Manche ${n} / 13`, rollsLeft: (n: number) => `Lancers restants ${n}`,
         total: 'Total', best: 'Record', roll: 'Lancer les dés 🎲', rollFirst: "Lancez d'abord les dés",
         gameOver: 'Partie terminée !', playAgain: 'Rejouer', holdHint: 'Touchez un dé pour le garder/relâcher',
-        upper: 'Section supérieure', lower: 'Section inférieure', bonus: 'Bonus (63+ → +35)', yahtzeeBonus: 'Bonus Yahtzee',
-        rules: 'Règles', joker: "Yahtzee supplémentaire ! Remplissez d'abord la case supérieure correspondante.",
+        upper: 'Section supérieure', lower: 'Section inférieure', bonus: 'Bonus (63+ → +35)', yahtzeeBonus: 'Bonus Five Dice',
+        rules: 'Règles', joker: "Five Dice supplémentaire ! Remplissez d'abord la case supérieure correspondante.",
         time: 'Temps', sound: 'Son', recommendation: 'Conseil', upperReason: 'favorise le bonus supérieur', scoreReason: 'meilleur score actuel', jokerReason: 'règle Joker officielle', breakdown: 'Analyse', zeroes: 'Cases à zéro', nextGoal: 'Prochain objectif', points: 'pts',
-        rulesBody: ['13 manches ; à chaque manche, lancez 5 dés jusqu\'à 3 fois.', 'Touchez les dés entre les lancers pour les garder.', 'Après un lancer, choisissez une case du tableau (0 possible).', 'Section supérieure (1–6) à 63+ : bonus de +35.', 'Le Yahtzee (5 identiques) vaut 50 ; chaque Yahtzee suivant +100.'],
-        cats: { aces: 'As', twos: 'Deux', threes: 'Trois', fours: 'Quatre', fives: 'Cinq', sixes: 'Six', threeOfAKind: 'Brelan', fourOfAKind: 'Carré', fullHouse: 'Full', smallStraight: 'Petite suite', largeStraight: 'Grande suite', yahtzee: 'Yahtzee !', chance: 'Chance' },
+        rulesBody: ['13 manches ; à chaque manche, lancez 5 dés jusqu\'à 3 fois.', 'Touchez les dés entre les lancers pour les garder.', 'Après un lancer, choisissez une case du tableau (0 possible).', 'Section supérieure (1–6) à 63+ : bonus de +35.', 'Le Five Dice (5 identiques) vaut 50 ; chaque Five Dice suivant +100.'],
+        cats: { aces: 'As', twos: 'Deux', threes: 'Trois', fours: 'Quatre', fives: 'Cinq', sixes: 'Six', threeOfAKind: 'Brelan', fourOfAKind: 'Carré', fullHouse: 'Full', smallStraight: 'Petite suite', largeStraight: 'Grande suite', yahtzee: 'Five Dice !', chance: 'Chance' },
     },
     es: {
-        title: 'Yahtzee', subtitle: 'Dice Strategy',
+        title: 'Five Dice', subtitle: 'Dice Strategy',
         round: (n: number) => `Ronda ${n} / 13`, rollsLeft: (n: number) => `Tiradas restantes ${n}`,
         total: 'Total', best: 'Récord', roll: 'Lanzar dados 🎲', rollFirst: 'Lanza los dados primero',
         gameOver: '¡Fin del juego!', playAgain: 'Jugar otra vez', holdHint: 'Toca un dado para fijarlo/soltarlo',
-        upper: 'Sección superior', lower: 'Sección inferior', bonus: 'Bono (63+ → +35)', yahtzeeBonus: 'Bono Yahtzee',
-        rules: 'Reglas', joker: '¡Yahtzee extra! Primero debes anotar la casilla superior correspondiente.',
+        upper: 'Sección superior', lower: 'Sección inferior', bonus: 'Bono (63+ → +35)', yahtzeeBonus: 'Bono Five Dice',
+        rules: 'Reglas', joker: '¡Five Dice extra! Primero debes anotar la casilla superior correspondiente.',
         time: 'Tiempo', sound: 'Sonido', recommendation: 'Sugerencia', upperReason: 'ayuda al bono superior', scoreReason: 'mayor puntuación actual', jokerReason: 'regla oficial del comodín', breakdown: 'Análisis', zeroes: 'Casillas en cero', nextGoal: 'Próximo objetivo', points: 'pts',
-        rulesBody: ['13 rondas; en cada una lanza 5 dados hasta 3 veces.', 'Toca los dados entre tiradas para fijarlos.', 'Tras lanzar, elige una casilla del marcador (puedes anotar 0).', 'Sección superior (1–6) con 63+ gana un bono de +35.', 'El Yahtzee (5 iguales) vale 50; cada Yahtzee extra suma +100.'],
-        cats: { aces: 'Unos', twos: 'Doses', threes: 'Treses', fours: 'Cuatros', fives: 'Cincos', sixes: 'Seises', threeOfAKind: 'Trío', fourOfAKind: 'Póker', fullHouse: 'Full', smallStraight: 'Escalera corta', largeStraight: 'Escalera larga', yahtzee: '¡Yahtzee!', chance: 'Suerte' },
+        rulesBody: ['13 rondas; en cada una lanza 5 dados hasta 3 veces.', 'Toca los dados entre tiradas para fijarlos.', 'Tras lanzar, elige una casilla del marcador (puedes anotar 0).', 'Sección superior (1–6) con 63+ gana un bono de +35.', 'El Five Dice (5 iguales) vale 50; cada Five Dice extra suma +100.'],
+        cats: { aces: 'Unos', twos: 'Doses', threes: 'Treses', fours: 'Cuatros', fives: 'Cincos', sixes: 'Seises', threeOfAKind: 'Trío', fourOfAKind: 'Póker', fullHouse: 'Full', smallStraight: 'Escalera corta', largeStraight: 'Escalera larga', yahtzee: '¡Five Dice!', chance: 'Suerte' },
     },
 } as const;
 
@@ -198,14 +198,14 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     useEffect(() => {
         try {
             const legacyBest = Number(localStorage.getItem(BEST_KEY));
-            const unifiedBest = getBest('yahtzee');
+            const unifiedBest = getBest('five-dice');
             const migratedBest = Math.max(
                 Number.isFinite(legacyBest) && legacyBest > 0 ? legacyBest : 0,
                 unifiedBest?.unit === 'score' ? unifiedBest.value : 0,
             );
             if (migratedBest > 0) {
                 setBest(migratedBest);
-                recordBest('yahtzee', migratedBest, 'score', undefined, { trackPlay: false });
+                recordBest('five-dice', migratedBest, 'score', undefined, { trackPlay: false });
             }
             const saved = loadYahtzeeSave();
             if (saved) {
@@ -268,7 +268,7 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             if (next.isGameOver && next.scorecard.totalScore > best) {
                 setBest(next.scorecard.totalScore);
                 try { localStorage.setItem(BEST_KEY, String(next.scorecard.totalScore)); } catch { /* ignore */ }
-                recordBest('yahtzee', next.scorecard.totalScore, 'score');
+                recordBest('five-dice', next.scorecard.totalScore, 'score');
             }
             if (next.isGameOver) clearYahtzeeSave();
             return next;
@@ -314,7 +314,7 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 subtitle: `Score: ${state.scorecard.totalScore} · Upper: ${upperScore + state.scorecard.upperBonus}`,
                 score: `${state.scorecard.totalScore} PTS`,
                 bestScore: best ? `${best} PTS` : undefined,
-                slug: "yahtzee",
+                slug: "five-dice",
                 durationSeconds: seconds,
                 locale,
                 customStats: [
@@ -328,7 +328,7 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 setShareCardCopied(true);
                 setTimeout(() => setShareCardCopied(false), 2500);
             } else {
-                downloadShareCard(canvas, `yahtzee-${state.scorecard.totalScore}pts.png`);
+                downloadShareCard(canvas, `five-dice-${state.scorecard.totalScore}pts.png`);
             }
         } catch { /* best effort */ }
     }, [best, locale, seconds, state.scorecard.totalScore, state.scorecard.upperBonus, state.scorecard.yahtzeeBonusCount, t.title, t.upper, t.yahtzeeBonus, t.zeroes, upperScore, zeroCount]);
@@ -431,7 +431,7 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             />
                             <img
                                 src={YAHTZEE_UI_SPRITES.trophy}
-                                alt="Yahtzee Master Trophy"
+                                alt="Five Dice Master Trophy"
                                 width={60}
                                 height={60}
                                 className="drop-shadow-lg animate-bounce"

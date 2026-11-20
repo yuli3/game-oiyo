@@ -46,7 +46,7 @@ const completedRisk = {
   "mallow-isle": { mobile: "low", accessibility: "low", performance: "medium" },
   hitori: { mobile: "low", accessibility: "low", performance: "low" },
   "light-up": { mobile: "low", accessibility: "low", performance: "low" },
-  "korean-semantle": { mobile: "low", accessibility: "low", performance: "low" },
+  "word-warmth": { mobile: "low", accessibility: "low", performance: "low" },
   "isometric-city": { mobile: "low", accessibility: "low", performance: "medium" },
   "charge-climb": { mobile: "low", accessibility: "low", performance: "low" },
   "animal-pop": { mobile: "low", accessibility: "low", performance: "low" },
@@ -55,7 +55,7 @@ const completedRisk = {
   maze: { mobile: "low", accessibility: "low", performance: "low" },
   janggi: { mobile: "low", accessibility: "low", performance: "low" },
   gomoku: { mobile: "low", accessibility: "low", performance: "low" },
-  "connect-four": { mobile: "low", accessibility: "low", performance: "low" },
+  "four-in-a-row": { mobile: "low", accessibility: "low", performance: "low" },
   freecell: { mobile: "low", accessibility: "low", performance: "low" },
   hearts: { mobile: "low", accessibility: "low", performance: "low" },
   "puzzle-15": { mobile: "low", accessibility: "low", performance: "low" },
@@ -74,7 +74,7 @@ const completedRisk = {
   "neon-formation": { mobile: "low", accessibility: "low", performance: "medium" },
   "skyward-atlas": { mobile: "low", accessibility: "low", performance: "medium" },
 };
-const wave3 = new Set(["snake-game", "gomoku", "kurodoko", "yahtzee"]);
+const wave3 = new Set(["snake-game", "gomoku", "kurodoko", "five-dice"]);
 const wave4 = new Set(["cave-dash", "dot-runner", "mahjong"]);
 const specialComponents = { chess: "ChessBoard", janggi: "JanggiBoard", maze: "MazeGame", "number-guessing": "NumberGuessingGame", wordle: "WordleGame" };
 const sharedLibs = new Set(["records", "daily", "active-game-save", "session-envelope", "reduced-motion", "react-state-transitions"]);

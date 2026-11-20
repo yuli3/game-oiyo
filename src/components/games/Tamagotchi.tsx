@@ -72,7 +72,7 @@ const STORE_KEY = 'oiyo-tamagotchi:v1';
 
 const COPY = {
     ko: {
-        title: '다마고치', subtitle: 'Retro Virtual Pet',
+        title: '포켓 펫', subtitle: 'Retro Virtual Pet',
         namePrompt: '알에게 이름을 지어주세요', nameLabel: '이름', start: '키우기 시작', age: '나이', days: '일',
         hunger: '포만감', thirst: '수분', happiness: '행복', cleanliness: '청결', health: '건강',
         feed: '먹이', water: '물', play: '놀기', clean: '씻기', heal: '치료',
@@ -83,7 +83,7 @@ const COPY = {
         msg: { fed: '냠냠! 맛있게 먹었어요', gave_water: '꿀꺽꿀꺽! 시원해요', played: '신나게 놀았어요!', cleaned: '반짝반짝 깨끗해요', healed: '몸이 나아졌어요', petted: '기분이 좋아요 💗', hatched: '알에서 태어났어요! 🎉', grew_to_child: '어린이로 자랐어요!', grew_to_adult: '어른이 되었어요!', sleeping: '쿨쿨... 잠들었어요', woke_up: '잠에서 깼어요!', egg_cared: '알이 따뜻해졌어요', meal_breakfast: '아침을 먹었어요 🌅', meal_lunch: '점심을 먹었어요 ☀️', meal_dinner: '저녁을 먹었어요 🌙', walked: '즐거운 산책이었어요 🐾', walk_unavailable: '아직 산책할 수 없어요', heal_not_needed: '지금은 건강해요', dead_cant_act: '...', sleeping_cant_act: '자고 있어요...', feed_cooldown: '아직 배불러요', water_cooldown: '목마르지 않아요', play_cooldown: '조금 쉬고 싶어요', clean_cooldown: '이미 깨끗해요', heal_cooldown: '약은 아직이에요', pet_cooldown: '쓰다듬기는 잠시 후에', died_neglect: '돌봄이 부족해 떠났어요... 🌈', died_old_age: '천수를 누리고 떠났어요 🌈' },
     },
     en: {
-        title: 'Tamagotchi', subtitle: 'Retro Virtual Pet',
+        title: 'Pocket Pet', subtitle: 'Retro Virtual Pet',
         namePrompt: 'Name your egg', nameLabel: 'Name', start: 'Start Raising', age: 'Age', days: 'days',
         hunger: 'Fullness', thirst: 'Hydration', happiness: 'Happiness', cleanliness: 'Cleanliness', health: 'Health',
         feed: 'Feed', water: 'Water', play: 'Play', clean: 'Clean', heal: 'Heal',
@@ -94,7 +94,7 @@ const COPY = {
         msg: { fed: 'Yum! That hit the spot', gave_water: 'Gulp gulp! Refreshing', played: 'That was fun!', cleaned: 'Squeaky clean', healed: 'Feeling better now', petted: 'So happy 💗', hatched: 'The egg hatched! 🎉', grew_to_child: 'Grew into a child!', grew_to_adult: 'All grown up!', sleeping: 'Zzz... fell asleep', woke_up: 'Woke up!', egg_cared: 'The egg feels warm', meal_breakfast: 'Had breakfast 🌅', meal_lunch: 'Had lunch ☀️', meal_dinner: 'Had dinner 🌙', walked: 'What a nice walk 🐾', walk_unavailable: "Can't walk yet", heal_not_needed: 'Healthy enough already', dead_cant_act: '...', sleeping_cant_act: 'Sleeping...', feed_cooldown: 'Still full', water_cooldown: 'Not thirsty', play_cooldown: 'Needs a little rest', clean_cooldown: 'Already clean', heal_cooldown: 'No medicine yet', pet_cooldown: 'Petting again soon', died_neglect: 'Passed away from neglect... 🌈', died_old_age: 'Lived a full life 🌈' },
     },
     ja: {
-        title: 'たまごっち風ペット', subtitle: 'Retro Virtual Pet',
+        title: 'ポケットペット', subtitle: 'Retro Virtual Pet',
         namePrompt: 'たまごに名前をつけてね', nameLabel: '名前', start: '育てはじめる', age: '年齢', days: '日',
         hunger: '満腹度', thirst: '水分', happiness: 'ごきげん', cleanliness: '清潔', health: '健康',
         feed: 'ごはん', water: '水', play: '遊ぶ', clean: '洗う', heal: '治療',
@@ -105,7 +105,7 @@ const COPY = {
         msg: { fed: 'もぐもぐ！おいしかった', gave_water: 'ごくごく！うるおった', played: 'たのしかった！', cleaned: 'ピカピカきれい', healed: '元気になった', petted: 'うれしい 💗', hatched: 'たまごが孵った！ 🎉', grew_to_child: 'こどもに成長！', grew_to_adult: 'おとなになった！', sleeping: 'すやすや...眠った', woke_up: '目が覚めた！', egg_cared: 'たまごがあたたかい', meal_breakfast: '朝ごはんを食べた 🌅', meal_lunch: '昼ごはんを食べた ☀️', meal_dinner: '晩ごはんを食べた 🌙', walked: 'たのしい散歩だった 🐾', walk_unavailable: 'まだ散歩できない', heal_not_needed: '今は健康です', dead_cant_act: '...', sleeping_cant_act: '眠っています...', feed_cooldown: 'まだ満腹', water_cooldown: 'のどは乾いてない', play_cooldown: '少し休みたい', clean_cooldown: 'もうきれい', heal_cooldown: 'お薬はまだ', pet_cooldown: 'なでなではまた後で', died_neglect: 'お世話が足りず旅立ちました... 🌈', died_old_age: '天寿をまっとうしました 🌈' },
     },
     zh: {
-        title: '电子宠物', subtitle: 'Retro Virtual Pet',
+        title: '口袋宠物', subtitle: 'Retro Virtual Pet',
         namePrompt: '给蛋起个名字吧', nameLabel: '名字', start: '开始饲养', age: '年龄', days: '天',
         hunger: '饱食度', thirst: '水分', happiness: '快乐', cleanliness: '清洁', health: '健康',
         feed: '喂食', water: '喂水', play: '玩耍', clean: '清洗', heal: '治疗',
@@ -116,7 +116,7 @@ const COPY = {
         msg: { fed: '吧唧吧唧！真好吃', gave_water: '咕咚咕咚！真解渴', played: '玩得真开心！', cleaned: '洗得干干净净', healed: '身体好多了', petted: '好开心 💗', hatched: '蛋孵化了！🎉', grew_to_child: '长成小孩了！', grew_to_adult: '长大成年了！', sleeping: '呼呼...睡着了', woke_up: '醒来了！', egg_cared: '蛋暖暖的', meal_breakfast: '吃了早餐 🌅', meal_lunch: '吃了午餐 ☀️', meal_dinner: '吃了晚餐 🌙', walked: '散步真愉快 🐾', walk_unavailable: '还不能散步', heal_not_needed: '现在很健康', dead_cant_act: '...', sleeping_cant_act: '在睡觉...', feed_cooldown: '还很饱', water_cooldown: '不渴', play_cooldown: '想休息一下', clean_cooldown: '已经很干净', heal_cooldown: '还不能吃药', pet_cooldown: '待会儿再摸摸', died_neglect: '因缺乏照顾离开了... 🌈', died_old_age: '安享天年离开了 🌈' },
     },
     fr: {
-        title: 'Tamagotchi', subtitle: 'Retro Virtual Pet',
+        title: 'Pocket Pet', subtitle: 'Retro Virtual Pet',
         namePrompt: 'Donnez un nom à votre œuf', nameLabel: 'Nom', start: 'Commencer', age: 'Âge', days: 'jours',
         hunger: 'Satiété', thirst: 'Hydratation', happiness: 'Bonheur', cleanliness: 'Propreté', health: 'Santé',
         feed: 'Nourrir', water: 'Eau', play: 'Jouer', clean: 'Laver', heal: 'Soigner',
@@ -127,7 +127,7 @@ const COPY = {
         msg: { fed: 'Miam ! Délicieux', gave_water: 'Glou glou ! Rafraîchissant', played: "C'était amusant !", cleaned: 'Tout propre', healed: 'Ça va mieux', petted: 'Trop content 💗', hatched: "L'œuf a éclos ! 🎉", grew_to_child: 'Devenu enfant !', grew_to_adult: 'Devenu adulte !', sleeping: 'Zzz... endormi', woke_up: 'Réveillé !', egg_cared: "L'œuf est tout chaud", meal_breakfast: 'Petit-déjeuner pris 🌅', meal_lunch: 'Déjeuner pris ☀️', meal_dinner: 'Dîner pris 🌙', walked: 'Belle promenade 🐾', walk_unavailable: 'Pas encore de promenade', heal_not_needed: 'Déjà en bonne santé', dead_cant_act: '...', sleeping_cant_act: 'Il dort...', feed_cooldown: 'Encore rassasié', water_cooldown: "Pas soif", play_cooldown: 'Besoin de repos', clean_cooldown: 'Déjà propre', heal_cooldown: 'Pas de médicament pour l\'instant', pet_cooldown: 'Caresses dans un moment', died_neglect: 'Parti par manque de soins... 🌈', died_old_age: 'A vécu une belle vie 🌈' },
     },
     es: {
-        title: 'Tamagotchi', subtitle: 'Retro Virtual Pet',
+        title: 'Pocket Pet', subtitle: 'Retro Virtual Pet',
         namePrompt: 'Ponle nombre a tu huevo', nameLabel: 'Nombre', start: 'Empezar a criar', age: 'Edad', days: 'días',
         hunger: 'Saciedad', thirst: 'Hidratación', happiness: 'Felicidad', cleanliness: 'Limpieza', health: 'Salud',
         feed: 'Alimentar', water: 'Agua', play: 'Jugar', clean: 'Lavar', heal: 'Curar',
@@ -260,9 +260,9 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         try {
             const canvas = createShareCardCanvas({
                 title: pet.name,
-                subtitle: `Tamagotchi · ${pet.stage.toUpperCase()}`,
+                subtitle: `Pocket Pet · ${pet.stage.toUpperCase()}`,
                 score: `${pet.age} Days`,
-                slug: 'tamagotchi',
+                slug: 'pocket-pet',
                 customStats: [
                     { label: 'STAGE', value: pet.stage },
                     { label: 'HEALTH', value: `${pet.health}%` },

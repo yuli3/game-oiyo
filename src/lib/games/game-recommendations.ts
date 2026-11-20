@@ -19,9 +19,9 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
   "checkers": { emoji: "🟤", cat: "board", name: {"ko":"체커","en":"Checkers","ja":"チェッカー","zh":"西洋跳棋","fr":"Dames","es":"Damas"} },
   "gomoku": { emoji: "⚫", cat: "board", name: {"ko":"오목","en":"Gomoku","ja":"五目並べ","zh":"五子棋","fr":"Gomoku","es":"Gomoku"} },
   "janggi": { emoji: "♟️", cat: "board", name: {"ko":"장기","en":"Janggi","ja":"チャンギ","zh":"韩国象棋","fr":"Janggi","es":"Janggi"} },
-  "connect-four": { emoji: "🔴", cat: "board", name: {"ko":"사목","en":"Connect Four","ja":"四目並べ","zh":"四子棋","fr":"Puissance 4","es":"Conecta 4"} },
+  "four-in-a-row": { emoji: "🔴", cat: "board", name: {"ko":"사목","en":"Four in a Row","ja":"四目並べ","zh":"四子棋","fr":"Quatre en ligne","es":"Cuatro en raya"} },
   "dominoes": { emoji: "🎴", cat: "board", name: {"ko":"도미노","en":"Dominoes","ja":"ドミノ","zh":"多米诺","fr":"Dominos","es":"Dominó"} },
-  "kingdomino": { emoji: "👑", cat: "board", name: {"ko":"킹도미노","en":"Kingdomino","ja":"キングドミノ","zh":"王国骨牌","fr":"Kingdomino","es":"Kingdomino"} },
+  "kingdom-tiles": { emoji: "👑", cat: "board", name: {"ko":"킹덤 타일","en":"Kingdom Tiles","ja":"キングダムタイル","zh":"王国拼砖","fr":"Kingdom Tiles","es":"Kingdom Tiles"} },
   "mahjong": { emoji: "🀄", cat: "board", name: {"ko":"마작","en":"Mahjong","ja":"麻雀","zh":"麻将","fr":"Mahjong","es":"Mahjong"} },
   "hitori": { emoji: "🔲", cat: "board", name: {"ko":"히토리","en":"Hitori","ja":"ひとり","zh":"数织","fr":"Hitori","es":"Hitori"} },
   "tents-and-trees": { emoji: "⛺", cat: "board", name: {"ko":"텐트와 나무","en":"Tents & Trees","ja":"テントと木","zh":"帐篷与树","fr":"Tentes & arbres","es":"Tiendas y árboles"} },
@@ -40,7 +40,7 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
   "number-trail": { emoji: "🔢", cat: "puzzle", name: {"ko":"넘버 트레일","en":"Number Trail","ja":"ナンバートレイル","zh":"数字小径","fr":"Number Trail","es":"Number Trail"} },
   "arrow-walk": { emoji: "🧭", cat: "puzzle", name: {"ko":"애로 워크","en":"Arrow Walk","ja":"アローウォーク","zh":"箭头漫步","fr":"Arrow Walk","es":"Arrow Walk"} },
   "game-2048": { emoji: "🔟", cat: "puzzle", name: {"ko":"2048","en":"2048","ja":"2048","zh":"2048","fr":"2048","es":"2048"} },
-  "wordle": { emoji: "🟩", cat: "puzzle", name: {"ko":"워들","en":"Wordle","ja":"ワードル","zh":"猜词","fr":"Wordle","es":"Wordle"} },
+  "five-letter-guess": { emoji: "🟩", cat: "puzzle", name: {"ko":"다섯 글자 맞히기","en":"Five Letter Guess","ja":"5文字ワード当て","zh":"五字母猜词","fr":"Mot en 5 lettres","es":"Palabra de 5 letras"} },
   "letter-swap": { emoji: "🔤", cat: "puzzle", name: {"ko":"글자 맞바꾸기","en":"Letter Swap","ja":"文字入れ替え","zh":"字母对调","fr":"Échange de lettres","es":"Cambio de letras"} },
   "blackout-courier": { emoji: "🔦", cat: "puzzle", name: {"ko":"정전 배달부","en":"Blackout Courier","ja":"停電の配達人","zh":"停电快递员","fr":"Coursier dans le noir","es":"Mensajero a oscuras"} },
   "omission-detective": { emoji: "🔍", cat: "puzzle", name: {"ko":"거짓말 탐정","en":"Omission Detective","ja":"省略の探偵","zh":"省略侦探","fr":"Détective des oublis","es":"Detective de omisiones"} },
@@ -61,7 +61,7 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
   "liar-onephone": { emoji: "🎭", cat: "quiz", name: {"ko":"라이어 한 폰","en":"One-Phone Liar","ja":"一台ライアー","zh":"一机说谎者","fr":"Menteur, un téléphone","es":"Mentiroso de un móvil"} },
   "spatial-memory": { emoji: "🧭", cat: "puzzle", name: {"ko":"공간 기억","en":"Spatial Memory","ja":"空間記憶","zh":"空间记忆","fr":"Mémoire spatiale","es":"Memoria espacial"} },
   "spirit-vale": { emoji: "🌿", cat: "puzzle", name: {"ko":"정령 골짜기","en":"Spirit Vale","ja":"精霊の谷","zh":"精灵山谷","fr":"Val des Esprits","es":"Valle de los Espíritus"} },
-  "korean-semantle": { emoji: "🌊", cat: "puzzle", name: {"ko":"꼬맨틀","en":"Kkomantle","ja":"꼬맨틀","zh":"韩语猜义","fr":"Kkomantle","es":"Kkomantle"} },
+  "word-warmth": { emoji: "🌊", cat: "puzzle", name: {"ko":"단어 온도","en":"Word Warmth","ja":"単語温度","zh":"词语温度","fr":"Word Warmth","es":"Word Warmth"} },
   "cosmic-merge": { emoji: "🪐", cat: "puzzle", name: {"ko":"코스믹 머지","en":"Cosmic Merge","ja":"コズミック・マージ","zh":"宇宙合成","fr":"Cosmic Merge","es":"Cosmic Merge"} },
   "hexa-sort": { emoji: "🧩", cat: "puzzle", name: {"ko":"헥사 소트 3D","en":"Hexa Sort 3D","ja":"ヘキサソート 3D","zh":"六角排序 3D","fr":"Hexa Sort 3D","es":"Hexa Sort 3D"} },
   "grid-clear": { emoji: "💥", cat: "puzzle", name: {"ko":"그리드 클리어","en":"Grid Clear","ja":"グリッドクリア","zh":"格子消除","fr":"Grid Clear","es":"Grid Clear"} },
@@ -180,7 +180,7 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
   "dot-tower": { emoji: "🏰", cat: "arcade", name: {"ko":"도트 타워","en":"Dot Tower","ja":"ドットタワー","zh":"点点塔防","fr":"Dot Tower","es":"Dot Tower"} },
   "animal-pop": { emoji: "🐵", cat: "arcade", name: {"ko":"애니멀 팝","en":"Animal Pop","ja":"アニマルポップ","zh":"动物消消乐","fr":"Animal Pop","es":"Animal Pop"} },
   "block-burst": { emoji: "💎", cat: "arcade", name: {"ko":"블록 버스트","en":"Block Burst","ja":"ブロックバースト","zh":"方块爆裂","fr":"Block Burst","es":"Block Burst"} },
-  "yahtzee": { emoji: "🎲", cat: "luck", name: {"ko":"야찌","en":"Yahtzee","ja":"ヤッツィー","zh":"快艇骰子","fr":"Yahtzee","es":"Yahtzee"} },
+  "five-dice": { emoji: "🎲", cat: "luck", name: {"ko":"파이브 다이스","en":"Five Dice","ja":"ファイブダイス","zh":"五骰计分","fr":"Five Dice","es":"Five Dice"} },
 };
 
 /**
@@ -214,11 +214,11 @@ export const CURATED_CLUSTERS: Record<string, string[]> = {
   // Board Games
   "chess": ["shotgun-chess", "checkers", "gomoku", "janggi"],
   "shotgun-chess": ["chess", "checkers", "mech-grid-tactics", "tower-deck-rogue"],
-  "checkers": ["chess", "gomoku", "connect-four", "janggi"],
-  "gomoku": ["connect-four", "chess", "checkers", "janggi"],
+  "checkers": ["chess", "gomoku", "four-in-a-row", "janggi"],
+  "gomoku": ["four-in-a-row", "chess", "checkers", "janggi"],
   "janggi": ["chess", "gomoku", "checkers", "mahjong"],
-  "connect-four": ["gomoku", "checkers", "dominoes", "kingdomino"],
-  "kingdomino": ["dominoes", "card-village", "connect-four", "harbor-blocks"],
+  "four-in-a-row": ["gomoku", "checkers", "dominoes", "kingdom-tiles"],
+  "kingdom-tiles": ["dominoes", "card-village", "four-in-a-row", "harbor-blocks"],
 
   // Block & Tile Puzzles
   "grid-clear": ["block-burst", "hexa-sort", "game-2048", "brick-breaker"],
@@ -230,11 +230,11 @@ export const CURATED_CLUSTERS: Record<string, string[]> = {
   "game-2048": ["grid-clear", "cosmic-merge", "hexa-sort", "sudoku"],
 
   // Word Puzzles
-  "wordle": ["word-stack", "word-groups", "word-waffle", "korean-semantle"],
-  "word-stack": ["wordle", "letter-swap", "word-groups", "word-waffle"],
-  "word-groups": ["wordle", "word-waffle", "word-stack", "letter-swap"],
-  "word-waffle": ["wordle", "word-groups", "letter-swap", "word-stack"],
-  "korean-semantle": ["wordle", "word-groups", "letter-swap", "word-stack"],
+  "five-letter-guess": ["word-stack", "word-groups", "word-waffle", "word-warmth"],
+  "word-stack": ["five-letter-guess", "letter-swap", "word-groups", "word-waffle"],
+  "word-groups": ["five-letter-guess", "word-waffle", "word-stack", "letter-swap"],
+  "word-waffle": ["five-letter-guess", "word-groups", "letter-swap", "word-stack"],
+  "word-warmth": ["five-letter-guess", "word-groups", "letter-swap", "word-stack"],
 
   // Logic & Deduction Puzzles
   "sudoku": ["hitori", "minesweeper", "light-up", "tents-and-trees"],

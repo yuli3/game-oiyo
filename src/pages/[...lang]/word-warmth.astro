@@ -1,0 +1,51 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import KoreanSemantle from "../../components/games/KoreanSemantle";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "단어 온도 — 한국어 단어 의미 추측 게임",
+    description: "꼬맨틀·Semantle 같은 의미 거리 맞히기. 숨은 단어와 의미가 가까운 단어를 추측하세요. 매 추측마다 의미 유사도 순위를 알려줍니다.",
+  },
+  en: {
+    title: "Word Warmth — Korean Word-Meaning Guessing Game",
+    description: "A Semantle-style Korean meaning game. Guess words that are semantically close to a hidden Korean word. Each guess reveals its similarity rank.",
+  },
+  ja: {
+    title: "単語温度 — 韓国語 意味類似度あてゲーム",
+    description: "Semantleのような意味の近さ当て。 隠れた韓国語の単語と意味が近い単語を推測しましょう。推測ごとに類似度の順位が表示されます。",
+  },
+  fr: {
+    title: "Word Warmth — Jeu de proximité sémantique coréen",
+    description: "Un jeu sémantique coréen façon Semantle. Devinez des mots proches du sens d'un mot coréen caché. Chaque essai révèle son rang de similarité.",
+  },
+  es: {
+    title: "Word Warmth — Juego de proximidad semántica en coreano",
+    description: "Un juego semántico coreano al estilo Semantle. Adivina palabras cercanas en significado a una palabra coreana oculta. Cada intento revela su puesto de similitud.",
+  },
+  zh: {
+    title: "词语温度 — 韩语词义相近猜词游戏",
+    description: "类似 Semantle 的语义猜词。 猜出与隐藏韩语词语义相近的词。每次猜测都会显示其相似度排名。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image="/games/korean-semantle-social.png">
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
+    <KoreanSemantle client:load locale={locale} />
+    <div class="mx-auto max-w-3xl px-4 mt-8">
+      <GameGuide slug="word-warmth" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
