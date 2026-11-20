@@ -24,6 +24,7 @@ import { nativeHaptics } from "../../lib/haptics/native-bridge";
 import { useAudioContext } from "../../lib/games/use-audio-context";
 import { GameStatTile } from "../ui/game/GameStatTile";
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 function TiltSushiButton({
   children,
   className = "",
@@ -480,7 +481,7 @@ export function SushiConveyor() {
             href="/prototypes/sushi-conveyor-unity/index.html"
             className="flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-lg border border-primary/50 bg-primary/15 text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
           >
-            🛰️ Unity 3D 실시간 에디션 (12스테이지)
+            <UnityEditionLabel />
           </a>
           <button
             type="button"

@@ -862,12 +862,14 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
   };
 
   const handleStartGame = useCallback(() => {
+    // Studio X2: the start tap is the gesture that opens the full-screen play view.
+    if (!isImmersive) void togglePortal();
     initGame();
     setPhase("play");
     const bgm = getGlobalBgmController("cosmic");
     bgm.start("cosmic");
     bgm.setMuted(mutedRef.current);
-  }, [initGame]);
+  }, [initGame, isImmersive, togglePortal]);
 
   const handlePause = useCallback(() => {
     setPhase("paused");
@@ -1349,16 +1351,16 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
       })}
       controlsHint={t.controlsHint}
       extraHeaderActions={
-        <div className="flex items-center gap-1.5 pointer-events-auto">
+        <div className="flex flex-wrap items-center justify-end gap-1.5 pointer-events-auto">
           {/* Mode Switcher */}
-          <div className="inline-flex rounded-xl border border-border bg-muted/60 p-0.5">
+          <div className="inline-flex shrink-0 rounded-xl border border-border bg-muted/60 p-0.5">
             <button
               type="button"
               onClick={() => {
                 setGameMode("classic");
                 initGame();
               }}
-              className={`min-h-9 px-2 py-1 text-xs font-bold rounded-lg transition-colors ${
+              className={`min-h-9 whitespace-nowrap px-2 py-1 text-xs font-bold rounded-lg transition-colors ${
                 gameMode === "classic"
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -1372,7 +1374,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
                 setGameMode("time-attack");
                 initGame();
               }}
-              className={`min-h-9 px-2 py-1 text-xs font-bold rounded-lg transition-colors ${
+              className={`min-h-9 whitespace-nowrap px-2 py-1 text-xs font-bold rounded-lg transition-colors ${
                 gameMode === "time-attack"
                   ? "bg-primary text-primary-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"

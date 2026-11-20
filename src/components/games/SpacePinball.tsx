@@ -18,6 +18,7 @@ import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } fr
 import { HitStopController } from '../../lib/games/game-juice';
 import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 interface Props {
   locale: Locale;
 }
@@ -467,14 +468,7 @@ export default function SpacePinball({ locale }: Props) {
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 w-full mb-3">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl select-none" aria-hidden="true">🚀</span>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-foreground">
-                Unity 6 3D 12미션 스페이스 핀볼 코스믹 아크 4개국어 에디션
-              </span>
-              <span className="text-xs text-muted-foreground">
-                3D 물리 플리퍼 & 우주 웜홀 & 3단 범퍼/슬링샷 • 잭팟 5배율 • 4개국어(KO/EN/JA/ES) • 무한 핀볼
-              </span>
-            </div>
+            <UnityEditionBlurb />
           </div>
           <a
             href="/prototypes/space-pinball-unity/index.html"
@@ -482,8 +476,7 @@ export default function SpacePinball({ locale }: Props) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
           >
-            <span>3D 실행</span>
-            <span className="text-xs">↗</span>
+            <UnityEditionLabel />
           </a>
         </div>
       )}

@@ -23,6 +23,7 @@ import {
 import { getSpriteUrl, MINI_MOTORWAYS_SPRITES } from '../../lib/games/sprites';
 import { Share2, Check, Maximize2, Minimize2 } from 'lucide-react';
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 function TiltMotorButton({
   children,
   onClick,
@@ -293,7 +294,7 @@ export default function MiniMotorways({ locale }: Props) {
             href="/prototypes/mini-motorways-unity/index.html"
             className="rounded-xl border border-primary/50 bg-primary/15 px-3 py-2 text-xs font-black text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
           >
-            🛰️ Unity 실시간 에디션
+            <UnityEditionLabel />
           </a>
           <TiltMotorButton
             onClick={handlePreset}

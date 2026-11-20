@@ -32,6 +32,7 @@ import {
 import type { Locale } from "../../lib/i18n";
 import { Maximize2, Minimize2, Share2, Check } from "lucide-react";
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 function TiltVillageButton({
   children,
   onClick,
@@ -236,7 +237,7 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
             href="/prototypes/stacklands-unity/index.html"
             className="rounded-xl border border-primary/50 bg-primary/15 px-3 py-1.5 text-xs font-black text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
           >
-            🛰️ Unity 실시간 에디션
+            <UnityEditionLabel />
           </a>
           <TiltVillageButton
             onClick={onBuyPack}

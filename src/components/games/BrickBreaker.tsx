@@ -34,6 +34,7 @@ import { playSpatialTone } from "../../lib/games/spatial-audio";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { CameraShake2D, HitStopController } from "../../lib/games/game-juice";
 
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 function TiltBrickBreakerButton({
   ref,
   onClick,
@@ -705,14 +706,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 w-full max-w-md">
         <div className="flex items-center gap-2.5">
           <span className="text-2xl select-none" aria-hidden="true">🧱</span>
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-foreground">
-              Unity 6 3D 12스테이지 벽돌깨기 4개국어 에디션
-            </span>
-            <span className="text-xs text-muted-foreground">
-              3D 네온 패들 • 멀티볼 & 레이저 & 폭탄 연쇄 • 4개국어(KO/EN/JA/ES)
-            </span>
-          </div>
+          <UnityEditionBlurb />
         </div>
         <a
           href="/prototypes/brick-breaker-unity/index.html"
@@ -720,8 +714,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
         >
-          <span>3D 실행</span>
-          <span className="text-xs">↗</span>
+          <UnityEditionLabel />
         </a>
       </div>
 

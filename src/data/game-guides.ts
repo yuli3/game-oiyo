@@ -6193,10 +6193,10 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "border-inspector": {
     origin: {
-      ko: "『페이퍼 플리즈 국경 심사 (Border Inspector Desk)』는 Lucas Pope의 전설적인 서류 검문 스릴러 『Papers, Please』에서 영감을 받은 OIYO 오리지널 입국 심사 추리 시뮬레이터입니다. 가상의 국경 검문소 데스크에서 입국자의 여권(Passport), 입국 허가증(Entry Permit), 입국부 공식 규칙서(Rulebook), 그리고 검문소 기준일(1982-11-23)을 대조하여 만료된 여권, 존재하지 않는 위조 발급 도시, 번호/성명 불일치, 위조 직인을 적발하고 묵직한 승인(APPROVED) 및 거부(DENIED) 스탬프를 날인하는 손맛을 웹에서 구현했습니다.",
+      ko: "『국경 서류 심사 (Border Inspector Desk)』는 Lucas Pope의 전설적인 서류 검문 스릴러 『Papers, Please』에서 영감을 받은 OIYO 오리지널 입국 심사 추리 시뮬레이터입니다. 가상의 국경 검문소 데스크에서 입국자의 여권(Passport), 입국 허가증(Entry Permit), 입국부 공식 규칙서(Rulebook), 그리고 검문소 기준일(1982-11-23)을 대조하여 만료된 여권, 존재하지 않는 위조 발급 도시, 번호/성명 불일치, 위조 직인을 적발하고 묵직한 승인(APPROVED) 및 거부(DENIED) 스탬프를 날인하는 손맛을 웹에서 구현했습니다.",
       en: "Border Inspector Desk is an original OIYO document-verification thriller inspired by Lucas Pope's acclaimed Papers, Please. Cross-reference each traveler's Passport, Entry Permit, Ministry Rulebook, and the booth date (1982-11-23) using the two-field Discrepancy Inspector to catch expired dates, fake issuing cities, mismatched IDs, and forged seals before stamping APPROVED or DENIED.",
-      ja: "『ペーパー・プリーズ 国境審査（Border Inspector Desk）』は、名作入国審査スリラー『Papers, Please』にインスパイアされたOIYOオリジナルの書類照合推理シミュレーターです。検問所のデスクで申請者のパスポート、入国許可証、公式規則書、現在日付（1982-11-23）を2項目照合スキャナーで突き合わせ、期限切れや偽造都市、番号不一致、偽造公印を見抜いて承認・拒否スタンプを押す緊張感を楽しめます。",
-      zh: "《请出示证件：边境审查（Border Inspector Desk）》灵感源自独立神作《Papers, Please（请出示证件）》。在边境检查站桌面比对入境者的护照、入境许可证、官方规则手册与当前日期（1982-11-23），利用双栏矛盾核查器识破过期证件、虚构签发城市、编号不符与伪造钢印，果断盖下批准（APPROVED）或拒绝（DENIED）印章。",
+      ja: "『国境書類審査（Border Inspector Desk）』は、名作入国審査スリラー『Papers, Please』にインスパイアされたOIYOオリジナルの書類照合推理シミュレーターです。検問所のデスクで申請者のパスポート、入国許可証、公式規則書、現在日付（1982-11-23）を2項目照合スキャナーで突き合わせ、期限切れや偽造都市、番号不一致、偽造公印を見抜いて承認・拒否スタンプを押す緊張感を楽しめます。",
+      zh: "《边境证件审查（Border Inspector Desk）》灵感源自独立神作《Papers, Please（请出示证件）》。在边境检查站桌面比对入境者的护照、入境许可证、官方规则手册与当前日期（1982-11-23），利用双栏矛盾核查器识破过期证件、虚构签发城市、编号不符与伪造钢印，果断盖下批准（APPROVED）或拒绝（DENIED）印章。",
       fr: "Border Inspector Desk est un simulateur d'inspection documentaire inspiré de Papers, Please. Comparez le passeport, le permis d'entrée, le règlement officiel et la date du poste (1982-11-23) pour repérer les dates expirées, les fausses villes et les sceaux contrefaits avant de tamponner.",
       es: "Border Inspector Desk es un simulador de verificación documental inspirado en Papers, Please. Compara el pasaporte, el permiso de entrada, el reglamento oficial y la fecha actual (1982-11-23) para detectar fechas vencidas, ciudades falsas y sellos falsificados antes de sellar.",
     },
@@ -6305,10 +6305,10 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "slot-rogue": {
     origin: {
-      ko: "『럭 비 어 랜드로드 슬롯 (Slot Synergy Rogue)』는 TrampolineTales의 인디 덱빌더 히트작 『Luck be a Landlord』에서 영감을 받은 OIYO 오리지널 5×4 심볼 시너지 슬롯 로그라이크입니다. 매 스핀 후 3개의 후보 심볼 중 하나를 덱에 추가하고, 길고양이+우유(+$12 소비), 광부+철광석(+$15 및 사파이어 보석 영구 생성), 괴도+강철 금고(+$30 일격), 태양+해바라기, 국왕+왕관 등 8방향 인접 시너지를 폭발시켜 5스핀마다 찾아오는 집세(Rent)를 완납하세요.",
+      ko: "『슬롯 시너지 로그 (Slot Synergy Rogue)』는 TrampolineTales의 인디 덱빌더 히트작 『Luck be a Landlord』에서 영감을 받은 OIYO 오리지널 5×4 심볼 시너지 슬롯 로그라이크입니다. 매 스핀 후 3개의 후보 심볼 중 하나를 덱에 추가하고, 길고양이+우유(+$12 소비), 광부+철광석(+$15 및 사파이어 보석 영구 생성), 괴도+강철 금고(+$30 일격), 태양+해바라기, 국왕+왕관 등 8방향 인접 시너지를 폭발시켜 5스핀마다 찾아오는 집세(Rent)를 완납하세요.",
       en: "Slot Synergy Rogue is an original OIYO 5x4 symbol deckbuilding roguelike inspired by TrampolineTales's hit Luck be a Landlord. Draft 1 of 3 symbols after each spin, trigger 8-way adjacency cascades like Stray Cat + Fresh Milk (+$12 consume), Dwarf Miner + Iron Ore (+$15 & permanent Sapphire Gem), and Master Thief + Steel Safe (+$30 heist), and pay escalating rent every 5 spins.",
       ja: "『スロット・シナジー・ローグ（Slot Synergy Rogue）』は、『Luck be a Landlord』にインスパイアされた5×4シンボル構築型ローグライクです。毎スピン後に3つの候補からシンボルをデッキに加え、猫+ミルク(+$12消費)、鉱夫+鉄鉱石(+$15＆サファイア生成)、怪盗+金庫(+$30)などの8方向隣接シナジーを連鎖させて5スピンごとの家賃を突破します。",
-      zh: "《幸运房东协同老虎机（Slot Synergy Rogue）》灵感源自经典肉鸽神作《Luck be a Landlord》。在 5×4 转盘上每次旋转后从 3 个候选符号中抓取 1 个加入牌库，触发流浪猫喝鲜奶（+$12 吞噬）、矿工挖铁矿（+$15 并永久产出蓝宝石）、怪盗撬保险箱（+$30）等八向相邻连锁，按时交齐每 5 转递增的房租。",
+      zh: "《老虎机协同肉鸽（Slot Synergy Rogue）》灵感源自经典肉鸽神作《Luck be a Landlord》。在 5×4 转盘上每次旋转后从 3 个候选符号中抓取 1 个加入牌库，触发流浪猫喝鲜奶（+$12 吞噬）、矿工挖铁矿（+$15 并永久产出蓝宝石）、怪盗撬保险箱（+$30）等八向相邻连锁，按时交齐每 5 转递增的房租。",
       fr: "Slot Synergy Rogue est un roguelike de construction de symboles 5x4 inspiré de Luck be a Landlord. Recrutez 1 symbole parmi 3 après chaque tour, déclenchez des synergies adjacentes (Chat+Lait, Mineur+Minerai, Voleur+Coffre) et payez votre loyer tous les 5 tours.",
       es: "Slot Synergy Rogue es un roguelike de construcción de símbolos 5x4 inspirado en Luck be a Landlord. Elige 1 de 3 símbolos tras cada tirada, activa sinergias adyacentes (Gato+Leche, Minero+Mineral, Ladrón+Caja Fuerte) y paga el alquiler cada 5 giros.",
     },
@@ -6381,10 +6381,10 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "candle-sacrifice": {
     origin: {
-      ko: "『인스크립션 캔들 덱 (Candle Sacrifice Deck)』은 Daniel Mullins의 호러 덱빌딩 명작 『Inscryption』에서 영감을 받은 OIYO 오리지널 4레인 피의 공양 & 천칭 카드 결투 게임입니다. 다람쥐 보조 덱(Squirrel Deck)과 야수 메인 덱(Main Deck)을 운용하며, 보드 위의 다람쥐를 제물로 바쳐 피(Blood)를 공양하고 아군 사망 시 쌓이는 뼈(Bone) 토큰으로 살무사(치명독)·까마귀(비행)·사마귀 신(양갈래 일격)·회색곰을 소환해 이빨 천칭을 +5까지 기울이세요.",
+      ko: "『촛불 제물 덱 (Candle Sacrifice Deck)』은 Daniel Mullins의 호러 덱빌딩 명작 『Inscryption』에서 영감을 받은 OIYO 오리지널 4레인 피의 공양 & 천칭 카드 결투 게임입니다. 다람쥐 보조 덱(Squirrel Deck)과 야수 메인 덱(Main Deck)을 운용하며, 보드 위의 다람쥐를 제물로 바쳐 피(Blood)를 공양하고 아군 사망 시 쌓이는 뼈(Bone) 토큰으로 살무사(치명독)·까마귀(비행)·사마귀 신(양갈래 일격)·회색곰을 소환해 이빨 천칭을 +5까지 기울이세요.",
       en: "Candle Sacrifice Deck is an original OIYO 4-lane woodland cabin card duel inspired by Daniel Mullins's acclaimed Inscryption. Manage a dual-deck system (Squirrel Side-Deck + Main Beast Deck), sacrifice creatures on the board for Blood, collect Bone tokens from fallen allies, and unleash Sigils like Touch of Death, Airborne, and Bifurcated Strike to tip the Teeth Scale to +5.",
-      ja: "『インスクリプション・キャンドルデッキ（Candle Sacrifice Deck）』は、『Inscryption』にインスパイアされた4レーン生贄＆天秤カード決闘ゲームです。リス補助デッキとメイン獣デッキを使い分け、盤面のリスを生贄に捧げて血(Blood)と骨(Bone)でカマキリの神やグリズリーを召喚し、歯の天秤を+5まで傾ければ勝利です。",
-      zh: "《邪恶冥刻烛光牌（Candle Sacrifice Deck）》灵感源自克苏鲁风卡牌神作《Inscryption》。采用松鼠副牌库+野兽主牌库双轨抽牌机制，将场上的松鼠献祭化为鲜血（Blood），收集阵亡野兽留下的骨头代币（Bone），驱动剧毒、飞行与双向连击印记，将金牙天平推向 +5 即可获胜。",
+      ja: "『キャンドル生贄デッキ（Candle Sacrifice Deck）』は、『Inscryption』にインスパイアされた4レーン生贄＆天秤カード決闘ゲームです。リス補助デッキとメイン獣デッキを使い分け、盤面のリスを生贄に捧げて血(Blood)と骨(Bone)でカマキリの神やグリズリーを召喚し、歯の天秤を+5まで傾ければ勝利です。",
+      zh: "《烛光献祭牌组（Candle Sacrifice Deck）》灵感源自克苏鲁风卡牌神作《Inscryption》。采用松鼠副牌库+野兽主牌库双轨抽牌机制，将场上的松鼠献祭化为鲜血（Blood），收集阵亡野兽留下的骨头代币（Bone），驱动剧毒、飞行与双向连击印记，将金牙天平推向 +5 即可获胜。",
       fr: "Candle Sacrifice Deck est un duel de cartes tactique sur 4 voies inspiré d'Inscryption. Gérez votre deck d'Écureuils et votre deck de Bêtes, sacrifiez des créatures pour du Sang et des Os, et faites pencher la balance des dents à +5.",
       es: "Candle Sacrifice Deck es un duelo de cartas táctico en 4 carriles inspirado en Inscryption. Gestiona tu mazo de Ardillas y tu mazo de Bestias, sacrifica criaturas por Sangre y Huesos, y lleva la balanza de dientes a +5.",
     },
@@ -6419,10 +6419,10 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "cozy-glider": {
     origin: {
-      ko: "『어 숏 하이크 글라이더 (Cozy Peak Glider)』는 Adam Robinson-Yu의 힐링 산악 탐험 명작 『A Short Hike』에서 영감을 받은 OIYO 오리지널 황금 깃털(Golden Feathers) 스태미나 등반 & 상승기류 활공 어드벤처입니다. 조개껍질 해변 캠프(0m)에서 출발해 보물상자와 단풍 성소를 탐험하며 최대 황금 깃털 개수를 늘리고, 화강암 절벽과 만년설 능선을 넘어 해발 550m 호크 피크 정상(Hawk Peak Summit)에 등정한 뒤 섬 전체를 가로지르는 장거리 활공의 해방감을 만끽하세요.",
+      ko: "『포근한 봉우리 글라이더 (Cozy Peak Glider)』는 Adam Robinson-Yu의 힐링 산악 탐험 명작 『A Short Hike』에서 영감을 받은 OIYO 오리지널 황금 깃털(Golden Feathers) 스태미나 등반 & 상승기류 활공 어드벤처입니다. 조개껍질 해변 캠프(0m)에서 출발해 보물상자와 단풍 성소를 탐험하며 최대 황금 깃털 개수를 늘리고, 화강암 절벽과 만년설 능선을 넘어 해발 550m 호크 피크 정상(Hawk Peak Summit)에 등정한 뒤 섬 전체를 가로지르는 장거리 활공의 해방감을 만끽하세요.",
       en: "Cozy Peak Glider is an original OIYO mountain trail exploration and wingsuit gliding adventure inspired by Adam Robinson-Yu's beloved A Short Hike. Start at Seashell Beach (0m) with 2 Golden Feathers, explore coastal chests and autumn shrines to expand your feather stamina capacity, scale granite cliffs, and reach the 550m Hawk Peak Summit.",
       ja: "『コージー・ピーク・グライダー（Cozy Peak Glider）』は、癒やし系山岳探検ゲーム『A Short Hike』にインスパイアされた黄金の羽スタミナ登山＆滑空アドベンチャーです。海岸キャンプ(0m)からスタートし、宝箱や祠を巡って黄金の羽の最大数を増やしながら標高550mのホークピーク山頂を目指します。",
-      zh: "《短途徒步滑翔机（Cozy Peak Glider）》灵感源自治愈系徒步神作《A Short Hike》。从海滩营地（0m）携带 2 根黄金羽毛出发，探索灯塔宝箱与红叶神龛扩充羽毛体力上限，攀登花岗岩峭壁与雪线营地，最终登顶海拔 550 米的鹰峰之巅并畅享长距离滑翔。",
+      zh: "《暖峰滑翔机（Cozy Peak Glider）》灵感源自治愈系徒步神作《A Short Hike》。从海滩营地（0m）携带 2 根黄金羽毛出发，探索灯塔宝箱与红叶神龛扩充羽毛体力上限，攀登花岗岩峭壁与雪线营地，最终登顶海拔 550 米的鹰峰之巅并畅享长距离滑翔。",
       fr: "Cozy Peak Glider est un jeu d'exploration insulaire et de vol plané inspiré d'A Short Hike. Partez de la plage avec 2 Plumes d'Or, ouvrez des coffres pour augmenter votre endurance d'escalade et atteignez le sommet enneigé de Hawk Peak à 550m.",
       es: "Cozy Peak Glider es una aventura de senderismo y planeo inspirada en A Short Hike. Comienza en la playa con 2 Plumas Doradas, descubre cofres y santuarios para ampliar tu resistencia de escalada y alcanza la cima nevada de Hawk Peak a 550m.",
     },
@@ -6495,10 +6495,10 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "chrono-detective": {
     origin: {
-      ko: "『오브라 딘 크로노 추리 (Memento Mori Chrono)』는 Lucas Pope의 추리 걸작 『Return of the Obra Dinn』과 『The Case of the Golden Idol』에서 영감을 받은 OIYO 오리지널 시간 정지 검시 & 3인의 법칙(Rule of Three) 연역 미스터리입니다. 죽음의 순간을 정지된 풍경으로 보여 주는 회중시계(Memento Mori)로 선미 갑판·주마스트·화물창 금고의 3개 현장을 조사하고, 운명 장부(The Fate Ledger)에 희생자 3인의 [신원 · 사인 · 가해자]를 정확히 기입해 진실을 영구 봉인하세요.",
+      ko: "『회중시계 운명 추리 (Memento Mori Chrono)』는 Lucas Pope의 추리 걸작 『Return of the Obra Dinn』과 『The Case of the Golden Idol』에서 영감을 받은 OIYO 오리지널 시간 정지 검시 & 3인의 법칙(Rule of Three) 연역 미스터리입니다. 죽음의 순간을 정지된 풍경으로 보여 주는 회중시계(Memento Mori)로 선미 갑판·주마스트·화물창 금고의 3개 현장을 조사하고, 운명 장부(The Fate Ledger)에 희생자 3인의 [신원 · 사인 · 가해자]를 정확히 기입해 진실을 영구 봉인하세요.",
       en: "Memento Mori Chrono is an original OIYO time-freeze forensic mystery inspired by Lucas Pope's Return of the Obra Dinn and The Case of the Golden Idol. Peer into 3 frozen moments of maritime tragedy using the Memento Mori pocket watch, inspect physical evidence hotspots, and complete all 3 crew Fates [Identity · Cause · Culprit] in the Ledger to trigger the Rule of Three lock-in.",
-      ja: "『オブラ・ディン・クロノ推理（Memento Mori Chrono）』は、『Return of the Obra Dinn』と『The Case of the Golden Idol』にインスパイアされた時間停止検死＆「3人の法則」演繹ミステリーです。死の瞬間を映し出す懐中時計(Memento Mori)で3つの船上現場を調査し、乗組員3名の「身元・死因・犯人」を手帳に正しく記入して真実を封印します。",
-      zh: "《奥伯拉丁怀表推理（Memento Mori Chrono）》灵感源自推理神作《Return of the Obra Dinn》与《The Case of the Golden Idol》。借助能够凝固死亡瞬间的死神怀表（Memento Mori），勘查后甲板、主桅杆与底舱金库三幕现场，在命运账簿中完整推导 3 名船员的【身份 · 死因 · 凶手】，触发“三人法则（Rule of Three）”永久锁定真相。",
+      ja: "『懐中時計の運命推理（Memento Mori Chrono）』は、『Return of the Obra Dinn』と『The Case of the Golden Idol』にインスパイアされた時間停止検死＆「3人の法則」演繹ミステリーです。死の瞬間を映し出す懐中時計(Memento Mori)で3つの船上現場を調査し、乗組員3名の「身元・死因・犯人」を手帳に正しく記入して真実を封印します。",
+      zh: "《怀表命运推理（Memento Mori Chrono）》灵感源自推理神作《Return of the Obra Dinn》与《The Case of the Golden Idol》。借助能够凝固死亡瞬间的死神怀表（Memento Mori），勘查后甲板、主桅杆与底舱金库三幕现场，在命运账簿中完整推导 3 名船员的【身份 · 死因 · 凶手】，触发“三人法则（Rule of Three）”永久锁定真相。",
       fr: "Memento Mori Chrono est un jeu d'enquête médico-légale figée dans le temps inspiré de Return of the Obra Dinn. Inspectez 3 scènes de tragédie maritime avec votre montre à gousset et complétez l'identité, la cause et le coupable des 3 victimes dans le Registre.",
       es: "Memento Mori Chrono es un misterio deductivo de tiempo congelado inspirado en Return of the Obra Dinn. Examina 3 escenas de tragedia marítima con el reloj Memento Mori y completa la identidad, causa y culpable de las 3 víctimas en el Libro de Destinos.",
     },
@@ -6761,10 +6761,10 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "chaos-kitchen": {
     origin: {
-      ko: "『카오스 키친: 오버쿡드 러시 (Chaos Kitchen: Overcooked Rush)』는 명작 파티 게임 『Overcooked』의 긴박한 협동 주방 시뮬레이션에서 영감을 받아 제작된 아케이드 게임입니다. 다익스트라 플로우 필드(Dijkstra Flow-Field) AI 보조 시스템과 결정론적 락스텝(Lockstep) 동기화를 적용하여 조리대 동선과 화재, 요리 완성을 구현했습니다.",
-      en: "Chaos Kitchen: Overcooked Rush is a high-octane culinary co-op arcade game inspired by Overcooked. Powered by Dijkstra flow-field pathfinding for AI assistant navigation and deterministic lockstep synchronization, master chaotic prep lines, sizzling pans, and fire safety.",
-      ja: "『カオスキッチン：オーバークック・ラッシュ（Chaos Kitchen: Overcooked Rush）』は、名作『Overcooked』の混沌とした協力調理に着想を得たアーケードゲームです。ダイクストラ・フローフィールドAIアシストと決定論的ロックステップ同期を搭載し、刻み作業や焼き調理、消火器の使い分けをこなします。",
-      zh: "《混乱厨房：胡闹厨房大冲刺（Chaos Kitchen: Overcooked Rush）》灵感来自聚会经典《Overcooked》。采用迪杰斯特拉流场寻路算法驱动AI帮厨走位，并结合确定性锁步机制，在混乱的备菜台前切碎食材、煎烤肉饼与合力灭火。",
+      ko: "『카오스 키친: 주방 러시 (Chaos Kitchen: Kitchen Rush)』는 명작 파티 게임 『Overcooked』의 긴박한 협동 주방 시뮬레이션에서 영감을 받아 제작된 아케이드 게임입니다. 다익스트라 플로우 필드(Dijkstra Flow-Field) AI 보조 시스템과 결정론적 락스텝(Lockstep) 동기화를 적용하여 조리대 동선과 화재, 요리 완성을 구현했습니다.",
+      en: "Chaos Kitchen: Kitchen Rush is a high-octane culinary co-op arcade game inspired by Overcooked. Powered by Dijkstra flow-field pathfinding for AI assistant navigation and deterministic lockstep synchronization, master chaotic prep lines, sizzling pans, and fire safety.",
+      ja: "『カオスキッチン：厨房ラッシュ（Chaos Kitchen: Kitchen Rush）』は、名作『Overcooked』の混沌とした協力調理に着想を得たアーケードゲームです。ダイクストラ・フローフィールドAIアシストと決定論的ロックステップ同期を搭載し、刻み作業や焼き調理、消火器の使い分けをこなします。",
+      zh: "《混乱厨房：后厨大冲刺（Chaos Kitchen: Kitchen Rush）》灵感来自聚会经典《Overcooked》。采用迪杰斯特拉流场寻路算法驱动AI帮厨走位，并结合确定性锁步机制，在混乱的备菜台前切碎食材、煎烤肉饼与合力灭火。",
       fr: "Chaos Kitchen est un jeu de coopération culinaire effréné inspiré d'Overcooked.",
       es: "Cocina Caótica es una simulación de cocina cooperativa inspirada en Overcooked.",
     },

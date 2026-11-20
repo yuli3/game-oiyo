@@ -25,6 +25,7 @@ import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { ORBITAL_DEFENSE_UI_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
 
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 function TiltDefenseButton({
   children,
   onClick,
@@ -289,14 +290,7 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 w-full">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl select-none" aria-hidden="true">🪐</span>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-foreground">
-                Unity 6 3D 12섹터 행성 방어전 4개국어 에디션
-              </span>
-              <span className="text-xs text-muted-foreground">
-                3중 방어 궤도링 & 18개 터렛 • 운석/드랍포드/에일리언 모선 보스 • 4개국어(KO/EN/JA/ES)
-              </span>
-            </div>
+            <UnityEditionBlurb />
           </div>
           <a
             href="/prototypes/orbital-defense-unity/index.html"
@@ -304,8 +298,7 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
           >
-            <span>3D 실행</span>
-            <span className="text-xs">↗</span>
+            <UnityEditionLabel />
           </a>
         </div>
       )}

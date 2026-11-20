@@ -36,6 +36,7 @@ import {
   renderAimField,
 } from "../../lib/games/aim-trainer-canvas";
 
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 /* ────────────────────────────────────────────────────────────────────────────
  * Pro Aim Trainer — 5 modes × 4 difficulties, mouse + touch, FPS-grade metrics,
  * personal bests (localStorage via records.ts) and rank flavour. Single-file game
@@ -672,6 +673,8 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   }, [finish]);
 
   const begin = useCallback(() => {
+    // Studio X2: the start tap is the gesture that opens the full-screen play view.
+    if (!isImmersive) togglePortal();
     stop();
     completedRef.current = false;
     setHits(0);
@@ -713,7 +716,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       setTimeLeft(Math.ceil(remaining));
       if (remaining <= 0) finishRef.current();
     }, 100);
-  }, [stop, track, mode, diff, targetSize, gridCount, spawnMany, scheduleRecoveryTarget]);
+  }, [stop, track, mode, diff, targetSize, gridCount, spawnMany, scheduleRecoveryTarget, isImmersive, togglePortal]);
 
   useEffect(() => {
     targetsRef.current = targets;
@@ -1049,18 +1052,12 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
         </div>
       </div>
 
-      {/* 3D Unity 6 WebGL Launcher Banner */}
+      {/* Unity 3D edition link: hidden in the full-screen play view (studio X3) */}
+      {!isImmersive && (
       <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 w-full">
         <div className="flex items-center gap-2.5">
           <span className="text-2xl select-none" aria-hidden="true">🎯</span>
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-foreground">
-              Unity 6 3D 12스테이지 에임 트레이너 4개국어 에디션
-            </span>
-            <span className="text-xs text-muted-foreground">
-              3D 슈팅 레인지 • 클레이 사격 & 폭탄 디코이 & 보스 코어 • 4개국어(KO/EN/JA/ES)
-            </span>
-          </div>
+          <UnityEditionBlurb />
         </div>
         <a
           href="/prototypes/aim-trainer-unity/index.html"
@@ -1068,10 +1065,10 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
         >
-          <span>3D 실행</span>
-          <span className="text-xs">↗</span>
+          <UnityEditionLabel />
         </a>
       </div>
+      )}
 
       {/* ── MENU ── */}
       {phase === "menu" && (

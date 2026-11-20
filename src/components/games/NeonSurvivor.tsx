@@ -52,6 +52,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 interface Props {
   locale?: Locale;
 }
@@ -276,6 +277,7 @@ const COPY = {
 
 export default function NeonSurvivor({ locale = 'ko' }: Props) {
   const t = COPY[locale] ?? COPY.en;
+  const LAUNCH_LABEL: Record<string, string> = { ko: '작전 개시', en: 'LAUNCH MISSION', ja: '作戦開始', zh: '开始任务', fr: 'LANCER LA MISSION', es: 'INICIAR MISIÓN' };
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [phase, setPhase] = useState<'briefing' | 'playing'>('briefing');
   const [paused, setPaused] = useState(false);
@@ -1276,7 +1278,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
                   href="/prototypes/neon-unity/index.html"
                   className="inline-flex items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/15 px-3.5 py-2 text-xs font-black text-primary hover:bg-primary/25 transition-colors"
                 >
-                  <span>🛰️ {locale === 'ko' ? 'Unity G3 에디션 실행' : locale === 'ja' ? 'Unity G3版を起動' : locale === 'zh' ? '启动 Unity G3 版' : 'Unity G3 Edition'}</span>
+                  <UnityEditionLabel />
                 </a>
               </div>
 
@@ -1287,13 +1289,15 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
                   onClick={() => {
                     nativeHaptics.trigger('heavy');
                     MobileHapticsPro.heavy();
+                    // Studio X2: the start tap is the gesture that opens the full-screen play view.
+                    if (!isImmersive) togglePortal();
                     setGameState(createInitialNeonSurvivorState(metaState.upgrades));
                     setPhase('playing');
                   }}
                   className="min-h-14 rounded-xl bg-primary px-7 py-3 text-sm font-black uppercase tracking-wider text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 active:scale-95 transition-all flex items-center gap-2"
                 >
                   <Zap className="size-5 fill-current" />
-                  <span>{locale === 'ko' ? '작전 개시' : 'LAUNCH MISSION'}</span>
+                  <span>{LAUNCH_LABEL[locale] ?? LAUNCH_LABEL.en}</span>
                 </button>
 
                 <span className="inline-flex items-center gap-1.5 border border-border bg-card/60 px-4 py-3 rounded-xl font-mono text-xs">

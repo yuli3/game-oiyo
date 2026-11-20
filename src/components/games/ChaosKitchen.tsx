@@ -31,6 +31,7 @@ import { useClipboardShare } from "../../lib/games/use-clipboard-share";
 import { GameStatTile } from "../ui/game/GameStatTile";
 import { CHAOS_KITCHEN_SPRITES } from "../../lib/games/sprites";
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 function TiltKitchenButton({
   children,
   onClick,
@@ -656,7 +657,7 @@ export function ChaosKitchen({ lang = "ko" }: { lang?: string }) {
             href="/prototypes/chaos-kitchen-unity/index.html"
             className="flex-1 py-2 px-2.5 rounded-md border border-primary/50 bg-primary/15 text-xs font-black text-primary hover:bg-primary/25 transition-colors text-center whitespace-nowrap"
           >
-            🛰️ Unity 실시간 에디션
+            <UnityEditionLabel />
           </a>
           <TiltKitchenButton
             onClick={() => setShowQuests(true)}

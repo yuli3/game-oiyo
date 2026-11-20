@@ -41,6 +41,7 @@ import {
   type WhackShockwave,
 } from "../../lib/games/whack-canvas";
 
+import UnityEditionLabel, { UnityEditionBlurb } from "../ui/game/UnityEditionLabel";
 const GAME_KEY = "whack-a-mole";
 
 type Copy = {
@@ -478,14 +479,7 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-lg">
             🔨
           </span>
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-foreground">
-              Unity 6 3D 12스테이지 두더지 잡기 4개국어 에디션
-            </span>
-            <span className="text-xs text-muted-foreground">
-              3D 아케이드 해머 • 황금 두더지 & 다이너마이트 • 4개국어(KO/EN/JA/ES)
-            </span>
-          </div>
+          <UnityEditionBlurb />
         </div>
         <a
           href="/prototypes/whack-a-mole-unity/index.html"
@@ -493,8 +487,7 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors shrink-0"
         >
-          <span>3D 실행</span>
-          <span className="text-xs">↗</span>
+          <UnityEditionLabel />
         </a>
       </div>
 

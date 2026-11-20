@@ -62,6 +62,7 @@ import {
 } from '../../lib/games/frostpunk-ring';
 import type { Locale } from '../../lib/i18n';
 
+import UnityEditionLabel from "../ui/game/UnityEditionLabel";
 interface Props {
   locale?: Locale;
 }
@@ -366,7 +367,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
             href="/prototypes/frostpunk-ring-unity/index.html"
             className="rounded-xl border border-primary/50 bg-primary/15 px-3 py-1.5 text-xs font-black text-primary hover:bg-primary/25 transition-colors whitespace-nowrap"
           >
-            🛰️ Unity 3D 실시간 에디션
+            <UnityEditionLabel />
           </a>
           <TiltFrostButton
             onClick={onQuickAutoSetup}
