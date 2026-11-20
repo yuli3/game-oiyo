@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 164종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 164종." },
-  en: { title: "OIYO Arcade — 164 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 164 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム164種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム164種。" },
-  zh: { title: "OIYO 街机 — 无需安装的164款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，164款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 164 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 164 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 164 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 164 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 166종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 166종." },
+  en: { title: "OIYO Arcade — 166 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 166 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム166種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム166種。" },
+  zh: { title: "OIYO 街机 — 无需安装的166款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，166款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 166 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 166 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 166 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 166 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 164종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "164 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム164種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的164款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "164 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "164 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 166종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "166 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム166種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的166款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "166 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "166 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -90,6 +90,8 @@ const GAMES: Game[] = [
   { slug: "minesweeper", emoji: "💣", cat: "puzzle", name: { ko: "지뢰찾기", en: "Minesweeper", ja: "マインスイーパ", zh: "扫雷", fr: "Démineur", es: "Buscaminas" } },
   { slug: "water-sort", emoji: "🧪", cat: "puzzle", name: { ko: "물 정렬", en: "Water Sort", ja: "水ソート", zh: "水排序", fr: "Tri d'eau", es: "Ordenar agua" } },
   { slug: "light-up", emoji: "💡", cat: "puzzle", name: { ko: "라이트업", en: "Light Up", ja: "美術館", zh: "点灯", fr: "Light Up", es: "Light Up" } },
+  { slug: "number-trail", emoji: "🔢", cat: "puzzle", name: { ko: "넘버 트레일", en: "Number Trail", ja: "ナンバートレイル", zh: "数字小径", fr: "Number Trail", es: "Number Trail" } },
+  { slug: "arrow-walk", emoji: "🧭", cat: "puzzle", name: { ko: "애로 워크", en: "Arrow Walk", ja: "アローウォーク", zh: "箭头漫步", fr: "Arrow Walk", es: "Arrow Walk" } },
   { slug: "game-2048", emoji: "🔟", cat: "puzzle", name: { ko: "2048", en: "2048", ja: "2048", zh: "2048", fr: "2048", es: "2048" } },
   { slug: "wordle", emoji: "🟩", cat: "puzzle", name: { ko: "워들", en: "Wordle", ja: "ワードル", zh: "猜词", fr: "Wordle", es: "Wordle" } },
   { slug: "letter-swap", emoji: "🔤", cat: "puzzle", name: { ko: "글자 맞바꾸기", en: "Letter Swap", ja: "文字入れ替え", zh: "字母对调", fr: "Échange de lettres", es: "Cambio de letras" } },
@@ -282,6 +284,30 @@ const newReleasesLabel: Record<Locale, { sectionTitle: string; badge: string; su
 const newReleaseLabels = newReleasesLabel[locale] ?? newReleasesLabel.en;
 
 const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; desc: Record<Locale, string> }> = [
+  {
+    slug: "number-trail",
+    tag: { ko: "합 맞추기 경로 퍼즐", en: "Daily sum path puzzle", ja: "合計合わせ経路パズル", zh: "凑和路径谜题", fr: "Puzzle de chemin à somme", es: "Puzle de camino con suma" },
+    desc: {
+      ko: "왼쪽 위에서 오른쪽 아래까지 걸으며 지나간 숫자의 합을 목표와 정확히 맞추세요.",
+      en: "Walk corner to corner so the numbers you pass add up to exactly the target.",
+      ja: "左上から右下まで歩き、通った数字の合計を目標にぴったり合わせよう。",
+      zh: "从左上走到右下，让经过的数字之和正好等于目标。",
+      fr: "Marchez d'un coin à l'autre pour atteindre exactement la somme cible.",
+      es: "Camina de esquina a esquina para sumar exactamente el objetivo.",
+    },
+  },
+  {
+    slug: "arrow-walk",
+    tag: { ko: "화살표 한붓그리기", en: "Turn-the-arrows path puzzle", ja: "矢印の一筆書き", zh: "旋转箭头一笔画", fr: "Puzzle de flèches", es: "Puzle de flechas" },
+    desc: {
+      ko: "화살표를 돌려 모든 칸을 한 번씩 지나 ★에서 멈추는 길을 만드세요.",
+      en: "Turn the arrows so one walk visits every cell once and stops on the star.",
+      ja: "矢印を回して、全マスを1回ずつ通り★で止まる道を作ろう。",
+      zh: "旋转箭头，让路线走遍每格一次并停在 ★。",
+      fr: "Tournez les flèches pour passer une fois par chaque case et finir sur l'étoile.",
+      es: "Gira las flechas para pasar una vez por cada casilla y terminar en la estrella.",
+    },
+  },
   {
     slug: "shadow-dodge",
     tag: { ko: "불릿타임 탄막 회피 그레이징", en: "Bullet-Time Grazing Survival", ja: "バレットタイム弾幕回避グレイズ", zh: "子弹时间极限擦弹街机", fr: "Esquive Bullet-Time", es: "Esquiva Bullet-Time" },
