@@ -421,7 +421,7 @@ export const GameShell: React.FC<GameShellProps> = ({
         </div>
 
         {/* HUD Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {extraHeaderActions}
 
           {score !== undefined && (
