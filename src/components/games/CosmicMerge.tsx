@@ -862,12 +862,14 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
   };
 
   const handleStartGame = useCallback(() => {
+    // Studio X2: the start tap is the gesture that opens the full-screen play view.
+    if (!isImmersive) void togglePortal();
     initGame();
     setPhase("play");
     const bgm = getGlobalBgmController("cosmic");
     bgm.start("cosmic");
     bgm.setMuted(mutedRef.current);
-  }, [initGame]);
+  }, [initGame, isImmersive, togglePortal]);
 
   const handlePause = useCallback(() => {
     setPhase("paused");

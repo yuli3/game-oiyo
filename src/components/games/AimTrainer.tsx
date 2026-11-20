@@ -673,6 +673,8 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   }, [finish]);
 
   const begin = useCallback(() => {
+    // Studio X2: the start tap is the gesture that opens the full-screen play view.
+    if (!isImmersive) togglePortal();
     stop();
     completedRef.current = false;
     setHits(0);
@@ -714,7 +716,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       setTimeLeft(Math.ceil(remaining));
       if (remaining <= 0) finishRef.current();
     }, 100);
-  }, [stop, track, mode, diff, targetSize, gridCount, spawnMany, scheduleRecoveryTarget]);
+  }, [stop, track, mode, diff, targetSize, gridCount, spawnMany, scheduleRecoveryTarget, isImmersive, togglePortal]);
 
   useEffect(() => {
     targetsRef.current = targets;
@@ -1050,7 +1052,8 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
         </div>
       </div>
 
-      {/* 3D Unity 6 WebGL Launcher Banner */}
+      {/* Unity 3D edition link: hidden in the full-screen play view (studio X3) */}
+      {!isImmersive && (
       <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 w-full">
         <div className="flex items-center gap-2.5">
           <span className="text-2xl select-none" aria-hidden="true">🎯</span>
@@ -1065,6 +1068,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
           <UnityEditionLabel />
         </a>
       </div>
+      )}
 
       {/* ── MENU ── */}
       {phase === "menu" && (
