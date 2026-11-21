@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { MECH_GRID_TEXT } from "../../lib/games/text/mech-grid-tactics";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Camera, Check, Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
@@ -85,6 +87,7 @@ function getMechSprite(mechId: string): string {
 }
 
 export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
+  const { t } = useGameText(MECH_GRID_TEXT, locale);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
     locale: (locale as any) || 'ko',
   });
@@ -737,13 +740,13 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
     MobileHapticsPro.light();
     const canvas = createShareCardCanvas({
       title: 'Mech Grid Tactics',
-      subtitle: gamePhase === 'victory' ? '타임라인 수호 완료' : '전술 작전 기록',
-      score: gamePhase === 'victory' ? '전력망 방어 성공' : `턴 ${currentTurn}/${maxTurns}`,
+      subtitle: gamePhase === 'victory' ? t("타임라인 수호 완료") : t("전술 작전 기록"),
+      score: gamePhase === 'victory' ? t("전력망 방어 성공") : t('턴 {0}/{1}', currentTurn, maxTurns),
       slug: 'mech-grid-tactics',
       customStats: [
-        { label: '전력망', value: `${powerGrid}/${maxPowerGrid}` },
-        { label: '작전 턴', value: `${currentTurn}/${maxTurns}` },
-        { label: '생존 메크', value: `${mechsState.filter((m) => !m.isDead).length}/3` },
+        { label: t("전력망"), value: `${powerGrid}/${maxPowerGrid}` },
+        { label: t("작전 턴"), value: `${currentTurn}/${maxTurns}` },
+        { label: t("생존 메크"), value: `${mechsState.filter((m) => !m.isDead).length}/3` },
       ],
     });
     const ok = await copyShareCardToClipboard(canvas);
@@ -780,7 +783,7 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
                 alt="Power Grid"
                 className="size-4 inline-block select-none pointer-events-none"
               />
-              <span>전력망 (POWER GRID)</span>
+              <span>{t("전력망 (POWER GRID)")}</span>
             </span>
             <div className="flex items-center gap-1 mt-1">
               {Array.from({ length: maxPowerGrid }).map((_, idx) => (
@@ -802,7 +805,7 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
         {/* Dual Progress Bars */}
         <div className="flex-1 min-w-45 max-w-xs space-y-1">
           <div className="flex justify-between text-xs text-muted-foreground font-semibold">
-            <span>전력 잔여율</span>
+            <span>{t("전력 잔여율")}</span>
             <span className="font-mono text-warning font-bold">{powerGrid} / {maxPowerGrid} ({powerPct}%)</span>
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
@@ -812,7 +815,7 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
             />
           </div>
           <div className="flex justify-between text-xs text-muted-foreground font-semibold pt-1">
-            <span>작전 턴 진행</span>
+            <span>{t("작전 턴 진행")}</span>
             <span className="font-mono text-primary font-bold">{currentTurn} / {maxTurns} ({turnPct}%)</span>
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
@@ -845,7 +848,7 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
             disabled={gamePhase !== 'player'}
             className="min-h-11 px-4 py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold rounded-xl shadow-md text-xs flex items-center gap-1.5"
           >
-            <span>턴 종료</span>
+            <span>{t("턴 종료")}</span>
             <span>⏩</span>
           </TiltBreachButton>
         </div>
@@ -870,9 +873,9 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
               alt="Timeline Saved"
               className="size-16 animate-bounce drop-shadow-xl mb-2 select-none pointer-events-none"
             />
-            <h2 className="text-3xl font-extrabold text-primary mb-2">섬 방어 성공! (TIMELINE SAVED)</h2>
+            <h2 className="text-3xl font-extrabold text-primary mb-2">{t("섬 방어 성공! (TIMELINE SAVED)")}</h2>
             <p className="text-muted-foreground text-sm max-w-md mb-5">
-              외계 벡(Vek)의 침공으로부터 민간인 전력망과 대도시를 완벽하게 사수했습니다!
+              {t("외계 벡(Vek)의 침공으로부터 민간인 전력망과 대도시를 완벽하게 사수했습니다!")}
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               <TiltBreachButton
@@ -882,7 +885,7 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
                 }}
                 className="min-h-11 px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl shadow-lg text-sm"
               >
-                새 타임라인 방어하기 ↺
+                {t("새 타임라인 방어하기 ↺")}
               </TiltBreachButton>
               <TiltBreachButton
                 onClick={handleShareCard}
@@ -891,12 +894,12 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
                 {shareStatus === 'copied' ? (
                   <>
                     <Check className="size-4 text-primary" />
-                    <span>복사됨!</span>
+                    <span>{t("복사됨!")}</span>
                   </>
                 ) : (
                   <>
                     <Camera className="size-4" />
-                    <span>성과 카드</span>
+                    <span>{t("성과 카드")}</span>
                   </>
                 )}
               </TiltBreachButton>
@@ -906,9 +909,9 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
 
         {gamePhase === 'defeat' && (
           <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-20 animate-in fade-in zoom-in-95">
-            <h2 className="text-3xl font-extrabold text-destructive mb-2">전력망 붕괴 (TIMELINE LOST)</h2>
+            <h2 className="text-3xl font-extrabold text-destructive mb-2">{t("전력망 붕괴 (TIMELINE LOST)")}</h2>
             <p className="text-muted-foreground text-sm max-w-md mb-5">
-              도시의 전력망이 모두 파괴되었습니다. 타임라인을 포기하고 과거로 리셋해야 합니다.
+              {t("도시의 전력망이 모두 파괴되었습니다. 타임라인을 포기하고 과거로 리셋해야 합니다.")}
             </p>
             <TiltBreachButton
               onClick={() => {
@@ -917,7 +920,7 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
               }}
               className="min-h-11 px-6 py-2.5 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold rounded-xl shadow-lg text-sm"
             >
-              타임트래블 재도전 ↺
+              {t("타임트래블 재도전 ↺")}
             </TiltBreachButton>
           </div>
         )}
@@ -945,14 +948,14 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
                 <div className="size-10 shrink-0 flex items-center justify-center rounded-xl bg-background/60 border border-border/60 p-1">
                   <img
                     src={getMechSprite(mech.id)}
-                    alt={mech.name}
+                    alt={t(mech.name)}
                     className="size-full object-contain filter drop-shadow-xs select-none pointer-events-none"
                     draggable={false}
                   />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-foreground truncate">{mech.name}</span>
+                    <span className="font-bold text-sm text-foreground truncate">{t(mech.name)}</span>
                     <span className="text-xs px-2 py-0.5 rounded-lg bg-muted text-muted-foreground uppercase font-mono font-bold">
                       {mech.mechClass}
                     </span>
@@ -988,7 +991,7 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
                         : 'bg-muted hover:bg-muted/80 text-primary'
                     }`}
                   >
-                    이동 (MOVE)
+                    {t("이동 (MOVE)")}
                   </TiltBreachButton>
 
                   <TiltBreachButton
@@ -1003,13 +1006,13 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
                         : 'bg-muted hover:bg-muted/80 text-destructive'
                     }`}
                   >
-                    공격 (ATTACK)
+                    {t("공격 (ATTACK)")}
                   </TiltBreachButton>
                 </div>
               )}
 
               {isExhausted && !mech.isDead && (
-                <div className="text-center text-xs text-muted-foreground mt-1 font-mono font-semibold">행동 완료</div>
+                <div className="text-center text-xs text-muted-foreground mt-1 font-mono font-semibold">{t("행동 완료")}</div>
               )}
             </div>
           );
@@ -1019,8 +1022,8 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
       {/* Tactical Strategy Hints */}
       <div className="w-full mt-2 bg-card/60 border border-border rounded-xl p-3 text-xs text-muted-foreground flex items-center justify-between gap-2 shadow-xs">
         <div>
-          <span className="font-bold text-warning">💡 전술 팁:</span> 적을 직접 처치하지 못하더라도,{' '}
-          <strong className="text-foreground">밀쳐내기(넉백)</strong>로 적의 공격 방향을 건물 밖으로 돌리거나 물/장애물로 밀어붙여 충돌 대미지를 입히세요!
+          <span className="font-bold text-warning">{t("💡 전술 팁:")}</span> {t('적을 직접 처치하지 못하더라도,')}{' '}
+          <strong className="text-foreground">{t("밀쳐내기(넉백)")}</strong>{t('로 적의 공격 방향을 건물 밖으로 돌리거나 물/장애물로 밀어붙여 충돌 대미지를 입히세요!')}
         </div>
         <TiltBreachButton
           onClick={() => {
@@ -1029,7 +1032,7 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
           }}
           className="min-h-11 px-3 py-1 text-xs text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80 rounded-xl transition-colors shrink-0"
         >
-          재시작
+          {t("재시작")}
         </TiltBreachButton>
       </div>
     </div>

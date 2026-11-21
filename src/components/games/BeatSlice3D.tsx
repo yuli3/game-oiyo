@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { BEAT_SLICE_TEXT } from "../../lib/games/text/beat-slice-3d";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { celebrate } from "../../lib/games/celebration";
 import { BEAT_SLICE_SPRITES } from "../../lib/games/sprites";
@@ -111,7 +113,8 @@ function TiltBeatActionButton({
   );
 }
 
-export default function BeatSlice3D() {
+export default function BeatSlice3D({ locale: pageLocale }: { locale?: string } = {}) {
+  const { t } = useGameText(BEAT_SLICE_TEXT, pageLocale);
   const [selectedTrackId, setSelectedTrackId] = useState("cyber-rush");
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -712,9 +715,9 @@ export default function BeatSlice3D() {
             <img src={BEAT_SLICE_SPRITES.cube} alt="" className="size-7 object-contain" draggable={false} />
           </span>
           <div>
-            <h2 className="text-lg font-bold leading-none tracking-tight">비트 슬라이스 3D</h2>
+            <h2 className="text-lg font-bold leading-none tracking-tight">{t("비트 슬라이스 3D")}</h2>
             <p className="text-xs text-muted-foreground mt-1">
-              3D 네온 런웨이 & 정밀 비트 블록 슬라이싱 액션
+              {t("3D 네온 런웨이 & 정밀 비트 블록 슬라이싱 액션")}
             </p>
           </div>
         </div>
@@ -739,7 +742,7 @@ export default function BeatSlice3D() {
             type="button"
             className="rounded-lg border border-border bg-background p-2 text-foreground transition-colors hover:bg-muted"
             onClick={() => setIsMuted((prev) => !prev)}
-            aria-label={isMuted ? "음소거 해제" : "음소거"}
+            aria-label={isMuted ? t("음소거 해제") : t("음소거")}
           >
             {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
           </button>
@@ -749,7 +752,7 @@ export default function BeatSlice3D() {
             type="button"
             className="rounded-lg border border-border bg-background p-2 text-foreground transition-colors hover:bg-muted"
             onClick={() => initGame(selectedTrackId)}
-            aria-label="재시작"
+            aria-label={t("재시작")}
           >
             <RotateCcw className="h-4 w-4" />
           </button>
@@ -857,15 +860,15 @@ export default function BeatSlice3D() {
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/20 text-primary mb-3">
               <Play className="h-7 w-7 fill-current ml-0.5" />
             </div>
-            <h3 className="text-xl font-bold text-foreground">비트 슬라이스 시작하기</h3>
+            <h3 className="text-xl font-bold text-foreground">{t("비트 슬라이스 시작하기")}</h3>
             <p className="mt-1 max-w-xs text-xs text-muted-foreground">
-              마우스 스와이프, 터치 드래그, 또는 D/F/J/K 키보드로 리듬에 맞춰 3D 블록을 절단하세요!
+              {t("마우스 스와이프, 터치 드래그, 또는 D/F/J/K 키보드로 리듬에 맞춰 3D 블록을 절단하세요!")}
             </p>
             <TiltBeatActionButton
               className="mt-4 flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow transition hover:opacity-90"
               onClick={handleStartGame}
             >
-              곡 재생 및 플레이
+              {t("곡 재생 및 플레이")}
               <ChevronRight className="h-4 w-4" />
             </TiltBeatActionButton>
           </div>
@@ -902,7 +905,7 @@ export default function BeatSlice3D() {
               onClick={() => initGame(selectedTrackId)}
             >
               <RotateCcw className="h-4 w-4" />
-              다시 도전하기
+              {t("다시 도전하기")}
             </TiltBeatActionButton>
           </div>
         )}
@@ -963,9 +966,9 @@ export default function BeatSlice3D() {
       <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-3">
         <div className="flex items-center gap-1.5">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
-          <span>조작법: 화면 터치 스와이프 슬라이스 또는 키보드 [D, F, J, K] / 방향키</span>
+          <span>{t("조작법: 화면 터치 스와이프 슬라이스 또는 키보드 [D, F, J, K] / 방향키")}</span>
         </div>
-        <span>0ms Web Audio 정밀 싱크</span>
+        <span>{t("0ms Web Audio 정밀 싱크")}</span>
       </div>
     </div>
   );

@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { SAND_DIG_TEXT } from "../../lib/games/text/sand-dig";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   RotateCcw,
@@ -75,7 +77,8 @@ interface Particle {
 }
 
 export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
-  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: "ko" });
+  const { t } = useGameText(SAND_DIG_TEXT, locale);
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: (["ko", "en", "ja", "zh", "fr", "es"].includes(locale) ? locale : "en") as "ko" | "en" | "ja" | "zh" | "fr" | "es" });
   const [engine] = useState(() => new SandBallsEngine(400, 600, 8));
   const [gameState, setGameState] = useState<SandBallsState>(() => engine.getState());
   const [isMuted, setIsMuted] = useState(false);
@@ -512,9 +515,9 @@ export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
             <img src={SAND_BALLS_SPRITES.truck} alt="" className="size-7 object-contain" draggable={false} />
           </span>
           <div>
-            <h2 className="text-lg font-bold leading-none tracking-tight">샌드 디그</h2>
+            <h2 className="text-lg font-bold leading-none tracking-tight">{t("샌드 디그")}</h2>
             <p className="text-xs text-muted-foreground mt-1">
-              실시간 모래 절삭 지형 & 구체 물리 낙하 시뮬레이션
+              {t("실시간 모래 절삭 지형 & 구체 물리 낙하 시뮬레이션")}
             </p>
           </div>
         </div>
@@ -525,7 +528,7 @@ export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
             type="button"
             className="rounded-lg border border-border bg-background p-2 text-foreground transition hover:bg-muted"
             onClick={() => setIsMuted((m) => !m)}
-            aria-label={isMuted ? "음소거 해제" : "음소거"}
+            aria-label={isMuted ? t("음소거 해제") : t("음소거")}
           >
             {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
           </button>
@@ -535,14 +538,14 @@ export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
             type="button"
             className="rounded-lg border border-border bg-background p-2 text-foreground transition hover:bg-muted"
             onClick={() => handleReset(gameState.level)}
-            aria-label="재시작"
+            aria-label={t("재시작")}
           >
             <RotateCcw className="h-4 w-4" />
           </button>
 
           {/* Share Score Button */}
           <TiltSandButton
-            title="기록 공유"
+            title={t("기록 공유")}
             className="rounded-lg border border-border bg-background p-2 text-foreground transition hover:bg-muted"
             onClick={handleShareCard}
           >
@@ -551,7 +554,7 @@ export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
 
           {/* Arcade Portal Toggle */}
           <TiltSandButton
-            title={isImmersive ? "창모드로 복귀" : "100dvh 전체화면 몰입"}
+            title={isImmersive ? t("창모드로 복귀") : t("100dvh 전체화면 몰입")}
             className="rounded-lg border border-border bg-background p-2 text-foreground transition hover:bg-muted"
             onClick={togglePortal}
           >
@@ -600,7 +603,7 @@ export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
         <div className="flex items-center justify-between text-xs font-medium">
           <span className="flex items-center gap-1 text-primary">
             <Zap className="h-3.5 w-3.5" />
-            트럭 적재 게이지
+            {t("트럭 적재 게이지")}
           </span>
           <span className="text-muted-foreground">{loadPercent}%</span>
         </div>
@@ -638,12 +641,12 @@ export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
             </div>
             <h3 className="text-2xl font-black text-foreground">TRUCK FULL & DEPARTED!</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-              모든 구체를 안전하게 모래에서 구출하여 적재함을 가득 채웠습니다!
+              {t("모든 구체를 안전하게 모래에서 구출하여 적재함을 가득 채웠습니다!")}
             </p>
             <div className="my-3 grid grid-cols-2 gap-4 border border-border rounded-lg p-3 bg-card/60 text-left">
               <div>
                 <p className="text-xs text-muted-foreground">SAVED BALLS</p>
-                <p className="text-lg font-bold text-primary">{gameState.collectedCount} 개</p>
+                <p className="text-lg font-bold text-primary">{t("{0} 개", gameState.collectedCount)}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">ACCURACY</p>
@@ -656,13 +659,13 @@ export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
                 onClick={handleShareCard}
               >
                 {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
-                <span>{shareCardCopied ? "복사됨!" : "기록 공유"}</span>
+                <span>{shareCardCopied ? t("복사됨!") : t("기록 공유")}</span>
               </TiltSandButton>
               <TiltSandButton
                 className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90"
                 onClick={() => handleReset(gameState.level + 1)}
               >
-                다음 스테이지 도전
+                {t("다음 스테이지 도전")}
                 <ChevronRight className="h-4 w-4" />
               </TiltSandButton>
             </div>
@@ -674,7 +677,7 @@ export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
       <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-3">
         <div className="flex items-center gap-1.5">
           <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-          <span>플레이 팁: 화면을 손가락/마우스로 문질러 모래를 파내세요. 회색 볼을 채색 볼과 접촉시키면 함께 활성화됩니다!</span>
+          <span>{t("플레이 팁: 화면을 손가락/마우스로 문질러 모래를 파내세요. 회색 볼을 채색 볼과 접촉시키면 함께 활성화됩니다!")}</span>
         </div>
       </div>
     </div>

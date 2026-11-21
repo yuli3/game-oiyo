@@ -73,7 +73,7 @@ export const SUIKA_DIALOGUES: Record<SuikaTrigger, SuikaDialogue[]> = {
       text: {
         ko: "음! 당도가 훌륭하게 응축되었군. 이 기세라면 연쇄 콤보도 노려볼 만하겠어!",
         en: "Exquisite sweetness! Keep up this momentum and we might see a spectacular chain combo!",
-        ja: "うむ！糖度が実に素晴らしく凝축されておる。この勢いなら連鎖コンボも狙えるぞ！",
+        ja: "うむ！糖度が実に素晴らしく凝縮されておる。この勢いなら連鎖コンボも狙えるぞ！",
         zh: "嗯！糖分浓缩得相当完美。照这个势头，接下来的连锁合体指日可待！",
         es: "¡Exquisito dulzor! Mantén el ritmo y podríamos ver un combo en cadena espectacular.",
         fr: "Quelle douceur raffinée ! Continuez sur cette lancée pour déclencher un beau combo !",

@@ -59,7 +59,7 @@ export const SWAT_META_UPGRADE_DEFS: SwatMetaUpgradeDef[] = [
     desc: {
       ko: '사격 후 재장전 쿨다운이 레벨당 -12% 단축되어 압도적인 화력을 투사합니다.',
       en: 'Reduces firing cooldown by -12% per level for faster bursts.',
-      ja: '射撃クールダウンがLvごとに-12%短縮され、素早く応사します。',
+      ja: '射撃クールダウンがLvごとに-12%短縮され、素早く応射します。',
       zh: '每级减少开火冷却时间 -12%，提供极为迅猛的战术压制。',
       fr: 'Réduit le temps de rechargement entre les tirs de -12% par niveau.',
       es: 'Reduce el enfriamiento entre disparos un -12% por nivel.',
