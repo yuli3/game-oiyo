@@ -6,6 +6,7 @@ import {
   updateGolfPhysics,
   advanceToNextHole,
   COURSES,
+  holeLabel,
 } from "./mini-golf";
 
 describe("mini-golf logic", () => {
@@ -107,5 +108,36 @@ describe("mini-golf logic", () => {
     expect(state.ball.x).toBe(COURSES[2].startPos.x);
     expect(state.ball.z).toBe(COURSES[2].startPos.z);
     expect(state.lastEvent).toBe("water_hazard");
+  });
+
+  it("has 10 to 50 holes, each named in all six languages", () => {
+    expect(COURSES.length).toBeGreaterThanOrEqual(10);
+    expect(COURSES.length).toBeLessThanOrEqual(50);
+    COURSES.forEach((hole, i) => {
+      expect(hole.id).toBe(i + 1);
+      for (const lang of ["ko", "en", "ja", "zh", "fr", "es"]) {
+        expect(hole.label?.[lang as "ko"], `${hole.name} ${lang}`).toBeTruthy();
+      }
+    });
+    expect(holeLabel(COURSES[0], "ko")).toBe("클래식 페어웨이");
+  });
+
+  // Shots found by a beam search (angle step 3 degrees, power step 0.1); each must hole out within par.
+  const SOLUTIONS: Array<Array<[number, number]>> = [
+    [[90, 9]], [[81, 10], [1, 6]], [[90, 9]], [[103, 10], [64, 6]], [[101, 10], [0, 3]],
+    [[102, 10], [61, 7]], [[103, 10], [30, 7]], [[92, 9], [0, 6]], [[108, 10], [72, 8]], [[95, 10], [62, 9]],
+  ];
+
+  it("every hole can be holed within par", () => {
+    expect(SOLUTIONS).toHaveLength(COURSES.length);
+    SOLUTIONS.forEach((shots, idx) => {
+      let state = createInitialGolfState(idx);
+      for (const [angleStep, power] of shots) {
+        state = executePutt(setAim(state, (angleStep / 120) * Math.PI * 2, power / 10));
+        for (let i = 0; i < 2000 && state.status === "rolling"; i++) state = updateGolfPhysics(state, 1 / 60);
+      }
+      expect(["holed", "finished"], COURSES[idx].name).toContain(state.status);
+      expect(state.strokesThisHole).toBeLessThanOrEqual(COURSES[idx].par);
+    });
   });
 });

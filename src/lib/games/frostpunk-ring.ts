@@ -71,13 +71,19 @@ export const BUILDING_COSTS: Record<
   beacon: { wood: 30, steel: 25, maxWorkers: 5, insulationC: 15 },
 };
 
+// Ten days of falling temperature (stage range 10-50, 2026-11-21); day 10 is the Great Whiteout.
+export const FROST_MAX_DAYS = 10;
 const WEATHER_BY_DAY: Record<number, number> = {
   1: -20,
-  2: -30,
-  3: -40,
-  4: -50,
-  5: -60,
-  6: -70, // The Great Whiteout
+  2: -25,
+  3: -30,
+  4: -35,
+  5: -40,
+  6: -45,
+  7: -50,
+  8: -55,
+  9: -60,
+  10: -70, // The Great Whiteout
 };
 
 export function computeSlotTemperatureC(
@@ -142,7 +148,7 @@ export function createInitialFrostpunkRingState(seed = 20261027): FrostpunkRingS
     seed,
     status: "playing",
     day: 1,
-    maxDays: 6,
+    maxDays: FROST_MAX_DAYS,
     hour: 8,
     ambientTempC: -20,
     coal: 180,
@@ -330,7 +336,7 @@ export function stepFrostpunkHour(
     day += 1;
   }
 
-  const ambientTempC = WEATHER_BY_DAY[Math.min(6, day)] ?? -70;
+  const ambientTempC = WEATHER_BY_DAY[Math.min(FROST_MAX_DAYS, day)] ?? -70;
   const shiftMult = state.laws["extended-shift"].enacted ? 1.35 : 1.0;
 
   let coalIncome = 0;

@@ -358,8 +358,8 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
           </h1>
           <p className="mt-1 text-xs text-muted-foreground md:text-sm">
             {isKo
-              ? '중앙 증기 발전기의 동심원 열기 구역(Ring 1~4)을 설계하고 -70°C 대폭설 화이트아웃 6일을 생존하세요.'
-              : 'Manage 4 concentric Steam Generator heat rings, coal supply, and laws to survive the -70°C Day 6 Whiteout.'}
+              ? '중앙 증기 발전기의 동심원 열기 구역(Ring 1~4)을 설계하고 -70°C 대폭설 화이트아웃까지 10일을 생존하세요.'
+              : 'Manage 4 concentric Steam Generator heat rings, coal supply, and laws to survive the -70°C Day 10 Whiteout.'}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

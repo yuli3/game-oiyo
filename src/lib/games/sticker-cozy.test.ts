@@ -53,4 +53,21 @@ describe("Sticker Book Cozy Engine", () => {
     expect(state.placedCount).toBe(8);
     expect(state.isRoomComplete).toBe(true);
   });
+
+  it("ships 10 to 50 rooms; each has 8 uniquely named stickers that all snap in", () => {
+    expect(ROOM_THEMES.length).toBeGreaterThanOrEqual(10);
+    expect(ROOM_THEMES.length).toBeLessThanOrEqual(50);
+    ROOM_THEMES.forEach((room, i) => {
+      expect(room.roomNumber).toBe(i + 1);
+      expect(new Set(room.stickers.map((st) => st.id)).size).toBe(room.stickers.length);
+      for (const lang of ["ko", "en", "ja", "zh", "fr", "es"] as const) {
+        expect(room.title[lang].length).toBeGreaterThan(0);
+        for (const st of room.stickers) expect(st.name[lang].length, `${room.id}/${st.id}`).toBeGreaterThan(0);
+      }
+      const state = createStickerCozyState(i);
+      for (const spec of room.stickers) tryPlaceStickerAt(state, spec.id, spec.targetX, spec.targetY);
+      expect(state.isRoomComplete, room.id).toBe(true);
+    });
+    expect(createStickerCozyState(ROOM_THEMES.length - 1).isAllComplete).toBe(false);
+  });
 });
