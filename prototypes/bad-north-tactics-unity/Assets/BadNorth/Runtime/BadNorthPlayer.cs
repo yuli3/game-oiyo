@@ -184,6 +184,10 @@ public class BadNorthPlayer : MonoBehaviour
     private Material shieldMat;
     private Material berserkerMat;
     private Material bossMat;
+    private Material arrowMat;
+    private Material roofBurningMat;
+    private Material hullMat, sailMat;
+    private readonly Dictionary<string, Material> spriteMats = new Dictionary<string, Material>();
 
     // State & Score
     public enum GameState { Playing, Victory, Defeat }
@@ -380,31 +384,68 @@ public class BadNorthPlayer : MonoBehaviour
         lightGo.transform.rotation = Quaternion.Euler(52f, -38f, 0f);
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/BN/Art) ----
+    private static Texture2D ArtTex(string name, bool repeat = false)
+    {
+        var t = Resources.Load<Texture2D>("BN/Art/" + name);
+        if (t != null) t.wrapMode = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+        return t;
+    }
+
+    // Lit material carrying a painted texture (white tint so the paint shows as drawn).
+    private static Material TexturedLit(Shader lit, string tex, float tile = 1f)
+    {
+        var m = new Material(OiyoShaders.Safe(lit));
+        m.mainTexture = ArtTex(tex, tile != 1f);
+        m.mainTextureScale = new Vector2(tile, tile);
+        m.color = Color.white;
+        if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.08f);
+        return m;
+    }
+
+    // Unlit cut-out sprite material, shared per texture.
+    private Material SpriteMat(string tex)
+    {
+        if (!spriteMats.TryGetValue(tex, out var m))
+        {
+            var sh = Shader.Find("OIYO/UnlitCutout");
+            m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+            m.mainTexture = ArtTex(tex);
+            m.color = Color.white;
+            spriteMats[tex] = m;
+        }
+        return m;
+    }
+
+    // Camera-facing painted figure (no collider: combat here is distance maths).
+    private GameObject Billboard(string name, string tex, float w, float h)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        go.transform.rotation = mainCam.transform.rotation;
+        go.transform.localScale = new Vector3(w, h, 1f);
+        go.GetComponent<Renderer>().material = SpriteMat(tex);
+        return go;
+    }
+
     private void CreateMaterials()
     {
         Shader lit = Shader.Find("Universal Render Pipeline/Lit");
         if (lit == null) lit = Shader.Find("Standard");
 
-        beachMat = new Material(OiyoShaders.Safe(lit));
-        beachMat.color = new Color(0.88f, 0.82f, 0.65f); // Nordic Sand
+        beachMat = TexturedLit(lit, "sand");
+        lowlandMat = TexturedLit(lit, "grass");
+        cliffMat = TexturedLit(lit, "cliff");
+        waterMat = TexturedLit(lit, "water", 6f);
+        houseWallMat = TexturedLit(lit, "house_wall");
+        houseRoofMat = TexturedLit(lit, "roof");
+        burningMat = TexturedLit(lit, "roof_burning");
+        hullMat = TexturedLit(lit, "hull");
+        sailMat = SpriteMat("sail");
 
-        lowlandMat = new Material(OiyoShaders.Safe(lit));
-        lowlandMat.color = new Color(0.24f, 0.55f, 0.32f); // Island Grass
-
-        cliffMat = new Material(OiyoShaders.Safe(lit));
-        cliffMat.color = new Color(0.38f, 0.42f, 0.46f); // Grey Slate Cliff
-
-        waterMat = new Material(OiyoShaders.Safe(lit));
-        waterMat.color = new Color(0.14f, 0.36f, 0.52f, 0.9f);
-
-        houseWallMat = new Material(OiyoShaders.Safe(lit));
-        houseWallMat.color = new Color(0.58f, 0.48f, 0.38f);
-
-        houseRoofMat = new Material(OiyoShaders.Safe(lit));
-        houseRoofMat.color = new Color(0.82f, 0.32f, 0.22f);
-
-        burningMat = new Material(OiyoShaders.Safe(lit));
-        burningMat.color = new Color(0.95f, 0.45f, 0.10f);
+        arrowMat = new Material(OiyoShaders.Safe(lit));
+        arrowMat.color = new Color(0.55f, 0.4f, 0.25f);
 
         // Player Squad Mats
         swordMat = new Material(OiyoShaders.Safe(lit));
@@ -606,8 +647,10 @@ public class BadNorthPlayer : MonoBehaviour
                 {
                     var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     cube.name = string.Format("Tile_{0}_{1}_H{2}", x, z, height);
-                    cube.transform.position = pos;
-                    cube.transform.localScale = new Vector3(TilePitch * 0.96f, height * 0.6f + 0.6f, TilePitch * 0.96f);
+                    // Visual only: put every tile's top surface just under the units standing on it
+                    float tileH = height * 0.6f + 0.6f;
+                    cube.transform.position = new Vector3(pos.x, pos.y + 0.35f - tileH * 0.5f, pos.z);
+                    cube.transform.localScale = new Vector3(TilePitch * 0.96f, tileH, TilePitch * 0.96f);
 
                     Material mat = (height == 1) ? beachMat : (height == 2) ? lowlandMat : cliffMat;
                     cube.GetComponent<Renderer>().material = mat;
@@ -682,11 +725,9 @@ public class BadNorthPlayer : MonoBehaviour
             sq.rootGo.transform.position = sq.centerPos;
 
             // Banner
-            var banner = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            banner.transform.position = sq.centerPos + new Vector3(0f, 1.3f, 0f);
-            banner.transform.localScale = new Vector3(0.18f, 0.5f, 0.18f);
+            var banner = Billboard("SquadFlag", FlagArt(types[i]), 0.6f, 0.9f);
+            banner.transform.position = sq.centerPos + new Vector3(0f, 1.05f, 0f);
             banner.transform.SetParent(sq.rootGo.transform);
-            banner.GetComponent<Renderer>().material = GetMaterialForSquad(types[i]);
             sq.bannerGo = banner;
 
             // 9 Soldiers in 3x3 formation
@@ -698,12 +739,9 @@ public class BadNorthPlayer : MonoBehaviour
                     sol.localOffset = new Vector3(c * 0.32f, 0f, r * 0.32f);
                     sol.currentPos = sq.centerPos + sol.localOffset;
 
-                    var solGo = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                    solGo.name = "Soldier";
-                    solGo.transform.position = sol.currentPos;
-                    solGo.transform.localScale = new Vector3(0.24f, 0.38f, 0.24f);
+                    var solGo = Billboard("Soldier", UnitArt(types[i]), 0.42f, 0.63f);
+                    solGo.transform.position = sol.currentPos + new Vector3(0f, 0.06f, 0f);
                     solGo.transform.SetParent(sq.rootGo.transform);
-                    solGo.GetComponent<Renderer>().material = GetMaterialForSquad(types[i]);
                     sol.go = solGo;
 
                     sq.soldiers.Add(sol);
@@ -714,6 +752,16 @@ public class BadNorthPlayer : MonoBehaviour
         }
 
         selectedSquadIdx = 0;
+    }
+
+    private static string UnitArt(SquadType type)
+    {
+        return type == SquadType.Archers ? "unit_archer" : type == SquadType.Pikemen ? "unit_pike" : "unit_sword";
+    }
+
+    private static string FlagArt(SquadType type)
+    {
+        return type == SquadType.Archers ? "flag_archer" : type == SquadType.Pikemen ? "flag_pike" : "flag_sword";
     }
 
     private Material GetMaterialForSquad(SquadType type)
@@ -898,7 +946,16 @@ public class BadNorthPlayer : MonoBehaviour
             shipGo.transform.position = spawnSea;
             shipGo.transform.localScale = new Vector3(1.2f, 0.5f, 2.6f);
             shipGo.transform.rotation = Quaternion.LookRotation(targetBeach.worldPos - spawnSea);
-            shipGo.GetComponent<Renderer>().material = houseRoofMat;
+            shipGo.GetComponent<Renderer>().material = hullMat;
+            // square sail on a mast, as a child that undoes the hull's stretch
+            var sailGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            sailGo.name = "Sail";
+            Destroy(sailGo.GetComponent<Collider>());
+            sailGo.transform.SetParent(shipGo.transform, false);
+            sailGo.transform.localPosition = new Vector3(0f, 2.3f, 0f);
+            sailGo.transform.localRotation = Quaternion.identity;
+            sailGo.transform.localScale = new Vector3(1.5f / 1.2f, 1.4f / 0.5f, 1f);
+            sailGo.GetComponent<Renderer>().material = sailMat;
             ship.go = shipGo;
 
             // Prepare passengers
@@ -975,17 +1032,15 @@ public class BadNorthPlayer : MonoBehaviour
         {
             unit.pos = ship.beachPos + new Vector3(UnityEngine.Random.Range(-0.8f, 0.8f), 0.3f, UnityEngine.Random.Range(-0.8f, 0.8f));
 
-            var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            go.name = "Raider_" + unit.type;
-            go.transform.position = unit.pos;
-
             float scale = (unit.type == RaiderType.JarlWarlord) ? 0.48f : (unit.type == RaiderType.Berserker) ? 0.36f : 0.26f;
-            go.transform.localScale = new Vector3(scale, scale * 1.5f, scale);
-
-            Material mat = (unit.type == RaiderType.JarlWarlord) ? bossMat :
-                           (unit.type == RaiderType.Berserker) ? berserkerMat :
-                           (unit.type == RaiderType.ShieldBearer) ? shieldMat : raiderMat;
-            go.GetComponent<Renderer>().material = mat;
+            string art = (unit.type == RaiderType.JarlWarlord) ? "raider_warlord" :
+                         (unit.type == RaiderType.Berserker) ? "raider_berserker" :
+                         (unit.type == RaiderType.ShieldBearer) ? "raider_shield" : "raider_militia";
+            var go = new GameObject("Raider_" + unit.type);
+            go.transform.position = unit.pos;
+            var fig = Billboard("Figure", art, scale * 1.75f, scale * 2.6f);
+            fig.transform.SetParent(go.transform, false);
+            fig.transform.localPosition = new Vector3(0f, 0.12f + scale * 0.5f, 0f);
             unit.go = go;
 
             // Target closest house
@@ -1253,7 +1308,7 @@ public class BadNorthPlayer : MonoBehaviour
         go.name = "Arrow";
         go.transform.position = arrow.startPos;
         go.transform.localScale = new Vector3(0.06f, 0.35f, 0.06f);
-        go.GetComponent<Renderer>().material = pikeMat;
+        go.GetComponent<Renderer>().material = arrowMat;
         arrow.go = go;
 
         activeArrows.Add(arrow);
@@ -1443,6 +1498,7 @@ public class BadNorthPlayer : MonoBehaviour
         if (seaGo != null)
         {
             seaGo.transform.position = new Vector3(0f, -0.4f + Mathf.Sin(waterBobTimer * 1.8f) * 0.08f, 0f);
+            if (waterMat != null) waterMat.mainTextureOffset = new Vector2(waterBobTimer * 0.012f, waterBobTimer * 0.02f);
         }
     }
 
