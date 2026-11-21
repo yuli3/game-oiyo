@@ -5,7 +5,7 @@ import GameGuide from "../../components/GameGuide.astro";
 import { locales, type Locale } from "../../lib/i18n";
 
 export function getStaticPaths() {
-  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+  return locales.map((l) => ({ params: { lang: l } }));
 }
 
 const locale: Locale = (Astro.params.lang as Locale) || "en";
