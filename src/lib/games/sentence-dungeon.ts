@@ -3,7 +3,7 @@
  * 한 문장은 가장 서쪽의 맞는 짝에만 한 번 읽힌다. 불 바로 동쪽의 얼음은 물이 되고,
  * 물 바로 동쪽의 불은 꺼지며, 불 바로 동쪽의 물은 마른다.
  * 복도가 표식과 같아질 때까지 문장 순서를 고른다.
- * 네 방은 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 방을 바꾸지 않는다.
+ * 열 방은 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 방을 바꾸지 않는다.
  * 자유 문장 입력, 물리 엔진, 철자 실력은 이 판의 승패가 아니다.
  *
  * 카메라 0 은 월드 +z 다. 화면 오른쪽이 월드 +x(동쪽)이고, 화면 위가 북쪽(−z)이다.
@@ -66,8 +66,16 @@ const PUZZLES: readonly RoomDef[] = [
   { id: "first-thaw", cells: [FIRE, ICE, FIRE, EMPTY, EMPTY], goal: [FIRE, EMPTY, EMPTY, EMPTY, EMPTY] },
   { id: "twin-ice", cells: [FIRE, ICE, FIRE, ICE, FIRE], goal: [FIRE, EMPTY, EMPTY, WATER, FIRE] },
   { id: "shore-water", cells: [WATER, FIRE, ICE, WATER, FIRE], goal: [WATER, EMPTY, EMPTY, WATER, EMPTY] },
-  { id: "long-clause", cells: [FIRE, ICE, FIRE, WATER, FIRE], goal: [FIRE, EMPTY, EMPTY, EMPTY, EMPTY] },
+  { id: "long-clause", cells: [FIRE, ICE, FIRE, WATER, FIRE], goal: [FIRE, EMPTY, EMPTY, EMPTY, EMPTY] },  // Stages 5-10 (stage range 2026-11-21): each keeps one shortest sentence order, checked by a search in the tests.
+  { id: "melt-run", cells: [FIRE, FIRE, ICE, FIRE, WATER], goal: [FIRE, FIRE, EMPTY, EMPTY, EMPTY] },
+  { id: "half-thaw", cells: [FIRE, ICE, FIRE, WATER, FIRE], goal: [FIRE, WATER, EMPTY, EMPTY, EMPTY] },
+  { id: "ice-tail", cells: [FIRE, FIRE, ICE, FIRE, ICE], goal: [FIRE, FIRE, EMPTY, EMPTY, WATER] },
+  { id: "pool-keep", cells: [FIRE, ICE, FIRE, ICE, FIRE], goal: [FIRE, WATER, EMPTY, WATER, EMPTY] },
+  { id: "west-ice", cells: [ICE, FIRE, ICE, FIRE, WATER], goal: [ICE, FIRE, EMPTY, EMPTY, EMPTY] },
+  { id: "open-door", cells: [EMPTY, FIRE, ICE, FIRE, ICE], goal: [EMPTY, FIRE, EMPTY, EMPTY, WATER] },
 ];
+
+export const PUZZLE_COUNT = PUZZLES.length;
 
 function normalize(x: number, y: number, z: number): [number, number, number] {
   const length = Math.hypot(x, y, z) || 1;
@@ -156,6 +164,12 @@ export function puzzleIndexForSeed(seed: number): number {
 export function nextSeed(seed: number): number {
   const current = Number.isFinite(seed) ? Math.trunc(seed) : 0;
   return mixSeed(current + 1);
+}
+
+/** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
+export function seedForPuzzle(index: number): number {
+  const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
 export function createRoom(seed = 0): RoomState {
