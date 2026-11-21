@@ -1779,3 +1779,49 @@ export const ALLEY_APPRAISER_SPRITES = {
   coin: "/assets/sprites/alley-appraiser/coin.webp",
   catalogue: "/assets/sprites/alley-appraiser/catalogue.webp",
 } as const;
+
+export const TRAP_STAIRS_SPRITES = {
+  heroIdle: "/assets/sprites/trap-stairs/hero-idle.webp",
+  heroRunA: "/assets/sprites/trap-stairs/hero-run-a.webp",
+  heroRunB: "/assets/sprites/trap-stairs/hero-run-b.webp",
+  heroJump: "/assets/sprites/trap-stairs/hero-jump.webp",
+  heroDead: "/assets/sprites/trap-stairs/hero-dead.webp",
+  stone: "/assets/sprites/trap-stairs/stone.webp",
+  stoneTop: "/assets/sprites/trap-stairs/stone-top.webp",
+  spike: "/assets/sprites/trap-stairs/spike.webp",
+  door: "/assets/sprites/trap-stairs/door.webp",
+  dropper: "/assets/sprites/trap-stairs/dropper.webp",
+  hidden: "/assets/sprites/trap-stairs/hidden.webp",
+  pad: "/assets/sprites/trap-stairs/pad.webp",
+} as const;
+
+const CE = "/assets/sprites/cat-expedition";
+export const CAT_EXPEDITION_SPRITES = {
+  cats: {
+    chonk: `${CE}/cat-chonk.webp`,
+    hunter: `${CE}/cat-hunter.webp`,
+    kneader: `${CE}/cat-kneader.webp`,
+    static: `${CE}/cat-static.webp`,
+    shadow: `${CE}/cat-shadow.webp`,
+    boxer: `${CE}/cat-boxer.webp`,
+  },
+  enemies: {
+    rat: `${CE}/enemy-rat.webp`,
+    pigeon: `${CE}/enemy-pigeon.webp`,
+    stray: `${CE}/enemy-stray.webp`,
+    "rat-boss": `${CE}/enemy-rat-boss.webp`,
+    vacuum: `${CE}/enemy-vacuum.webp`,
+    crow: `${CE}/enemy-crow.webp`,
+    fan: `${CE}/enemy-fan.webp`,
+    "vacuum-boss": `${CE}/enemy-vacuum-boss.webp`,
+    raccoon: `${CE}/enemy-raccoon.webp`,
+    owl: `${CE}/enemy-owl.webp`,
+    cloud: `${CE}/enemy-cloud.webp`,
+    "owl-boss": `${CE}/enemy-owl-boss.webp`,
+  },
+  backdrops: {
+    alley: `${CE}/bg-alley.webp`,
+    site: `${CE}/bg-site.webp`,
+    roof: `${CE}/bg-roof.webp`,
+  },
+} as const;

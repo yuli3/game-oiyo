@@ -174,6 +174,8 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
   "dot-dungeon-rogue": { emoji: "🗡️", cat: "arcade", name: {"ko":"도트 던전 로그","en":"Dot Dungeon Rogue","ja":"ドットダンジョンローグ","zh":"点点地牢肉鸽","fr":"Dot Dungeon Rogue","es":"Dot Dungeon Rogue"} },
   "dot-miner": { emoji: "⛏️", cat: "arcade", name: {"ko":"도트 마이너","en":"Dot Miner","ja":"ドットマイナー","zh":"点点采矿者","fr":"Dot Miner","es":"Dot Miner"} },
   "dot-farm": { emoji: "🌾", cat: "arcade", name: {"ko":"도트 팜","en":"Dot Farm","ja":"ドットファーム","zh":"点点农场","fr":"Dot Farm","es":"Dot Farm"} },
+  "cat-expedition": { emoji: "🐈", cat: "arcade", name: {"ko":"고양이 원정대","en":"Cat Expedition","ja":"ねこ遠征隊","zh":"猫咪远征队","fr":"L'Expédition des chats","es":"La Expedición Gatuna"} },
+  "trap-stairs": { emoji: "🪜", cat: "arcade", name: {"ko":"함정 계단","en":"Trap Stairs","ja":"罠の階段","zh":"陷阱台阶","fr":"L'Escalier piégé","es":"La Escalera Trampa"} },
   "alley-appraiser": { emoji: "🔍", cat: "puzzle", name: {"ko":"골목 감정소","en":"Alley Appraiser","ja":"路地裏鑑定所","zh":"胡同鉴定铺","fr":"L'Expert de la ruelle","es":"El Tasador del Callejón"} },
   "firefly-keeper": { emoji: "🏮", cat: "arcade", name: {"ko":"반딧불 등지기","en":"Firefly Keeper","ja":"ほたるの灯守り","zh":"萤火守灯人","fr":"Gardien des lucioles","es":"Guardián de luciérnagas"} },
   "hanyang-timeslip": { emoji: "⏳", cat: "arcade", name: {"ko":"한양 타임슬립","en":"Hanyang Timeslip","ja":"漢陽タイムスリップ","zh":"汉阳时光穿越","fr":"Hanyang Timeslip","es":"Hanyang Timeslip"} },
@@ -189,6 +191,8 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
  * Players finishing or exploring these games receive hand-tuned next-best suggestions.
  */
 export const CURATED_CLUSTERS: Record<string, string[]> = {
+  "cat-expedition": ["cat-fishing", "dot-dungeon-rogue", "tower-deck-rogue", "trap-stairs"],
+  "trap-stairs": ["dot-runner", "charge-climb", "cave-dash", "alley-appraiser"],
   "alley-appraiser": ["border-inspector", "dot-farm", "museum-night", "omission-detective"],
   // Dot Retro Arcade Cluster
   "dot-fishing": ["cat-fishing", "dot-farm", "dot-dungeon-rogue", "dot-runner"],

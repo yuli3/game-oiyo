@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CatExpedition from "../../components/games/CatExpedition";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "고양이 원정대 — 무료 고양이 파티 로그라이트 RPG 30층",
+    description: "뚱냥·사냥냥·꾹꾹냥과 함께 뒷골목, 공사장, 지붕 위 30층을 오르세요. 턴제 전투, 층마다 보상 선택, 새 고양이 영입. 설치 없이 브라우저에서 바로.",
+  },
+  en: {
+    title: "Cat Expedition — Free cat-party roguelite RPG, 30 floors",
+    description: "Lead a party of three cats up 30 floors of alleys, building sites and rooftops. Turn-based fights, a reward after every floor and new cats to recruit, free in your browser.",
+  },
+  ja: {
+    title: "ねこ遠征隊 — 無料の猫パーティー・ローグライトRPG 30階",
+    description: "3匹の猫を率いて裏路地・工事現場・屋根の上の30階を登ろう。ターン制バトル、階ごとの報酬選び、新しい猫の仲間入り。ブラウザですぐ遊べます。",
+  },
+  zh: {
+    title: "猫咪远征队 — 免费猫咪小队肉鸽RPG 30层",
+    description: "带领三只猫攀登后巷、工地和屋顶共30层。回合制战斗、每层选择奖励、招募新猫咪，浏览器即玩。",
+  },
+  fr: {
+    title: "L'Expédition des chats — Roguelite RPG gratuit en équipe de chats, 30 étages",
+    description: "Menez trois chats à travers 30 étages de ruelles, de chantiers et de toits. Combats au tour par tour, une récompense par étage et de nouveaux chats à recruter, dans le navigateur.",
+  },
+  es: {
+    title: "La Expedición Gatuna — Roguelite RPG gratis con un equipo de gatos, 30 pisos",
+    description: "Guía a tres gatos por 30 pisos de callejones, obras y tejados. Combates por turnos, una recompensa por piso y nuevos gatos que reclutar, gratis en el navegador.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["cat-expedition"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <CatExpedition client:only="react" locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="cat-expedition" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

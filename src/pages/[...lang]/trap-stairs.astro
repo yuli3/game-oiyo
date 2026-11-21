@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TrapStairs from "../../components/games/TrapStairs";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "함정 계단 — 매번 배신하는 무료 함정 플랫포머 40단계",
+    description: "솟아오르는 가시, 무너지는 바닥, 떨어지는 블록, 도망가는 문. 1분짜리 함정 계단 40단계를 설치 없이 브라우저에서 바로 깨 보세요.",
+  },
+  en: {
+    title: "Trap Stairs — Free trap platformer with 40 sneaky stages",
+    description: "Pop-up spikes, crumbling floors, falling blocks and a door that runs away. Beat 40 one-minute trap stages, free in your browser.",
+  },
+  ja: {
+    title: "罠の階段 — 毎回裏切られる無料トラップ・プラットフォーマー40ステージ",
+    description: "飛び出すトゲ、崩れる床、落ちてくるブロック、逃げるドア。1分で遊べる罠ステージ40をブラウザですぐに。",
+  },
+  zh: {
+    title: "陷阱台阶 — 处处坑人的免费陷阱平台跳跃40关",
+    description: "突然冒出的尖刺、会塌的地板、砸下来的方块、会逃跑的门。40个一分钟陷阱关卡，浏览器即玩。",
+  },
+  fr: {
+    title: "L'Escalier piégé — Jeu de plateforme piégé gratuit, 40 niveaux",
+    description: "Pics surprises, sols qui s'effondrent, blocs qui tombent et une porte qui s'enfuit. 40 niveaux d'une minute, gratuits dans le navigateur.",
+  },
+  es: {
+    title: "La Escalera Trampa — Plataformas con trampas gratis, 40 niveles",
+    description: "Pinchos sorpresa, suelos que se hunden, bloques que caen y una puerta que huye. 40 niveles de un minuto, gratis en el navegador.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["trap-stairs"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <TrapStairs client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="trap-stairs" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
