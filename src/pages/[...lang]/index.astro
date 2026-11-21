@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 169종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 169종." },
-  en: { title: "OIYO Arcade — 169 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 169 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム169種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム169種。" },
-  zh: { title: "OIYO 街机 — 无需安装的169款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，169款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 169 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 169 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 169 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 169 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 173종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 173종." },
+  en: { title: "OIYO Arcade — 173 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 173 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム173種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム173種。" },
+  zh: { title: "OIYO 街机 — 无需安装的173款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，173款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 173 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 173 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 173 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 173 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 169종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "169 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム169種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的169款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "169 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "169 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 173종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "173 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム173種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的173款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "173 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "173 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -232,6 +232,10 @@ const GAMES: Game[] = [
   { slug: "cat-expedition", emoji: "🐈", cat: "arcade", name: { ko: "고양이 원정대", en: "Cat Expedition", ja: "ねこ遠征隊", zh: "猫咪远征队", fr: "L'Expédition des chats", es: "La Expedición Gatuna" } },
   { slug: "trap-stairs", emoji: "🪜", cat: "arcade", name: { ko: "함정 계단", en: "Trap Stairs", ja: "罠の階段", zh: "陷阱台阶", fr: "L'Escalier piégé", es: "La Escalera Trampa" } },
   { slug: "alley-appraiser", emoji: "🔍", cat: "puzzle", name: { ko: "골목 감정소", en: "Alley Appraiser", ja: "路地裏鑑定所", zh: "胡同鉴定铺", fr: "L'Expert de la ruelle", es: "El Tasador del Callejón" } },
+  { slug: "rampart-keeper", emoji: "🏯", cat: "arcade", name: { ko: "성벽 지기", en: "Rampart Keeper", ja: "城壁の守り手", zh: "城墙守卫", fr: "Gardien du rempart", es: "Guardián de la muralla" } },
+  { slug: "link-duel", emoji: "⚔️", cat: "puzzle", name: { ko: "링크 대결", en: "Link Duel", ja: "リンク対決", zh: "链接对决", fr: "Duel par lien", es: "Duelo por enlace" } },
+  { slug: "season-workshop", emoji: "🥣", cat: "arcade", name: { ko: "절기 공방", en: "Season Workshop", ja: "節気工房", zh: "节气工坊", fr: "L'Atelier des saisons", es: "El Taller de las Estaciones" } },
+  { slug: "tidy-nook", emoji: "🧺", cat: "puzzle", name: { ko: "아늑한 방 정리", en: "Tidy Nook", ja: "ほっこり片付け", zh: "温馨收纳", fr: "Coin rangé", es: "Rincón ordenado" } },
   { slug: "firefly-keeper", emoji: "🏮", cat: "arcade", name: { ko: "반딧불 등지기", en: "Firefly Keeper", ja: "ほたるの灯守り", zh: "萤火守灯人", fr: "Gardien des lucioles", es: "Guardián de luciérnagas" } },
   { slug: "hanyang-timeslip", emoji: "⏳", cat: "arcade", name: { ko: "한양 타임슬립", en: "Hanyang Timeslip", ja: "漢陽タイムスリップ", zh: "汉阳时光穿越", fr: "Hanyang Timeslip", es: "Hanyang Timeslip" } },
   { slug: "dot-fishing", emoji: "🎣", cat: "arcade", name: { ko: "도트 피싱", en: "Dot Fishing", ja: "ドットフィッシング", zh: "点点钓鱼", fr: "Dot Fishing", es: "Dot Fishing" } },
@@ -287,6 +291,54 @@ const newReleasesLabel: Record<Locale, { sectionTitle: string; badge: string; su
 const newReleaseLabels = newReleasesLabel[locale] ?? newReleasesLabel.en;
 
 const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; desc: Record<Locale, string> }> = [
+  {
+    slug: "rampart-keeper",
+    tag: { ko: "물리 성벽 디펜스", en: "Physics wall defense", ja: "物理城壁ディフェンス", zh: "物理城墙防守", fr: "Défense physique", es: "Defensa con física" },
+    desc: {
+      ko: "30웨이브, 블록 쌓기·바위 떨구기, 넘어지는 공성병과 폭탄 수레",
+      en: "30 waves: stack blocks, drop boulders, watch invaders topple and bomb carts blow",
+      ja: "30ウェーブ、積んで落として、倒れる敵と爆弾車",
+      zh: "30波：堆方块、砸巨石，看攻城兵倒下、炸弹车爆炸",
+      fr: "30 vagues : empiler, lâcher des rochers, assaillants qui basculent et charrettes explosives",
+      es: "30 oleadas: apila, suelta rocas, invasores que vuelcan y carros bomba",
+    },
+  },
+  {
+    slug: "link-duel",
+    tag: { ko: "친구와 링크로 겨루기", en: "Duel friends by link", ja: "リンクで友だちと勝負", zh: "用链接和朋友对决", fr: "Défiez vos amis par lien", es: "Reta a tus amigos por enlace" },
+    desc: {
+      ko: "작은 게임 10판, 링크를 보내면 친구가 같은 판으로 도전",
+      en: "Ten tiny rounds; send the link and friends take on the same set",
+      ja: "小さなゲーム10回、リンクを送れば友だちが同じセットで挑戦",
+      zh: "10个小回合，发链接让朋友挑战同一组",
+      fr: "Dix mini-manches ; envoyez le lien, vos amis jouent la même série",
+      es: "Diez minirondas; envía el enlace y tus amigos juegan la misma serie",
+    },
+  },
+  {
+    slug: "season-workshop",
+    tag: { ko: "24절기 방치형 공방", en: "24-term idle workshop", ja: "二十四節気の放置工房", zh: "二十四节气放置工坊", fr: "Atelier idle des 24 termes", es: "Taller idle de 24 términos" },
+    desc: {
+      ko: "입춘첩부터 동지 팥죽까지, 눌러 만들고 일꾼을 늘리는 24단계",
+      en: "From spring couplets to solstice porridge: tap, hire helpers, 24 stages",
+      ja: "立春の札から冬至の小豆粥まで、作って職人を増やす24段階",
+      zh: "从立春帖到冬至红豆粥，点击制作、雇帮手，共24关",
+      fr: "Des calligraphies à la bouillie du solstice : fabriquez, embauchez, 24 étapes",
+      es: "De las caligrafías a las gachas del solsticio: haz, contrata, 24 etapas",
+    },
+  },
+  {
+    slug: "tidy-nook",
+    tag: { ko: "코지 수납 퍼즐", en: "Cozy packing puzzle", ja: "癒やし収納パズル", zh: "治愈收纳拼图", fr: "Puzzle de rangement cosy", es: "Puzle de orden acogedor" },
+    desc: {
+      ko: "20개 방, 물건을 돌려 선반 빈칸을 꼭 맞게 채우기",
+      en: "20 rooms: rotate items to fill the shelf exactly",
+      ja: "20部屋、物を回して棚をぴったり埋める",
+      zh: "20个房间，旋转物品把架子刚好填满",
+      fr: "20 pièces : tournez les objets pour remplir l'étagère",
+      es: "20 habitaciones: gira objetos para llenar el estante",
+    },
+  },
   {
     slug: "cat-expedition",
     tag: { ko: "고양이 파티 로그라이트", en: "Cat-party roguelite", ja: "猫パーティー・ローグライト", zh: "猫咪小队肉鸽", fr: "Roguelite en équipe de chats", es: "Roguelite de gatos" },

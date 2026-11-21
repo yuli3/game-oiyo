@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import LinkDuel from "../../components/games/LinkDuel";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "링크 대결 — 링크 하나로 친구와 같은 10판을 겨루는 무료 파티 게임",
+    description: "암산·멈추기·점 세기·다른 색 찾기·순서 기억 10판을 하고 링크를 보내세요. 친구는 똑같은 판으로 점수를 겨룹니다. 서버·가입 없이 12리그.",
+  },
+  en: {
+    title: "Link Duel — Free party game: send a link, friends play your exact 10 rounds",
+    description: "Play ten rounds of quick sums, stop-the-bar, dot counting, odd colour and memory, then send the link. Friends play the exact same rounds. 12 leagues, no server or sign-up.",
+  },
+  ja: {
+    title: "リンク対決 — リンク1つで友だちと同じ10回を競う無料パーティーゲーム",
+    description: "暗算・ストップ・点数え・色違い探し・順番記憶の10回を遊んでリンクを送ろう。友だちはまったく同じ回で勝負。12リーグ、サーバーも登録も不要。",
+  },
+  zh: {
+    title: "链接对决 — 一个链接和朋友比拼同样10回合的免费派对游戏",
+    description: "心算、停止条、数点、找不同色、记顺序共10回合，玩完把链接发出去，朋友用完全相同的回合比分。12个联赛，无需服务器或注册。",
+  },
+  fr: {
+    title: "Duel par lien — Jeu de soirée gratuit : envoyez un lien, vos amis jouent vos 10 manches",
+    description: "Dix manches de calcul, barre à arrêter, points à compter, teinte différente et mémoire, puis envoyez le lien : vos amis jouent les mêmes. 12 ligues, sans serveur ni compte.",
+  },
+  es: {
+    title: "Duelo por enlace — Juego de fiesta gratis: envía un enlace y tus amigos juegan tus 10 rondas",
+    description: "Diez rondas de sumas, para la barra, contar puntos, color distinto y memoria; luego envía el enlace y tus amigos juegan las mismas. 12 ligas, sin servidor ni registro.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["link-duel"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <LinkDuel client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="link-duel" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TidyNook from "../../components/games/TidyNook";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "아늑한 방 정리 — 선반에 물건을 꼭 맞게 넣는 무료 코지 수납 퍼즐",
+    description: "머그잔·책·스탠드·곰 인형·상자를 돌려 가며 선반 빈칸을 남김없이 채우세요. 신발장부터 다락방까지 20개 방, 시간 제한 없는 느긋한 퍼즐.",
+  },
+  en: {
+    title: "Tidy Nook — Free cozy packing puzzle: fit every item on the shelf",
+    description: "Rotate mugs, books, lamps, teddies and boxes to fill every free cell of the shelf. 20 rooms from the shoe rack to the attic, a relaxed puzzle with no timer.",
+  },
+  ja: {
+    title: "ほっこり片付け — 棚にぴったり収める無料の癒やし収納パズル",
+    description: "マグ・本・スタンド・くま・箱を回して棚の空きを残さず埋めよう。靴箱から屋根裏まで20部屋、時間制限なしのゆったりパズル。",
+  },
+  zh: {
+    title: "温馨收纳 — 把物品严丝合缝放上架子的免费治愈收纳拼图",
+    description: "旋转马克杯、书、台灯、小熊和箱子，把架子上的空格全部填满。从鞋柜到阁楼共20个房间，没有时间限制的悠闲拼图。",
+  },
+  fr: {
+    title: "Coin rangé — Puzzle de rangement cosy gratuit : tout doit tenir sur l'étagère",
+    description: "Tournez tasses, livres, lampes, oursons et boîtes pour remplir chaque case de l'étagère. 20 pièces, du meuble à chaussures au grenier, sans chrono.",
+  },
+  es: {
+    title: "Rincón ordenado — Puzle acogedor gratis: que todo quepa en el estante",
+    description: "Gira tazas, libros, lámparas, ositos y cajas para llenar cada hueco del estante. 20 habitaciones, del zapatero al desván, sin reloj.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["tidy-nook"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <TidyNook client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="tidy-nook" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

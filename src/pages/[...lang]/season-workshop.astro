@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SeasonWorkshop from "../../components/games/SeasonWorkshop";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "절기 공방 — 24절기마다 그때 만들던 것을 만드는 무료 방치형 게임",
+    description: "입춘첩부터 우수 된장, 동지 팥죽, 대한 털 버선까지. 눌러서 만들고 연장·일꾼·아궁이를 늘리는 24절기 방치형 공방. 창을 닫아도 일꾼이 일해요.",
+  },
+  en: {
+    title: "Season Workshop — Free idle game through Korea's 24 solar terms",
+    description: "From spring couplets at Start of Spring to red-bean porridge at the Winter Solstice: tap to make, add tools, helpers and a bigger hearth across 24 solar terms. Helpers keep working while the tab is closed.",
+  },
+  ja: {
+    title: "節気工房 — 二十四節気ごとの手仕事を作る無料放置ゲーム",
+    description: "立春の札から冬至の小豆粥、大寒の毛の足袋まで。タップで作り、道具・職人・かまどを増やす二十四節気の放置工房。閉じても職人が働きます。",
+  },
+  zh: {
+    title: "节气工坊 — 按二十四节气制作当季物品的免费放置游戏",
+    description: "从立春帖、雨水大酱到冬至红豆粥、大寒毛线袜。点击制作，添置工具、帮手和灶台，走完二十四节气。关掉页面帮手也在干活。",
+  },
+  fr: {
+    title: "L'Atelier des saisons — Jeu idle gratuit au fil des 24 termes solaires coréens",
+    description: "Des calligraphies du Début du printemps à la bouillie de haricots rouges du solstice d'hiver : fabriquez, ajoutez outils, aides et foyer au fil des 24 termes. Les aides travaillent onglet fermé.",
+  },
+  es: {
+    title: "El Taller de las Estaciones — Juego idle gratis por los 24 términos solares coreanos",
+    description: "De las caligrafías del Inicio de la primavera a las gachas de judías rojas del solsticio: toca para hacer y suma herramientas, ayudantes y fogón en 24 términos. Los ayudantes siguen con la pestaña cerrada.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["season-workshop"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <SeasonWorkshop client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="season-workshop" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
