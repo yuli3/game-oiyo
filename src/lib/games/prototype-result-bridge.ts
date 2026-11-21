@@ -9,14 +9,17 @@ export type PrototypeOutcome = "w" | "l" | "d";
 export type PrototypeResult = { slug: string; outcome: PrototypeOutcome; score?: number };
 
 const MAX_SCORE = 10_000_000;
+// Unity builds (firefly-keeper's jslib) send whole words; the static prototypes send w/l/d.
+const OUTCOME_ALIASES: Record<string, PrototypeOutcome> = { w: "w", l: "l", d: "d", win: "w", loss: "l", draw: "d" };
 
 /** Returns the result only if it is well formed and names the game this page shows. */
 export function parsePrototypeResult(data: unknown, expectedSlug: string): PrototypeResult | null {
   if (!data || typeof data !== "object") return null;
   const d = data as Record<string, unknown>;
   if (d.type !== GAME_RESULT_MESSAGE || d.slug !== expectedSlug) return null;
-  if (d.outcome !== "w" && d.outcome !== "l" && d.outcome !== "d") return null;
-  const result: PrototypeResult = { slug: expectedSlug, outcome: d.outcome };
+  const outcome = typeof d.outcome === "string" && Object.hasOwn(OUTCOME_ALIASES, d.outcome) ? OUTCOME_ALIASES[d.outcome] : undefined;
+  if (!outcome) return null;
+  const result: PrototypeResult = { slug: expectedSlug, outcome };
   if (typeof d.score === "number" && Number.isFinite(d.score) && d.score > 0 && d.score <= MAX_SCORE) {
     result.score = Math.round(d.score);
   }
