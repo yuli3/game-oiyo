@@ -10,6 +10,7 @@ import {
   UPGRADE_POOL,
   type ShotgunChessGame,
   type UpgradeCard,
+  SHOTGUN_FLOORS,
 } from "@/lib/games/shotgun-chess";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
 import {
@@ -373,7 +374,7 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
       <div className="flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-primary/10 p-2 text-primary font-bold">
-            {t.floor} {game.floor}
+            {t.floor} {game.floor} / {SHOTGUN_FLOORS}
           </div>
           <div className="text-sm text-muted-foreground flex items-center gap-1.5">
             <span>{t.turn} {game.turn}</span>

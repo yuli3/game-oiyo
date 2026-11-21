@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
-import { Maximize2, Minimize2, Share2, Volume2, VolumeX, Star, Flame, Sparkles } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX, Flame, Sparkles } from "lucide-react";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { celebrate } from "../../lib/games/celebration";
 import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
 import { createTonePlayer, type TonePlayer } from "../../lib/games/tone";
 import { GameContainer } from "../ui/game/GamePrimitives";
+import ScoreStages from "./ScoreStages";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import {
   ANIMAL_TIME_LIMIT,
@@ -15,6 +16,7 @@ import {
   parseAnimal,
   reshuffleAnimalBoard,
   scoreAnimalMatch,
+  ANIMAL_STAGE_TARGETS,
   serializeAnimal,
   swapAnimals,
   tickAnimalFever,
@@ -1027,29 +1029,9 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
           <Stat l={t.best} v={String(mode === "augment" ? Math.max(augmentBest, score) : best)} />
         </div>
 
-        {/* Star Milestone Rating Bar */}
-        <div className="mt-3 mb-1 px-1">
-          <div className="flex items-center justify-between text-xs text-muted-foreground font-bold mb-1">
-            <div className="flex items-center gap-1">
-              <Star className={`w-3.5 h-3.5 ${score >= 3000 ? "text-warning fill-warning" : "text-muted-foreground/30"}`} />
-              <span className={score >= 3000 ? "text-warning font-black" : ""}>★ 3K</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Star className={`w-3.5 h-3.5 ${score >= 8000 ? "text-warning fill-warning" : "text-muted-foreground/30"}`} />
-              <span className={score >= 8000 ? "text-warning font-black" : ""}>★★ 8K</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Star className={`w-3.5 h-3.5 ${score >= 15000 ? "text-warning fill-warning" : "text-muted-foreground/30"}`} />
-              <span className={score >= 15000 ? "text-warning font-black" : ""}>★★★ 15K</span>
-            </div>
-          </div>
-          <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden border border-border/40">
-            <div
-              className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${Math.min(100, (score / 15000) * 100)}%` }}
-            />
-          </div>
-        </div>
+        {mode === "classic" && (
+          <ScoreStages slug="animal-pop" targets={ANIMAL_STAGE_TARGETS} score={score} locale={locale} />
+        )}
 
         {restored && (
           <p

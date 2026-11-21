@@ -1,3 +1,4 @@
+import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
 import * as THREE from "three";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
@@ -290,7 +291,7 @@ export default function VoxelMaze3D() {
   }, []);
 
   const handleNextLevel = useCallback(() => {
-    setGameState((s) => createInitialVoxelMazeState(s.level + 1));
+    setGameState((s) => createInitialVoxelMazeState(nextCappedStage(s.level)));
   }, []);
 
   return (
@@ -317,6 +318,9 @@ export default function VoxelMaze3D() {
       <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none gap-4">
         {/* Keys & Objectives */}
         <div className="flex gap-2 rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2.5 shadow-xs">
+          <div className="flex items-center text-xs font-black text-primary tabular-nums">
+            단계 {gameState.level} / {ENDLESS_STAGE_CAP}
+          </div>
           <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
             <img src={VOXEL_MAZE_3D_UI_SPRITES.key} alt="" className="size-4 object-contain" />
             <span>열쇠:</span>
@@ -456,7 +460,7 @@ export default function VoxelMaze3D() {
                 onClick={handleNextLevel}
                 className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
               >
-                다음 스테이지 (NEXT LEVEL)
+                {isFinalStage(gameState.level) ? finaleLabel("ko") : "다음 스테이지 (NEXT LEVEL)"}
               </button>
             </div>
           </div>

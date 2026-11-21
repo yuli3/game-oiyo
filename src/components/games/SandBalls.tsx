@@ -1,3 +1,4 @@
+import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
 import { useGameText } from "../../lib/games/game-text";
 import { SAND_DIG_TEXT } from "../../lib/games/text/sand-dig";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -570,7 +571,7 @@ export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
           <span className="text-xs text-muted-foreground">LEVEL</span>
           <p className="text-xl font-black tracking-tight text-primary flex items-center justify-center gap-1.5">
             <img src={SAND_BALLS_SPRITES.shovel} alt="" className="size-4 object-contain" draggable={false} />
-            <span>STAGE {gameState.level}</span>
+            <span>STAGE {gameState.level} / {ENDLESS_STAGE_CAP}</span>
           </p>
         </div>
 
@@ -663,9 +664,9 @@ export default function SandBalls({ locale = "ko" }: { locale?: string } = {}) {
               </TiltSandButton>
               <TiltSandButton
                 className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90"
-                onClick={() => handleReset(gameState.level + 1)}
+                onClick={() => handleReset(nextCappedStage(gameState.level))}
               >
-                {t("다음 스테이지 도전")}
+                {isFinalStage(gameState.level) ? finaleLabel(locale) : t("다음 스테이지 도전")}
                 <ChevronRight className="h-4 w-4" />
               </TiltSandButton>
             </div>

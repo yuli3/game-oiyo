@@ -174,6 +174,9 @@ function getInitialPieces(floor: number): ChessPiece[] {
   return pieces;
 }
 
+/** Floors in one run (stage range 10-50, 2026-11-21); the king toughens each floor. */
+export const SHOTGUN_FLOORS = 10;
+
 export function initShotgunChess(floor = 1): ShotgunChessGame {
   return {
     player: {
@@ -266,7 +269,7 @@ export function movePlayerKing(state: ShotgunChessGame, target: Position): Shotg
 
   // Check if white king was captured by moving
   if (targetPiece?.type === "king") {
-    nextState.status = nextState.floor >= 5 ? "victory" : "wave_clear";
+    nextState.status = nextState.floor >= SHOTGUN_FLOORS ? "victory" : "wave_clear";
     return nextState;
   }
 
@@ -405,7 +408,7 @@ export function shootShotgun(
   // Check if white king killed
   const whiteKing = pieces.find((p) => p.type === "king");
   if (!whiteKing) {
-    nextState.status = nextState.floor >= 5 ? "victory" : "wave_clear";
+    nextState.status = nextState.floor >= SHOTGUN_FLOORS ? "victory" : "wave_clear";
     return nextState;
   }
 

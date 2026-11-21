@@ -1,4 +1,5 @@
 import { useGameText } from "../../lib/games/game-text";
+import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
 import { BLADE_DROP_TEXT } from "../../lib/games/text/blade-drop-3d";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
@@ -369,7 +370,7 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
 
     if (current.status === "completed") {
       // Advance to next level
-      const nextLvl = level + 1;
+      const nextLvl = nextCappedStage(level);
       setLevel(nextLvl);
       const mods = buildSliceMetaModifiers(metaState);
       const nextGame = createSliceMasterLevel(nextLvl, mods);
@@ -408,7 +409,7 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
       <div className="w-full flex items-center justify-between px-4 py-2 bg-muted/40 border-b border-border z-10">
         <div className="flex items-center gap-2">
           <span className="font-black text-sm tracking-wide text-foreground">
-            STAGE {level}
+            STAGE {level} / {ENDLESS_STAGE_CAP}
           </span>
           {game.combo > 1 && (
             <span className="text-xs font-black px-2 py-0.5 rounded-full bg-chart-4/20 text-chart-4 border border-chart-4/30 animate-pulse">
@@ -576,7 +577,7 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
             <div className="flex gap-3">
               <Button onClick={handleFlip} size="lg">
                 <Sparkles className="w-4 h-4 mr-2" />
-                {t("다음 스테이지로 (Stage {0})", level + 1)}
+                {isFinalStage(level) ? finaleLabel(L) : t("다음 스테이지로 (Stage {0})", level + 1)}
               </Button>
             </div>
           </div>

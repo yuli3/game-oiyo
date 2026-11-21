@@ -1,3 +1,4 @@
+import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import MazeRunnerScene from './MazeRunnerScene';
@@ -383,7 +384,7 @@ export default function MazeRunner({ locale }: Props) {
 
           <div className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/40 px-3 py-1.5 text-xs font-bold text-foreground">
             <Compass className="w-4 h-4 text-primary" />
-            <span>{t.stage} {gameState.level}</span>
+            <span>{t.stage} {gameState.level} / {ENDLESS_STAGE_CAP}</span>
           </div>
 
           <div className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/40 px-3 py-1.5 text-xs font-bold text-foreground">
@@ -483,11 +484,11 @@ export default function MazeRunner({ locale }: Props) {
               </button>
               <button
                 type="button"
-                onClick={() => setGameState(createInitialMazeRunnerState(gameState.level + 1, gameState.highScore))}
+                onClick={() => setGameState(createInitialMazeRunnerState(nextCappedStage(gameState.level), gameState.highScore))}
                 className="inline-flex items-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-base font-bold text-primary-foreground shadow-lg hover:bg-primary/90"
               >
                 <Play className="w-5 h-5 fill-current" />
-                <span>{t.nextStage}</span>
+                <span>{isFinalStage(gameState.level) ? finaleLabel(locale) : t.nextStage}</span>
               </button>
             </div>
           </div>
