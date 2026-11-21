@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { HOP_ACROSS_TEXT } from "../../lib/games/text/hop-across-3d";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CrossyRoadEngine } from '../../lib/games/crossy-road';
 import { celebrate } from '../../lib/games/celebration';
@@ -30,7 +32,8 @@ function TiltCrossyActionButton({
   );
 }
 
-export default function CrossyRoad3D() {
+export default function CrossyRoad3D({ locale: pageLocale }: { locale?: string } = {}) {
+  const { t } = useGameText(HOP_ACROSS_TEXT, pageLocale);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<CrossyRoadEngine>(new CrossyRoadEngine());
 
@@ -242,12 +245,12 @@ export default function CrossyRoad3D() {
         }
         setDeathReason(
           engine.state.deathReason === 'car'
-            ? '자동차에 치였습니다!'
+            ? t("자동차에 치였습니다!")
             : engine.state.deathReason === 'drown'
-            ? '차가운 강물에 빠졌습니다!'
+            ? t("차가운 강물에 빠졌습니다!")
             : engine.state.deathReason === 'eagle'
-            ? '너무 오래 머물러 독수리에게 낚아채였습니다!'
-            : '초고속 열차와 충돌했습니다!'
+            ? t("너무 오래 머물러 독수리에게 낚아채였습니다!")
+            : t("초고속 열차와 충돌했습니다!")
         );
       }
 
@@ -525,14 +528,14 @@ export default function CrossyRoad3D() {
             draggable={false}
           />
           <div className="flex flex-col">
-            <span className="text-xs font-bold text-muted-foreground tracking-wider">점수 (SCORE)</span>
+            <span className="text-xs font-bold text-muted-foreground tracking-wider">{t("점수 (SCORE)")}</span>
             <div className="text-2xl font-black text-primary font-mono">{score}</div>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <span className="text-xs text-muted-foreground">최고 기록</span>
+            <span className="text-xs text-muted-foreground">{t("최고 기록")}</span>
             <div className="flex items-center justify-end gap-1.5 text-base font-bold text-warning font-mono">
               <img src={CROSSY_ROAD_SPRITES.trophy} alt="" className="size-4 object-contain" draggable={false} />
               <span>{highScore}</span>
@@ -543,7 +546,7 @@ export default function CrossyRoad3D() {
             onClick={handleRestart}
             className="px-3.5 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold rounded-lg text-xs"
           >
-            다시 시작 ↺
+            {t("다시 시작 ↺")}
           </TiltCrossyActionButton>
         </div>
       </div>
@@ -571,11 +574,11 @@ export default function CrossyRoad3D() {
             <h2 className="text-3xl font-extrabold text-foreground mb-1">{deathReason}</h2>
             <div className="my-3 flex items-center gap-4">
               <div className="text-center">
-                <div className="text-xs text-muted-foreground">도달 거리</div>
+                <div className="text-xs text-muted-foreground">{t("도달 거리")}</div>
                 <div className="text-2xl font-black text-primary font-mono">{score} m</div>
               </div>
               <div className="text-center">
-                <div className="text-xs text-muted-foreground">최고 기록</div>
+                <div className="text-xs text-muted-foreground">{t("최고 기록")}</div>
                 <div className="text-2xl font-black text-warning font-mono">{highScore} m</div>
               </div>
             </div>
@@ -583,7 +586,7 @@ export default function CrossyRoad3D() {
               onClick={handleRestart}
               className="mt-2 px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg shadow-lg text-sm"
             >
-              다시 도전하기 ↺
+              {t("다시 도전하기 ↺")}
             </TiltCrossyActionButton>
           </div>
         )}
@@ -592,7 +595,7 @@ export default function CrossyRoad3D() {
       {/* On-Screen Mobile Touch Controls */}
       <div className="w-full max-w-2xl mt-3 flex items-center justify-between gap-2">
         <div className="flex-1 text-xs text-muted-foreground bg-card/60 border border-border p-2.5 rounded-lg">
-          💡 <strong className="text-foreground">조작법:</strong> 키보드 방향키 / WASD / 스페이스바(전진) 또는 화면을 위·아래·좌·우로 스와이프하거나 탭하세요! 너무 오래 멈춰 있으면 독수리가 덮칩니다!
+          💡 <strong className="text-foreground">{t("조작법:")}</strong> {t("키보드 방향키 / WASD / 스페이스바(전진) 또는 화면을 위·아래·좌·우로 스와이프하거나 탭하세요! 너무 오래 멈춰 있으면 독수리가 덮칩니다!")}
         </div>
 
         {/* Quick D-Pad Buttons for Touch / Mobile users */}

@@ -33,6 +33,50 @@ export function translateGameText(table: GameTextTable, locale: string, source: 
   return fill(text, args);
 }
 
+const TEMPLATE_CACHE = new WeakMap<GameTextTable, Array<[RegExp, string]>>();
+
+function templatesOf(table: GameTextTable): Array<[RegExp, string]> {
+  let list = TEMPLATE_CACHE.get(table);
+  if (!list) {
+    list = Object.keys(table)
+      .filter((key) => /\{\d+\}/.test(key))
+      .map((key) => {
+        const parts = key.split(/(\{\d+\})/);
+        const body = parts.map((part) => (/^\{\d+\}$/.test(part) ? "(.+?)" : part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))).join("");
+        return [new RegExp(`^${body}$`), key] as [RegExp, string];
+      });
+    TEMPLATE_CACHE.set(table, list);
+  }
+  return list;
+}
+
+/**
+ * Translate a finished message that a game engine built in Korean (combat logs and the like).
+ * An exact key wins; otherwise the first "{0}" template that matches is used, and each captured
+ * value is itself looked up, so names inside a log line are translated too.
+ */
+export function translateGameMessage(
+  table: GameTextTable,
+  locale: string,
+  message: string,
+  /** Optional lookup for values the table does not hold, such as names from a game catalog. */
+  resolve?: (value: string) => string | undefined,
+): string {
+  if (locale === "ko") return message;
+  if (table[message]) return translateGameText(table, locale, message);
+  for (const [re, key] of templatesOf(table)) {
+    const m = re.exec(message);
+    if (!m) continue;
+    const order = [...key.matchAll(/\{(\d+)\}/g)].map((x) => Number(x[1]));
+    const args: string[] = [];
+    order.forEach((slot, i) => {
+      args[slot] = table[m[i + 1]] ? translateGameText(table, locale, m[i + 1]) : (resolve?.(m[i + 1]) ?? m[i + 1]);
+    });
+    return translateGameText(table, locale, key, ...args);
+  }
+  return message;
+}
+
 /** Locale of the page, read from <html lang>. First render uses `initial` (the page prop when known). */
 export function usePageLocale(initial?: string): string {
   const [locale, setLocale] = useState(() => (initial ? normalizeGameLocale(initial) : typeof document === "undefined" ? "ko" : normalizeGameLocale(document.documentElement.lang)));
@@ -46,5 +90,6 @@ export function usePageLocale(initial?: string): string {
 export function useGameText(table: GameTextTable, initial?: string) {
   const locale = usePageLocale(initial);
   const t = (source: string, ...args: Array<string | number>) => translateGameText(table, locale, source, ...args);
-  return { t, locale };
+  const tm = (message: string, resolve?: (value: string) => string | undefined) => translateGameMessage(table, locale, message, resolve);
+  return { t, tm, locale };
 }

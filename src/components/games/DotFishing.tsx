@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { DOT_FISHING_TEXT } from "../../lib/games/text/dot-fishing";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Volume2,
@@ -197,6 +199,11 @@ const VIRTUAL_HEIGHT = 280;
 
 export default function DotFishing({ locale = "en" }: { locale?: string }) {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+  const { t: tx, tm } = useGameText(DOT_FISHING_TEXT, locale);
+  const catalogName = (name: string) => {
+    const hit = [...FISH_CATALOG, ...ROD_UPGRADES, ...BOAT_UPGRADES].find((d) => d.names.ko === name);
+    return hit ? hit.names[locale] || hit.names.en : undefined;
+  };
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [gameState, setGameState] = useState<FishingGameState>(() => createFishingGame(Date.now()));
@@ -654,15 +661,15 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
             <div className="flex items-center justify-between text-xs font-bold text-foreground">
               <span className="flex items-center gap-1 text-primary">
                 <Sparkles className="size-3.5" />
-                {gameState.activeFish.fish.names.ko || gameState.activeFish.fish.names.en} ({gameState.activeFish.size}cm)
+                {gameState.activeFish.fish.names[locale] || gameState.activeFish.fish.names.en} ({gameState.activeFish.size}cm)
               </span>
-              <span>거리: {Math.max(0, Math.round(gameState.distance))}m</span>
+              <span>{tx("거리: {0}m", Math.max(0, Math.round(gameState.distance)))}</span>
             </div>
 
             {/* Tension Meter */}
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>줄 텐션 (Tension)</span>
+                <span>{tx("줄 텐션 (Tension)")}</span>
                 <span className={gameState.lineTension > 75 ? "text-destructive font-black" : "text-foreground"}>
                   {Math.round(gameState.lineTension)}%
                 </span>
@@ -685,7 +692,7 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
 
         {/* Status Bubble in Bottom Center */}
         <div className="absolute bottom-2 left-2 right-2 rounded-md border border-border bg-card/85 px-3 py-1 text-center text-xs font-medium text-foreground backdrop-blur-xs">
-          {gameState.logMessage}
+          {tm(gameState.logMessage, catalogName)}
         </div>
       </div>
 
@@ -798,7 +805,7 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
                           >
                             <div className="flex items-center justify-between mb-1">
                               <span className="font-bold text-foreground">
-                                {isDiscovered ? fish.names.ko || fish.names.en : "???"}
+                                {isDiscovered ? fish.names[locale] || fish.names.en : "???"}
                               </span>
                               <span
                                 className={`size-2.5 rounded-full inline-block ${
@@ -808,12 +815,12 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
                             </div>
                             {isDiscovered ? (
                               <div className="space-y-0.5 text-xs text-muted-foreground">
-                                <div>최대: {rec.maxSize}cm</div>
-                                <div>포획: {rec.count}회</div>
-                                <div className="text-warning font-semibold">가치: {fish.baseValue}G~</div>
+                                <div>{tx("최대: {0}cm", rec.maxSize)}</div>
+                                <div>{tx("포획: {0}회", rec.count)}</div>
+                                <div className="text-warning font-semibold">{tx("가치: {0}G~", fish.baseValue)}</div>
                               </div>
                             ) : (
-                              <div className="text-xs italic text-muted-foreground">미발견 어종</div>
+                              <div className="text-xs italic text-muted-foreground">{tx("미발견 어종")}</div>
                             )}
                           </div>
                         );
@@ -850,10 +857,10 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
               <div className="rounded-lg border border-border bg-secondary/30 p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-foreground">
-                    낚싯대: {currentRod.names.ko || currentRod.names.en} (Lv.{currentRod.level})
+                    {tx("낚싯대: {0} (Lv.{1})", currentRod.names[locale] || currentRod.names.en, currentRod.level)}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    내구도 x{currentRod.durability} / 인장력 x{currentRod.pullPower}
+                    {tx("내구도 x{0} / 인장력 x{1}", currentRod.durability, currentRod.pullPower)}
                   </span>
                 </div>
                 {nextRod ? (
@@ -867,12 +874,12 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
                     className="w-full flex items-center justify-between rounded-lg border border-border bg-primary disabled:opacity-50 px-3 py-2 text-xs font-bold text-primary-foreground shadow-xs"
                   >
                     <span>
-                      {nextRod.names.ko || nextRod.names.en} (Lv.{nextRod.level})
+                      {nextRod.names[locale] || nextRod.names.en} (Lv.{nextRod.level})
                     </span>
                     <span>{nextRod.cost.toLocaleString()} G</span>
                   </button>
                 ) : (
-                  <div className="text-xs text-muted-foreground text-center font-bold">최고 등급 로드 달성!</div>
+                  <div className="text-xs text-muted-foreground text-center font-bold">{tx("최고 등급 로드 달성!")}</div>
                 )}
               </div>
 
@@ -880,9 +887,9 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
               <div className="rounded-lg border border-border bg-secondary/30 p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-foreground">
-                    선박: {currentBoat.names.ko || currentBoat.names.en} (Lv.{currentBoat.level})
+                    {tx("선박: {0} (Lv.{1})", currentBoat.names[locale] || currentBoat.names.en, currentBoat.level)}
                   </span>
-                  <span className="text-xs text-muted-foreground">해역: {t.zones[currentBoat.unlockedZone]}</span>
+                  <span className="text-xs text-muted-foreground">{tx("해역: {0}", t.zones[currentBoat.unlockedZone])}</span>
                 </div>
                 {nextBoat ? (
                   <button
@@ -895,12 +902,12 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
                     className="w-full flex items-center justify-between rounded-lg border border-border bg-primary disabled:opacity-50 px-3 py-2 text-xs font-bold text-primary-foreground shadow-xs"
                   >
                     <span>
-                      {nextBoat.names.ko || nextBoat.names.en} (Lv.{nextBoat.level})
+                      {nextBoat.names[locale] || nextBoat.names.en} (Lv.{nextBoat.level})
                     </span>
                     <span>{nextBoat.cost.toLocaleString()} G</span>
                   </button>
                 ) : (
-                  <div className="text-xs text-muted-foreground text-center font-bold">최고 등급 탐사선 달성!</div>
+                  <div className="text-xs text-muted-foreground text-center font-bold">{tx("최고 등급 탐사선 달성!")}</div>
                 )}
               </div>
             </div>
@@ -916,8 +923,8 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
             <h3 className="text-xl font-black text-warning">{t.victoryTitle}</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">{t.victoryDesc}</p>
             <div className="flex items-center gap-4 text-xs font-bold text-foreground">
-              <span>도감: {Object.keys(gameState.encyclopedia).length} / 30종</span>
-              <span>총 골드: {gameState.gold.toLocaleString()} G</span>
+              <span>{tx("도감: {0} / 30종", Object.keys(gameState.encyclopedia).length)}</span>
+              <span>{tx("총 골드: {0} G", gameState.gold.toLocaleString())}</span>
             </div>
             <button
               type="button"

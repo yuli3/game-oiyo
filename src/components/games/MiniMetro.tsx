@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { SUBWAY_SKETCH_TEXT } from "../../lib/games/text/subway-sketch";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,6 +73,7 @@ interface MiniMetroProps {
 }
 
 export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
+  const { t: tx } = useGameText(SUBWAY_SKETCH_TEXT, locale);
   const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const [copied, setCopied] = useState(false);
   const [game, setGame] = useState<MiniMetroGame>(() => createInitialMiniMetroGame());
@@ -333,9 +336,9 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
                 <span
                   className="h-3 w-3 rounded-full bg-(--line-color)"
                 />
-                <span>{line.name}</span>
+                <span>{tx(line.name)}</span>
                 <span className="text-muted-foreground text-xs font-normal">
-                  ({line.stationIds.length}역)
+                  {tx("({0}역)", line.stationIds.length)}
                 </span>
               </button>
             );
