@@ -3,7 +3,7 @@
  * 빛을 한 칸 올리면 빔 안의 생물은 어두운 쪽(+x)으로 한 칸 피하고, 포식자는 빛 쪽(−x)으로 한 칸 다가온다.
  * 빛을 내리면 생물은 그대로 있고 포식자만 어둠으로 한 칸 물러난다.
  * 생물이 표식 위에 있고, 밝기가 그 장면과 같고, 포식자가 빔 밖에 있을 때만 셔터가 그 한 장면을 남긴다.
- * 네 장면은 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 생물을 옮기지 않는다.
+ * 열 장면은 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 생물을 옮기지 않는다.
  *
  * 카메라 0 은 월드 +z 다. 그래서 화면 오른쪽이 월드 +x, 곧 해구의 어두운 끝이다.
  */
@@ -60,13 +60,28 @@ interface PuzzleDef {
  * washout: the fish is already on the mark and the lamp is too hot. Dimming does not move the fish.
  * step-then-ease: the fish steps onto the mark only when the lamp overshoots, then dimming sets the exposure.
  * long-swim: two brighter steps carry the fish to the far mark as the predator stops on the beam's edge.
+ * Stages 5-10 (stage range 2026-11-21) each keep one shortest exposure, checked by a search in the tests.
+ * close-call: the predator is near, so dim first to push it back, then one brighter step moves the fish.
+ * flare: the lamp is far too hot; two dims set it without moving the fish.
+ * hot-start: dim once, then a brighter step nudges the fish onto the far mark.
+ * full-beam: the same order from the first station, with the predator far off.
+ * ember: the predator sits on the fish; dimming twice is the only way to send it back.
+ * slow-blink: dim twice to push the predator off, then one brighter step moves the fish.
  */
 const PUZZLES: readonly PuzzleDef[] = [
   { id: "edge-light", lamp: 1, subject: 0, predator: 4, need: 2, seat: 1 },
   { id: "washout", lamp: 2, subject: 0, predator: 3, need: 1, seat: 0 },
   { id: "step-then-ease", lamp: 2, subject: 0, predator: 4, need: 2, seat: 1 },
   { id: "long-swim", lamp: 1, subject: 0, predator: 5, need: 3, seat: 2 },
+  { id: "close-call", lamp: 2, subject: 0, predator: 2, need: 2, seat: 1 },
+  { id: "flare", lamp: 3, subject: 0, predator: 2, need: 1, seat: 0 },
+  { id: "hot-start", lamp: 3, subject: 1, predator: 3, need: 3, seat: 2 },
+  { id: "full-beam", lamp: 3, subject: 0, predator: 5, need: 3, seat: 1 },
+  { id: "ember", lamp: 3, subject: 0, predator: 0, need: 1, seat: 0 },
+  { id: "slow-blink", lamp: 3, subject: 0, predator: 1, need: 2, seat: 1 },
 ];
+
+export const PUZZLE_COUNT = PUZZLES.length;
 
 function normalize(x: number, y: number, z: number): [number, number, number] {
   const length = Math.hypot(x, y, z) || 1;
@@ -200,6 +215,12 @@ function makeState(puzzle: PuzzleDef, steps = 0, pose?: { lamp: number; subject:
     miss: [],
     lastAction: null,
   };
+}
+
+/** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
+export function seedForPuzzle(index: number): number {
+  const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
 export function createShot(seed = 0): ShotState {
