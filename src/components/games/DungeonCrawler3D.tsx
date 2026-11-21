@@ -1,3 +1,4 @@
+import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
 import * as THREE from "three";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
@@ -165,7 +166,8 @@ export default function DungeonCrawler3D() {
   const handleNextFloor = useCallback(() => {
     MobileHapticsPro.selection();
     setGameState((s) => {
-      const next = createDungeonFloor(s.floor + 1);
+      if (isFinalStage(s.floor)) return createDungeonFloor(1);
+      const next = createDungeonFloor(nextCappedStage(s.floor));
       return {
         ...next,
         hp: s.hp,
@@ -248,7 +250,7 @@ export default function DungeonCrawler3D() {
         <div className="rounded-xl border border-border bg-background/85 backdrop-blur-md px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm">
           <div className="text-xs text-muted-foreground font-medium">던전 위치</div>
           <div className="text-base sm:text-xl font-black text-foreground">
-            B{gameState.floor}F <span className="text-xs font-semibold text-primary">지하 {gameState.floor}층</span>
+            B{gameState.floor}F <span className="text-xs font-semibold text-primary">지하 {gameState.floor}층 / {ENDLESS_STAGE_CAP}</span>
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">
             처치: <span className="font-bold text-foreground">{gameState.kills} 마리</span>
@@ -395,7 +397,7 @@ export default function DungeonCrawler3D() {
                 onClick={handleNextFloor}
                 className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
               >
-                지하 {gameState.floor + 1}층으로 내려가기 (NEXT FLOOR)
+                {isFinalStage(gameState.floor) ? finaleLabel("ko") : `지하 ${gameState.floor + 1}층으로 내려가기 (NEXT FLOOR)`}
               </TiltDungeonButton>
               <TiltDungeonButton
                 onClick={handleShareCard}

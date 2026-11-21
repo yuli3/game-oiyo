@@ -1,3 +1,4 @@
+import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
 import React, { useState, useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -251,7 +252,7 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
 
   const handleNextLevel = useCallback(() => {
     MobileHapticsPro.success();
-    setGame(initWaterSort(game.level + 1));
+    setGame(initWaterSort(nextCappedStage(game.level)));
   }, [game.level]);
 
   return (
@@ -276,7 +277,7 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
           />
           <div className="flex flex-col">
             <span className="text-xs font-semibold text-muted-foreground">{t.level}</span>
-            <span className="text-2xl font-black text-primary">{game.level}</span>
+            <span className="text-2xl font-black text-primary">{game.level}<span className="text-xs text-muted-foreground"> / {ENDLESS_STAGE_CAP}</span></span>
           </div>
           <div className="text-xs text-muted-foreground">
             {t.moves}: {game.moves}
@@ -342,7 +343,7 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
               {t.moves}: {game.moves}
             </div>
             <Button variant="default" className="w-full" onClick={handleNextLevel}>
-              {t.nextLevel}
+              {isFinalStage(game.level) ? finaleLabel(locale) : t.nextLevel}
             </Button>
           </div>
         </div>

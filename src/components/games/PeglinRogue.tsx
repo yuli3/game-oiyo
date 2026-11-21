@@ -1,3 +1,4 @@
+import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -229,7 +230,7 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
     victoryHandledRef.current = false;
     gameOverHandledRef.current = false;
     MobileHapticsPro.medium();
-    setGame(createInitialPeglinGame(game.stage + 1));
+    setGame(createInitialPeglinGame(nextCappedStage(game.stage)));
   };
 
   const handleRestart = () => {
@@ -471,8 +472,8 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
             </h3>
             <p className="mb-6 text-sm text-muted-foreground">
               {locale === "ko"
-                ? `${game.stage}스테이지 승리! 다음 몬스터에게 도전하세요.`
-                : `Stage ${game.stage} Cleared! Face the next enemy.`}
+                ? `${game.stage}/${ENDLESS_STAGE_CAP} 스테이지 승리! 다음 몬스터에게 도전하세요.`
+                : `Stage ${game.stage}/${ENDLESS_STAGE_CAP} Cleared! Face the next enemy.`}
             </p>
             <div className="flex gap-3">
               <TiltPeglinButton
@@ -491,7 +492,7 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
                 onClick={handleNextStage}
                 className="px-4 py-2 rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow"
               >
-                {locale === "ko" ? "다음 스테이지" : "Next Stage"}
+                {isFinalStage(game.stage) ? finaleLabel(locale) : locale === "ko" ? "다음 스테이지" : "Next Stage"}
               </TiltPeglinButton>
             </div>
           </div>

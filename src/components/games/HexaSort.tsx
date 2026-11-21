@@ -1,3 +1,4 @@
+import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
 import React, { useState, useEffect, useRef } from "react";
 import {
   type HexColor,
@@ -164,7 +165,7 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
 
   const handleNextLevel = () => {
     MobileHapticsPro.success();
-    setGame(createInitialHexaSortGame(game.level + 1, Date.now()));
+    setGame(createInitialHexaSortGame(nextCappedStage(game.level), Date.now()));
     setSelectedHandIdx(null);
   };
 
@@ -214,7 +215,7 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
             <span className="text-xs font-bold text-muted-foreground">
               {locale === "ko" ? "레벨" : "LEVEL"}
             </span>
-            <span className="text-xl font-black text-foreground">{game.level}</span>
+            <span className="text-xl font-black text-foreground">{game.level}<span className="text-xs text-muted-foreground"> / {ENDLESS_STAGE_CAP}</span></span>
           </div>
         </div>
 
@@ -333,7 +334,7 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
             </p>
             <div className="mt-4 flex gap-2">
               <Button type="button" variant="default" size="lg" onClick={handleNextLevel}>
-                {locale === "ko" ? "다음 레벨" : "Next Level"}
+                {isFinalStage(game.level) ? finaleLabel(locale) : locale === "ko" ? "다음 레벨" : "Next Level"}
               </Button>
               <Button type="button" variant="outline" size="lg" onClick={handleShare}>
                 {shareCopied

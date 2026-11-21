@@ -2,6 +2,8 @@ export const ANIMAL_SIZE = 7,
   ANIMAL_TYPES = ["🐵", "🐱", "🐷", "🐭", "🐰", "🐶", "🐤"] as const;
 /** Round length and remaining-time cap (seconds). Matches save-game validation. */
 export const ANIMAL_TIME_LIMIT = 60;
+/** Ten score-milestone stages (stage range 10-50), tuned with a bot: a slow first-match player reaches about stage 3, a fast greedy one stage 10. */
+export const ANIMAL_STAGE_TARGETS = [1000, 2000, 3500, 5000, 8000, 12000, 20000, 35000, 60000, 100000] as const;
 /** Successful 3-match. */
 export const ANIMAL_TIME_BONUS_MATCH = 1;
 /** Extra second when 4+ tiles clear in one swap (including cascades). */

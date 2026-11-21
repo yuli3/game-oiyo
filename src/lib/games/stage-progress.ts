@@ -48,3 +48,32 @@ export const STAGE_LABEL: Record<string, string> = {
   fr: "Niveau",
   es: "Nivel",
 };
+
+/**
+ * Procedural level games (each clear makes a new, harder level) stop at this many stages
+ * and offer a fresh start from stage 1 after the finale (stage range 10-50, 2026-11-21).
+ */
+export const ENDLESS_STAGE_CAP = 50;
+
+/** The level that follows a clear: one more, or back to 1 after the last stage. */
+export function nextCappedStage(level: number, cap: number = ENDLESS_STAGE_CAP): number {
+  return level >= cap ? 1 : level + 1;
+}
+
+export function isFinalStage(level: number, cap: number = ENDLESS_STAGE_CAP): boolean {
+  return level >= cap;
+}
+
+/** Shown on the clear screen of the last stage, where "next stage" would be. */
+export const FINALE_LABEL: Record<string, string> = {
+  ko: "마지막 단계까지 완주! 처음부터 다시",
+  en: "All stages cleared! Start over",
+  ja: "全ステージ制覇! 最初から",
+  zh: "全部关卡通关！重新开始",
+  fr: "Tous les niveaux réussis ! Recommencer",
+  es: "¡Todos los niveles superados! Empezar de nuevo",
+};
+
+export function finaleLabel(locale: string): string {
+  return FINALE_LABEL[locale] ?? FINALE_LABEL.en;
+}

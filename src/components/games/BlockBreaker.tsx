@@ -1,3 +1,4 @@
+import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import BlockBreakerScene from './BlockBreakerScene';
@@ -451,7 +452,7 @@ export default function BlockBreaker({ locale }: Props) {
 
           <div className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/40 px-3 py-1.5 text-xs font-bold text-foreground">
             <img src={BLOCK_BREAKER_UI_SPRITES.brick} alt="" className="size-4 object-contain" />
-            <span>{t.level} {gameState.level}</span>
+            <span>{t.level} {gameState.level} / {ENDLESS_STAGE_CAP}</span>
           </div>
 
           <div className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/40 px-3 py-1.5 text-xs font-bold text-foreground">
@@ -536,11 +537,11 @@ export default function BlockBreaker({ locale }: Props) {
               </button>
               <button
                 type="button"
-                onClick={() => setGameState((prev) => nextLevel(prev))}
+                onClick={() => setGameState((prev) => (isFinalStage(prev.level) ? createInitialBlockBreakerState(prev.highScore) : nextLevel(prev)))}
                 className="inline-flex items-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-base font-bold text-primary-foreground shadow-lg hover:bg-primary/90"
               >
                 <Play className="w-5 h-5 fill-current" />
-                <span>{t.nextLevel}</span>
+                <span>{isFinalStage(gameState.level) ? finaleLabel(locale) : t.nextLevel}</span>
               </button>
             </div>
           </div>
