@@ -1779,3 +1779,18 @@ export const ALLEY_APPRAISER_SPRITES = {
   coin: "/assets/sprites/alley-appraiser/coin.webp",
   catalogue: "/assets/sprites/alley-appraiser/catalogue.webp",
 } as const;
+
+export const TRAP_STAIRS_SPRITES = {
+  heroIdle: "/assets/sprites/trap-stairs/hero-idle.webp",
+  heroRunA: "/assets/sprites/trap-stairs/hero-run-a.webp",
+  heroRunB: "/assets/sprites/trap-stairs/hero-run-b.webp",
+  heroJump: "/assets/sprites/trap-stairs/hero-jump.webp",
+  heroDead: "/assets/sprites/trap-stairs/hero-dead.webp",
+  stone: "/assets/sprites/trap-stairs/stone.webp",
+  stoneTop: "/assets/sprites/trap-stairs/stone-top.webp",
+  spike: "/assets/sprites/trap-stairs/spike.webp",
+  door: "/assets/sprites/trap-stairs/door.webp",
+  dropper: "/assets/sprites/trap-stairs/dropper.webp",
+  hidden: "/assets/sprites/trap-stairs/hidden.webp",
+  pad: "/assets/sprites/trap-stairs/pad.webp",
+} as const;
