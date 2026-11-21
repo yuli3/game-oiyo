@@ -2,7 +2,7 @@
  * 의도 (2026-10-15 세운): 낙서 방어선은 그림을 잘 그리는 게임이 아니다.
  * 펜은 이어진 한 획만 그린다. 돌은 지나가지 못하고, 이미 그린 칸으로는 돌아가지 않는다.
  * 손을 떼면 적이 북쪽 끝에서 남쪽으로 걸어오고, 그 줄에 잉크가 있으면 막히고 없으면 기지가 뚫린다.
- * 네 장은 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 적을 움직이지 않는다.
+ * 열 장은 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 적을 움직이지 않는다.
  * 자유 손그림, 물리 엔진, 적을 쏘는 버튼은 이 판의 승패가 아니다.
  *
  * 카메라 0 은 월드 +z 다. 화면 오른쪽이 월드 +x(동쪽)이고, 화면 위가 북쪽(−z)이다.
@@ -78,7 +78,16 @@ const PUZZLES: readonly LineDef[] = [
   { id: "stone-hook", start: [0, 0], stones: [[1, 0]], threats: [0, 2] },
   { id: "trap-south", start: [0, 1], stones: [[0, 0], [1, 2], [2, 1]], threats: [0, 2] },
   { id: "far-lane", start: [0, 0], stones: [[1, 0]], threats: [0, 3] },
+  // Stages 5-10 (stage range 2026-11-21): each keeps one shortest stroke, checked by a search in the tests.
+  { id: "rim-run", start: [2, 2], stones: [[2, 0]], threats: [0, 1, 2, 3] },
+  { id: "low-road", start: [0, 0], stones: [[1, 0], [1, 1]], threats: [1, 3] },
+  { id: "back-hook", start: [0, 1], stones: [[0, 0], [1, 1], [3, 2]], threats: [1, 2, 3] },
+  { id: "full-wall", start: [2, 1], stones: [[3, 0], [3, 1]], threats: [0, 1, 2, 3] },
+  { id: "tight-ink", start: [1, 2], stones: [[0, 2], [2, 2], [3, 2]], threats: [0, 1, 2, 3] },
+  { id: "long-loop", start: [2, 2], stones: [[3, 1], [1, 2]], threats: [0, 3] },
 ];
+
+export const PUZZLE_COUNT = PUZZLES.length;
 
 function normalize(x: number, y: number, z: number): [number, number, number] {
   const length = Math.hypot(x, y, z) || 1;
@@ -211,6 +220,12 @@ export function puzzleIndexForSeed(seed: number): number {
 export function nextSeed(seed: number): number {
   const current = Number.isFinite(seed) ? Math.trunc(seed) : 0;
   return mixSeed(current + 1);
+}
+
+/** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
+export function seedForPuzzle(index: number): number {
+  const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
 export function createLine(seed = 0): LineState {

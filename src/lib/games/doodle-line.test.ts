@@ -2,6 +2,9 @@ import { readFileSync } from "node:fs";
 import { PerspectiveCamera, Vector3 } from "three";
 import { describe, expect, it } from "vitest";
 import {
+  PUZZLE_COUNT,
+  puzzleIndexForSeed,
+  seedForPuzzle,
   ABSENT,
   ACTS,
   CAMERA_POSES,
@@ -29,6 +32,12 @@ const SOLUTIONS: Record<string, readonly Act[]> = {
   "stone-hook": ["S", "E", "E", "H"],
   "trap-south": ["E", "N", "E", "H"],
   "far-lane": ["S", "E", "E", "E", "H"],
+  "rim-run": ["E", "N", "W", "W", "W", "H"],
+  "low-road": ["S", "S", "E", "E", "E", "H"],
+  "back-hook": ["S", "E", "E", "N", "E", "H"],
+  "full-wall": ["W", "W", "S", "E", "E", "E", "H"],
+  "tight-ink": ["N", "W", "N", "E", "E", "E", "H"],
+  "long-loop": ["N", "W", "W", "N", "E", "E", "E", "H"],
 };
 
 const CAUGHT: Record<string, readonly number[]> = {
@@ -36,6 +45,12 @@ const CAUGHT: Record<string, readonly number[]> = {
   "stone-hook": [0, ABSENT, 1, ABSENT],
   "trap-south": [1, ABSENT, 0, ABSENT],
   "far-lane": [0, ABSENT, ABSENT, 1],
+  "rim-run": [1, 1, 1, 1],
+  "low-road": [ABSENT, 2, ABSENT, 2],
+  "back-hook": [ABSENT, 2, 1, 1],
+  "full-wall": [1, 1, 1, 2],
+  "tight-ink": [0, 0, 0, 0],
+  "long-loop": [0, ABSENT, ABSENT, 0],
 };
 
 function replay(id: string, actions: readonly Act[]): LineState {
@@ -43,7 +58,7 @@ function replay(id: string, actions: readonly Act[]): LineState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 80; seed += 1) {
+  for (let seed = 0; seed < 400; seed += 1) {
     if (createLine(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -141,6 +156,11 @@ describe("doodle line", () => {
     const east = new Vector3(cellX(COLS - 1), 0, 0);
     const west = new Vector3(cellX(0), 0, 0);
     expect(east.dot(right)).toBeGreaterThan(west.dot(right));
+  });
+
+  it("ships ten stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(10);
+    for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
   });
 
   it("keeps one hand-checked shortest stroke for each page", () => {
@@ -248,7 +268,7 @@ describe("doodle line", () => {
 
   it("rebuilds the same page from the same seed", () => {
     const seen = new Set<string>();
-    for (let seed = 0; seed < 80; seed += 1) {
+    for (let seed = 0; seed < 400; seed += 1) {
       const page = createLine(seed);
       expect(createLine(seed)).toEqual(page);
       expect(mixSeed(seed)).toBe(mixSeed(seed));
