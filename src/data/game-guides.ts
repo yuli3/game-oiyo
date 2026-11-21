@@ -4124,12 +4124,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "cosmic-merge": {
     origin: {
-      ko: "코스믹 머지 드롭은 고전 물리 드롭 퍼즐과 수박게임 류의 결합 메카닉을 우주 천체 테마로 재해석한 OIYO 오리지널 물리 머지 게임입니다. Matter.js 2D 강체 물리 엔진과 100% Canvas GPU 렌더링, Web Audio 절차적 펜타토닉 신스를 결합해 손가락 끝의 찰진 탄성을 구현했습니다.",
-      en: "Cosmic Merge Drop is an original OIYO physics merge puzzle reimagining the classic Suika-style mechanics with a cosmic celestial theme. Combining Matter.js 2D rigid-body dynamics, a 100% Canvas GPU pipeline, and procedural pentatonic synthwave audio, it delivers tactile tactile satisfaction on touchscreens.",
-      ja: "コズミック・マージ・ドロップは、物理ドロップパズルとスイカゲーム風のマージメカニクスを天体テーマで再解釈したOIYOオリジナルの物理ゲームです。Matter.js 2D物理演算と100% Canvas描画、プロシージャル・シンセ音響を融合し、指先で味わう心地よい弾性を実現しました。",
+      ko: "코스믹 머지 드롭은 고전 물리 드롭 퍼즐의 합체 메카닉을 우주 천체 테마로 재해석한 OIYO 오리지널 물리 머지 게임입니다. Matter.js 2D 강체 물리 엔진과 100% Canvas GPU 렌더링, Web Audio 절차적 펜타토닉 신스를 결합해 손가락 끝의 찰진 탄성을 구현했습니다.",
+      en: "Cosmic Merge Drop is an original OIYO physics merge puzzle. Combining Matter.js 2D rigid-body dynamics, a 100% Canvas GPU pipeline, and procedural pentatonic synthwave audio, it delivers tactile tactile satisfaction on touchscreens.",
+      ja: "コズミック・マージ・ドロップは、物理ドロップパズルのマージメカニクスを天体テーマで再解釈したOIYOオリジナルの物理ゲームです。Matter.js 2D物理演算と100% Canvas描画、プロシージャル・シンセ音響を融合し、指先で味わう心地よい弾性を実現しました。",
       zh: "宇宙合成消除是一款将经典西瓜消除玩法与宇宙天体演化主题融合的 OIYO 原创 2D 物理合成游戏。结合 Matter.js 刚体动力学引擎、100% Canvas GPU 渲染管线与五度音程程序化合成器，打造极具弹性的触屏打击手感。",
-      fr: "Cosmic Merge Drop est un jeu de fusion physique original d'OIYO revisitant les mécaniques de type Suika sous un thème cosmique. Alliant la physique 2D Matter.js, un canevas 100% GPU et une synthèse audio procédurale, il offre un retour tactile immédiat sur mobile.",
-      es: "Cosmic Merge Drop es un juego de puzle y física original de OIYO que reinterpreta las mecánicas tipo Suika con temática astronómica. Integra el motor 2D Matter.js, renderizado 100% en Canvas y sintetizador procedural para ofrecer una elasticidad táctil inigualable.",
+      fr: "Cosmic Merge Drop est un jeu de fusion physique original d'OIYO revisitant la fusion par gravité sous un thème cosmique. Alliant la physique 2D Matter.js, un canevas 100% GPU et une synthèse audio procédurale, il offre un retour tactile immédiat sur mobile.",
+      es: "Cosmic Merge Drop es un juego de puzle y física original de OIYO que reinterpreta la fusión por gravedad con temática astronómica. Integra el motor 2D Matter.js, renderizado 100% en Canvas y sintetizador procedural para ofrecer una elasticidad táctil inigualable.",
     },
     how: {
       ko: "터치하거나 마우스를 움직여 상단 발사대의 좌우 위치를 조준하고, 손을 떼거나 클릭하여 천체를 드롭합니다. 동일한 천체가 충돌하면 찰진 탄성과 함께 상위 천체로 진화하며 점수를 획득합니다. 상단 붉은 위험선에 천체가 3초 이상 넘치면 게임이 종료되므로 크기와 무게중심을 전략적으로 고려하세요.",
@@ -4254,12 +4254,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "card-surge": {
     origin: {
-      ko: "카드 서지(Card Surge)는 2025 GOTY 대작 발라트로(Balatro)의 핵심 메커니즘을 순수 브라우저 웹 기술로 재해석한 수학적 포커 로그라이크 덱빌더입니다. 칩(Chips)과 배율(Mult)의 기하급수적 곱셈, 조커의 연쇄 시너지, 8개 안테에 걸친 보스 블라인드 공략의 정수를 무설치로 즐길 수 있습니다.",
-      en: "Card Surge is a mathematical poker roguelike deckbuilder inspired by Balatro, crafted for the web. Experience exponential Chips x Mult scaling, chain Joker synergies, and conquer 8 Ante Boss Blinds instantly in your browser with zero installation.",
-      ja: "カードサージ（Card Surge）は、GOTY受賞作Balatroのコアメカニクスをブラウザ向けに再構築したポーカー×デッキ構築ローグライクです。チップと倍率の乗算、ジョーカーの相乗効果、8つのアンティに挑む奥深い戦略をインストール不要で体験できます。",
-      zh: "卡牌狂涌（Card Surge）是一款受 Balatro 启发的数学扑克肉鸽卡牌构筑游戏。无需安装，在浏览器中即可体验筹码与倍数的指数级乘法碰撞、小丑连环协同，以及挑战8大底注首领盲注的纯粹策略乐趣。",
-      fr: "Card Surge est un roguelite de poker mathématique inspiré de Balatro, conçu pour le web. Profitez d'une mise à l'échelle exponentielle Jetons x Mult, de synergies de Jokers explosives et affrontez 8 boss d'Ante sans installation.",
-      es: "Card Surge es un roguelike de póker matemático inspirado en Balatro, diseñado para navegador. Disfruta de la multiplicación exponencial de Fichas x Mult, sinergias de Comodines y 8 jefes de ciega al instante.",
+      ko: "카드 서지(Card Surge)는 순수 브라우저 웹 기술로 만든 OIYO 오리지널 수학적 포커 로그라이크 덱빌더입니다. 칩(Chips)과 배율(Mult)의 기하급수적 곱셈, 조커의 연쇄 시너지, 8개 안테에 걸친 보스 블라인드 공략의 정수를 무설치로 즐길 수 있습니다.",
+      en: "Card Surge is a mathematical poker roguelike deckbuilder. Experience exponential Chips x Mult scaling, chain Joker synergies, and conquer 8 Ante Boss Blinds instantly in your browser with zero installation.",
+      ja: "カードサージ（Card Surge）は、ブラウザ向けに作ったOIYOオリジナルのポーカー×デッキ構築ローグライクです。チップと倍率の乗算、ジョーカーの相乗効果、8つのアンティに挑む奥深い戦略をインストール不要で体験できます。",
+      zh: "卡牌狂涌（Card Surge）是一款 OIYO 原创的数学扑克肉鸽卡牌构筑游戏。无需安装，在浏览器中即可体验筹码与倍数的指数级乘法碰撞、小丑连环协同，以及挑战8大底注首领盲注的纯粹策略乐趣。",
+      fr: "Card Surge est un roguelite de poker mathématique. Profitez d'une mise à l'échelle exponentielle Jetons x Mult, de synergies de Jokers explosives et affrontez 8 boss d'Ante sans installation.",
+      es: "Card Surge es un roguelike de póker matemático. Disfruta de la multiplicación exponencial de Fichas x Mult, sinergias de Comodines y 8 jefes de ciega al instante.",
     },
     how: {
       ko: "손패에서 최대 5장의 카드를 골라 포커 핸드를 냅니다. 족보 기본치와 카드의 칩이 더해지고, 장착한 조커들의 효과가 차례대로 적용되어 (총 칩) × (총 배율)이 계산됩니다. 남은 핸드가 0이 되기 전에 목표 점수를 넘기면 승리하고 상점에서 덱을 강화합니다.",
@@ -4310,12 +4310,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "cyber-track": {
     origin: {
-      ko: "사이버 트랙 3D(CyberTrack 3D)는 Polytrack과 Trackmania에서 영감을 받은 브라우저 기반 60FPS 로우폴리 3D 타임어택 레이서입니다. Three.js의 커스텀 튜브 지오메트리 트랙, 물리 가감속 및 드리프트 모델, 그리고 완주 기록을 시각화하는 실시간 고스트 카(Ghost Replay) 엔진을 무설치 웹으로 구현했습니다.",
-      en: "CyberTrack 3D is a browser-based 60FPS low-poly 3D time-attack racer inspired by Polytrack and Trackmania. Built with Three.js custom tube geometries, realistic arcade vehicle physics with drift scoring, and a real-time Ghost Replay engine that visualizes your personal best runs.",
-      ja: "サイバートラック 3D（CyberTrack 3D）は、PolytrackやTrackmaniaにインスパイアされたブラウザ完結型60FPSローポリ3Dタイムアタックレースゲームです。Three.jsによる滑らかなコースジオメトリ、ドリフト物理、そして自己ベストと並走するリアルタイムゴーストカー機能を搭載しています。",
-      zh: "赛博赛道 3D（CyberTrack 3D）是一款受 Polytrack 和 Trackmania 启发、运行于浏览器的60FPS低多边形3D极速时间赛。基于Three.js定制管状赛道、敏捷漂移物理引擎与实时幽灵车（Ghost Replay）回放系统，零安装即刻狂飙。",
-      fr: "CyberTrack 3D est un jeu de course contre-la-montre 3D low-poly à 60 FPS inspiré de Polytrack et Trackmania. Conçu avec Three.js, il propose une physique d'arcade avec gestion du drift et un fantôme en temps réel reproduisant votre record personnel.",
-      es: "CyberTrack 3D es un juego de carreras contrarreloj 3D low-poly a 60 FPS para navegador, inspirado en Polytrack y Trackmania. Ofrece físicas arcade con derrapes dinámicos y un coche fantasma en tiempo real que compite contra tu mejor marca personal.",
+      ko: "사이버 트랙 3D(CyberTrack 3D)는 브라우저 기반 60FPS 로우폴리 3D 타임어택 레이서입니다. Three.js의 커스텀 튜브 지오메트리 트랙, 물리 가감속 및 드리프트 모델, 그리고 완주 기록을 시각화하는 실시간 고스트 카(Ghost Replay) 엔진을 무설치 웹으로 구현했습니다.",
+      en: "CyberTrack 3D is a browser-based 60FPS low-poly 3D time-attack racer. Built with Three.js custom tube geometries, realistic arcade vehicle physics with drift scoring, and a real-time Ghost Replay engine that visualizes your personal best runs.",
+      ja: "サイバートラック 3D（CyberTrack 3D）は、ブラウザ完結型60FPSローポリ3Dタイムアタックレースゲームです。Three.jsによる滑らかなコースジオメトリ、ドリフト物理、そして自己ベストと並走するリアルタイムゴーストカー機能を搭載しています。",
+      zh: "赛博赛道 3D（CyberTrack 3D）是一款 OIYO 原创、运行于浏览器的60FPS低多边形3D极速时间赛。基于Three.js定制管状赛道、敏捷漂移物理引擎与实时幽灵车（Ghost Replay）回放系统，零安装即刻狂飙。",
+      fr: "CyberTrack 3D est un jeu de course contre-la-montre 3D low-poly à 60 FPS. Conçu avec Three.js, il propose une physique d'arcade avec gestion du drift et un fantôme en temps réel reproduisant votre record personnel.",
+      es: "CyberTrack 3D es un juego de carreras contrarreloj 3D low-poly a 60 FPS para navegador. Ofrece físicas arcade con derrapes dinámicos y un coche fantasma en tiempo real que compite contra tu mejor marca personal.",
     },
     how: {
       ko: "W/위쪽 화살표로 가속, S/아래쪽으로 제동 및 후진, A/D 또는 좌우 화살표로 조향합니다. 모바일에서는 화면 하단 터치 버튼으로 조작할 수 있습니다. 각 섹터의 체크포인트를 순서대로 통과해 결승선을 끊으면 랩 타임이 기록됩니다.",
@@ -4471,12 +4471,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "word-waffle": {
     origin: {
-      ko: "단어 와플(Word Waffle)은 전 세계 퍼즐 마니아들에게 사랑받는 Waffle Game에서 영감을 받은 5×5 격자 글자 교환 퍼즐입니다. 가로 3줄과 세로 3줄이 교차하는 와플 보드 위에 섞여 있는 글자들을 15번의 기회 안에 교환하여 6개의 숨겨진 단어를 모두 밝혀내는 고품질 데일리 싱크탱크입니다.",
-      en: "Word Waffle is a 5x5 grid letter-swapping word puzzle inspired by Waffle Game. Swap shuffled letters across intersecting horizontal and vertical words to solve 6 target words within a 15-swap budget. A daily workout for your vocabulary and deductive logic.",
-      ja: "ワードワッフル（Word Waffle）は、世界中で人気のWaffle Gameに着想を得た5×5グリッドの文字入れ替えパズルです。縦横3つずつ交差するワッフル盤面上の文字を15手以内で正しい位置にスワップし、隠された6つの言葉を解き明かします。",
-      zh: "文字华夫饼（Word Waffle）是一款受 Waffle Game 启发的5×5棋盘字母置换益智游戏。在交错的3横3竖网格中，通过最多15次字母对调，揭开全部6个神秘词汇，体验兼具词汇积累与演绎推理的纯粹乐趣。",
-      fr: "Word Waffle est un jeu de lettres sur grille 5x5 inspiré de Waffle Game. Échangez les lettres mélangées pour reconstituer 6 mots croisés en 15 coups maximum. Un entraînement cérébral quotidien idéal.",
-      es: "Word Waffle es un puzle de palabras en cuadrícula 5x5 inspirado en Waffle Game. Intercambia letras desordenadas para formar 6 palabras cruzadas en un límite de 15 movimientos.",
+      ko: "단어 와플(Word Waffle)은 5×5 격자 글자 교환 퍼즐입니다. 가로 3줄과 세로 3줄이 교차하는 와플 보드 위에 섞여 있는 글자들을 15번의 기회 안에 교환하여 6개의 숨겨진 단어를 모두 밝혀내는 고품질 데일리 싱크탱크입니다.",
+      en: "Word Waffle is a 5x5 grid letter-swapping word puzzle. Swap shuffled letters across intersecting horizontal and vertical words to solve 6 target words within a 15-swap budget. A daily workout for your vocabulary and deductive logic.",
+      ja: "ワードワッフル（Word Waffle）は、5×5グリッドの文字入れ替えパズルです。縦横3つずつ交差するワッフル盤面上の文字を15手以内で正しい位置にスワップし、隠された6つの言葉を解き明かします。",
+      zh: "文字华夫饼（Word Waffle）是一款 OIYO 原创的5×5棋盘字母置换益智游戏。在交错的3横3竖网格中，通过最多15次字母对调，揭开全部6个神秘词汇，体验兼具词汇积累与演绎推理的纯粹乐趣。",
+      fr: "Word Waffle est un jeu de lettres sur grille 5x5. Échangez les lettres mélangées pour reconstituer 6 mots croisés en 15 coups maximum. Un entraînement cérébral quotidien idéal.",
+      es: "Word Waffle es un puzle de palabras en cuadrícula 5x5. Intercambia letras desordenadas para formar 6 palabras cruzadas en un límite de 15 movimientos.",
     },
     how: {
       ko: "옮기고 싶은 글자를 누르고 교환할 대상 글자를 누르면 서로 자리가 바뀝니다. 제자리를 찾은 글자는 녹색으로 변하며 자물쇠(🔒)와 함께 고정되어 더 이상 움직이지 않습니다. 노란색은 가로 또는 세로 단어에 포함되지만 자리가 틀렸음을 뜻합니다. 15회 스왑 이내에 21개 글자를 모두 녹색으로 맞추세요.",
@@ -4695,12 +4695,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "subway-runner": {
     origin: {
-      ko: "러너 빌더 3D(Subway Mini-Parkour)는 전 세계 누적 30억 다운로드를 기록한 글로벌 메가히트 Subway Surfers에서 영감을 받은 3레인 원근 3D 무한 러너 액션입니다. 속도감 넘치는 지하철 선로 위를 3개의 차선으로 누비며 도심 장애물을 돌파하는 짜릿한 반응 속도 게임입니다.",
-      en: "Subway Mini-Parkour 3D is a 3-lane perspective endless runner inspired by global megahit Subway Surfers. Dart across train tracks, jump high hurdles, slide under gantries, and dodge oncoming trains in a thrilling reflex challenge.",
-      ja: "ランナービルダー 3D（Subway Mini-Parkour）は、世界的大ヒットとなった『Subway Surfers』に着想を得た3レーン遠近3D無限ランナーゲームです。スピード感溢れる地下鉄線路を左右に駆け抜け、障害物を跳び越え潜り抜けます。",
-      zh: "跑酷大师 3D（Subway Mini-Parkour）是一款受全球现象级跑酷游戏《Subway Surfers》启发的3轨道透视极速无尽跑酷。穿梭在繁忙的地铁轨道间，凭借精准敏捷的反应跳跃障碍、滑行钻桥，冲击高分纪录。",
-      fr: "Subway Mini-Parkour 3D est un runner sans fin sur 3 voies inspiré du succès mondial Subway Surfers. Foncez sur les rails, sautez par-dessus les barrières et esquivez les wagons à toute allure.",
-      es: "Subway Mini-Parkour 3D es un runner infinito de 3 carriles inspirado en el superventas Subway Surfers. Corre por las vías del tren, salta vallas, deslízate bajo pórticos y esquiva trenes a toda velocidad.",
+      ko: "러너 빌더 3D(Subway Mini-Parkour)는 3레인 원근 3D 무한 러너 액션입니다. 속도감 넘치는 지하철 선로 위를 3개의 차선으로 누비며 도심 장애물을 돌파하는 짜릿한 반응 속도 게임입니다.",
+      en: "Subway Mini-Parkour 3D is a 3-lane perspective endless runner. Dart across train tracks, jump high hurdles, slide under gantries, and dodge oncoming trains in a thrilling reflex challenge.",
+      ja: "ランナービルダー 3D（Subway Mini-Parkour）は、3レーン遠近3D無限ランナーゲームです。スピード感溢れる地下鉄線路を左右に駆け抜け、障害物を跳び越え潜り抜けます。",
+      zh: "跑酷大师 3D（Subway Mini-Parkour）是一款 OIYO 原创的3轨道透视极速无尽跑酷。穿梭在繁忙的地铁轨道间，凭借精准敏捷的反应跳跃障碍、滑行钻桥，冲击高分纪录。",
+      fr: "Subway Mini-Parkour 3D est un runner sans fin sur 3 voies. Foncez sur les rails, sautez par-dessus les barrières et esquivez les wagons à toute allure.",
+      es: "Subway Mini-Parkour 3D es un runner infinito de 3 carriles. Corre por las vías del tren, salta vallas, deslízate bajo pórticos y esquiva trenes a toda velocidad.",
     },
     how: {
       ko: "좌우 방향키(또는 화면 좌우 스와이프)로 3개 레인 사이를 순식간에 변경합니다. 위 방향키나 점프 버튼으로 허들 배리어를 뛰어넘고, 아래 방향키나 슬라이딩 버튼으로 고가 장애물 아래로 미끄러져 통과하세요. 정면에 나타나는 거대한 열차는 반드시 좌우로 피해가야 하며, 황금 코인을 모아 최고 점수를 갱신하세요.",
@@ -4751,12 +4751,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "shotgun-chess": {
     origin: {
-      ko: "샷건 체스(Shotgun Chess)는 2022년 출시되어 선풍적인 인기를 끈 인디 로그라이크 명작 'Shotgun King: The First Scramble'에서 영감을 받은 턴제 택티컬 체스 슈터입니다. 모든 아군을 잃고 홀로 남은 흑색 킹이 산탄총 한 자루를 들고 백색 체스 군단에 맞서는 파격적인 설정과 체스 룰의 결합이 특징입니다.",
-      en: "Shotgun Chess is a tactical turn-based roguelike shooter inspired by the critically acclaimed indie hit 'Shotgun King: The First Scramble'. As the solitary Black King stripped of his court, you take up a shotgun to battle against the full might of the White Army.",
-      ja: "ショットガン チェス（Shotgun Chess）は、世界的に話題を呼んだインディーローグライク『Shotgun King: The First Scramble』に着想を得たターン制タクティカルシューターです。軍勢を失い孤立した黒のキングが散弾銃を手に、白のチェス軍団へと挑みます。",
-      zh: "散弹枪象棋（Shotgun Chess）受现象级独立战棋肉鸽《Shotgun King: The First Scramble》启发。失去所有随从的孤独黑王，凭借一把重威力霰弹枪对抗整支白棋大军，将严密的国际象棋棋理与射击打击感完美融合。",
-      fr: "Shotgun Chess est un jeu de stratégie tactique au tour par tour inspiré du succès indépendant 'Shotgun King'. Abandonné par sa cour, le roi noir prend un fusil de chasse pour défier toute l'armée blanche.",
-      es: "Shotgun Chess es un roguelike táctico por turnos inspirado en el aclamado juego indie 'Shotgun King'. Sin cortesanos ni peones, el rey negro empuña una escopeta para enfrentarse al ejército blanco en solitario.",
+      ko: "샷건 체스(Shotgun Chess)는 턴제 택티컬 체스 슈터입니다. 모든 아군을 잃고 홀로 남은 흑색 킹이 산탄총 한 자루를 들고 백색 체스 군단에 맞서는 파격적인 설정과 체스 룰의 결합이 특징입니다.",
+      en: "Shotgun Chess is a tactical turn-based roguelike shooter. As the solitary Black King stripped of his court, you take up a shotgun to battle against the full might of the White Army.",
+      ja: "ショットガン チェス（Shotgun Chess）は、ターン制タクティカルシューターです。軍勢を失い孤立した黒のキングが散弾銃を手に、白のチェス軍団へと挑みます。",
+      zh: "散弹枪象棋（Shotgun Chess）是 OIYO 原创的战棋肉鸽射击游戏。失去所有随从的孤独黑王，凭借一把重威力霰弹枪对抗整支白棋大军，将严密的国际象棋棋理与射击打击感完美融合。",
+      fr: "Shotgun Chess est un jeu de stratégie tactique au tour par tour. Abandonné par sa cour, le roi noir prend un fusil de chasse pour défier toute l'armée blanche.",
+      es: "Shotgun Chess es un roguelike táctico por turnos. Sin cortesanos ni peones, el rey negro empuña una escopeta para enfrentarse al ejército blanco en solitario.",
     },
     how: {
       ko: "플레이어는 자신의 턴에 '이동' 또는 '사격' 중 하나를 선택합니다. 이동 시 인접 1칸을 이동하며 탄약 1발을 재장전합니다(적 기물이 있으면 체스처럼 밟아 포획합니다). 사격 시 8개 방향 중 하나를 지정하여 산탄을 발사하며, 탄환 궤적과 넉백 물리로 적 기물을 파괴합니다. 적 백색 킹을 사살하면 층을 클리어하고 업그레이드 카드를 획득합니다.",
@@ -5295,9 +5295,9 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
           es: "¿Cuál es la secuencia táctica más eficaz para traspasar los escudos enemigos?",
         },
         a: {
-          ko: "에너지 쉴드는 레이저 1발당 1겹씩 흡수합니다. 따라서 아르테미스 미사일(Artemis Missile)은 쉴드를 완전히 무시하고 관통하므로 먼저 적의 '쉴드실(Shields)'을 직접 미사일로 타격하여 쉴드 발생 장치 자체를 고장 내세요. 쉴드가 무력화되면 버스트 레이저로 적의 '무기실(Weapons)'을 집중 포격하여 반격을 봉쇄하는 것이 교과서적인 전술입니다.",
-          en: "Energy shields absorb one incoming laser bolt per active layer. However, missiles (like the Artemis Missile) completely bypass shields! Use missiles to directly strike the enemy's Shield room to disable their generator. Once their shields collapse, unleash your Burst Laser volleys into their Weapons room to prevent them from firing back.",
-          ja: "シールドは通常レーザーを1発につき1枚吸収します。しかしミサイル（Artemis Missile）はシールドを完全に貫通して直接命中します！ まずミサイルで敵の『シールド室』を破壊してシールド発生器そのものを停止させ、無防備になったところへバーストレーザーを『兵器室』に叩き込んで反撃を阻止するのが定石です。",
+          ko: "에너지 쉴드는 레이저 1발당 1겹씩 흡수합니다. 따라서 미사일은 쉴드를 완전히 무시하고 관통하므로 먼저 적의 '쉴드실(Shields)'을 직접 미사일로 타격하여 쉴드 발생 장치 자체를 고장 내세요. 쉴드가 무력화되면 버스트 레이저로 적의 '무기실(Weapons)'을 집중 포격하여 반격을 봉쇄하는 것이 교과서적인 전술입니다.",
+          en: "Energy shields absorb one incoming laser bolt per active layer. However, missiles completely bypass shields! Use missiles to directly strike the enemy's Shield room to disable their generator. Once their shields collapse, unleash your Burst Laser volleys into their Weapons room to prevent them from firing back.",
+          ja: "シールドは通常レーザーを1発につき1枚吸収します。しかしミサイルはシールドを完全に貫通して直接命中します！ まずミサイルで敵の『シールド室』を破壊してシールド発生器そのものを停止させ、無防備になったところへバーストレーザーを『兵器室』に叩き込んで反撃を阻止するのが定石です。",
           zh: "能量护盾每层可抵消一束常规激光。但阿尔忒弥斯导弹具备纯粹护盾穿透特性！先使用导弹精确穿透直击敌舰‘护盾室（Shields）’，彻底摧毁其供电与发生器。待其护盾崩解瓦解后，立刻用连发激光集火其‘武器室（Weapons）’，彻底瘫痪敌舰的一切反击手段。",
           fr: "Les boucliers absorbent un tir laser par couche. Les missiles traversent les boucliers : ciblez d'abord la salle des boucliers ennemie avec un missile pour couper leur alimentation, puis détruisez leur salle d'armes avec vos lasers.",
           es: "Los escudos absorben un impacto láser por capa. Los misiles atraviesan los escudos por completo: apunta primero a su sala de escudos con un misil para apagar su generador y luego bombardea su sala de armas con láseres.",
@@ -5801,12 +5801,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "pressure-wash-3d": {
     origin: {
-      ko: "『압력 세척 3D (Pressure Wash 3D)』는 영국 인디 개발사 FuturLab이 2022년 선보여 전 세계 천만 플레이어에게 극강의 힐링 쾌감을 선사한 명작 청소 시뮬레이터 『PowerWash Simulator』에서 영감을 받은 OIYO 오리지널 ASMR 고압 세척 시뮬레이터입니다. 진흙, 녹, 이끼로 뒤덮인 빈티지 캠핑카, 왕실 정원 분수대, 거대 메카닉 수호자의 세부 파츠를 4종 고압 노즐과 비누 거품으로 말끔히 벗겨내며 95% 도달 시 울려 퍼지는 청량한 '딩(Ding)!' 완료음과 화이트 플래시의 카타르시스를 웹 브라우저에서 그대로 재현했습니다.",
-      en: "Pressure Wash 3D is an original OIYO ASMR high-pressure washing simulator inspired by FuturLab's global relaxation phenomenon PowerWash Simulator (2022). Armed with a 4-nozzle pressure washer and foaming soap, you strip away layers of baked mud, rust, and moss across multi-part dioramas—from a Vintage Camper Van to a Royal Fountain and a Giant Mecha Guardian—savoring the iconic 'DING!' chime and white flash as each component snaps to 100% spotless shine.",
-      ja: "『高圧洗浄 3D（Pressure Wash 3D）』は、FuturLabが2022年に発表し世界中で大ヒットした癒やし系高圧洗浄シミュレーター『PowerWash Simulator』にインスパイアされたOIYOオリジナルASMRゲームです。泥やサビ、苔で汚れたヴィンテージキャンピングカー、王宮の噴水、巨大メカガーディアンの各パーツを4種類のノズルと泡ソープで洗い流し、95%到達時に鳴り響く爽快な「チーン！」という完了音とフラッシュ演出の快感をブラウザで楽しめます。",
-      zh: "《高压清洗 3D（Pressure Wash 3D）》灵感源自 FuturLab 于 2022 年推出的全球现象级解压清洁神作《PowerWash Simulator》。面对裹满泥垢、铁锈与青苔的复古露营车、皇家喷泉与巨型机甲守卫，你可以自由切换 4 款高压喷嘴与发泡清洁剂逐件冲刷，在部件洁净度达到 95% 时触发清脆的“叮！”声与高光闪烁，尽享强迫症一本满足的治愈快感。",
-      fr: "Pressure Wash 3D est un simulateur de nettoyage haute pression ASMR inspiré du célèbre PowerWash Simulator (2022) de FuturLab. Équipé de 4 buses interchangeables et d'un canon à mousse, décapez la boue, la rouille et la mousse sur un camping-car vintage, une fontaine royale ou un mécha géant, jusqu'au fameux « DING ! » libérateur.",
-      es: "Pressure Wash 3D es un simulador ASMR de lavado a alta presión inspirado en el fenómeno mundial PowerWash Simulator (2022) de FuturLab. Con 4 boquillas ajustables y espuma limpiadora, elimina el barro, el óxido y el musgo de una caravana retro, una fuente real y un mecha gigante hasta escuchar el satisfactorio «¡DING!» de limpieza total.",
+      ko: "『압력 세척 3D (Pressure Wash 3D)』는 OIYO 오리지널 ASMR 고압 세척 시뮬레이터입니다. 진흙, 녹, 이끼로 뒤덮인 빈티지 캠핑카, 왕실 정원 분수대, 거대 메카닉 수호자의 세부 파츠를 4종 고압 노즐과 비누 거품으로 말끔히 벗겨내며 95% 도달 시 울려 퍼지는 청량한 '딩(Ding)!' 완료음과 화이트 플래시의 카타르시스를 웹 브라우저에서 그대로 재현했습니다.",
+      en: "Pressure Wash 3D is an original OIYO ASMR high-pressure washing simulator. Armed with a 4-nozzle pressure washer and foaming soap, you strip away layers of baked mud, rust, and moss across multi-part dioramas—from a Vintage Camper Van to a Royal Fountain and a Giant Mecha Guardian—savoring the iconic 'DING!' chime and white flash as each component snaps to 100% spotless shine.",
+      ja: "『高圧洗浄 3D（Pressure Wash 3D）』は、OIYOオリジナルASMRゲームです。泥やサビ、苔で汚れたヴィンテージキャンピングカー、王宮の噴水、巨大メカガーディアンの各パーツを4種類のノズルと泡ソープで洗い流し、95%到達時に鳴り響く爽快な「チーン！」という完了音とフラッシュ演出の快感をブラウザで楽しめます。",
+      zh: "《高压清洗 3D（Pressure Wash 3D）》是 OIYO 原创作品。面对裹满泥垢、铁锈与青苔的复古露营车、皇家喷泉与巨型机甲守卫，你可以自由切换 4 款高压喷嘴与发泡清洁剂逐件冲刷，在部件洁净度达到 95% 时触发清脆的“叮！”声与高光闪烁，尽享强迫症一本满足的治愈快感。",
+      fr: "Pressure Wash 3D est un simulateur de nettoyage haute pression ASMR. Équipé de 4 buses interchangeables et d'un canon à mousse, décapez la boue, la rouille et la mousse sur un camping-car vintage, une fontaine royale ou un mécha géant, jusqu'au fameux « DING ! » libérateur.",
+      es: "Pressure Wash 3D es un simulador ASMR de lavado a alta presión. Con 4 boquillas ajustables y espuma limpiadora, elimina el barro, el óxido y el musgo de una caravana retro, una fuente real y un mecha gigante hasta escuchar el satisfactorio «¡DING!» de limpieza total.",
     },
     how: {
       ko: "캔버스 위에서 마우스를 클릭한 채 드래그하거나 화면을 터치해 고압 물줄기를 분사하세요. 하단 툴바나 숫자키 [1]~[4]로 노즐을 교체할 수 있습니다. [1] 0° 적색 직사 노즐은 좁지만 가장 강력한 수압으로 찌든 녹을 뚫어내고, [2] 15° 황색 노즐과 [3] 40° 녹색 광각 노즐은 넓은 면적의 진흙을 빠르게 씻어냅니다. [4] 비누 노즐로 거품을 먼저 도포하면 찌든 때가 부드럽게 불어나 두 배 빠르게 세척됩니다! [R] 키로 노즐 분사 각도를 가로/세로로 회전하고, [Tab] 키(오점 탐색기)를 눌러 남은 때의 위치를 황금빛으로 스캔하세요.",
@@ -5857,12 +5857,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "belt-factory": {
     origin: {
-      ko: "『벨트 팩토리 (Belt Factory)』는 체코의 인디 스튜디오 Wube Software가 창시해 공장 자동화 시뮬레이션 장르의 바이블이 된 『Factorio』와 미니멀 컨베이어 퍼즐 『Shapez.io』에서 영감을 받은 OIYO 오리지널 산업 자동화 시뮬레이터입니다. 철광석과 구리광석 광맥 위에 채굴기를 건설하고, 용광로에서 제련된 금속판을 컨베이어 벨트로 수송하며, 조립기에서 기어·전자회로·적색 과학 팩을 합성해 연구실(Lab)로 끊임없이 공급하는 물류 최적화의 묘미를 웹 브라우저에서 직관적으로 즐길 수 있습니다.",
-      en: "Belt Factory is an original OIYO industrial logistics and factory automation simulator inspired by Wube Software's genre-defining masterpiece Factorio and minimalist belt puzzle Shapez.io. Place Miners on Iron and Copper veins, smelt raw ore into plates, route Conveyor Belts, and merge materials into Assemblers to synthesize Gears, Circuits, and Red Science Packs for the Research Lab.",
-      ja: "『ベルトファクトリー（Belt Factory）』は、工場自動化シミュレーションの金字塔であるWube Softwareの『Factorio』および『Shapez.io』にインスパイアされたOIYOオリジナルのコンベア物流自動化ゲームです。鉄鉱石や銅鉱石の鉱脈に採掘機を設置し、溶鉱炉で精錬した金属板をコンベアベルトで運び、組立機で歯車・電子回路・赤サイエンスパックを合成して研究所へ自動供給する設計の楽しさをブラウザで体験できます。",
-      zh: "《传送带工厂（Belt Factory）》灵感源自 Wube Software 打造的工业自动化神作《Factorio》与极简传送带解谜《Shapez.io》。在铁矿与铜矿脉上部署采矿机，通过熔炉冶炼金属板，铺设四通八达的传送带网络，并在组装机中合成齿轮、电子电路与高价值的红色科技包，源源不断地输送至研究中心。",
-      fr: "Belt Factory est un simulateur d'automatisation industrielle inspiré du chef-d'œuvre Factorio de Wube Software et de Shapez.io. Installez des foreuses sur les gisements de fer et de cuivre, fondez le minerai en plaques, tracez vos lignes de convoyeurs et combinez les composants dans des machines d'assemblage pour alimenter le laboratoire.",
-      es: "Belt Factory es un simulador de logística y automatización industrial inspirado en Factorio de Wube Software y Shapez.io. Coloca perforadoras sobre vetas de hierro y cobre, funde el mineral en placas, traza cintas transportadoras y combina materiales en ensambladoras para abastecer el laboratorio de investigación.",
+      ko: "『벨트 팩토리 (Belt Factory)』는 OIYO 오리지널 산업 자동화 시뮬레이터입니다. 철광석과 구리광석 광맥 위에 채굴기를 건설하고, 용광로에서 제련된 금속판을 컨베이어 벨트로 수송하며, 조립기에서 기어·전자회로·적색 과학 팩을 합성해 연구실(Lab)로 끊임없이 공급하는 물류 최적화의 묘미를 웹 브라우저에서 직관적으로 즐길 수 있습니다.",
+      en: "Belt Factory is an original OIYO industrial logistics and factory automation simulator. Place Miners on Iron and Copper veins, smelt raw ore into plates, route Conveyor Belts, and merge materials into Assemblers to synthesize Gears, Circuits, and Red Science Packs for the Research Lab.",
+      ja: "『ベルトファクトリー（Belt Factory）』は、OIYOオリジナルのコンベア物流自動化ゲームです。鉄鉱石や銅鉱石の鉱脈に採掘機を設置し、溶鉱炉で精錬した金属板をコンベアベルトで運び、組立機で歯車・電子回路・赤サイエンスパックを合成して研究所へ自動供給する設計の楽しさをブラウザで体験できます。",
+      zh: "《传送带工厂（Belt Factory）》是 OIYO 原创作品。在铁矿与铜矿脉上部署采矿机，通过熔炉冶炼金属板，铺设四通八达的传送带网络，并在组装机中合成齿轮、电子电路与高价值的红色科技包，源源不断地输送至研究中心。",
+      fr: "Belt Factory est un simulateur d'automatisation industrielle. Installez des foreuses sur les gisements de fer et de cuivre, fondez le minerai en plaques, tracez vos lignes de convoyeurs et combinez les composants dans des machines d'assemblage pour alimenter le laboratoire.",
+      es: "Belt Factory es un simulador de logística y automatización industrial. Coloca perforadoras sobre vetas de hierro y cobre, funde el mineral en placas, traza cintas transportadoras y combina materiales en ensambladoras para abastecer el laboratorio de investigación.",
     },
     how: {
       ko: "하단 건설 툴바(또는 숫자키 [1]~[5])에서 설비를 선택한 뒤 10×8 공장 격자 위를 클릭하거나 드래그해 배치하세요. 이미 배치된 설비를 다시 클릭하거나 [R] 키를 누르면 배출 방향(⬆️북·➡️동·⬇️남·⬅️서)이 90° 회전합니다. 기본 공정은 『광맥 위 채굴기(⛏️) → 용광로(🔥) → 컨베이어 벨트(➡️) → 연구실(🔬)』입니다. 철판과 구리판을 하나의 조립기(⚙️)로 동시에 합류시키면 최고 효율인 '적색 과학 팩(65 RP)'이 생산됩니다!",
@@ -5913,12 +5913,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "frame-weaver": {
     origin: {
-      ko: "『프레임 위버 (Frame Weaver)』는 1인 개발자 Jason Roberts가 7년간 수작업 일러스트로 빚어내어 BAFTA 데뷔 게임상을 수상한 걸작 퍼즐 『Gorogoa(2017)』에서 영감을 받은 OIYO 오리지널 2×2 멀티 액자 시각 퍼즐입니다. 4개의 그림 패널을 각각 확대·축소(Zoom)하여 숨겨진 사물을 발견하고, 액자의 상하좌우 배치를 바꿔 끊어진 다리와 계단을 하나로 이어 붙이며, 창틀(스텐실) 레이어를 분리해 다른 배경 위에 포개어 새로운 차원의 통로를 여는 마법 같은 직조 경험을 브라우저에서 구현했습니다.",
-      en: "Frame Weaver is an original OIYO 2x2 multi-frame visual puzzle inspired by Jason Roberts' BAFTA-winning hand-illustrated masterpiece Gorogoa (2017). Zoom inside individual comic panels to uncover hidden details, rearrange the 4 frames spatially to connect broken bridges and staircases, and detach foreground stencil cutouts to composite them onto other scenes.",
-      ja: "『フレームウィーバー（Frame Weaver）』は、Jason Roberts氏が手描きイラストで創り上げBAFTA賞を受賞した名作パズル『Gorogoa（2017）』にインスパイアされたOIYOオリジナルの2×2マルチフレーム視覚パズルです。4つの絵画パネルをそれぞれ拡大・縮小して隠された風景を見つけ、上下左右の配置を入れ替えて橋や階段を繋ぎ、窓枠（ステンシル）レイヤーを別の背景に重ね合わせて新たな道を切り開く体験をブラウザで楽しめます。",
-      zh: "《画框编织（Frame Weaver）》灵感源自独立开发者 Jason Roberts 历时七年手绘打磨并斩获 BAFTA 大奖的艺术解谜神作《Gorogoa（画中世界）》。在 2×2 四格插画画框中独立缩放视角探索细节，通过交换画框空间位置将断裂的桥梁与阶梯无缝拼接，并将镂空窗框图层剥离叠加至另一幅画景之上，编织跨越时空的奇妙通路。",
-      fr: "Frame Weaver est un puzzle visuel en grille 2x2 inspiré du chef-d'œuvre illustré Gorogoa (2017) de Jason Roberts. Zoomez à l'intérieur des cadres, réorganisez les 4 vignettes pour relier ponts et escaliers, et détachez des calques en pochoir pour les superposer sur d'autres scènes.",
-      es: "Frame Weaver es un puzle visual de cuadrícula 2x2 inspirado en la obra maestra ilustrada Gorogoa (2017) de Jason Roberts. Haz zoom dentro de cada viñeta, reorganiza los 4 marcos para unir puentes y escaleras, y superpón plantillas recortadas sobre otros paisajes.",
+      ko: "『프레임 위버 (Frame Weaver)』는 OIYO 오리지널 2×2 멀티 액자 시각 퍼즐입니다. 4개의 그림 패널을 각각 확대·축소(Zoom)하여 숨겨진 사물을 발견하고, 액자의 상하좌우 배치를 바꿔 끊어진 다리와 계단을 하나로 이어 붙이며, 창틀(스텐실) 레이어를 분리해 다른 배경 위에 포개어 새로운 차원의 통로를 여는 마법 같은 직조 경험을 브라우저에서 구현했습니다.",
+      en: "Frame Weaver is an original OIYO 2x2 multi-frame visual puzzle. Zoom inside individual comic panels to uncover hidden details, rearrange the 4 frames spatially to connect broken bridges and staircases, and detach foreground stencil cutouts to composite them onto other scenes.",
+      ja: "『フレームウィーバー（Frame Weaver）』は、OIYOオリジナルの2×2マルチフレーム視覚パズルです。4つの絵画パネルをそれぞれ拡大・縮小して隠された風景を見つけ、上下左右の配置を入れ替えて橋や階段を繋ぎ、窓枠（ステンシル）レイヤーを別の背景に重ね合わせて新たな道を切り開く体験をブラウザで楽しめます。",
+      zh: "《画框编织（Frame Weaver）》是 OIYO 原创作品。在 2×2 四格插画画框中独立缩放视角探索细节，通过交换画框空间位置将断裂的桥梁与阶梯无缝拼接，并将镂空窗框图层剥离叠加至另一幅画景之上，编织跨越时空的奇妙通路。",
+      fr: "Frame Weaver est un puzzle visuel en grille 2x2. Zoomez à l'intérieur des cadres, réorganisez les 4 vignettes pour relier ponts et escaliers, et détachez des calques en pochoir pour les superposer sur d'autres scènes.",
+      es: "Frame Weaver es un puzle visual de cuadrícula 2x2. Haz zoom dentro de cada viñeta, reorganiza los 4 marcos para unir puentes y escaleras, y superpón plantillas recortadas sobre otros paisajes.",
     },
     how: {
       ko: "2×2 격자에 놓인 4개의 그림 액자를 조작해 각 장(Chapter)의 시공을 하나로 연결하세요. 1) 각 액자 우측 하단의 『🔍+ 확대 / 🔍- 축소』 버튼을 누르면 액자 내부 풍경이 확대되거나 축소됩니다. 2) 액자 하나를 클릭해 선택한 뒤 다른 액자를 클릭하면 두 액자의 위치가 서로 교환됩니다. 3) 『✨ 창틀 분리 가능』 배지가 뜬 스텐실 액자(석조 아치, 황동 망원경, 천문 해시계)를 선택한 상태로 목표 배경 액자를 클릭하면 두 그림이 하나로 포개어져(레이어 결합) 숨겨진 현상이 깨어납니다!",
@@ -5969,12 +5969,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "sticker-cozy": {
     origin: {
-      ko: "『스티커북 코지 룸 (Sticker Book Cozy Room)』은 BAFTA 수상작 『Unpacking(2021)』의 아늑한 공간 정리 감성과 다이어리 꾸미기(다꾸)·스티커 컬러링 북 트렌드에서 영감을 받은 OIYO 오리지널 ASMR 아이소메트릭 방 꾸미기 퍼즐입니다. 햇살 가득한 다락방 서재, 파스텔 베이커리 카페, 달빛 온실 아틀리에의 3개 미니어처 공간에 다이컷(Die-cut) 테두리가 살아있는 가구·화분·소품·고양이 스티커를 핀셋으로 떼어내어 착 붙이는 촉각적 힐링을 선사합니다.",
-      en: "Sticker Book Cozy Room is an original OIYO ASMR isometric room-decorating puzzle inspired by Witch Beam's BAFTA-winning Unpacking (2021) and tactile sticker-by-number art books. Peel die-cut furniture, lush plants, espresso machines, and sleeping cats from your sticker binder and magnetically snap them into three charming miniature dioramas.",
-      ja: "『ステッカーブック コージールーム（Sticker Book Cozy Room）』は、BAFTA受賞作『Unpacking（2021）』の心地よい部屋づくりの感性とシールパズルブックのトレンドにインスパイアされたOIYOオリジナルASMR箱庭パズルです。陽だまりの屋根裏書斎、パステルベーカリーカフェ、月明かりの温室アトリエの3つの空間に、白フチ付きの可愛い家具や植物、居眠り猫のシールを貼り付ける癒やしの時間を届けます。",
-      zh: "《贴纸书：温馨小屋（Sticker Book Cozy Room）》灵感源自斩获 BAFTA 大奖的收纳神作《Unpacking（2021）》与风靡全球的手账贴纸涂色书。在阳光阁楼书房、马卡龙烘焙咖啡馆与月光温室画室三座等距微缩景观中，用镊子揭下带有精致白边的家具、盆栽与橘猫贴纸，享受磁吸贴合瞬间的清脆 ASMR 治愈反馈。",
-      fr: "Sticker Book Cozy Room est un puzzle de décoration isométrique ASMR inspiré d'Unpacking (2021) et des cahiers d'autocollants relaxants. Décollez des meubles, des plantes et des chats endormis de votre classeur et collez-les dans trois charmants dioramas miniatures.",
-      es: "Sticker Book Cozy Room es un puzle isométrico ASMR de decoración inspirado en Unpacking (2021) y los álbumes de pegatinas relajantes. Despega muebles, plantas y gatos dormidos de tu álbum y colócalos con precisión magnética en tres encantadores dioramas.",
+      ko: "『스티커북 코지 룸 (Sticker Book Cozy Room)』은 OIYO 오리지널 ASMR 아이소메트릭 방 꾸미기 퍼즐입니다. 햇살 가득한 다락방 서재, 파스텔 베이커리 카페, 달빛 온실 아틀리에의 3개 미니어처 공간에 다이컷(Die-cut) 테두리가 살아있는 가구·화분·소품·고양이 스티커를 핀셋으로 떼어내어 착 붙이는 촉각적 힐링을 선사합니다.",
+      en: "Sticker Book Cozy Room is an original OIYO ASMR isometric room-decorating puzzle. Peel die-cut furniture, lush plants, espresso machines, and sleeping cats from your sticker binder and magnetically snap them into three charming miniature dioramas.",
+      ja: "『ステッカーブック コージールーム（Sticker Book Cozy Room）』は、OIYOオリジナルASMR箱庭パズルです。陽だまりの屋根裏書斎、パステルベーカリーカフェ、月明かりの温室アトリエの3つの空間に、白フチ付きの可愛い家具や植物、居眠り猫のシールを貼り付ける癒やしの時間を届けます。",
+      zh: "《贴纸书：温馨小屋（Sticker Book Cozy Room）》是 OIYO 原创作品。在阳光阁楼书房、马卡龙烘焙咖啡馆与月光温室画室三座等距微缩景观中，用镊子揭下带有精致白边的家具、盆栽与橘猫贴纸，享受磁吸贴合瞬间的清脆 ASMR 治愈反馈。",
+      fr: "Sticker Book Cozy Room est un puzzle de décoration isométrique ASMR inspiré des cahiers d'autocollants relaxants. Décollez des meubles, des plantes et des chats endormis de votre classeur et collez-les dans trois charmants dioramas miniatures.",
+      es: "Sticker Book Cozy Room es un puzle isométrico ASMR de decoración. Despega muebles, plantas y gatos dormidos de tu álbum y colócalos con precisión magnética en tres encantadores dioramas.",
     },
     how: {
       ko: "1) 하단 『📒 스티커 바인더』에서 붙이고 싶은 번호의 스티커를 클릭해 선택하세요(기본으로 다음 번호 스티커가 자동 선택됩니다). 2) 아이소메트릭 방 안의 동일한 번호(`#1`~`#8`)가 적힌 점선 실루엣 위에 마우스를 가져가 클릭하면, 자석처럼 착 달라붙으며 통통 튀는 탄성 애니메이션과 별빛 파티클이 피어오릅니다! 3) 스티커를 붙일 위치를 찾기 어려울 때는 상단의 『🥢 핀셋 위치 찾기』 버튼을 눌러 목표 실루엣을 황금빛으로 깜빡이게 할 수 있습니다.",
@@ -6025,12 +6025,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "swat-breach": {
     origin: {
-      ko: "『택티컬 스왓 브리치 (Tactical SWAT Breach)』는 KillHouse Games의 명작 탑다운 CQB 전술 시뮬레이터 『Door Kickers』와 『Rainbow Six』 시리즈의 사전 브리핑(Planning Phase) 시스템에서 영감을 받은 OIYO 오리지널 근접 실내전(CQB) 전술 게임입니다. 건물 평면도(Blueprint) 위에서 방패병(ALPHA-1)과 돌격병(BRAVO-2)의 진입 동선 및 섬광탄 투척 좌표를 치밀하게 설계한 뒤, 『작전 개시(GO CODE)』 신호와 함께 동시에 문을 박차고 들어가 시야각(FOV) 레이캐스트 사격으로 무장 용의자를 제압하고 인질을 안전하게 구출하는 긴박감을 브라우저에서 구현했습니다.",
-      en: "Tactical SWAT Breach is an original OIYO top-down CQB (Close Quarters Battle) tactical simulator inspired by KillHouse Games' Door Kickers and classic Rainbow Six blueprint planning. Plot entry waypoints and flashbang targets for ALPHA-1 (Ballistic Shield) and BRAVO-2 (Assault Breacher) on the architectural floorplan, then hit GO CODE to watch your synchronized breach unfold with real-time raycast line-of-sight combat.",
-      ja: "『タクティカル SWAT ブリーチ（Tactical SWAT Breach）』は、名作トップダウンCQB戦術ゲーム『Door Kickers』や『Rainbow Six』の突入計画システムにインスパイアされたOIYOオリジナルの室内突入戦術シミュレーターです。建物の青写真上で盾兵（ALPHA-1）と突撃兵（BRAVO-2）の移動経路および閃光弾の投擲位置を設計し、『突入開始（GO CODE）』の合図でドアを突破して武装容疑者を制圧・人質を救出する緊迫の戦術体験を楽しめます。",
-      zh: "《战术特警：破门突击（Tactical SWAT Breach）》灵感源自经典俯视角室内近战（CQB）神作《Door Kickers（破门而入）》与《彩虹六号》战术蓝图规划系统。在建筑平面蓝图上为持盾干员（ALPHA-1）与突击干员（BRAVO-2）预设行进航点与闪光弹震慑落点，随后下达“行动开始（GO CODE）”指令同步破门突入，通过实时视线（LOS）交火肃清歹徒并营救人质。",
-      fr: "Tactical SWAT Breach est un simulateur tactique CQB en vue de dessus inspiré de Door Kickers et Rainbow Six. Tracez les itinéraires d'entrée et les cibles de grenades flash pour ALPHA-1 (Bouclier) et BRAVO-2 (Assaut) sur le plan architectural, puis lancez le GO CODE pour exécuter un assaut coordonné.",
-      es: "Tactical SWAT Breach es un simulador táctico CQB inspirado en Door Kickers y Rainbow Six. Traza rutas de entrada y objetivos de granadas cegadoras para ALPHA-1 (Escudo) y BRAVO-2 (Asalto) en el plano arquitectónico, y pulsa GO CODE para ejecutar la irrupción en tiempo real.",
+      ko: "『택티컬 스왓 브리치 (Tactical SWAT Breach)』는 OIYO 오리지널 근접 실내전(CQB) 전술 게임입니다. 건물 평면도(Blueprint) 위에서 방패병(ALPHA-1)과 돌격병(BRAVO-2)의 진입 동선 및 섬광탄 투척 좌표를 치밀하게 설계한 뒤, 『작전 개시(GO CODE)』 신호와 함께 동시에 문을 박차고 들어가 시야각(FOV) 레이캐스트 사격으로 무장 용의자를 제압하고 인질을 안전하게 구출하는 긴박감을 브라우저에서 구현했습니다.",
+      en: "Tactical SWAT Breach is an original OIYO top-down CQB (Close Quarters Battle) tactical simulator. Plot entry waypoints and flashbang targets for ALPHA-1 (Ballistic Shield) and BRAVO-2 (Assault Breacher) on the architectural floorplan, then hit GO CODE to watch your synchronized breach unfold with real-time raycast line-of-sight combat.",
+      ja: "『タクティカル SWAT ブリーチ（Tactical SWAT Breach）』は、OIYOオリジナルの室内突入戦術シミュレーターです。建物の青写真上で盾兵（ALPHA-1）と突撃兵（BRAVO-2）の移動経路および閃光弾の投擲位置を設計し、『突入開始（GO CODE）』の合図でドアを突破して武装容疑者を制圧・人質を救出する緊迫の戦術体験を楽しめます。",
+      zh: "《战术特警：破门突击（Tactical SWAT Breach）》是 OIYO 原创作品。在建筑平面蓝图上为持盾干员（ALPHA-1）与突击干员（BRAVO-2）预设行进航点与闪光弹震慑落点，随后下达“行动开始（GO CODE）”指令同步破门突入，通过实时视线（LOS）交火肃清歹徒并营救人质。",
+      fr: "Tactical SWAT Breach est un simulateur tactique CQB en vue de dessus. Tracez les itinéraires d'entrée et les cibles de grenades flash pour ALPHA-1 (Bouclier) et BRAVO-2 (Assaut) sur le plan architectural, puis lancez le GO CODE pour exécuter un assaut coordonné.",
+      es: "Tactical SWAT Breach es un simulador táctico CQB. Traza rutas de entrada y objetivos de granadas cegadoras para ALPHA-1 (Escudo) y BRAVO-2 (Asalto) en el plano arquitectónico, y pulsa GO CODE para ejecutar la irrupción en tiempo real.",
     },
     how: {
       ko: "1) 『📋 작전 설계(PLANNING)』 단계에서 하단 툴바의 『🛡️ ALPHA-1 (Shield)』 또는 『⚡ BRAVO-2 (Assault)』 대원을 선택하세요. 2) 『📍 이동 경로 설정』 모드에서 도면의 바닥 타일이나 문('DOOR')을 순서대로 클릭해 진입 경로(점선)를 그리거나, 『⚡ 표준 전술 경로』 버튼으로 추천 진입 루트를 불러오세요. 3) 『💥 섬광탄 투척 지점』 모드로 전환해 용의자들이 모인 방 안을 클릭하면 문 돌파 즉시 해당 지점으로 섬광탄이 투척되어 반경 내의 적들을 4.5초간 기절(💫)시킵니다. 4) 상단의 『🚨 작전 개시 (GO CODE)』를 눌러 돌입하세요!",
@@ -6137,12 +6137,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "fruit-merge-drop": {
     origin: {
-      ko: "『과일 머지 드롭 (Fruit Merge Drop)』는 글로벌 열풍을 일으킨 물리 합체 퍼즐 『수박게임 (Suika Game)』에서 영감을 받은 OIYO 오리지널 과일 진화 물리 게임입니다. 체리(🍒, 1단계)부터 대왕 수박(🍉, 10단계)까지 원형 과일의 질량·마찰·각운동량 구름 회전과 합성 시 발생하는 팝업 팽창 충격파(Pop Shockwave)를 정밀 구현하여, 과일이 상단 데드라인을 넘지 않도록 연쇄 합성을 유도하는 쫄깃한 손맛을 웹에서 즐길 수 있습니다.",
-      en: "Fruit Merge Drop is an original OIYO multi-circle rigid-body merge puzzle inspired by the global hit Suika Game. Drop circular fruits from Cherry (🍒, Tier 1) to Giant Watermelon (🍉, Tier 10) into the wooden box, leveraging angular rolling momentum and Pop Shockwave impulses to trigger chain evolutions without crossing the top deadline.",
-      ja: "『フルーツマージドロップ（Fruit Merge Drop）』は、世界的大ヒットとなった物理パズル『スイカゲーム』にインスパイアされたOIYOオリジナルのフルーツ進化パズルです。サクランボ（🍒）から巨大スイカ（🍉）まで10段階の球体物理（質量・摩擦・回転モーメント）と合体時のポップ衝撃波を再現し、箱から溢れないように連鎖合体を狙う中毒性の高いパズル体験を提供します。",
-      zh: "《水果合成掉落（Fruit Merge Drop）》灵感源自风靡全球的物理合成游戏《Suika Game（合成大西瓜）》。从第 1 阶樱桃（🍒）到第 10 阶超级大西瓜（🍉），真实还原圆球质量、滚动摩擦力与合成瞬间的膨胀冲击波（Pop Shockwave），在不超出箱顶警戒线的前提下引爆爽快连环进化。",
-      fr: "Fruit Merge Drop est un jeu de fusion physique inspiré du phénomène mondial Suika Game. Faites tomber des fruits ronds de la Cerise (🍒) à la Pastèque Géante (🍉) en exploitant le roulement et les ondes de choc de fusion sans dépasser la ligne limite.",
-      es: "Fruit Merge Drop es un puzle físico de fusión inspirado en el fenómeno global Suika Game. Suelta frutas circulares desde la Cereza (🍒) hasta la Sandía Gigante (🍉), aprovechando el giro y las ondas expansivas de fusión sin superar la línea superior.",
+      ko: "『과일 머지 드롭 (Fruit Merge Drop)』는 OIYO 오리지널 과일 진화 물리 게임입니다. 체리(🍒, 1단계)부터 대왕 수박(🍉, 10단계)까지 원형 과일의 질량·마찰·각운동량 구름 회전과 합성 시 발생하는 팝업 팽창 충격파(Pop Shockwave)를 정밀 구현하여, 과일이 상단 데드라인을 넘지 않도록 연쇄 합성을 유도하는 쫄깃한 손맛을 웹에서 즐길 수 있습니다.",
+      en: "Fruit Merge Drop is an original OIYO multi-circle rigid-body merge puzzle. Drop circular fruits from Cherry (🍒, Tier 1) to Giant Watermelon (🍉, Tier 10) into the wooden box, leveraging angular rolling momentum and Pop Shockwave impulses to trigger chain evolutions without crossing the top deadline.",
+      ja: "『フルーツマージドロップ（Fruit Merge Drop）』は、OIYOオリジナルのフルーツ進化パズルです。サクランボ（🍒）から巨大スイカ（🍉）まで10段階の球体物理（質量・摩擦・回転モーメント）と合体時のポップ衝撃波を再現し、箱から溢れないように連鎖合体を狙う中毒性の高いパズル体験を提供します。",
+      zh: "《水果合成掉落（Fruit Merge Drop）》是 OIYO 原创作品。从第 1 阶樱桃（🍒）到第 10 阶超级大西瓜（🍉），真实还原圆球质量、滚动摩擦力与合成瞬间的膨胀冲击波（Pop Shockwave），在不超出箱顶警戒线的前提下引爆爽快连环进化。",
+      fr: "Fruit Merge Drop est un jeu de fusion physique. Faites tomber des fruits ronds de la Cerise (🍒) à la Pastèque Géante (🍉) en exploitant le roulement et les ondes de choc de fusion sans dépasser la ligne limite.",
+      es: "Fruit Merge Drop es un puzle físico de fusión. Suelta frutas circulares desde la Cereza (🍒) hasta la Sandía Gigante (🍉), aprovechando el giro y las ondas expansivas de fusión sin superar la línea superior.",
     },
     how: {
       ko: "1) 마우스나 손가락을 좌우로 움직여(또는 방향키 ◀/▶) 상단 구름에서 떨어뜨릴 과일의 위치를 조준하세요. 2) 클릭/터치(또는 스페이스바)하면 과일이 수직 가이드라인을 따라 낙하합니다. 3) 같은 종류의 과일 2개가 서로 닿으면 '퐁!' 소리와 함께 한 단계 더 큰 과일로 진화(🍒체리 → 🍓딸기 → 🍇포도 → 🍊한라봉 → 🍅단감 → 🍎사과 → 🍐배 → 🍑복숭아 → 🍍파인애플 → 🍉수박)합니다. 4) 미세하게 틈이 벌어져 합쳐지지 않을 때는 상단의 『🫨 상자 흔들기』 버튼(2회 제공)을 눌러 과일들을 살짝 흔들어 주세요!",
@@ -6193,12 +6193,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "border-inspector": {
     origin: {
-      ko: "『국경 서류 심사 (Border Inspector Desk)』는 Lucas Pope의 전설적인 서류 검문 스릴러 『Papers, Please』에서 영감을 받은 OIYO 오리지널 입국 심사 추리 시뮬레이터입니다. 가상의 국경 검문소 데스크에서 입국자의 여권(Passport), 입국 허가증(Entry Permit), 입국부 공식 규칙서(Rulebook), 그리고 검문소 기준일(1982-11-23)을 대조하여 만료된 여권, 존재하지 않는 위조 발급 도시, 번호/성명 불일치, 위조 직인을 적발하고 묵직한 승인(APPROVED) 및 거부(DENIED) 스탬프를 날인하는 손맛을 웹에서 구현했습니다.",
-      en: "Border Inspector Desk is an original OIYO document-verification thriller inspired by Lucas Pope's acclaimed Papers, Please. Cross-reference each traveler's Passport, Entry Permit, Ministry Rulebook, and the booth date (1982-11-23) using the two-field Discrepancy Inspector to catch expired dates, fake issuing cities, mismatched IDs, and forged seals before stamping APPROVED or DENIED.",
-      ja: "『国境書類審査（Border Inspector Desk）』は、名作入国審査スリラー『Papers, Please』にインスパイアされたOIYOオリジナルの書類照合推理シミュレーターです。検問所のデスクで申請者のパスポート、入国許可証、公式規則書、現在日付（1982-11-23）を2項目照合スキャナーで突き合わせ、期限切れや偽造都市、番号不一致、偽造公印を見抜いて承認・拒否スタンプを押す緊張感を楽しめます。",
-      zh: "《边境证件审查（Border Inspector Desk）》灵感源自独立神作《Papers, Please（请出示证件）》。在边境检查站桌面比对入境者的护照、入境许可证、官方规则手册与当前日期（1982-11-23），利用双栏矛盾核查器识破过期证件、虚构签发城市、编号不符与伪造钢印，果断盖下批准（APPROVED）或拒绝（DENIED）印章。",
-      fr: "Border Inspector Desk est un simulateur d'inspection documentaire inspiré de Papers, Please. Comparez le passeport, le permis d'entrée, le règlement officiel et la date du poste (1982-11-23) pour repérer les dates expirées, les fausses villes et les sceaux contrefaits avant de tamponner.",
-      es: "Border Inspector Desk es un simulador de verificación documental inspirado en Papers, Please. Compara el pasaporte, el permiso de entrada, el reglamento oficial y la fecha actual (1982-11-23) para detectar fechas vencidas, ciudades falsas y sellos falsificados antes de sellar.",
+      ko: "『국경 서류 심사 (Border Inspector Desk)』는 OIYO 오리지널 입국 심사 추리 시뮬레이터입니다. 가상의 국경 검문소 데스크에서 입국자의 여권(Passport), 입국 허가증(Entry Permit), 입국부 공식 규칙서(Rulebook), 그리고 검문소 기준일(1982-11-23)을 대조하여 만료된 여권, 존재하지 않는 위조 발급 도시, 번호/성명 불일치, 위조 직인을 적발하고 묵직한 승인(APPROVED) 및 거부(DENIED) 스탬프를 날인하는 손맛을 웹에서 구현했습니다.",
+      en: "Border Inspector Desk is an original OIYO document-verification thriller. Cross-reference each traveler's Passport, Entry Permit, Ministry Rulebook, and the booth date (1982-11-23) using the two-field Discrepancy Inspector to catch expired dates, fake issuing cities, mismatched IDs, and forged seals before stamping APPROVED or DENIED.",
+      ja: "『国境書類審査（Border Inspector Desk）』は、OIYOオリジナルの書類照合推理シミュレーターです。検問所のデスクで申請者のパスポート、入国許可証、公式規則書、現在日付（1982-11-23）を2項目照合スキャナーで突き合わせ、期限切れや偽造都市、番号不一致、偽造公印を見抜いて承認・拒否スタンプを押す緊張感を楽しめます。",
+      zh: "《边境证件审查（Border Inspector Desk）》是 OIYO 原创作品。在边境检查站桌面比对入境者的护照、入境许可证、官方规则手册与当前日期（1982-11-23），利用双栏矛盾核查器识破过期证件、虚构签发城市、编号不符与伪造钢印，果断盖下批准（APPROVED）或拒绝（DENIED）印章。",
+      fr: "Border Inspector Desk est un simulateur d'inspection documentaire. Comparez le passeport, le permis d'entrée, le règlement officiel et la date du poste (1982-11-23) pour repérer les dates expirées, les fausses villes et les sceaux contrefaits avant de tamponner.",
+      es: "Border Inspector Desk es un simulador de verificación documental. Compara el pasaporte, el permiso de entrada, el reglamento oficial y la fecha actual (1982-11-23) para detectar fechas vencidas, ciudades falsas y sellos falsificados antes de sellar.",
     },
     how: {
       ko: "1) 입국자가 제출한 『여권』과 『입국 허가증』의 성명, 여권 번호, 발급 도시, 만료일, 직인을 꼼꼼히 확인하세요. 2) 의심스러운 항목이 보이면 두 항목(예: 상단 『📅 검문소 기준일』과 『여권 만료일』, 또는 『여권 번호』와 『허가증 여권 번호』, 또는 『발급 도시』와 규칙서의 『국가별 적법 발급 도시』)을 차례로 클릭해 대조하세요. 3) 위조·불일치를 적발한 뒤 『⛔ 거부 스탬프 [DENIED]』를 찍으면 기본 급여(+20₵)에 더해 적발 수당(+15₵)을 추가로 받습니다! 4) 모든 항목에 이상이 없다면 『✅ 승인 스탬프 [APPROVED]』를 찍어 통과시키세요.",
@@ -6249,12 +6249,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "truss-bridge": {
     origin: {
-      ko: "『트러스 브리지 빌더 (Truss Bridge Builder)』는 Dry Cactus의 대표 물리 건축 퍼즐 『Poly Bridge』에서 영감을 받은 OIYO 오리지널 구조 역학 교량 건설 시뮬레이터입니다. 협곡 양안의 고정 앵커(Anchor Pin)를 기점으로 제한된 예산($) 안에서 도로 상판(Road Deck), 목재 트러스(Wood Truss), 강철 케이블(Steel Cable)을 삼각형 구조로 연결하고, 베를레(Verlet) 질점-스프링 솔버가 실시간으로 계산하는 장력·압축 응력(녹색 0% → 적색 100%)을 견뎌내며 중장비 트럭을 도하시키는 엔지니어링의 쾌감을 웹에서 구현했습니다.",
-      en: "Truss Bridge Builder is an original OIYO structural engineering puzzle inspired by Dry Cactus's hit Poly Bridge. Connect Road Decks, Wood Trusses, and Steel Cables across gorge anchor pins within a strict budget ($), then run the real-time Verlet physics stress test (0% Green to 100% Red fracture) as a heavy cargo truck drives across your bridge.",
-      ja: "『トラス橋ビルダー（Truss Bridge Builder）』は、名作橋梁建設物理パズル『Poly Bridge』にインスパイアされたOIYOオリジナル構造力学シミュレーターです。限られた予算($)の中で道路デッキ・木製トラス・鋼鉄ケーブルを三角形に組み上げ、Verlet物理エンジンによるリアルタイム応力ヒートマップ（緑0%→赤100%破断）を検証しながら大型トラックを対岸へ渡らせます。",
-      zh: "《桁架桥梁建造（Truss Bridge Builder）》灵感源自经典桥梁建造物理神作《Poly Bridge》。在有限预算（$）内以两岸红色锚点为支点，架设公路桥面、木材桁架与高强钢索，通过 Verlet 质点弹簧力学求解器实时渲染构件张力与压缩应力热力图（绿色 0% → 红色 100% 断裂），护送重型卡车安全驶过深谷。",
-      fr: "Truss Bridge Builder est un jeu de construction de ponts basé sur la physique inspiré de Poly Bridge. Reliez tabliers routiers, treillis en bois et câbles d'acier dans le budget imparti et observez la carte thermique de contrainte en temps réel au passage du camion.",
-      es: "Truss Bridge Builder es un puzle de ingeniería estructural inspirado en Poly Bridge. Conecta carretera, cerchas de madera y cables de acero dentro del presupuesto y observa el mapa de calor de tensión en tiempo real mientras cruza el camión pesado.",
+      ko: "『트러스 브리지 빌더 (Truss Bridge Builder)』는 OIYO 오리지널 구조 역학 교량 건설 시뮬레이터입니다. 협곡 양안의 고정 앵커(Anchor Pin)를 기점으로 제한된 예산($) 안에서 도로 상판(Road Deck), 목재 트러스(Wood Truss), 강철 케이블(Steel Cable)을 삼각형 구조로 연결하고, 베를레(Verlet) 질점-스프링 솔버가 실시간으로 계산하는 장력·압축 응력(녹색 0% → 적색 100%)을 견뎌내며 중장비 트럭을 도하시키는 엔지니어링의 쾌감을 웹에서 구현했습니다.",
+      en: "Truss Bridge Builder is an original OIYO structural engineering puzzle. Connect Road Decks, Wood Trusses, and Steel Cables across gorge anchor pins within a strict budget ($), then run the real-time Verlet physics stress test (0% Green to 100% Red fracture) as a heavy cargo truck drives across your bridge.",
+      ja: "『トラス橋ビルダー（Truss Bridge Builder）』は、OIYOオリジナル構造力学シミュレーターです。限られた予算($)の中で道路デッキ・木製トラス・鋼鉄ケーブルを三角形に組み上げ、Verlet物理エンジンによるリアルタイム応力ヒートマップ（緑0%→赤100%破断）を検証しながら大型トラックを対岸へ渡らせます。",
+      zh: "《桁架桥梁建造（Truss Bridge Builder）》是 OIYO 原创作品。在有限预算（$）内以两岸红色锚点为支点，架设公路桥面、木材桁架与高强钢索，通过 Verlet 质点弹簧力学求解器实时渲染构件张力与压缩应力热力图（绿色 0% → 红色 100% 断裂），护送重型卡车安全驶过深谷。",
+      fr: "Truss Bridge Builder est un jeu de construction de ponts basé sur la physique. Reliez tabliers routiers, treillis en bois et câbles d'acier dans le budget imparti et observez la carte thermique de contrainte en temps réel au passage du camion.",
+      es: "Truss Bridge Builder es un puzle de ingeniería estructural. Conecta carretera, cerchas de madera y cables de acero dentro del presupuesto y observa el mapa de calor de tensión en tiempo real mientras cruza el camión pesado.",
     },
     how: {
       ko: "1) 상단 툴바에서 자재(🛣️ 도로 상판 / 🪵 목재 트러스 / ⛓️ 강철 케이블)를 선택하세요. 2) 캔버스에서 붉은색 고정 앵커(●)나 기존 연결점을 클릭한 뒤, 빈 격자 공간이나 다른 노드를 클릭하면 두 지점을 잇는 빔이 설치됩니다(또는 『📐 표준 트러스 설계도』 버튼으로 정석 워렌/현수교 트러스 구조를 즉시 불러올 수 있습니다). 3) 『🚛 주행 테스트 시작』을 누르면 트럭이 출발하며 각 부재가 받는 하중 응력이 초록색(안전)에서 노란색·붉은색(위험)으로 실시간 표시됩니다.",
@@ -6305,12 +6305,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "slot-rogue": {
     origin: {
-      ko: "『슬롯 시너지 로그 (Slot Synergy Rogue)』는 TrampolineTales의 인디 덱빌더 히트작 『Luck be a Landlord』에서 영감을 받은 OIYO 오리지널 5×4 심볼 시너지 슬롯 로그라이크입니다. 매 스핀 후 3개의 후보 심볼 중 하나를 덱에 추가하고, 길고양이+우유(+$12 소비), 광부+철광석(+$15 및 사파이어 보석 영구 생성), 괴도+강철 금고(+$30 일격), 태양+해바라기, 국왕+왕관 등 8방향 인접 시너지를 폭발시켜 5스핀마다 찾아오는 집세(Rent)를 완납하세요.",
-      en: "Slot Synergy Rogue is an original OIYO 5x4 symbol deckbuilding roguelike inspired by TrampolineTales's hit Luck be a Landlord. Draft 1 of 3 symbols after each spin, trigger 8-way adjacency cascades like Stray Cat + Fresh Milk (+$12 consume), Dwarf Miner + Iron Ore (+$15 & permanent Sapphire Gem), and Master Thief + Steel Safe (+$30 heist), and pay escalating rent every 5 spins.",
-      ja: "『スロット・シナジー・ローグ（Slot Synergy Rogue）』は、『Luck be a Landlord』にインスパイアされた5×4シンボル構築型ローグライクです。毎スピン後に3つの候補からシンボルをデッキに加え、猫+ミルク(+$12消費)、鉱夫+鉄鉱石(+$15＆サファイア生成)、怪盗+金庫(+$30)などの8方向隣接シナジーを連鎖させて5スピンごとの家賃を突破します。",
-      zh: "《老虎机协同肉鸽（Slot Synergy Rogue）》灵感源自经典肉鸽神作《Luck be a Landlord》。在 5×4 转盘上每次旋转后从 3 个候选符号中抓取 1 个加入牌库，触发流浪猫喝鲜奶（+$12 吞噬）、矿工挖铁矿（+$15 并永久产出蓝宝石）、怪盗撬保险箱（+$30）等八向相邻连锁，按时交齐每 5 转递增的房租。",
-      fr: "Slot Synergy Rogue est un roguelike de construction de symboles 5x4 inspiré de Luck be a Landlord. Recrutez 1 symbole parmi 3 après chaque tour, déclenchez des synergies adjacentes (Chat+Lait, Mineur+Minerai, Voleur+Coffre) et payez votre loyer tous les 5 tours.",
-      es: "Slot Synergy Rogue es un roguelike de construcción de símbolos 5x4 inspirado en Luck be a Landlord. Elige 1 de 3 símbolos tras cada tirada, activa sinergias adyacentes (Gato+Leche, Minero+Mineral, Ladrón+Caja Fuerte) y paga el alquiler cada 5 giros.",
+      ko: "『슬롯 시너지 로그 (Slot Synergy Rogue)』는 OIYO 오리지널 5×4 심볼 시너지 슬롯 로그라이크입니다. 매 스핀 후 3개의 후보 심볼 중 하나를 덱에 추가하고, 길고양이+우유(+$12 소비), 광부+철광석(+$15 및 사파이어 보석 영구 생성), 괴도+강철 금고(+$30 일격), 태양+해바라기, 국왕+왕관 등 8방향 인접 시너지를 폭발시켜 5스핀마다 찾아오는 집세(Rent)를 완납하세요.",
+      en: "Slot Synergy Rogue is an original OIYO 5x4 symbol deckbuilding roguelike. Draft 1 of 3 symbols after each spin, trigger 8-way adjacency cascades like Stray Cat + Fresh Milk (+$12 consume), Dwarf Miner + Iron Ore (+$15 & permanent Sapphire Gem), and Master Thief + Steel Safe (+$30 heist), and pay escalating rent every 5 spins.",
+      ja: "『スロット・シナジー・ローグ（Slot Synergy Rogue）』は、OIYOオリジナルの5×4シンボル構築型ローグライクです。毎スピン後に3つの候補からシンボルをデッキに加え、猫+ミルク(+$12消費)、鉱夫+鉄鉱石(+$15＆サファイア生成)、怪盗+金庫(+$30)などの8方向隣接シナジーを連鎖させて5スピンごとの家賃を突破します。",
+      zh: "《老虎机协同肉鸽（Slot Synergy Rogue）》是 OIYO 原创的 5×4 符号构筑肉鸽。在 5×4 转盘上每次旋转后从 3 个候选符号中抓取 1 个加入牌库，触发流浪猫喝鲜奶（+$12 吞噬）、矿工挖铁矿（+$15 并永久产出蓝宝石）、怪盗撬保险箱（+$30）等八向相邻连锁，按时交齐每 5 转递增的房租。",
+      fr: "Slot Synergy Rogue est un roguelike de construction de symboles 5x4 original d'OIYO. Recrutez 1 symbole parmi 3 après chaque tour, déclenchez des synergies adjacentes (Chat+Lait, Mineur+Minerai, Voleur+Coffre) et payez votre loyer tous les 5 tours.",
+      es: "Slot Synergy Rogue es un roguelike de construcción de símbolos 5x4 original de OIYO. Elige 1 de 3 símbolos tras cada tirada, activa sinergias adyacentes (Gato+Leche, Minero+Mineral, Ladrón+Caja Fuerte) y paga el alquiler cada 5 giros.",
     },
     how: {
       ko: "1) 『🎰 레버 당기기 (SPIN REELS)』를 눌러 보유 덱 심볼을 5×4 보드에 무작위 배치하고 기본 수익과 8방향 인접 시너지 보너스를 획득하세요. 2) 스핀 직후 우측 『🃏 심볼 드래프트 (3택 1)』에서 현재 덱과 시너지가 나는 심볼을 골라 추가하거나, 리롤 토큰(🎲)을 쓰거나, 『⏭️ 건너뛰기』로 덱 압축을 유지하세요. 3) 5스핀마다 임대료가 자동 정산되며, 총 4차 임대료($25 → $60 → $115 → $190)를 모두 완납하면 승리합니다!",
@@ -6343,12 +6343,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "harbor-blocks": {
     origin: {
-      ko: "『하버 블록 (Harbor Blocks)』는 Oskar Stålberg의 감성 건축 토이 『Townscaper』에서 영감을 받은 OIYO 오리지널 WFC(Wave Function Collapse, 파동 함수 붕괴) 기반 파스텔 해상 마을 샌드박스입니다. 복잡한 건축 도구나 자원 제약 없이 바다 타일을 클릭하면 석조 부두(Stone Quay)가 솟아오르고, 그 위에 산호·골드·민트·코발트 블록을 쌓으면 주변 4방향 인접 문맥을 실시간으로 감지해 박공지붕 코티지, 수로를 가로지르는 운하 아치교(Arch Bridge), 4면 위요 중정 정원(Courtyard Garden), 5층 해안 등대(Coastal Lighthouse)로 자동 변신합니다.",
-      en: "Harbor Blocks is an original OIYO procedural coastal architecture sandbox inspired by Oskar Stålberg's beloved Townscaper. Powered by a real-time 4-direction Wave Function Collapse (WFC) neighbor-bitmask solver, clicking open water places a Stone Quay while stacking Coral, Sunflower, Mint, Cobalt, or Ivory blocks automatically transforms them into Cottages, Canal Arch Bridges, Enclosed Courtyard Gardens, and 5-story Lighthouses.",
-      ja: "『ハーバーブロック（Harbor Blocks）』は、Oskar Stålberg氏の名作建築トイ『Townscaper』にインスパイアされたWFC（波動関数崩壊）ベースの海上街づくりサンドボックスです。海面をクリックすると石造りの波止場が現れ、その上にパステルカラーのブロックを積むだけで周囲4方向の文脈を自動判定し、運河アーチ橋や中庭庭園、5階建ての灯台へとリアルタイムに変化します。",
-      zh: "《海港积木（Harbor Blocks）》灵感源自 Oskar Stålberg 的治愈建筑神作《Townscaper》。内置四向邻接位掩码波函数坍缩（WFC）算法，无需繁琐菜单，点击海面即可升起石砌码头，向上堆叠珊瑚红、向日葵金、爱琴海薄荷或圣托里尼蓝方块，系统会自动识别空间拓扑并生成运河拱桥、四合中庭花园与五层海岸灯塔。",
-      fr: "Harbor Blocks est un bac à sable d'architecture côtière procédurale inspiré de Townscaper. Grâce à un algorithme WFC contextuel, cliquez sur l'eau pour créer un quai et empilez des blocs pastel pour générer automatiquement cottages, ponts en arche, jardins clos et phares.",
-      es: "Harbor Blocks es un sandbox de arquitectura costera procedimental inspirado en Townscaper. Con un algoritmo WFC contextual, haz clic en el agua para crear muelles y apila bloques pastel para formar automáticamente cabañas, puentes en arco, jardines interiores y faros.",
+      ko: "『하버 블록 (Harbor Blocks)』는 OIYO 오리지널 WFC(Wave Function Collapse, 파동 함수 붕괴) 기반 파스텔 해상 마을 샌드박스입니다. 복잡한 건축 도구나 자원 제약 없이 바다 타일을 클릭하면 석조 부두(Stone Quay)가 솟아오르고, 그 위에 산호·골드·민트·코발트 블록을 쌓으면 주변 4방향 인접 문맥을 실시간으로 감지해 박공지붕 코티지, 수로를 가로지르는 운하 아치교(Arch Bridge), 4면 위요 중정 정원(Courtyard Garden), 5층 해안 등대(Coastal Lighthouse)로 자동 변신합니다.",
+      en: "Harbor Blocks is an original OIYO procedural coastal architecture sandbox. Powered by a real-time 4-direction Wave Function Collapse (WFC) neighbor-bitmask solver, clicking open water places a Stone Quay while stacking Coral, Sunflower, Mint, Cobalt, or Ivory blocks automatically transforms them into Cottages, Canal Arch Bridges, Enclosed Courtyard Gardens, and 5-story Lighthouses.",
+      ja: "『ハーバーブロック（Harbor Blocks）』は、WFC（波動関数崩壊）ベースの海上街づくりサンドボックスです。海面をクリックすると石造りの波止場が現れ、その上にパステルカラーのブロックを積むだけで周囲4方向の文脈を自動判定し、運河アーチ橋や中庭庭園、5階建ての灯台へとリアルタイムに変化します。",
+      zh: "《海港积木（Harbor Blocks）》是 OIYO 原创作品。内置四向邻接位掩码波函数坍缩（WFC）算法，无需繁琐菜单，点击海面即可升起石砌码头，向上堆叠珊瑚红、向日葵金、爱琴海薄荷或圣托里尼蓝方块，系统会自动识别空间拓扑并生成运河拱桥、四合中庭花园与五层海岸灯塔。",
+      fr: "Harbor Blocks est un bac à sable d'architecture côtière procédurale. Grâce à un algorithme WFC contextuel, cliquez sur l'eau pour créer un quai et empilez des blocs pastel pour générer automatiquement cottages, ponts en arche, jardins clos et phares.",
+      es: "Harbor Blocks es un sandbox de arquitectura costera procedimental. Con un algoritmo WFC contextual, haz clic en el agua para crear muelles y apila bloques pastel para formar automáticamente cabañas, puentes en arco, jardines interiores y faros.",
     },
     how: {
       ko: "1) 상단 팔레트에서 원하는 지중해 파스텔 색상(산호 테라코타, 해바라기 골드, 에게해 민트, 산토리니 코발트, 회벽 아이보리)을 선택하세요. 2) 우측 『📐 8×8 WFC 건축 그리드 패드』의 바다 칸을 클릭하면 1층 석조 부두가 건설되고, 같은 칸을 반복 클릭하면 최대 5층까지 건물이 높아집니다(우클릭 또는 『🔽 한 층 철거』 모드로 층수를 낮출 수 있습니다). 3) 『✨ 산토리니 섬 프리셋』 버튼을 누르면 등대·운하 아치교·중정 정원이 모두 구현된 시범 디오라마를 즉시 감상할 수 있습니다.",
@@ -6381,12 +6381,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "candle-sacrifice": {
     origin: {
-      ko: "『촛불 제물 덱 (Candle Sacrifice Deck)』은 Daniel Mullins의 호러 덱빌딩 명작 『Inscryption』에서 영감을 받은 OIYO 오리지널 4레인 피의 공양 & 천칭 카드 결투 게임입니다. 다람쥐 보조 덱(Squirrel Deck)과 야수 메인 덱(Main Deck)을 운용하며, 보드 위의 다람쥐를 제물로 바쳐 피(Blood)를 공양하고 아군 사망 시 쌓이는 뼈(Bone) 토큰으로 살무사(치명독)·까마귀(비행)·사마귀 신(양갈래 일격)·회색곰을 소환해 이빨 천칭을 +5까지 기울이세요.",
-      en: "Candle Sacrifice Deck is an original OIYO 4-lane woodland cabin card duel inspired by Daniel Mullins's acclaimed Inscryption. Manage a dual-deck system (Squirrel Side-Deck + Main Beast Deck), sacrifice creatures on the board for Blood, collect Bone tokens from fallen allies, and unleash Sigils like Touch of Death, Airborne, and Bifurcated Strike to tip the Teeth Scale to +5.",
-      ja: "『キャンドル生贄デッキ（Candle Sacrifice Deck）』は、『Inscryption』にインスパイアされた4レーン生贄＆天秤カード決闘ゲームです。リス補助デッキとメイン獣デッキを使い分け、盤面のリスを生贄に捧げて血(Blood)と骨(Bone)でカマキリの神やグリズリーを召喚し、歯の天秤を+5まで傾ければ勝利です。",
-      zh: "《烛光献祭牌组（Candle Sacrifice Deck）》灵感源自克苏鲁风卡牌神作《Inscryption》。采用松鼠副牌库+野兽主牌库双轨抽牌机制，将场上的松鼠献祭化为鲜血（Blood），收集阵亡野兽留下的骨头代币（Bone），驱动剧毒、飞行与双向连击印记，将金牙天平推向 +5 即可获胜。",
-      fr: "Candle Sacrifice Deck est un duel de cartes tactique sur 4 voies inspiré d'Inscryption. Gérez votre deck d'Écureuils et votre deck de Bêtes, sacrifiez des créatures pour du Sang et des Os, et faites pencher la balance des dents à +5.",
-      es: "Candle Sacrifice Deck es un duelo de cartas táctico en 4 carriles inspirado en Inscryption. Gestiona tu mazo de Ardillas y tu mazo de Bestias, sacrifica criaturas por Sangre y Huesos, y lleva la balanza de dientes a +5.",
+      ko: "『촛불 제물 덱 (Candle Sacrifice Deck)』은 OIYO 오리지널 4레인 피의 공양 & 천칭 카드 결투 게임입니다. 다람쥐 보조 덱(Squirrel Deck)과 야수 메인 덱(Main Deck)을 운용하며, 보드 위의 다람쥐를 제물로 바쳐 피(Blood)를 공양하고 아군 사망 시 쌓이는 뼈(Bone) 토큰으로 살무사(치명독)·까마귀(비행)·사마귀 신(양갈래 일격)·회색곰을 소환해 이빨 천칭을 +5까지 기울이세요.",
+      en: "Candle Sacrifice Deck is an original OIYO 4-lane woodland cabin card duel. Manage a dual-deck system (Squirrel Side-Deck + Main Beast Deck), sacrifice creatures on the board for Blood, collect Bone tokens from fallen allies, and unleash Sigils like Touch of Death, Airborne, and Bifurcated Strike to tip the Teeth Scale to +5.",
+      ja: "『キャンドル生贄デッキ（Candle Sacrifice Deck）』は、4レーン生贄＆天秤カード決闘ゲームです。リス補助デッキとメイン獣デッキを使い分け、盤面のリスを生贄に捧げて血(Blood)と骨(Bone)でカマキリの神やグリズリーを召喚し、歯の天秤を+5まで傾ければ勝利です。",
+      zh: "《烛光献祭牌组（Candle Sacrifice Deck）》是 OIYO 原创作品。采用松鼠副牌库+野兽主牌库双轨抽牌机制，将场上的松鼠献祭化为鲜血（Blood），收集阵亡野兽留下的骨头代币（Bone），驱动剧毒、飞行与双向连击印记，将金牙天平推向 +5 即可获胜。",
+      fr: "Candle Sacrifice Deck est un duel de cartes tactique original d'OIYO sur 4 voies. Gérez votre deck d'Écureuils et votre deck de Bêtes, sacrifiez des créatures pour du Sang et des Os, et faites pencher la balance des dents à +5.",
+      es: "Candle Sacrifice Deck es un duelo de cartas táctico en 4 carriles. Gestiona tu mazo de Ardillas y tu mazo de Bestias, sacrifica criaturas por Sangre y Huesos, y lleva la balanza de dientes a +5.",
     },
     how: {
       ko: "1) 손패에서 무료 카드인 『🐿️ 다람쥐』를 선택한 뒤 아군 전선의 빈 레인을 클릭해 배치하세요. 2) 피(🩸) 비용이 필요한 상위 야수(담비·다이어 울프·살무사·사마귀 신)를 손패에서 선택하고, 이미 전선에 나와 있는 다람쥐(또는 다른 아군)를 필요한 피 개수만큼 클릭해 제물로 바치면 그 자리에 상위 야수가 소환됩니다! 3) 『🔔 전투 종 울리기』를 누르면 아군 야수가 정면 공격을 수행하며, 빈 레인을 타격한 피해만큼 천칭이 +방향으로 기울어 +5에 도달하면 즉시 승리합니다.",
@@ -6419,12 +6419,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "cozy-glider": {
     origin: {
-      ko: "『포근한 봉우리 글라이더 (Cozy Peak Glider)』는 Adam Robinson-Yu의 힐링 산악 탐험 명작 『A Short Hike』에서 영감을 받은 OIYO 오리지널 황금 깃털(Golden Feathers) 스태미나 등반 & 상승기류 활공 어드벤처입니다. 조개껍질 해변 캠프(0m)에서 출발해 보물상자와 단풍 성소를 탐험하며 최대 황금 깃털 개수를 늘리고, 화강암 절벽과 만년설 능선을 넘어 해발 550m 호크 피크 정상(Hawk Peak Summit)에 등정한 뒤 섬 전체를 가로지르는 장거리 활공의 해방감을 만끽하세요.",
-      en: "Cozy Peak Glider is an original OIYO mountain trail exploration and wingsuit gliding adventure inspired by Adam Robinson-Yu's beloved A Short Hike. Start at Seashell Beach (0m) with 2 Golden Feathers, explore coastal chests and autumn shrines to expand your feather stamina capacity, scale granite cliffs, and reach the 550m Hawk Peak Summit.",
-      ja: "『コージー・ピーク・グライダー（Cozy Peak Glider）』は、癒やし系山岳探検ゲーム『A Short Hike』にインスパイアされた黄金の羽スタミナ登山＆滑空アドベンチャーです。海岸キャンプ(0m)からスタートし、宝箱や祠を巡って黄金の羽の最大数を増やしながら標高550mのホークピーク山頂を目指します。",
-      zh: "《暖峰滑翔机（Cozy Peak Glider）》灵感源自治愈系徒步神作《A Short Hike》。从海滩营地（0m）携带 2 根黄金羽毛出发，探索灯塔宝箱与红叶神龛扩充羽毛体力上限，攀登花岗岩峭壁与雪线营地，最终登顶海拔 550 米的鹰峰之巅并畅享长距离滑翔。",
-      fr: "Cozy Peak Glider est un jeu d'exploration insulaire et de vol plané inspiré d'A Short Hike. Partez de la plage avec 2 Plumes d'Or, ouvrez des coffres pour augmenter votre endurance d'escalade et atteignez le sommet enneigé de Hawk Peak à 550m.",
-      es: "Cozy Peak Glider es una aventura de senderismo y planeo inspirada en A Short Hike. Comienza en la playa con 2 Plumas Doradas, descubre cofres y santuarios para ampliar tu resistencia de escalada y alcanza la cima nevada de Hawk Peak a 550m.",
+      ko: "『포근한 봉우리 글라이더 (Cozy Peak Glider)』는 OIYO 오리지널 황금 깃털(Golden Feathers) 스태미나 등반 & 상승기류 활공 어드벤처입니다. 조개껍질 해변 캠프(0m)에서 출발해 보물상자와 단풍 성소를 탐험하며 최대 황금 깃털 개수를 늘리고, 화강암 절벽과 만년설 능선을 넘어 해발 550m 호크 피크 정상(Hawk Peak Summit)에 등정한 뒤 섬 전체를 가로지르는 장거리 활공의 해방감을 만끽하세요.",
+      en: "Cozy Peak Glider is an original OIYO mountain trail exploration and wingsuit gliding adventure. Start at Seashell Beach (0m) with 2 Golden Feathers, explore coastal chests and autumn shrines to expand your feather stamina capacity, scale granite cliffs, and reach the 550m Hawk Peak Summit.",
+      ja: "『コージー・ピーク・グライダー（Cozy Peak Glider）』は、黄金の羽スタミナ登山＆滑空アドベンチャーです。海岸キャンプ(0m)からスタートし、宝箱や祠を巡って黄金の羽の最大数を増やしながら標高550mのホークピーク山頂を目指します。",
+      zh: "《暖峰滑翔机（Cozy Peak Glider）》是 OIYO 原创作品。从海滩营地（0m）携带 2 根黄金羽毛出发，探索灯塔宝箱与红叶神龛扩充羽毛体力上限，攀登花岗岩峭壁与雪线营地，最终登顶海拔 550 米的鹰峰之巅并畅享长距离滑翔。",
+      fr: "Cozy Peak Glider est un jeu d'exploration insulaire et de vol plané original d'OIYO. Partez de la plage avec 2 Plumes d'Or, ouvrez des coffres pour augmenter votre endurance d'escalade et atteignez le sommet enneigé de Hawk Peak à 550m.",
+      es: "Cozy Peak Glider es una aventura de senderismo y planeo. Comienza en la playa con 2 Plumas Doradas, descubre cofres y santuarios para ampliar tu resistencia de escalada y alcanza la cima nevada de Hawk Peak a 550m.",
     },
     how: {
       ko: "1) 우측 『🧗 연결된 등반·이동 코스』에서 이동할 지점을 선택하세요. 더 높은 고도로 등반할 때는 표시된 개수만큼 활성 황금 깃털(🪶)이 소모됩니다. 2) 보물상자(🎁)나 성소에 처음 방문하면 최대 황금 깃털 상한선이 영구적으로 증가합니다! 3) 깃털이 부족할 때는 『🪂 활공 비행』으로 낮은 지점으로 활강하거나 『🔥 깃털 숨고르기 충전』을 눌러 스태미나를 100% 회복한 뒤 호크 피크 정상(🪶×3 필요)에 도전하세요.",
@@ -6457,12 +6457,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "road-weaver": {
     origin: {
-      ko: "『로드 위버 (Road Weaver)』는 Dinosaur Polo Club의 미니멀 도시 교통망 퍼즐 『Mini Motorways』에서 영감을 받은 OIYO 오리지널 도로 네트워크 & 교차로 물류 시뮬레이터입니다. 크림슨(🟥)·코발트(🟦)·앰버(🟨) 색상별 주택 단지와 목적지 쇼핑몰을 도로 타일로 연결하고, 병목 지점에 회전교차로(Roundabout)와 도시를 가로지르는 직통 고속도로(Motorway #1)를 배치해 쇼핑몰 수요 핀(📍)이 폭발하기 전에 30대의 통근 차량을 수송하세요.",
-      en: "Road Weaver is an original OIYO urban road network and intersection logistics puzzle inspired by Dinosaur Polo Club's hit Mini Motorways. Connect Crimson (🟥), Cobalt (🟦), and Amber (🟨) commuter houses to matching destination malls using Road tiles, Roundabouts, and the Motorway #1 express overpass before demand pins (📍) overflow into gridlock.",
-      ja: "『ロードウィーバー（Road Weaver）』は、『Mini Motorways』にインスパイアされた都市道路網＆交差点物流パズルです。赤・青・黄の住宅とショッピングモールを道路タイルで結び、ラウンドアバウトや高速道路(#1)で渋滞を防ぎながら30台の通勤車を送り届けます。",
-      zh: "《道路编织（Road Weaver）》灵感源自极简城市交通规划名作《Mini Motorways》。用道路方块、环岛（Roundabout）与 1 号跨城高速（Motorway #1）连接绯红、钴蓝、琥珀三色住宅与对应商场，在商场需求图钉（📍）满溢瘫痪前完成 30 次通勤运输。",
-      fr: "Road Weaver est un jeu de gestion de réseau routier urbain inspiré de Mini Motorways. Reliez les maisons et centres commerciaux de même couleur grâce aux routes, ronds-points et à l'Autoroute #1 avant que la demande ne provoque un embouteillage.",
-      es: "Road Weaver es un puzle de logística vial inspirado en Mini Motorways. Conecta casas y centros comerciales del mismo color mediante carreteras, rotondas y la Autopista #1 antes de que los pines de demanda colapsen la ciudad.",
+      ko: "『로드 위버 (Road Weaver)』는 OIYO 오리지널 도로 네트워크 & 교차로 물류 시뮬레이터입니다. 크림슨(🟥)·코발트(🟦)·앰버(🟨) 색상별 주택 단지와 목적지 쇼핑몰을 도로 타일로 연결하고, 병목 지점에 회전교차로(Roundabout)와 도시를 가로지르는 직통 고속도로(Motorway #1)를 배치해 쇼핑몰 수요 핀(📍)이 폭발하기 전에 30대의 통근 차량을 수송하세요.",
+      en: "Road Weaver is an original OIYO urban road network and intersection logistics puzzle. Connect Crimson (🟥), Cobalt (🟦), and Amber (🟨) commuter houses to matching destination malls using Road tiles, Roundabouts, and the Motorway #1 express overpass before demand pins (📍) overflow into gridlock.",
+      ja: "『ロードウィーバー（Road Weaver）』は、都市道路網＆交差点物流パズルです。赤・青・黄の住宅とショッピングモールを道路タイルで結び、ラウンドアバウトや高速道路(#1)で渋滞を防ぎながら30台の通勤車を送り届けます。",
+      zh: "《道路编织（Road Weaver）》是 OIYO 原创作品。用道路方块、环岛（Roundabout）与 1 号跨城高速（Motorway #1）连接绯红、钴蓝、琥珀三色住宅与对应商场，在商场需求图钉（📍）满溢瘫痪前完成 30 次通勤运输。",
+      fr: "Road Weaver est un jeu de gestion de réseau routier urbain. Reliez les maisons et centres commerciaux de même couleur grâce aux routes, ronds-points et à l'Autoroute #1 avant que la demande ne provoque un embouteillage.",
+      es: "Road Weaver es un puzle de logística vial. Conecta casas y centros comerciales del mismo color mediante carreteras, rotondas y la Autopista #1 antes de que los pines de demanda colapsen la ciudad.",
     },
     how: {
       ko: "1) 상단 툴바에서 『🛣️ 도로 포설』을 선택하고 빈 격자를 클릭해 같은 색상의 주택(🏠)과 쇼핑몰(🏢)을 연결하세요. 2) 교차로에 『🔄 회전교차로』를 설치하면 해당 노선을 통과하는 통근 차량 수송량이 증가하며, 『🌉 고속도로 #1』로 멀리 떨어진 두 지점을 클릭하면 기존 도로를 건너뛰는 직통 고가도로가 개통됩니다! 3) 『🚗 주간 통근 차량 출발』을 눌러 30대 통근 목표를 달성하세요.",
@@ -6495,12 +6495,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "chrono-detective": {
     origin: {
-      ko: "『회중시계 운명 추리 (Memento Mori Chrono)』는 Lucas Pope의 추리 걸작 『Return of the Obra Dinn』과 『The Case of the Golden Idol』에서 영감을 받은 OIYO 오리지널 시간 정지 검시 & 3인의 법칙(Rule of Three) 연역 미스터리입니다. 죽음의 순간을 정지된 풍경으로 보여 주는 회중시계(Memento Mori)로 선미 갑판·주마스트·화물창 금고의 3개 현장을 조사하고, 운명 장부(The Fate Ledger)에 희생자 3인의 [신원 · 사인 · 가해자]를 정확히 기입해 진실을 영구 봉인하세요.",
-      en: "Memento Mori Chrono is an original OIYO time-freeze forensic mystery inspired by Lucas Pope's Return of the Obra Dinn and The Case of the Golden Idol. Peer into 3 frozen moments of maritime tragedy using the Memento Mori pocket watch, inspect physical evidence hotspots, and complete all 3 crew Fates [Identity · Cause · Culprit] in the Ledger to trigger the Rule of Three lock-in.",
-      ja: "『懐中時計の運命推理（Memento Mori Chrono）』は、『Return of the Obra Dinn』と『The Case of the Golden Idol』にインスパイアされた時間停止検死＆「3人の法則」演繹ミステリーです。死の瞬間を映し出す懐中時計(Memento Mori)で3つの船上現場を調査し、乗組員3名の「身元・死因・犯人」を手帳に正しく記入して真実を封印します。",
-      zh: "《怀表命运推理（Memento Mori Chrono）》灵感源自推理神作《Return of the Obra Dinn》与《The Case of the Golden Idol》。借助能够凝固死亡瞬间的死神怀表（Memento Mori），勘查后甲板、主桅杆与底舱金库三幕现场，在命运账簿中完整推导 3 名船员的【身份 · 死因 · 凶手】，触发“三人法则（Rule of Three）”永久锁定真相。",
-      fr: "Memento Mori Chrono est un jeu d'enquête médico-légale figée dans le temps inspiré de Return of the Obra Dinn. Inspectez 3 scènes de tragédie maritime avec votre montre à gousset et complétez l'identité, la cause et le coupable des 3 victimes dans le Registre.",
-      es: "Memento Mori Chrono es un misterio deductivo de tiempo congelado inspirado en Return of the Obra Dinn. Examina 3 escenas de tragedia marítima con el reloj Memento Mori y completa la identidad, causa y culpable de las 3 víctimas en el Libro de Destinos.",
+      ko: "『회중시계 운명 추리 (Memento Mori Chrono)』는 OIYO 오리지널 시간 정지 검시 & 3인의 법칙(Rule of Three) 연역 미스터리입니다. 죽음의 순간을 정지된 풍경으로 보여 주는 회중시계(Memento Mori)로 선미 갑판·주마스트·화물창 금고의 3개 현장을 조사하고, 운명 장부(The Fate Ledger)에 희생자 3인의 [신원 · 사인 · 가해자]를 정확히 기입해 진실을 영구 봉인하세요.",
+      en: "Memento Mori Chrono is an original OIYO time-freeze forensic mystery. Peer into 3 frozen moments of maritime tragedy using the Memento Mori pocket watch, inspect physical evidence hotspots, and complete all 3 crew Fates [Identity · Cause · Culprit] in the Ledger to trigger the Rule of Three lock-in.",
+      ja: "『懐中時計の運命推理（Memento Mori Chrono）』は、時間停止検死＆「3人の法則」演繹ミステリーです。死の瞬間を映し出す懐中時計(Memento Mori)で3つの船上現場を調査し、乗組員3名の「身元・死因・犯人」を手帳に正しく記入して真実を封印します。",
+      zh: "《怀表命运推理（Memento Mori Chrono）》是 OIYO 原创作品。借助能够凝固死亡瞬间的死神怀表（Memento Mori），勘查后甲板、主桅杆与底舱金库三幕现场，在命运账簿中完整推导 3 名船员的【身份 · 死因 · 凶手】，触发“三人法则（Rule of Three）”永久锁定真相。",
+      fr: "Memento Mori Chrono est un jeu d'enquête médico-légale figée dans le temps. Inspectez 3 scènes de tragédie maritime avec votre montre à gousset et complétez l'identité, la cause et le coupable des 3 victimes dans le Registre.",
+      es: "Memento Mori Chrono es un misterio deductivo de tiempo congelado. Examina 3 escenas de tragedia marítima con el reloj Memento Mori y completa la identidad, causa y culpable de las 3 víctimas en el Libro de Destinos.",
     },
     how: {
       ko: "1) 좌측 상단 탭(『⏱️ 기억 #1 ~ #3』)을 눌러 선미 갑판, 주마스트, 화물창 금고의 정지된 사건 현장을 전환하세요. 2) 각 현장의 『🔍 정밀 조사 포인트』를 클릭하면 하단 검시 기록에 결정적 단서(인물의 제복·문신·반지·약병)가 표시됩니다. 3) 우측 『📖 선원 운명 추리 장부』에서 인물 #1~#3의 [1. 신원 · 2. 사인 · 3. 가해자/원인]을 선택하세요. 3인의 추리가 모두 정확히 일치하면 『3인의 법칙』이 발동하며 사건이 해결됩니다!",
@@ -6521,9 +6521,9 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
           es: "¿Por qué el Libro valida los destinos mediante la «Regla de Tres»?",
         },
         a: {
-          ko: "1명씩 즉시 정답을 알려주면 단서를 읽지 않고 무작위 대입(Brute-force)만으로 쉽게 답을 맞힐 수 있기 때문입니다. 원작 『Return of the Obra Dinn』의 핵심 설계처럼 3명의 운명이 동시에 맞아야 봉인되도록 하여 진짜 검시관처럼 단서를 교차 검증하는 추리의 쾌감을 살렸습니다(상단 카운터에서 현재 몇 명의 추리가 완성되었는지 실시간 힌트를 확인할 수 있습니다).",
-          en: "Validating every single dropdown immediately would allow brute-force guessing without reading the clues. Inspired by Return of the Obra Dinn, sealing fates when all 3 triads match rewards genuine forensic cross-referencing (while the top HUD counter still tracks how many of the 3 triads are currently valid!).",
-          ja: "1項目ごとにすぐ正解が出ると、手がかりを読まずに総当たりで当てられてしまうためです。『Return of the Obra Dinn』と同様に3人分の推理が揃った時点で封印される仕組みにより、本物の検死官のように証拠を照合する推理の醍醐味を味わえます。",
+          ko: "1명씩 즉시 정답을 알려주면 단서를 읽지 않고 무작위 대입(Brute-force)만으로 쉽게 답을 맞힐 수 있기 때문입니다. 3명의 운명이 동시에 맞아야 봉인되도록 하여 진짜 검시관처럼 단서를 교차 검증하는 추리의 쾌감을 살렸습니다(상단 카운터에서 현재 몇 명의 추리가 완성되었는지 실시간 힌트를 확인할 수 있습니다).",
+          en: "Validating every single dropdown immediately would allow brute-force guessing without reading the clues. Sealing fates when all 3 triads match rewards genuine forensic cross-referencing (while the top HUD counter still tracks how many of the 3 triads are currently valid!).",
+          ja: "1項目ごとにすぐ正解が出ると、手がかりを読まずに総当たりで当てられてしまうためです。3人分の推理が揃った時点で封印される仕組みにより、本物の検死官のように証拠を照合する推理の醍醐味を味わえます。",
           zh: "如果每填一项都立刻提示对错，玩家无需阅读线索就能靠穷举试出答案。借鉴《奥伯拉丁的回归》经典的“三人法则”，当 3 名船员的命运同时推导正确时才予以永久封印，最大化还原硬核刑侦推理的成就感（顶部计数器也会实时提示当前已答对的组数）。",
           fr: "Valider trois destins ensemble empêche les essais au hasard et récompense la véritable déduction logique à partir des indices.",
           es: "Validar tres destinos a la vez evita el tanteo al azar y premia la deducción lógica genuina basada en las pruebas.",
@@ -6533,10 +6533,10 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "drill-dome": {
     origin: {
-      ko: "『드릴 돔 디펜스 (Drill Dome Defense)』는 Bippinbits의 글로벌 히트작 『Dome Keeper』에서 영감을 받아 OIYO Web-Unity Engine v5.0(보로노이 강체 파쇄 물리)으로 구현한 지하 광산 굴착 & 지상 유리 돔 레이저 방어 게임입니다. 외계 웨이브가 몰려오기 전까지 지하 지층에서 철광석(Iron)과 코발트(Cobalt)를 채굴해 플라즈마 드릴과 레이저 포탑을 강화하고, 심층부의 고대 유물 코어(Relic Core)를 인양하세요.",
-      en: "Drill Dome Defense is an original OIYO dual-loop underground mining and glass-dome wave defense game inspired by Dome Keeper and powered by OIYO Web-Unity Engine v5.0 Voronoi Shatter physics. Excavate Iron and Cobalt veins before the alien wave timer hits zero, upgrade your plasma drill and dome laser turret, and extract the deep Ancient Relic Core.",
-      ja: "『ドリルドーム防衛（Drill Dome Defense）』は、人気インディー作『Dome Keeper』に着想を得てOIYO Web-Unity Engine v5.0（ボロノイ破砕物理）で構築した地下採掘＆ドーム防衛ゲームです。ウェーブ襲来までの限られた時間で鉄鉱石とコバルトを掘り出し、ドリルとレーザー砲を強化して最深部の古代遺物コアを回収しましょう。",
-      zh: "《钻探穹顶防卫（Drill Dome Defense）》灵感源自热门独立游戏《Dome Keeper》，搭载 OIYO Web-Unity Engine v5.0 泰森多边形破碎物理引擎。在异形波次倒计时结束前深入地下岩层挖掘铁矿与钴水晶，升级等离子钻头与穹顶激光炮，发掘最底层的远古遗物核心。",
+      ko: "『드릴 돔 디펜스 (Drill Dome Defense)』는 OIYO Web-Unity Engine v5.0(보로노이 강체 파쇄 물리)으로 구현한 지하 광산 굴착 & 지상 유리 돔 레이저 방어 게임입니다. 외계 웨이브가 몰려오기 전까지 지하 지층에서 철광석(Iron)과 코발트(Cobalt)를 채굴해 플라즈마 드릴과 레이저 포탑을 강화하고, 심층부의 고대 유물 코어(Relic Core)를 인양하세요.",
+      en: "Drill Dome Defense is an original OIYO dual-loop underground mining and glass-dome wave defense game. Excavate Iron and Cobalt veins before the alien wave timer hits zero, upgrade your plasma drill and dome laser turret, and extract the deep Ancient Relic Core.",
+      ja: "『ドリルドーム防衛（Drill Dome Defense）』は、OIYO Web-Unity Engine v5.0（ボロノイ破砕物理）で構築した地下採掘＆ドーム防衛ゲームです。ウェーブ襲来までの限られた時間で鉄鉱石とコバルトを掘り出し、ドリルとレーザー砲を強化して最深部の古代遺物コアを回収しましょう。",
+      zh: "《钻探穹顶防卫（Drill Dome Defense）》是 OIYO 原创作品。在异形波次倒计时结束前深入地下岩层挖掘铁矿与钴水晶，升级等离子钻头与穹顶激光炮，发掘最底层的远古遗物核心。",
       fr: "Drill Dome Defense est un jeu hybride de minage souterrain et de défense de dôme propulsé par la physique Voronoi Shatter v5.0.",
       es: "Drill Dome Defense es un juego híbrido de minería subterránea y defensa láser impulsado por la física Voronoi Shatter v5.0.",
     },
@@ -6571,10 +6571,10 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "heat-ring-city": {
     origin: {
-      ko: "『히트 링 시티 (Heat Ring City)』는 11 bit studios의 명작 『Frostpunk』에서 영감을 받아 OIYO Web-Unity Engine v5.0(2D SDF 열복사 라이트필드 & 블리자드 포스트 프로세스 볼륨)으로 구축한 동심원 증기 도시 생존 시뮬레이션입니다. 중앙 증기 발전기(Steam Generator)를 중심으로 4개의 동심원 구역(Ring 1~4)에 보온 합숙소, 석탄 파쇄기, 제재소, 의무실을 건설하고 10일 차 -70°C 대폭설(Great Whiteout)을 버텨내세요.",
-      en: "Heat Ring City is a concentric thermal city-builder inspired by Frostpunk and powered by OIYO Web-Unity Engine v5.0 (2D SDF thermal light field & blizzard post-processing volumes). Build insulated bunkhouses, coal thumpers, sawmills, and infirmaries across 4 radial rings around the Central Steam Generator to survive the Day 10 -70°C Great Whiteout.",
-      ja: "『ヒートリングシティ（Heat Ring City）』は名作『Frostpunk』に着想を得てOIYO Web-Unity Engine v5.0（2D SDF熱放射フィールド＆ブリザード後処理ボリューム）で構築された同心円都市サバイバルです。中央蒸気ジェネレーターの周囲4リングに炭鉱や宿舎を建設し、-70℃のホワイトアウトを生き延びましょう。",
-      zh: "《热环之城（Heat Ring City）》灵感源自《Frostpunk》，搭载 OIYO Web-Unity Engine v5.0 二维有向距离场热辐射与暴风雪后处理系统。围绕中央蒸汽核心在 4 层同心圆环区建造采煤机、保温宿舍与医务所，顶住第 10 天 -70°C 的大暴雪白化浩劫。",
+      ko: "『히트 링 시티 (Heat Ring City)』는 OIYO Web-Unity Engine v5.0(2D SDF 열복사 라이트필드 & 블리자드 포스트 프로세스 볼륨)으로 구축한 동심원 증기 도시 생존 시뮬레이션입니다. 중앙 증기 발전기(Steam Generator)를 중심으로 4개의 동심원 구역(Ring 1~4)에 보온 합숙소, 석탄 파쇄기, 제재소, 의무실을 건설하고 10일 차 -70°C 대폭설(Great Whiteout)을 버텨내세요.",
+      en: "Heat Ring City is a concentric thermal city-builder. Build insulated bunkhouses, coal thumpers, sawmills, and infirmaries across 4 radial rings around the Central Steam Generator to survive the Day 10 -70°C Great Whiteout.",
+      ja: "『ヒートリングシティ（Heat Ring City）』はOIYO Web-Unity Engine v5.0（2D SDF熱放射フィールド＆ブリザード後処理ボリューム）で構築された同心円都市サバイバルです。中央蒸気ジェネレーターの周囲4リングに炭鉱や宿舎を建設し、-70℃のホワイトアウトを生き延びましょう。",
+      zh: "《热环之城（Heat Ring City）》是 OIYO 原创作品。围绕中央蒸汽核心在 4 层同心圆环区建造采煤机、保温宿舍与医务所，顶住第 10 天 -70°C 的大暴雪白化浩劫。",
       fr: "Heat Ring City est un jeu de survie urbaine thermique sur 4 anneaux concentriques autour d'un générateur à vapeur central.",
       es: "Heat Ring City es un simulador de supervivencia urbana térmica en 4 anillos concéntricos alrededor de un generador de vapor central.",
     },
@@ -6647,12 +6647,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "card-village": {
     origin: {
-      ko: "『카드 빌리지 (Card Village)』는 Sokpop Collective의 대표작 『Stacklands』에서 영감을 받아 구현한 카드 드래그 & 스택 조합 기반의 마을 경영 서바이벌 게임입니다. 작업대 위에서 카드를 자유롭게 포개어 자원을 수확하고, 건축과 인구 번영을 이뤄내며 매 달(Moon)마다 돌아오는 식량 배급과 고블린 침략을 이겨내세요.",
-      en: "Card Village is a card-stacking village builder inspired by Sokpop's hit indie title Stacklands. Drag and stack cards to harvest resources, discover crafting recipes, expand your population, and survive monthly food consumption and goblin raids.",
-      ja: "『カードビレッジ（Card Village）』は、名作『Stacklands』に着想を得たカード重ね合わせ村経営シミュレーションです。作業台の上でカードを重ねて資源を集め、家や自警団をクラフトし、毎月の食料配給とゴ布林の襲撃を生き延びましょう。",
-      zh: "《卡牌村庄（Card Village）》灵感源自独立名作《Stacklands》，基于卡牌堆叠机制构建。在作业桌面上叠放卡牌采集资源、合成建筑与训练民兵，抵御每月食粮消耗与哥布林强盗的进犯。",
-      fr: "Card Village est un jeu de gestion de village par superposition de cartes inspiré de Stacklands.",
-      es: "Card Village es un constructor de aldeas mediante apilamiento de cartas inspirado en Stacklands.",
+      ko: "『카드 빌리지 (Card Village)』는 OIYO 오리지널 카드 드래그 & 스택 조합 기반의 마을 경영 서바이벌 게임입니다. 작업대 위에서 카드를 자유롭게 포개어 자원을 수확하고, 건축과 인구 번영을 이뤄내며 매 달(Moon)마다 돌아오는 식량 배급과 고블린 침략을 이겨내세요.",
+      en: "Card Village is a card-stacking village builder. Drag and stack cards to harvest resources, discover crafting recipes, expand your population, and survive monthly food consumption and goblin raids.",
+      ja: "『カードビレッジ（Card Village）』は、カード重ね合わせ村経営シミュレーションです。作業台の上でカードを重ねて資源を集め、家や自警団をクラフトし、毎月の食料配給とゴ布林の襲撃を生き延びましょう。",
+      zh: "《卡牌村庄（Card Village）》是 OIYO 原创作品。在作业桌面上叠放卡牌采集资源、合成建筑与训练民兵，抵御每月食粮消耗与哥布林强盗的进犯。",
+      fr: "Card Village est un jeu de gestion de village par superposition de cartes.",
+      es: "Card Village es un constructor de aldeas mediante apilamiento de cartas.",
     },
     how: {
       ko: "1) 주민 카드를 클릭한 뒤 나무·바위·베리 덤불 카드에 클릭하여 포개면 게이지가 차오르며 목재, 석재, 열매를 수확합니다. 2) [주민 + 목재 2 + 석재]를 포개면 초가집이 완성되며, [주민 + 초가집]으로 인구를 늘릴 수 있습니다. 3) 달 타이머가 100%에 도달할 때마다 주민 1명당 열매 1개씩 소비되므로 꾸준히 식량을 확보하고, 코인을 모아 부스터 팩을 개봉해 새 자원을 얻으세요.",
@@ -6685,12 +6685,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "viking-longship": {
     origin: {
-      ko: "『바이킹 롱쉽: 발할라 항해 (Viking Longship: Valhalla Seas)』는 발하임(Valheim)과 시 오브 씨브즈의 바이킹 항해 경험에서 영감을 얻은 2D 탑다운 해상 탐험 생존 게임입니다. 풍향에 맞춘 돛 트리밍과 보로노이 절차적 군도 탐험, 바다 괴물과의 작살 전투를 치르며 3개의 룬스톤을 활성화하고 발할라 비프로스트로 진입하세요.",
-      en: "Viking Longship: Valhalla Seas is a top-down nautical exploration and survival game inspired by Valheim and Sea of Thieves. Master aerodynamic sail trim and tacking, explore Voronoi-generated archipelagos, harpoon sea monsters, activate ancient runestones, and enter the Bifrost to Valhalla.",
-      ja: "『ヴァイキング・ロングシップ：ヴァルハラの航海（Viking Longship: Valhalla Seas）』は、Valheim等の航海サバイバルに着想を得た海洋探検ゲームです。風向きに応じた帆の角度調整（トリム）やボロノイ群島の探検、銛による海獣退治をこなし、3つの古代ルーンストーンを起動してビフレストを目指します。",
-      zh: "《维京长船：英灵殿航路（Viking Longship: Valhalla Seas）》灵感来自《Valheim》等航海生存名作。运用真实的空气动力学帆面修剪与迎风抢风航行，探索沃罗诺伊算法生成的群岛，掷出铁制鱼叉搏杀海蛇巨兽，激活3块符文神石通往英灵殿彩虹桥。",
-      fr: "Viking Longship: Mers du Valhalla est un jeu d'exploration nautique inspiré de Valheim et Sea of Thieves.",
-      es: "Drakkar Vikingo: Mares de Valhalla es un juego de supervivencia y navegación inspirado en Valheim.",
+      ko: "『바이킹 롱쉽: 발할라 항해 (Viking Longship: Valhalla Seas)』는 OIYO 오리지널 2D 탑다운 해상 탐험 생존 게임입니다. 풍향에 맞춘 돛 트리밍과 보로노이 절차적 군도 탐험, 바다 괴물과의 작살 전투를 치르며 3개의 룬스톤을 활성화하고 발할라 비프로스트로 진입하세요.",
+      en: "Viking Longship: Valhalla Seas is a top-down nautical exploration and survival game. Master aerodynamic sail trim and tacking, explore Voronoi-generated archipelagos, harpoon sea monsters, activate ancient runestones, and enter the Bifrost to Valhalla.",
+      ja: "『ヴァイキング・ロングシップ：ヴァルハラの航海（Viking Longship: Valhalla Seas）』は、海洋探検ゲームです。風向きに応じた帆の角度調整（トリム）やボロノイ群島の探検、銛による海獣退治をこなし、3つの古代ルーンストーンを起動してビフレストを目指します。",
+      zh: "《维京长船：英灵殿航路（Viking Longship: Valhalla Seas）》是 OIYO 原创作品。运用真实的空气动力学帆面修剪与迎风抢风航行，探索沃罗诺伊算法生成的群岛，掷出铁制鱼叉搏杀海蛇巨兽，激活3块符文神石通往英灵殿彩虹桥。",
+      fr: "Viking Longship: Mers du Valhalla est un jeu d'exploration nautique.",
+      es: "Drakkar Vikingo: Mares de Valhalla es un juego de supervivencia y navegación.",
     },
     how: {
       ko: "1) 방향타(A/D)로 배의 침로를 잡고, 돛 트리밍(W/S)으로 풍향에 맞춰 돛 각도를 조절해 최대 추진력을 얻으세요. 역풍일 때는 노 젓기(R)를 켜서 보조 추진력을 발휘합니다. 2) 섬에 근접했을 때 탐험(E)을 눌러 고대 룬스톤을 활성화하고 목재·철광석·식량을 채집합니다. 3) 바다뱀과 크라켄이 나타나면 작살(F)을 발사해 처치하고, 선체 피해는 수리(C)로 복구하세요. 3개의 룬스톤을 모두 모은 뒤 남동쪽 비프로스트 관문으로 항해하면 승리합니다.",
@@ -6761,12 +6761,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "chaos-kitchen": {
     origin: {
-      ko: "『카오스 키친: 주방 러시 (Chaos Kitchen: Kitchen Rush)』는 명작 파티 게임 『Overcooked』의 긴박한 협동 주방 시뮬레이션에서 영감을 받아 제작된 아케이드 게임입니다. 다익스트라 플로우 필드(Dijkstra Flow-Field) AI 보조 시스템과 결정론적 락스텝(Lockstep) 동기화를 적용하여 조리대 동선과 화재, 요리 완성을 구현했습니다.",
-      en: "Chaos Kitchen: Kitchen Rush is a high-octane culinary co-op arcade game inspired by Overcooked. Powered by Dijkstra flow-field pathfinding for AI assistant navigation and deterministic lockstep synchronization, master chaotic prep lines, sizzling pans, and fire safety.",
-      ja: "『カオスキッチン：厨房ラッシュ（Chaos Kitchen: Kitchen Rush）』は、名作『Overcooked』の混沌とした協力調理に着想を得たアーケードゲームです。ダイクストラ・フローフィールドAIアシストと決定論的ロックステップ同期を搭載し、刻み作業や焼き調理、消火器の使い分けをこなします。",
-      zh: "《混乱厨房：后厨大冲刺（Chaos Kitchen: Kitchen Rush）》灵感来自聚会经典《Overcooked》。采用迪杰斯特拉流场寻路算法驱动AI帮厨走位，并结合确定性锁步机制，在混乱的备菜台前切碎食材、煎烤肉饼与合力灭火。",
-      fr: "Chaos Kitchen est un jeu de coopération culinaire effréné inspiré d'Overcooked.",
-      es: "Cocina Caótica es una simulación de cocina cooperativa inspirada en Overcooked.",
+      ko: "『카오스 키친: 주방 러시 (Chaos Kitchen: Kitchen Rush)』는 긴박한 협동 주방을 다룬 OIYO 오리지널 아케이드 게임입니다. 다익스트라 플로우 필드(Dijkstra Flow-Field) AI 보조 시스템과 결정론적 락스텝(Lockstep) 동기화를 적용하여 조리대 동선과 화재, 요리 완성을 구현했습니다.",
+      en: "Chaos Kitchen: Kitchen Rush is a high-octane culinary co-op arcade game. Powered by Dijkstra flow-field pathfinding for AI assistant navigation and deterministic lockstep synchronization, master chaotic prep lines, sizzling pans, and fire safety.",
+      ja: "『カオスキッチン：厨房ラッシュ（Chaos Kitchen: Kitchen Rush）』は、アーケードゲームです。ダイクストラ・フローフィールドAIアシストと決定論的ロックステップ同期を搭載し、刻み作業や焼き調理、消火器の使い分けをこなします。",
+      zh: "《混乱厨房：后厨大冲刺（Chaos Kitchen: Kitchen Rush）》是 OIYO 原创作品。采用迪杰斯特拉流场寻路算法驱动AI帮厨走位，并结合确定性锁步机制，在混乱的备菜台前切碎食材、煎烤肉饼与合力灭火。",
+      fr: "Chaos Kitchen est un jeu de coopération culinaire effréné original d'OIYO.",
+      es: "Cocina Caótica es una simulación de cocina cooperativa.",
     },
     how: {
       ko: "1) 이동(WASD/방향키)과 들기/놓기(Space)로 토마토, 양상추, 고기 패티를 상자에서 꺼내 도마나 프라이팬에 올리세요. 2) 도마 앞에서 썰기(F 키)를 눌러 식재료를 다듬고, 프라이팬에 올린 고기는 적당히 익었을 때 꺼내세요. 너무 오래 두면 불이 붙어 소화기(🧯)로 꺼야 합니다. 3) 접시(🍽️)에 조리된 재료들을 올려 샐러드나 버거로 조합한 뒤, 상단 배달 창구(SERVE)로 운반하면 골드와 콤보 점수를 획득합니다.",
@@ -6799,12 +6799,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "grappling-boss": {
     origin: {
-      ko: "『그래플링 보스 아레나 (Grappling Boss Arena: Beholder)』는 명작 샌드박스 액션 『Terraria』의 공중 보스전(크툴루의 눈)과 그래플링 훅 기동에서 영감을 얻어 제작된 2D 액션 게임입니다. 베를레 진자 적분(Verlet Pendulum) 기반의 사실적인 훅 장력·스윙 물리와 거대 보스의 4개 다관절 촉수를 실시간으로 움직이는 FABRIK 역운동학(IK)을 엔진 코어로 탑재했습니다.",
-      en: "Grappling Boss Arena: Beholder is an aerial combat action game inspired by Terraria's legendary Eye of Cthulhu boss fights and grapple maneuvering. Powered by Verlet pendulum swing physics and procedural 4-chain FABRIK inverse kinematics, weave through mechanical tentacle sweeps and plasma barrages.",
-      ja: "『グラップリング・ボスアリーナ：ビホルダー（Grappling Boss Arena: Beholder）』は、『Terraria』の空中ボス戦とフックアクションに着想を得た2Dバトルアクションです。ベルレ積分による振り子スイング物理と、巨大ボスの4本触手をリアルタイム制御するFABRIK逆運動学（IK）を搭載しています。",
-      zh: "《抓钩领主竞技场：机械眼魔（Grappling Boss Arena: Beholder）》灵感来自《泰拉瑞亚（Terraria）》经典的克苏鲁之眼空战与抓钩高机动荡绳玩法。运用韦尔莱摆锤张力物理与驱动机械四触手实时追击的FABRIK反向动力学算法构建。",
-      fr: "Grappling Boss Arena est un jeu d'action aérienne inspiré des combats de boss de Terraria avec grappin Verlet et tentacules IK FABRIK.",
-      es: "Arena del Jefe con Gancho es un juego de acción aérea inspirado en los combates de jefes de Terraria con física de gancho Verlet y tentáculos IK.",
+      ko: "『그래플링 보스 아레나 (Grappling Boss Arena: Beholder)』는 공중 보스전과 그래플링 훅 기동을 다룬 OIYO 오리지널 2D 액션 게임입니다. 베를레 진자 적분(Verlet Pendulum) 기반의 사실적인 훅 장력·스윙 물리와 거대 보스의 4개 다관절 촉수를 실시간으로 움직이는 FABRIK 역운동학(IK)을 엔진 코어로 탑재했습니다.",
+      en: "Grappling Boss Arena: Beholder is an aerial combat action game. Powered by Verlet pendulum swing physics and procedural 4-chain FABRIK inverse kinematics, weave through mechanical tentacle sweeps and plasma barrages.",
+      ja: "『グラップリング・ボスアリーナ：ビホルダー（Grappling Boss Arena: Beholder）』は、2Dバトルアクションです。ベルレ積分による振り子スイング物理と、巨大ボスの4本触手をリアルタイム制御するFABRIK逆運動学（IK）を搭載しています。",
+      zh: "《抓钩领主竞技场：机械眼魔（Grappling Boss Arena: Beholder）》是 OIYO 原创作品。运用韦尔莱摆锤张力物理与驱动机械四触手实时追击的FABRIK反向动力学算法构建。",
+      fr: "Grappling Boss Arena est un jeu d'action aérienne.",
+      es: "Arena del Jefe con Gancho es un juego de acción aérea.",
     },
     how: {
       ko: "1) 이동(A/D) 및 점프(W)로 바닥 발판을 이동하고, 마우스 우클릭(또는 Space)으로 천장 앵커 오브(푸른 구체)에 그래플링 훅을 발사해 매달리세요. 2) 진자 스윙 반동으로 가속한 뒤 점프(W)를 누르면 로프를 풀고 폭발적인 탄성 도약(Slingshot)을 펼칠 수 있습니다. 3) 마우스 좌클릭(또는 F)으로 보스의 눈을 조준 사격하세요. 보스 HP가 50% 이하가 되면 붉게 폭주(ENRAGED)하며 촉수 휘두르기와 탄막 속도가 2배 빨라지므로 바닥 용암 가시에 떨어지지 않도록 공중 기동을 유지하세요.",
@@ -6837,7 +6837,7 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "cheese-factory": {
     origin: {
-      ko: "『치즈 팩토리 타이쿤 (Cheese Factory Tycoon)』은 팩토리오(Factorio)와 빅 팜(Big Farm)의 정밀 생산 자동화 재미를 스위스 알프스 전통 치즈 공방에 결합한 타이쿤 게임입니다. 대규모 원유 및 커드·치즈 휠 개체를 캐시 친화적인 SoA(Structure-of-Arrays) 구조로 시뮬레이션하는 Archetype ECS 월드와, 복도와 선반 사이를 서로 충돌 없이 누비는 Boids 군집 조향 무인 운반 로봇(AGV)을 탑재했습니다.",
+      ko: "『치즈 팩토리 타이쿤 (Cheese Factory Tycoon)』은 정밀 생산 자동화의 재미를 스위스 알프스 전통 치즈 공방에 결합한 타이쿤 게임입니다. 대규모 원유 및 커드·치즈 휠 개체를 캐시 친화적인 SoA(Structure-of-Arrays) 구조로 시뮬레이션하는 Archetype ECS 월드와, 복도와 선반 사이를 서로 충돌 없이 누비는 Boids 군집 조향 무인 운반 로봇(AGV)을 탑재했습니다.",
       en: "Cheese Factory Tycoon combines precision factory automation with the pastoral art of Swiss alpine cheesemaking. Powered by an Archetype SoA ECS world simulating hundreds of curd and cheese wheel entities in real time, and collision-avoiding Boids multi-agent AGV transport robots handling inter-station logistics.",
       ja: "『チーズ・ファクトリー・タイクーン（Cheese Factory Tycoon）』は、生産自動化タイクーンの奥深さとスイス・アルプスの伝統的なチーズ工房を融合させた経営ゲームです。大量の生乳・カード・チーズホイールを高速シミュレートするArchetype SoA ECSと、衝突回避型Boids群知能AGV搬送ロボットを搭載しています。",
       zh: "《奶酪工厂大亨（Cheese Factory Tycoon）》将自动化工厂精密流水线与瑞士阿尔卑斯高山传统奶酪酿造工艺完美融合。内置高性能 SoA Archetype ECS 世界，实时模拟海量原奶与奶酪实体，并配有自律集群避障的 Boids 算法 AGV 搬运机器人矩阵。",
@@ -6875,12 +6875,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "shadow-stealth": {
     origin: {
-      ko: "『시노비 잠입 암살 (Shinobi Shadow Infiltration)』은 『마크 오브 더 닌자(Mark of the Ninja)』와 『섀도우 택틱스(Shadow Tactics)』의 정통 전술 잠입 액션을 웹 브라우저 캔버스로 재해석한 게임입니다. 경비병의 동적 시야각(FOV) 콘 및 벽 가시선(LOS) 차단을 연산하는 isPointInViewCone2D 알고리즘과, 완벽한 잠입 런을 60fps 무손실 압축으로 기록하는 DeterministicReplayTape 엔진을 탑재했습니다.",
-      en: "Shinobi Shadow Infiltration reimagines classic tactical stealth games like Mark of the Ninja and Shadow Tactics for the browser canvas. Powered by isPointInViewCone2D computing dynamic guard FOV vision cones and raycast wall line-of-sight occlusion, paired with a DeterministicReplayTape engine that records and compresses your run into a shareable Ghost playback token.",
-      ja: "『忍び・シャドウ潜入（Shinobi Shadow Infiltration）』は、『Mark of the Ninja』や『Shadow Tactics』の本格戦術ステルスアクションをブラウザ向けに再構築したゲームです。警備兵の動的視界コーンと壁の視線遮蔽を判定するisPointInViewCone2Dと、完璧な潜入ルートを記録するDeterministicReplayTapeを搭載しています。",
-      zh: "《影之潜入：极意忍者（Shinobi Shadow Infiltration）》致敬《忍者之印（Mark of the Ninja）》与《影子战术（Shadow Tactics）》的硬核战术潜行神作。底层搭载用于视锥射线扫描与实体墙线遮蔽判定的 isPointInViewCone2D 算法，以及支持 60fps 确定性压缩回放的 DeterministicReplayTape 磁带系统。",
-      fr: "Shinobi Shadow Infiltration s'inspire de Mark of the Ninja avec des cônes de vision dynamiques et des replays déterministes.",
-      es: "Infiltración Shinobi en las Sombras se inspira en Mark of the Ninja con conos de visión dinámicos y replays deterministas.",
+      ko: "『시노비 잠입 암살 (Shinobi Shadow Infiltration)』은 정통 전술 잠입 액션을 웹 브라우저 캔버스로 만든 OIYO 오리지널 게임입니다. 경비병의 동적 시야각(FOV) 콘 및 벽 가시선(LOS) 차단을 연산하는 isPointInViewCone2D 알고리즘과, 완벽한 잠입 런을 60fps 무손실 압축으로 기록하는 DeterministicReplayTape 엔진을 탑재했습니다.",
+      en: "Shinobi Shadow Infiltration is an original OIYO stealth game built for the browser canvas. Powered by isPointInViewCone2D computing dynamic guard FOV vision cones and raycast wall line-of-sight occlusion, paired with a DeterministicReplayTape engine that records and compresses your run into a shareable Ghost playback token.",
+      ja: "『忍び・シャドウ潜入（Shinobi Shadow Infiltration）』は、本格戦術ステルスアクションをブラウザ向けに作ったOIYOオリジナルゲームです。警備兵の動的視界コーンと壁の視線遮蔽を判定するisPointInViewCone2Dと、完璧な潜入ルートを記録するDeterministicReplayTapeを搭載しています。",
+      zh: "《影之潜入：极意忍者（Shinobi Shadow Infiltration）》是 OIYO 原创的硬核战术潜行游戏。底层搭载用于视锥射线扫描与实体墙线遮蔽判定的 isPointInViewCone2D 算法，以及支持 60fps 确定性压缩回放的 DeterministicReplayTape 磁带系统。",
+      fr: "Shinobi Shadow Infiltration est un jeu d'infiltration original d'OIYO avec des cônes de vision dynamiques et des replays déterministes.",
+      es: "Infiltración Shinobi en las Sombras es un juego de sigilo original de OIYO con conos de visión dinámicos y replays deterministas.",
     },
     how: {
       ko: "1) WASD 또는 방향키로 은밀히 이동하며, 푸른 점선으로 표시된 그림자 구역(대나무 숲, 병풍 뒤)에 들어가 은신하세요. 그림자 안에서는 경비병 시야각 콘에 닿아도 발각되지 않습니다. 2) 경비병 등 뒤 30px 이내로 접근하여 Q 키를 누르면 소리 없이 배후 암살(Takedown)할 수 있습니다. 3) 위급할 때 Space/F 키로 수리검을 벽이나 등불에 던져 경비병의 시선을 분산시키고, E 키로 연막탄을 터뜨려 5초간 시야를 차단하세요. 4) 성 깊숙한 방의 비밀 두루마리(📜)를 획득한 후 시작 지점의 탈출 나룻배(🛶)로 무사히 복귀하면 클리어됩니다.",
@@ -6913,12 +6913,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "neon-katana": {
     origin: {
-      ko: "네온 카타나는 사이버펑크 디스토피아를 배경으로 세키로와 고스트러너의 정밀 패링 손맛을 브라우저에 이식한 초감각 반사신경 아케이드입니다.",
-      en: "Neon Katana is an ultra-reflex arcade game set in a cyberpunk dystopia, bringing Sekiro-grade precision parrying and Blade-Dash action to the browser.",
-      ja: "ネオン・カタナはサイバーパンクな世界観を舞台に、SEKIROやGhostrunnerのような精密パリィの快感をブラウザ上で再現した超感覚反射アクションです。",
-      zh: "霓虹武士刀以赛博朋克反乌托邦为背景，将类似只狼的极致精准弹反与瞬间拔刀斩体验移植至网页端。",
-      fr: "Neon Katana est un jeu d'arcade cyberpunk ultra-réactif inspiré des mécaniques de parade précise de Sekiro et Ghostrunner.",
-      es: "Neon Katana es un arcade cyberpunk de reflejos rápidos inspirado en la precisión de desvío al estilo Sekiro y Ghostrunner.",
+      ko: "네온 카타나는 사이버펑크 디스토피아를 배경으로 정밀 패링 손맛을 브라우저에 이식한 초감각 반사신경 아케이드입니다.",
+      en: "Neon Katana is an ultra-reflex arcade game set in a cyberpunk dystopia, bringing precision parrying and Blade-Dash action to the browser.",
+      ja: "ネオン・カタナはサイバーパンクな世界観を舞台に、精密パリィの快感をブラウザ上で再現した超感覚反射アクションです。",
+      zh: "霓虹武士刀以赛博朋克反乌托邦为背景，将极致精准弹反与瞬间拔刀斩体验移植至网页端。",
+      fr: "Neon Katana est un jeu d'arcade cyberpunk ultra-réactif bâti sur la parade de précision.",
+      es: "Neon Katana es un arcade cyberpunk de reflejos rápidos basado en el desvío de precisión.",
     },
     how: {
       ko: "1) 날아오는 네온 탄환이 중앙 점선 원(패링 타이밍 존)에 도달하는 순간 마우스 클릭이나 화면 탭으로 칼을 휘두르세요. 2) 타이밍 오차 140ms 이내의 퍼펙트 패링은 탄환을 반사하여 적 드론을 격추하고 게이지를 25% 충전합니다. 3) 게이지 100% 도달 시 스페이스바나 일섬 버튼을 눌러 슬로우모션 불릿 타임과 함께 화면 전체를 가르는 참격을 발동하세요.",
