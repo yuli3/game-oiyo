@@ -309,6 +309,46 @@ public class CyberHighwayPlayer : MonoBehaviour
         ResetToStage(0);
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/CH/Art) ----
+    private static readonly Dictionary<string, Texture2D> artTex = new Dictionary<string, Texture2D>();
+    private Material roadArtMat, skylineMat;
+    private float roadScroll;
+
+    private static Texture2D ArtTex(string name, bool repeat = false)
+    {
+        if (!artTex.TryGetValue(name, out var t))
+        {
+            t = Resources.Load<Texture2D>("CH/Art/" + name);
+            artTex[name] = t;
+        }
+        if (t != null) t.wrapMode = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+        return t;
+    }
+
+    // Unlit painted material (the night scene is lit by the paint itself).
+    private static Material ArtMat(string tex, Color tint, bool blended = false)
+    {
+        var sh = blended ? null : Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        m.mainTexture = ArtTex(tex);
+        m.color = tint;
+        return m;
+    }
+
+    // Painted rear view stuck to the back face of a unit box (child of the scaled box).
+    private static void RearPlate(GameObject box, string tex, float heightFrac = 1f)
+    {
+        var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        q.name = "Rear";
+        Destroy(q.GetComponent<Collider>());
+        q.transform.SetParent(box.transform, false);
+        q.transform.localPosition = new Vector3(0f, (heightFrac - 1f) * -0.5f + 0.02f, -0.505f);
+        q.transform.localScale = new Vector3(1.04f, heightFrac, 1f);
+        q.GetComponent<Renderer>().material = ArtMat(tex, Color.white);
+    }
+
+    private static readonly string[] RearArt = { "rear_sedan", "rear_truck", "rear_sports", "rear_police" };
+
     private void CreateMaterials()
     {
         var shader = Shader.Find("Mobile/Diffuse");
@@ -347,6 +387,19 @@ public class CyberHighwayPlayer : MonoBehaviour
 
         pickupMat = new Material(shader);
         pickupMat.color = Color.yellow;
+
+        // painted versions (body paint keeps each traffic type's colour)
+        trafficSedanMat = ArtMat("paint", new Color(0.85f, 0.2f, 0.36f));
+        trafficTruckMat = ArtMat("paint", new Color(0.36f, 0.4f, 0.5f));
+        trafficSportsMat = ArtMat("paint", new Color(0.95f, 0.76f, 0.2f));
+        policeMat = ArtMat("paint", new Color(0.14f, 0.18f, 0.3f));
+        bossMat = ArtMat("trailer", Color.white);
+        carBodyMat = ArtMat("paint", new Color(0.1f, 0.78f, 0.85f));
+        roadArtMat = ArtMat("road", Color.white);
+        roadArtMat.mainTexture.wrapMode = TextureWrapMode.Repeat;
+        roadArtMat.mainTextureScale = new Vector2(1f, 2f);
+        skylineMat = ArtMat("skyline", Color.white);
+        skylineMat.renderQueue = 1000;
     }
 
     private void CreatePlayerCar()
@@ -367,8 +420,7 @@ public class CyberHighwayPlayer : MonoBehaviour
         cabin.transform.SetParent(playerCar.transform);
         cabin.transform.localPosition = new Vector3(0, 0.55f, -0.2f);
         cabin.transform.localScale = new Vector3(1.1f, 0.4f, 1.3f);
-        var cabinMat = new Material(carBodyMat);
-        cabinMat.color = new Color(0.05f, 0.15f, 0.25f);
+        var cabinMat = ArtMat("glass", Color.white);
         cabin.GetComponent<Renderer>().material = cabinMat;
 
         // Rear Spoiler Wing
@@ -377,6 +429,7 @@ public class CyberHighwayPlayer : MonoBehaviour
         spoiler.transform.localPosition = new Vector3(0, 0.65f, -1.25f);
         spoiler.transform.localScale = new Vector3(1.5f, 0.08f, 0.35f);
         spoiler.GetComponent<Renderer>().material = carBodyMat;
+        RearPlate(chassis, "rear_player");
 
         // 4 Wheels
         float[] wx = new float[] { -0.75f, 0.75f };
@@ -394,42 +447,13 @@ public class CyberHighwayPlayer : MonoBehaviour
             }
         }
 
-        // Taillights
-        var tailL = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        tailL.transform.SetParent(playerCar.transform);
-        tailL.transform.localPosition = new Vector3(-0.55f, 0.3f, -1.41f);
-        tailL.transform.localScale = new Vector3(0.28f, 0.12f, 0.06f);
-        var redMat = new Material(carBodyMat);
-        redMat.color = Color.red;
-        tailL.GetComponent<Renderer>().material = redMat;
-
-        var tailR = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        tailR.transform.SetParent(playerCar.transform);
-        tailR.transform.localPosition = new Vector3(0.55f, 0.3f, -1.41f);
-        tailR.transform.localScale = new Vector3(0.28f, 0.12f, 0.06f);
-        tailR.GetComponent<Renderer>().material = redMat;
-
-        // Headlights (forward)
-        var headL = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        headL.transform.SetParent(playerCar.transform);
-        headL.transform.localPosition = new Vector3(-0.55f, 0.3f, 1.41f);
-        headL.transform.localScale = new Vector3(0.28f, 0.12f, 0.06f);
-        var whiteMat = new Material(carBodyMat);
-        whiteMat.color = Color.white;
-        headL.GetComponent<Renderer>().material = whiteMat;
-
-        var headR = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        headR.transform.SetParent(playerCar.transform);
-        headR.transform.localPosition = new Vector3(0.55f, 0.3f, 1.41f);
-        headR.transform.localScale = new Vector3(0.28f, 0.12f, 0.06f);
-        headR.GetComponent<Renderer>().material = whiteMat;
-
         // Shield Bubble
-        shieldBubble = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        shieldBubble = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        Destroy(shieldBubble.GetComponent<Collider>());
         shieldBubble.transform.SetParent(playerCar.transform);
-        shieldBubble.transform.localPosition = new Vector3(0, 0.35f, 0);
+        shieldBubble.transform.localPosition = new Vector3(0, 0.5f, -1.6f);
         shieldBubble.transform.localScale = new Vector3(2.4f, 1.6f, 3.8f);
-        shieldBubble.GetComponent<Renderer>().material = shieldMat;
+        shieldBubble.GetComponent<Renderer>().material = ArtMat("shield", new Color(1f, 1f, 1f, 0.55f), true);
 
         // Headlight Light
         var lightGo = new GameObject("CarHeadlight");
@@ -461,9 +485,17 @@ public class CyberHighwayPlayer : MonoBehaviour
             road.name = "HighwaySection_" + i;
             road.transform.position = new Vector3(0, -0.1f, i * 40f);
             road.transform.localScale = new Vector3(10.5f, 0.2f, 40f);
-            road.GetComponent<Renderer>().material = roadMat;
+            road.GetComponent<Renderer>().material = roadArtMat;
             roadSegments.Add(road.transform);
         }
+
+        // Neon skyline far ahead, beyond the end of the road
+        var sky = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        sky.name = "Skyline";
+        Destroy(sky.GetComponent<Collider>());
+        sky.transform.position = new Vector3(0f, 14f, 150f);
+        sky.transform.localScale = new Vector3(200f, 75f, 1f);
+        sky.GetComponent<Renderer>().material = skylineMat;
 
         // Side Guardrails & Streetlights
         for (int i = 0; i < 16; i++)
@@ -498,6 +530,8 @@ public class CyberHighwayPlayer : MonoBehaviour
         nm.simulationSpace = ParticleSystemSimulationSpace.World;
         var ne = nitroExhaust.emission;
         ne.rateOverTime = 60f;
+        var sparkMat = ArtMat("spark", Color.white, true);
+        nGo.GetComponent<ParticleSystemRenderer>().material = sparkMat;
         ne.enabled = false;
 
         // Crash sparks
@@ -509,6 +543,7 @@ public class CyberHighwayPlayer : MonoBehaviour
         sm.startSpeed = 14f;
         sm.startColor = new Color(1f, 0.6f, 0.1f);
         sm.simulationSpace = ParticleSystemSimulationSpace.World;
+        sGo.GetComponent<ParticleSystemRenderer>().material = sparkMat;
         var se = crashSparks.emission;
         se.rateOverTime = 0f;
     }
@@ -567,12 +602,14 @@ public class CyberHighwayPlayer : MonoBehaviour
         body1.transform.localPosition = new Vector3(0, 0, 0);
         body1.transform.localScale = new Vector3(3.2f, 2.2f, 6.5f);
         body1.GetComponent<Renderer>().material = bossMat;
+        RearPlate(body1, "boss_rear");
 
         var body2 = GameObject.CreatePrimitive(PrimitiveType.Cube);
         body2.transform.SetParent(bossJuggernaut.transform);
         body2.transform.localPosition = new Vector3(0, 0, -6.8f);
         body2.transform.localScale = new Vector3(3.0f, 2.0f, 5.8f);
         body2.GetComponent<Renderer>().material = bossMat;
+        RearPlate(body2, "boss_rear");
     }
 
     void Update()
@@ -800,6 +837,8 @@ public class CyberHighwayPlayer : MonoBehaviour
             speedKmh = baseSpeedKmh * 1.15f;
         }
 
+        RearPlate(go, RearArt[Mathf.Clamp(type, 0, 3)]);
+
         traffic.Add(new TrafficCar
         {
             pos = pos, speed = speedKmh, type = type,
@@ -861,16 +900,11 @@ public class CyberHighwayPlayer : MonoBehaviour
         else if (roll < 0.85f) type = 1;
         else type = 2;
 
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        Destroy(go.GetComponent<Collider>());
         go.transform.position = pos;
-        go.transform.localScale = new Vector3(0.6f, 0.15f, 0.6f);
-        go.transform.rotation = Quaternion.Euler(90, 0, 0);
-
-        var m = new Material(pickupMat);
-        if (type == 0) m.color = Color.yellow;
-        else if (type == 1) m.color = Color.cyan;
-        else m.color = Color.green;
-        go.GetComponent<Renderer>().material = m;
+        go.transform.localScale = new Vector3(1.0f, 1.0f, 1f);
+        go.GetComponent<Renderer>().material = ArtMat(type == 0 ? "pick_credit" : type == 1 ? "pick_nitro" : "pick_shield", Color.white);
 
         pickups.Add(new RoadPickup { pos = pos, type = type, go = go });
     }

@@ -83,6 +83,50 @@ public class ChaosKitchenPlayer : MonoBehaviour
     Sprite _sqSprite;
     Sprite _circleSprite;
 
+    // ---- Painted art (scripts/make_art.py -> Resources/CK/Art) ----
+    readonly Dictionary<string, Sprite> _art = new Dictionary<string, Sprite>();
+
+    // A sprite one world unit wide (keeps the old 1x1 square sizing).
+    Sprite Art(string name)
+    {
+        if (!_art.TryGetValue(name, out var sp))
+        {
+            var t = Resources.Load<Texture2D>("CK/Art/" + name);
+            if (t != null)
+            {
+                t.wrapMode = TextureWrapMode.Clamp;
+                sp = Sprite.Create(t, new Rect(0, 0, t.width, t.height), new Vector2(0.5f, 0.5f), t.width);
+            }
+            _art[name] = sp;
+        }
+        return sp;
+    }
+
+    Sprite ItemSprite(ItemKind k)
+    {
+        string n = k switch
+        {
+            ItemKind.Tomato => "item_tomato",
+            ItemKind.ChoppedTomato => "item_chopped",
+            ItemKind.RawPatty => "item_raw",
+            ItemKind.CookedPatty => "item_cooked",
+            ItemKind.BurntPatty => "item_burnt",
+            ItemKind.Bun => "item_bun",
+            ItemKind.Plate => "item_plate",
+            ItemKind.SaladDish => "item_salad",
+            ItemKind.BurgerDish => "item_burger",
+            ItemKind.Extinguisher => "item_extinguisher",
+            _ => null
+        };
+        return (n != null ? Art(n) : null) ?? _circleSprite;
+    }
+
+    void ShowItem(SpriteRenderer sr, ItemKind k)
+    {
+        sr.sprite = ItemSprite(k);
+        sr.color = Color.white;
+    }
+
     AudioSource _sfx;
     AudioClip _clipPick;
     AudioClip _clipChop;
@@ -193,8 +237,8 @@ public class ChaosKitchenPlayer : MonoBehaviour
                 fl.transform.position = new Vector3(gx * 1.15f, gy * 1.15f, 0);
                 fl.transform.localScale = new Vector3(1.13f, 1.13f, 1f);
                 var sr = fl.AddComponent<SpriteRenderer>();
-                sr.sprite = _sqSprite;
-                sr.color = ((gx + gy) & 1) == 0 ? new Color(0.22f, 0.19f, 0.17f, 1f) : new Color(0.27f, 0.23f, 0.20f, 1f);
+                sr.sprite = Art(((gx + gy) & 1) == 0 ? "floor_a" : "floor_b") ?? _sqSprite;
+                sr.color = new Color(0.5f, 0.48f, 0.47f, 1f); // dimmed so stations and food stand out
                 sr.sortingOrder = -10;
             }
         }
@@ -219,19 +263,10 @@ public class ChaosKitchenPlayer : MonoBehaviour
         _chefGo = new GameObject("Chef");
         _chefGo.transform.SetParent(_world.transform);
         var chefSr = _chefGo.AddComponent<SpriteRenderer>();
-        chefSr.sprite = _circleSprite;
-        chefSr.color = new Color(0.98f, 0.96f, 0.92f, 1f);
+        chefSr.sprite = Art("chef") ?? _circleSprite;
+        chefSr.color = Color.white;
         chefSr.sortingOrder = 10;
-        _chefGo.transform.localScale = new Vector3(0.85f, 0.85f, 1f);
-
-        var hat = new GameObject("ChefHat");
-        hat.transform.SetParent(_chefGo.transform);
-        hat.transform.localPosition = new Vector3(0, 0.22f, 0);
-        hat.transform.localScale = new Vector3(0.7f, 0.45f, 1f);
-        var hatSr = hat.AddComponent<SpriteRenderer>();
-        hatSr.sprite = _sqSprite;
-        hatSr.color = Color.white;
-        hatSr.sortingOrder = 11;
+        _chefGo.transform.localScale = new Vector3(1.05f, 1.05f, 1f);
 
         var held = new GameObject("ChefHeld");
         held.transform.SetParent(_chefGo.transform);
@@ -240,6 +275,7 @@ public class ChaosKitchenPlayer : MonoBehaviour
         _chefItemSr = held.AddComponent<SpriteRenderer>();
         _chefItemSr.sprite = _circleSprite;
         _chefItemSr.sortingOrder = 12;
+        held.transform.localPosition = new Vector3(0f, 0.5f, 0);
         _chefItemSr.enabled = false;
     }
 
@@ -248,26 +284,28 @@ public class ChaosKitchenPlayer : MonoBehaviour
         var go = new GameObject(kind.ToString());
         go.transform.SetParent(_world.transform);
         go.transform.position = pos;
-        go.transform.localScale = kind == StationKind.ServeBelt ? new Vector3(3.6f, 1.05f, 1f) : new Vector3(1.15f, 1.15f, 1f);
+        // the belt sprite is 512x150 (1 x 0.293 units), so its y scale makes it 1.05 tall
+        go.transform.localScale = kind == StationKind.ServeBelt ? new Vector3(3.6f, 1.05f / 0.293f, 1f) : new Vector3(1.15f, 1.15f, 1f);
         var sr = go.AddComponent<SpriteRenderer>();
-        sr.sprite = _sqSprite;
-        sr.sortingOrder = 1;
-        sr.color = kind switch
+        string stArt = kind switch
         {
-            StationKind.CrateTomato => new Color(0.82f, 0.24f, 0.22f, 1f),
-            StationKind.CratePatty => new Color(0.62f, 0.28f, 0.24f, 1f),
-            StationKind.CrateBun => new Color(0.86f, 0.68f, 0.34f, 1f),
-            StationKind.CratePlate => new Color(0.75f, 0.82f, 0.88f, 1f),
-            StationKind.ChoppingBoard => new Color(0.72f, 0.54f, 0.34f, 1f),
-            StationKind.Stove => new Color(0.24f, 0.27f, 0.32f, 1f),
-            StationKind.ServeBelt => new Color(0.18f, 0.55f, 0.42f, 1f),
-            _ => new Color(0.32f, 0.32f, 0.36f, 1f)
+            StationKind.CrateTomato => "st_crate_tomato",
+            StationKind.CratePatty => "st_crate_patty",
+            StationKind.CrateBun => "st_crate_bun",
+            StationKind.CratePlate => "st_crate_plate",
+            StationKind.ChoppingBoard => "st_board",
+            StationKind.Stove => "st_stove",
+            StationKind.ServeBelt => "st_belt",
+            _ => "st_trash"
         };
+        sr.sprite = Art(stArt) ?? _sqSprite;
+        sr.sortingOrder = 1;
+        sr.color = Color.white;
 
         var itemGo = new GameObject("HeldItem");
         itemGo.transform.SetParent(go.transform);
         itemGo.transform.localPosition = new Vector3(0, 0.08f, 0);
-        itemGo.transform.localScale = kind == StationKind.ServeBelt ? new Vector3(0.16f, 0.55f, 1f) : new Vector3(0.55f, 0.55f, 1f);
+        itemGo.transform.localScale = kind == StationKind.ServeBelt ? new Vector3(0.55f / 3.6f, 0.55f * 0.293f / 1.05f, 1f) : new Vector3(0.62f, 0.62f, 1f);
         var itemSr = itemGo.AddComponent<SpriteRenderer>();
         itemSr.sprite = _circleSprite;
         itemSr.sortingOrder = 5;
@@ -469,11 +507,14 @@ public class ChaosKitchenPlayer : MonoBehaviour
         _chefPos.x = Mathf.Clamp(_chefPos.x, -6.2f, 6.2f);
         _chefPos.y = Mathf.Clamp(_chefPos.y, -3.9f, 3.9f);
         _chefGo.transform.position = _chefPos;
+        // turn the top-down chef toward where they are walking (art faces +y)
+        float faceAng = Mathf.Atan2(_chefFacing.y, _chefFacing.x) * Mathf.Rad2Deg - 90f;
+        _chefGo.transform.rotation = Quaternion.Slerp(_chefGo.transform.rotation, Quaternion.Euler(0f, 0f, faceAng), Mathf.Min(1f, dt * 14f));
 
         if (_chefHand != ItemKind.None)
         {
             _chefItemSr.enabled = true;
-            _chefItemSr.color = ItemColor(_chefHand);
+            ShowItem(_chefItemSr, _chefHand);
             _chefItemSr.transform.localPosition = _chefFacing * 0.55f;
         }
         else
@@ -607,8 +648,7 @@ public class ChaosKitchenPlayer : MonoBehaviour
         go.transform.position = _chefPos;
         go.transform.localScale = new Vector3(0.45f, 0.45f, 1f);
         var sr = go.AddComponent<SpriteRenderer>();
-        sr.sprite = _circleSprite;
-        sr.color = ItemColor(_chefHand);
+        ShowItem(sr, _chefHand);
         sr.sortingOrder = 13;
         _thrown.Add(new ThrownItem { kind = _chefHand, pos = _chefPos, vel = _chefFacing * 10.5f, life = 0.35f, go = go });
         _chefHand = ItemKind.None;
@@ -697,11 +737,18 @@ public class ChaosKitchenPlayer : MonoBehaviour
             if (st.heldItem != ItemKind.None)
             {
                 st.itemSr.enabled = true;
-                st.itemSr.color = ItemColor(st.heldItem);
+                ShowItem(st.itemSr, st.heldItem);
             }
             else
             {
                 st.itemSr.enabled = false;
+            }
+
+            if (st.kind == StationKind.Stove)
+            {
+                var stoveSr = st.go.GetComponent<SpriteRenderer>();
+                var want = Art(st.onFire ? "st_stove_fire" : "st_stove");
+                if (want != null && stoveSr.sprite != want) stoveSr.sprite = want;
             }
 
             if (st.progress > 0.01f)
