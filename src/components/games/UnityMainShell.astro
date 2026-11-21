@@ -1,0 +1,177 @@
+---
+/**
+ * Unity build as the main game on a page, with the React game kept as a
+ * "quick play" tab.
+ *
+ * The Unity WebGL build (about 5 MB) loads only after the player presses
+ * Play, so the page stays light for crawlers and Lighthouse. The React game
+ * sits in a hidden panel; with client:visible it hydrates only when that tab
+ * is opened. ?play=quick (or #quick) opens the quick-play tab first.
+ */
+import type { Locale } from "../../lib/i18n";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+interface Props {
+  slug: string;
+  build: string;
+  locale: Locale;
+  name: string;
+  poster?: string;
+}
+
+const { slug, build, locale, name } = Astro.props as Props;
+const poster = Astro.props.poster ?? (gameArtDocument.games as Record<string, string>)[slug];
+
+const labels: Record<Locale, { main: string; quick: string; play: string; note: string; fullscreen: string; exit: string; hint: string; loading: string }> = {
+  ko: { main: "3D 본편", quick: "빠른 플레이", play: "3D로 플레이", note: "Unity 3D 본편이에요. 처음 한 번 약 5MB를 받아요.", fullscreen: "전체 화면", exit: "전체 화면 닫기", hint: "게임 안을 한 번 누르면 키보드 조작이 켜져요.", loading: "불러오는 중…" },
+  en: { main: "3D game", quick: "Quick play", play: "Play in 3D", note: "The full Unity 3D game. About 5 MB on first load.", fullscreen: "Full screen", exit: "Exit full screen", hint: "Click inside the game once to use the keyboard.", loading: "Loading…" },
+  ja: { main: "3D本編", quick: "クイックプレイ", play: "3Dで遊ぶ", note: "Unity 3D本編です。初回のみ約5MBを読み込みます。", fullscreen: "全画面", exit: "全画面を終了", hint: "ゲーム内を一度押すとキーボード操作が有効になります。", loading: "読み込み中…" },
+  zh: { main: "3D 正式版", quick: "快速游玩", play: "玩 3D 版", note: "Unity 3D 正式版，首次加载约 5MB。", fullscreen: "全屏", exit: "退出全屏", hint: "点击游戏区域一次即可使用键盘。", loading: "加载中…" },
+  fr: { main: "Jeu 3D", quick: "Partie rapide", play: "Jouer en 3D", note: "Le jeu complet en 3D Unity. Environ 5 Mo au premier chargement.", fullscreen: "Plein écran", exit: "Quitter le plein écran", hint: "Cliquez une fois dans le jeu pour utiliser le clavier.", loading: "Chargement…" },
+  es: { main: "Juego 3D", quick: "Partida rápida", play: "Jugar en 3D", note: "El juego completo en 3D con Unity. Unos 5 MB la primera vez.", fullscreen: "Pantalla completa", exit: "Salir de pantalla completa", hint: "Haz clic una vez en el juego para usar el teclado.", loading: "Cargando…" },
+};
+const ui = labels[locale] ?? labels.en;
+const src = `/prototypes/${build}/index.html?lang=${locale}&release=1`;
+---
+
+<section class="ums" data-unity-main={slug} data-src={src} data-locale={locale}>
+  <div class="ums__tabs" role="tablist" aria-label={name}>
+    <button type="button" role="tab" id={`${slug}-tab-main`} aria-controls={`${slug}-panel-main`} aria-selected="true" data-tab="main">{ui.main}</button>
+    <button type="button" role="tab" id={`${slug}-tab-quick`} aria-controls={`${slug}-panel-quick`} aria-selected="false" tabindex="-1" data-tab="quick">{ui.quick}</button>
+    <button type="button" class="ums__fs" data-fullscreen aria-label={ui.fullscreen} hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5m13 5h5v-5" /></svg>
+      <span>{ui.fullscreen}</span>
+    </button>
+  </div>
+
+  <div class="ums__panel" role="tabpanel" id={`${slug}-panel-main`} aria-labelledby={`${slug}-tab-main`} data-panel="main">
+    <div class="ums__frame" data-frame>
+      <button type="button" class="ums__exit" data-exit-fullscreen aria-label={ui.exit} hidden>{ui.exit}</button>
+      <div class="ums__poster" data-poster>
+        {poster && <img src={poster} alt="" loading="eager" decoding="async" />}
+        <div class="ums__cta">
+          <button type="button" class="ums__play" data-play>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+            <span>{ui.play}</span>
+          </button>
+          <p>{ui.note}</p>
+        </div>
+      </div>
+    </div>
+    <p class="ums__hint">{ui.hint}</p>
+  </div>
+
+  <div class="ums__panel" role="tabpanel" id={`${slug}-panel-quick`} aria-labelledby={`${slug}-tab-quick`} data-panel="quick" hidden>
+    <slot />
+  </div>
+</section>
+
+<script is:inline define:vars={{ ui }}>
+  for (const shell of document.querySelectorAll("[data-unity-main]")) {
+    if (shell.dataset.ready) continue;
+    shell.dataset.ready = "1";
+    const tabs = [...shell.querySelectorAll("[data-tab]")];
+    const panels = [...shell.querySelectorAll("[data-panel]")];
+    const frame = shell.querySelector("[data-frame]");
+    const poster = shell.querySelector("[data-poster]");
+    const fsButton = shell.querySelector("[data-fullscreen]");
+    const fsLabel = fsButton?.querySelector("span");
+    const exitButton = shell.querySelector("[data-exit-fullscreen]");
+    const canFullscreen = Boolean(document.fullscreenEnabled && frame?.requestFullscreen);
+    let iframe = null;
+
+    const start = () => {
+      if (iframe) return;
+      iframe = document.createElement("iframe");
+      iframe.src = shell.dataset.src;
+      iframe.title = shell.getAttribute("aria-label") || document.title;
+      iframe.allow = "fullscreen; autoplay";
+      iframe.referrerPolicy = "same-origin";
+      frame.appendChild(iframe);
+      poster?.setAttribute("hidden", "");
+      if (fsButton && canFullscreen) fsButton.hidden = false;
+      iframe.addEventListener("load", () => iframe?.focus());
+      try { window.gtag?.("event", "unity_play_start", { game_id: shell.dataset.unityMain, locale: shell.dataset.locale }); } catch {}
+    };
+    const stop = () => {
+      if (!iframe) return;
+      iframe.remove();
+      iframe = null;
+      poster?.removeAttribute("hidden");
+      if (fsButton) fsButton.hidden = true;
+    };
+    const select = (name) => {
+      for (const tab of tabs) {
+        const on = tab.dataset.tab === name;
+        tab.setAttribute("aria-selected", String(on));
+        tab.tabIndex = on ? 0 : -1;
+      }
+      for (const panel of panels) panel.hidden = panel.dataset.panel !== name;
+      if (name === "main") {
+        if (fsButton && iframe && canFullscreen) fsButton.hidden = false;
+      } else {
+        stop();
+        window.dispatchEvent(new Event("resize"));
+      }
+    };
+
+    // Start on pointerdown as well as click: some pages insert content on the
+    // first pointerdown, which moves the button before pointerup and drops the click.
+    const playButton = shell.querySelector("[data-play]");
+    playButton?.addEventListener("pointerdown", (e) => { if (e.button === 0) start(); });
+    playButton?.addEventListener("click", start);
+    for (const tab of tabs) {
+      tab.addEventListener("click", () => select(tab.dataset.tab));
+      tab.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+        const next = tabs[(tabs.indexOf(tab) + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+        next.focus();
+        select(next.dataset.tab);
+      });
+    }
+    fsButton?.addEventListener("click", async () => {
+      try { await frame.requestFullscreen(); } catch { fsButton.hidden = true; }
+    });
+    exitButton?.addEventListener("click", () => document.exitFullscreen());
+    document.addEventListener("fullscreenchange", () => {
+      const active = document.fullscreenElement === frame;
+      if (fsLabel) fsLabel.textContent = active ? ui.exit : ui.fullscreen;
+      if (exitButton) exitButton.hidden = !active;
+    });
+
+    const params = new URLSearchParams(location.search);
+    if (params.get("play") === "quick" || location.hash === "#quick") select("quick");
+  }
+</script>
+
+<style>
+  .ums { --ums-ink: #173f38; --ums-line: #b8c8c2; --ums-bg: #101915; max-width:80rem; margin-inline:auto; padding-inline:.5rem; }
+  .ums__tabs { display:flex; align-items:center; gap:.5rem; margin-bottom:.75rem; flex-wrap:wrap; }
+  .ums__tabs [role="tab"] { min-height:44px; border:1px solid var(--ums-line); border-radius:999px; background:#fff; padding:.55rem 1.05rem; color:var(--ums-ink); font-weight:750; cursor:pointer; }
+  .ums__tabs [role="tab"][aria-selected="true"] { background:var(--ums-ink); border-color:var(--ums-ink); color:#fff; }
+  .ums__tabs [role="tab"]:focus-visible, .ums__fs:focus-visible, .ums__play:focus-visible { outline:3px solid #2a806a; outline-offset:3px; }
+  .ums__fs { margin-left:auto; display:inline-flex; min-height:44px; align-items:center; gap:.5rem; border:1px solid var(--ums-line); border-radius:12px; background:#fff; padding:.55rem .85rem; color:var(--ums-ink); font-weight:750; cursor:pointer; }
+  .ums__fs[hidden] { display:none; }
+  .ums__fs svg { width:1.1rem; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .ums__frame { position:relative; overflow:hidden; border-radius:16px; background:var(--ums-bg); box-shadow:0 18px 45px rgba(23,63,56,.18); width:100%; height:clamp(420px, min(84vh, 62.5vw), 900px); }
+  .ums__frame :global(iframe) { position:absolute; inset:0; width:100%; height:100%; border:0; background:var(--ums-bg); }
+  .ums__frame:fullscreen { width:100vw; height:100vh; max-height:none; border-radius:0; }
+  .ums__poster { position:absolute; inset:0; display:grid; place-items:center; }
+  .ums__poster[hidden] { display:none; }
+  .ums__poster img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:brightness(.62) saturate(1.05); }
+  .ums__cta { position:relative; display:flex; flex-direction:column; align-items:center; gap:.75rem; padding:1rem; text-align:center; }
+  .ums__play { display:inline-flex; min-height:56px; align-items:center; gap:.6rem; border:0; border-radius:999px; background:#f5c84c; padding:.9rem 1.6rem; color:#1b1404; font-size:1.1rem; font-weight:850; cursor:pointer; box-shadow:0 10px 28px rgba(0,0,0,.35); }
+  .ums__play:hover { background:#ffd96b; }
+  .ums__play svg { width:1.4rem; fill:currentColor; }
+  .ums__cta p { margin:0; max-width:36ch; color:#f1f5f3; font-size:.85rem; text-shadow:0 1px 3px rgba(0,0,0,.6); }
+  .ums__exit { position:absolute; z-index:3; top:1rem; right:1rem; min-height:44px; border:1px solid rgba(255,255,255,.35); border-radius:12px; background:rgba(8,25,22,.9); padding:.65rem .85rem; color:#fff; font-weight:750; cursor:pointer; }
+  .ums__exit[hidden] { display:none; }
+  .ums__hint { margin:.65rem 0 0; color:#6c7b76; font-size:.78rem; text-align:center; }
+  .ums__panel[hidden] { display:none; }
+  /* The React game's own "Play the 3D version" link is redundant inside this shell. */
+  [data-panel="quick"] :global(a[href*="-unity/"]) { display:none; }
+  @media (max-width: 640px) {
+    .ums__frame { width:auto; height:78vh; min-height:520px; border-radius:12px; }
+    .ums__fs span { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+  }
+</style>

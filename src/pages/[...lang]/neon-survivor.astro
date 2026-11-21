@@ -1,4 +1,5 @@
 ---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import NeonSurvivor from "../../components/games/NeonSurvivor";
 import { locales } from "../../lib/i18n";
@@ -46,7 +47,9 @@ const coverArt = gameArt["neon-survivor"] ?? gameArt["neon-formation"] ?? "/game
 
 <BaseLayout title={m.title} description={m.description} heading={m.title} image={coverArt}>
   <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
-    <NeonSurvivor client:load locale={locale} />
+    <UnityMainShell slug="neon-survivor" build="neon-unity" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} poster={(gameArtDocument.games as Record<string, string>)["neon-survivor"]}>
+      <NeonSurvivor client:visible locale={locale} />
+    </UnityMainShell>
     <div class="mx-auto max-w-3xl px-4 mt-8">
       <GameGuide slug="neon-survivor" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
     </div>
