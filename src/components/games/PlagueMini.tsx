@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import {
   PlagueEngine,
   TRAITS,
@@ -120,6 +121,7 @@ export const PlagueMini: React.FC = () => {
   const [latestNews, setLatestNews] = useState<string>('Patient Zero infected in East Asia.');
   const [gameOver, setGameOver] = useState(false);
   const [victory, setVictory] = useState(false);
+  useOutcomeRecord("outbreak-map", gameOver ? (victory ? "w" : "l") : null);
   const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();

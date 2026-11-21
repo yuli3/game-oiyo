@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { evaluateAkari } from '../../lib/games/logic-puzzles';
 import { createLightUp, explainLightUpHint, hintLightUp, LIGHT_UP_SPEC, parseLightUp, serializeLightUp, toggleLightUp, undoLightUp, type LightUpHint, type LightUpState } from '../../lib/games/light-up';
@@ -73,6 +74,7 @@ export default function LightUp({ locale = 'ko' }: { locale?: string }) {
  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
  const [state, setState] = useState<LightUpState>(() => createLightUp());
  const [paused, setPaused] = useState(false);
+ useOutcomeRecord("light-up", state.won ? "w" : null);
  const [sound, setSound] = useState<boolean>(() => {
    try {
      if (typeof window !== 'undefined' && window.localStorage) {

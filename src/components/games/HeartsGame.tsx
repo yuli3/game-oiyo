@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { Camera, Check, Maximize2, Minimize2, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { celebrate } from "../../lib/games/celebration";
 import { HEARTS_GAME_UI_SPRITES } from "../../lib/games/sprites";
@@ -185,6 +186,7 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
   const roundWinners = game.finalScores ? game.finalScores.map((score, player) => ({ score, player })).filter(({ score }) => score === Math.min(...game.finalScores!)).map(({ player }) => player) : [];
   const gameWinners = game.phase === "gameOver" ? game.matchScores.map((score, player) => ({ score, player })).filter(({ score }) => score === Math.min(...game.matchScores)).map(({ player }) => player) : [];
   const moonShooter = game.finalScores && game.capturedPoints.includes(26) ? game.capturedPoints.indexOf(26) : -1;
+  useOutcomeRecord("hearts-game", game.phase === "gameOver" ? (gameWinners.includes(0) ? "w" : "l") : null);
 
   useEffect(() => {
     if (game.phase === "roundComplete" || game.phase === "gameOver") {

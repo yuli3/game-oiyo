@@ -1,4 +1,5 @@
 import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import React, { useState, useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -190,6 +191,7 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
   const t = useMemo(() => I18N[locale] ?? I18N.ko, [locale]);
 
   const [game, setGame] = useState<WaterSortState>(() => initWaterSort(1));
+  useOutcomeRecord("water-sort-3d", game.status === "level_cleared" ? "w" : null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const { addTrauma, shakeCssVars } = useGameJuicePro();
   const containerRef = useRef<HTMLDivElement | null>(null);

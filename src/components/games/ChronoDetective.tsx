@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -128,6 +129,7 @@ export default function ChronoDetective({ locale }: Props) {
   const [state, setState] = useState<ChronoDetectiveState>(() =>
     createChronoDetectiveState()
   );
+  useOutcomeRecord("chrono-detective", state.status === 'case-solved' ? "w" : null);
 
   const recordArcadePass = (casesSolved: number) => {
     try {

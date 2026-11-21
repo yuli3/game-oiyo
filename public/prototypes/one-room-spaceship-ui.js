@@ -1,3 +1,5 @@
+import {phaseReporter} from './oiyo-result-bridge.js';
+const __oiyoReport=phaseReporter('one-room-spaceship',{arrived:'w',lost:'l'});
 import {createShip,startShip,assignShip,assignCrew,stepShip,shipIncident,getBestForConditions,recordShipArrival} from './one-room-spaceship-engine.js';
 import {COPY} from './one-room-spaceship-copy.js';
 const $ = id => document.getElementById(id);
@@ -33,7 +35,7 @@ $('sound').onclick = async () => {
   draw();
 };
 const conditions = () => ({seed:'voyage-v2',difficulty:ship.crew,assist:$('view-mode').value === 'split' && ship.crew === 'human' ? 'none' : 'hint'});
-function draw() {
+function draw() {__oiyoReport(ship.status,()=>0);
   const t = COPY[language];
   document.querySelector('main').dataset.flight = String(ship.status !== 'ready');
   $('sound').setAttribute('aria-pressed',String(soundEnabled));

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import {
   addOrConnectBridgeNode,
   applyAutoTrussBlueprint,
@@ -300,6 +301,7 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
     applyAutoTrussBlueprint(createBridgeLevelState(0))
   );
   const stateRef = useRef(state);
+  useOutcomeRecord("truss-bridge", state.phase === 'victory' ? "w" : state.phase === 'collapsed' ? "l" : null);
   stateRef.current = state;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useGhostTimeAttackPro, MobileHapticsPro, useCardTiltPro } from "../../lib/games/engine-suite-unified";
@@ -80,6 +81,7 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
 
   const [car, setCar] = useState<CarPhysicsState>(() => createInitialCarState(track));
   const [bestLapMs, setBestLapMs] = useState<number | null>(null);
+  useRunRecord("cyber-track", car.status === "finished", car.lapTimeMs / 1000, "seconds");
   const [ghostFrames, setGhostFrames] = useState<GhostFrame[]>([]);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
 

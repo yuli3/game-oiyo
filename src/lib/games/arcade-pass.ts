@@ -1487,6 +1487,24 @@ export function saveArcadePassProgress(progress: ArcadePassProgress): void {
   }
 }
 
+const PAYOUT_KEY = "oiyo_arcade_pass_last_payout_v1";
+export const MATCH_PAYOUT_WINDOW_MS = 8000;
+
+/** True if this game has not been paid in the last few seconds; records the payout. */
+export function claimMatchPayout(gameSlug: string, now: number): boolean {
+  if (typeof window === "undefined" || !window.localStorage) return true;
+  try {
+    const last = JSON.parse(localStorage.getItem(PAYOUT_KEY) || "null") as { game?: unknown; at?: unknown } | null;
+    if (last && last.game === gameSlug && typeof last.at === "number" && now - last.at >= 0 && now - last.at < MATCH_PAYOUT_WINDOW_MS) {
+      return false;
+    }
+    localStorage.setItem(PAYOUT_KEY, JSON.stringify({ game: gameSlug, at: now }));
+  } catch {
+    /* storage unavailable — pay normally */
+  }
+  return true;
+}
+
 export interface MatchCompletionResult {
   updatedProgress: ArcadePassProgress;
   matchXpGained: number;
@@ -1517,9 +1535,33 @@ export function processMatchCompletion(
     won?: boolean;
     today: string;
     previousDay: string;
+    /** Clock for the duplicate-payout guard; tests pass a fixed value. */
+    now?: number;
   }
 ): MatchCompletionResult {
   const startXp = initialProgress.xp;
+  // One finished run can reach here twice (GameShell's result screen and the shared
+  // records event). Pay each game at most once per short window.
+  if (!claimMatchPayout(opts.gameSlug, opts.now ?? Date.now())) {
+    const level = calculateArcadeLevel(startXp).level;
+    const tier = calculateArcadeTier(startXp);
+    return {
+      updatedProgress: initialProgress,
+      matchXpGained: 0,
+      streakBonusXp: 0,
+      currentStreak: initialProgress.streakCount ?? 0,
+      streakCheckedInToday: false,
+      completedMissions: [],
+      levelUp: false,
+      prevLevel: level,
+      newLevel: level,
+      tierUp: false,
+      prevTier: tier,
+      newTier: tier,
+      newlyUnlockedTitles: [],
+      totalXpGained: 0,
+    };
+  }
   const prevLevel = calculateArcadeLevel(startXp).level;
   const prevTier = calculateArcadeTier(startXp);
   const prevTitleIds = new Set(getUnlockedTitles(startXp).map((t) => t.id));

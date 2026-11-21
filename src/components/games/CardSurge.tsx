@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   initGame,
@@ -186,6 +187,7 @@ export function CardSurge({ locale = "ko", lang }: CardSurgeProps) {
   const modifiers = useMemo(() => calculateCardSurgeModifiers(metaSave), [metaSave]);
 
   const [state, setState] = useState<CardSurgeState>(() => initGame(Date.now(), modifiers));
+  useOutcomeRecord("card-surge", state.phase === "victory" ? "w" : state.phase === "game-over" ? "l" : null);
   const [isScoringAnim, setIsScoringAnim] = useState<boolean>(false);
   const [activeStep, setActiveStep] = useState<ScoringStep | null>(null);
   const [sortMode, setSortMode] = useState<"rank" | "suit">("rank");

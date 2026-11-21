@@ -1,4 +1,5 @@
 import { useGameText } from "../../lib/games/game-text";
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { NARRATOR_DOOR_TEXT } from "../../lib/games/text/narrator-door";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
@@ -41,6 +42,7 @@ export default function StanleyChoice({ locale: pageLocale }: { locale?: string 
     engineRef.current.getCurrentRoom()
   );
   const [currentEnding, setCurrentEnding] = useState<EndingId | null>(null);
+  useOutcomeRecord("narrator-door", currentEnding ? "w" : null);
   const [unlockedEndings, setUnlockedEndings] = useState<EndingId[]>([]);
   const [narratorSubtitle, setNarratorSubtitle] = useState<string>('');
   const [hoveredOptionId, setHoveredOptionId] = useState<string | null>(null);

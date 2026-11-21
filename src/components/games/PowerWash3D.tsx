@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import {
   Droplets,
   Sparkles,
@@ -116,6 +117,7 @@ export function PowerWash3D({ locale: pageLocale }: { locale?: string } = {}) {
     return new PowerWashEngine(0, mods);
   });
   const [gameState, setGameState] = useState<PowerWashState>(() => engine.getState());
+  useOutcomeRecord("pressure-wash-3d", gameState.status === "stage_clear" ? "w" : null);
 
   // 2. 퀘스트 상태
   const [quests, setQuests] = useState<PowerWashQuest[]>(() => INITIAL_POWERWASH_QUESTS);

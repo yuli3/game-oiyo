@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -332,6 +333,7 @@ export default function FactorioMini({ locale = "ko" }: Props) {
   const [uiDir, setUiDir] = useState<Direction>(1);
   const [uiSpeed, setUiSpeed] = useState<1 | 2>(1);
   const [uiCleared, setUiCleared] = useState(false);
+  useOutcomeRecord("belt-factory", uiCleared ? "w" : null);
 
   const ensureAudio = useCallback(() => {
     if (typeof window === "undefined") return null;

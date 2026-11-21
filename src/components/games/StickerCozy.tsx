@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { STICKER_COZY_SPRITES } from "../../lib/games/sprites";
@@ -169,6 +170,7 @@ export default function StickerCozy({ locale = "ko" }: Props) {
   const [uiPlacedIds, setUiPlacedIds] = useState<string[]>([]);
   const [uiScore, setUiScore] = useState(0);
   const [uiComplete, setUiComplete] = useState(false);
+  useOutcomeRecord("sticker-cozy", uiComplete ? "w" : null);
   const [uiAllComplete, setUiAllComplete] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
@@ -439,6 +440,7 @@ export default function FrameWeaver({ locale = "ko" }: Props) {
   const [uiSelectedSlot, setUiSelectedSlot] = useState<SlotIndex | null>(null);
   const [uiMoves, setUiMoves] = useState(0);
   const [uiCleared, setUiCleared] = useState(false);
+  useOutcomeRecord("frame-weaver", uiCleared ? "w" : null);
   const [uiAllCleared, setUiAllCleared] = useState(false);
   const [showHintBanner, setShowHintBanner] = useState(false);
 

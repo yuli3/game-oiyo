@@ -1,4 +1,5 @@
 import ScoreStages from "./ScoreStages";
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { useGameText } from "../../lib/games/game-text";
 import { DOT_FISHING_TEXT } from "../../lib/games/text/dot-fishing";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -209,6 +210,7 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [gameState, setGameState] = useState<FishingGameState>(() => createFishingGame(Date.now()));
+  useOutcomeRecord("dot-fishing", gameState.status === "victory" ? "w" : null);
   const [encyclopediaOpen, setEncyclopediaOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
   const [isReelingInput, setIsReelingInput] = useState(false);

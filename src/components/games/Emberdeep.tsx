@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { recordBest, recordResult } from "../../lib/games/records";
 import { Flame, Gamepad2, Headphones, Route, Share2, Sparkles, Swords } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { celebrate } from "../../lib/games/celebration";
@@ -474,6 +475,8 @@ export default function Emberdeep({ locale }: { locale: Locale }) {
   useEffect(() => { const saved = parseEmberdeepSave(localStorage.getItem(EMBERDEEP_SAVE_KEY)); if (saved) { setBest(saved.bestScore); setHero(saved.preferredHero); } }, []);
   const finish = useCallback((next: Result) => {
     setResult(next);
+    recordResult("emberdeep", next.won ? "w" : "l");
+    if (next.score > 0) recordBest("emberdeep", Math.round(next.score), "score");
     setBest(old => {
       const value = Math.max(old, next.score);
       localStorage.setItem(EMBERDEEP_SAVE_KEY, JSON.stringify({ version: 1, bestScore: value, deepestRoom: next.room, preferredHero: hero }));

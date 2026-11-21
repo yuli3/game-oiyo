@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
@@ -200,6 +201,7 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
     [shareCopied, setShareCopied] = useState(false);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "en" });
   const { shakeCssVars, addTrauma } = useGameJuicePro();
+  useRunRecord("charge-climb", phase === "over", height);
   const [sound, setSound] = useState<boolean>(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX, Flame, Sparkles } from "lucide-react";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
@@ -700,6 +701,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     [sound],
   );
   const scoreRef = useRef(score);
+  useRunRecord("animal-pop", phase === "over", score);
   const toneRef = useRef(tone);
   scoreRef.current = score;
   toneRef.current = tone;

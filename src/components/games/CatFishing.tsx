@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { Volume2, VolumeX, Maximize2, Minimize2, Share2, Trophy, Sparkles, ScrollText, Wrench, X, ShieldAlert } from 'lucide-react';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { GameContainer } from '../ui/game/GamePrimitives';
@@ -380,6 +381,7 @@ export function CatFishing({ locale = 'ko' }: { locale?: string }) {
 
     const remaining = fish.filter((f) => !f.caught).length;
     const won = fish.length > 0 && remaining === 0;
+    useOutcomeRecord("cat-fishing", won ? "w" : null);
 
     useEffect(() => {
         const seed = typeof crypto !== 'undefined' ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now();

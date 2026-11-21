@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback, type ReactElement } from "react";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro, useGameJuicePro } from "../../lib/games/engine-suite-unified";
@@ -147,6 +148,7 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
   const [best, setBest] = useState(0);
   const [picking, setPicking] = useState(false);
   const [placing, setPlacing] = useState<BuildingId | null>(null);
+  useRunRecord("village", villageDone(state), villageScore(state));
   const [selected, setSelected] = useState<number | null>(null);
   const [codeInput, setCodeInput] = useState("");
   const [notice, setNotice] = useState("");

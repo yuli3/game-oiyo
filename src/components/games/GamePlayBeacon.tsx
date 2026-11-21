@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
 import { recordAchievementEvent, recordOpened } from "@/lib/games/records";
+import { installRunXp } from "@/lib/games/run-xp";
+import { parsePrototypeResult, savePrototypeResult } from "@/lib/games/prototype-result-bridge";
 import { STUDIO_ENGINE_VERSION, StudioEngineMonitor, type StudioEngineSnapshot } from "@/lib/games/studio-engine-runtime";
 
 export default function GamePlayBeacon({ slug, prototype = false }: { slug: string; prototype?: boolean }) {
   const [gizmoVisible, setGizmoVisible] = useState(false);
   const [snapshot, setSnapshot] = useState<StudioEngineSnapshot | null>(null);
+
+  // Every finished run saved to the shared records pays Arcade Pass XP.
+  useEffect(() => installRunXp(), []);
 
   useEffect(() => {
     if (slug) recordOpened(slug);
@@ -99,12 +104,24 @@ export default function GamePlayBeacon({ slug, prototype = false }: { slug: stri
       } catch {}
     };
 
+    // Prototype games report how a run ended (public/prototypes/oiyo-result-bridge.js).
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin || event.source !== iframe.contentWindow) return;
+      const result = parsePrototypeResult(event.data, slug);
+      if (result) {
+        markPlayed();
+        savePrototypeResult(result);
+      }
+    };
+
     iframe.addEventListener("load", attach);
+    window.addEventListener("message", onMessage);
     attach();
     return () => {
       window.cancelAnimationFrame(rafId);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("message", onMessage);
       iframe.removeEventListener("load", attach);
       detach();
     };
