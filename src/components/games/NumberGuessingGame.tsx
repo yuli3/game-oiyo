@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { Volume2, VolumeX, Maximize2, Minimize2, Share2, Check } from 'lucide-react';
 import { GameContainer } from '@/components/ui/game/GamePrimitives';
 import { useArcadePortal } from '@/lib/games/arcade-portal';
@@ -64,6 +65,7 @@ const NumberGuessingGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) =>
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
   const [state, setState] = useState<NumberGuessingState | null>(null);
+  useOutcomeRecord("number-guessing", state?.status === "won" ? "w" : state?.status === "lost" ? "l" : null);
   const [input, setInput] = useState(''); const [elapsedMs, setElapsedMs] = useState(0); const [paused, setPaused] = useState(false); const [restored, setRestored] = useState(false); const [assisted, setAssisted] = useState(false);
   const [muted, setMuted] = useState(() => {
     if (typeof window === 'undefined') return false;

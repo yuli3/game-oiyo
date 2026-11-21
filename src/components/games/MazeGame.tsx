@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { Share2, Check, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import {
@@ -202,6 +203,7 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
     [restored, setRestored] = useState(false),
     [shareCardCopied, setShareCardCopied] = useState(false);
   const touch = useRef<{ x: number; y: number } | null>(null);
+  useOutcomeRecord("maze", phase === "won" ? "w" : null);
   const player = useRef<TonePlayer | null>(null);
 
   const handleShareCard = useCallback(async () => {

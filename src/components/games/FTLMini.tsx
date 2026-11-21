@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import {
   FTLEngine,
   STAR_SKIFF_MAX_SECTOR,
@@ -122,6 +123,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
 
   const [gameOver, setGameOver] = useState(false);
   const [victory, setVictory] = useState(false);
+  useOutcomeRecord("star-skiff", gameOver ? (victory ? "w" : "l") : null);
 
   // Web Audio Context for retro FTL SFX
   const audioCtxRef = useRef<AudioContext | null>(null);

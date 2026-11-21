@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
@@ -104,6 +105,7 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | st
   const weekSeedRef = useRef(timeLoopWeekSeed());
   const [status, setStatus] = useState<Status>("idle");
   const [mission, setMission] = useState<TimeLoopMission>(missionRef.current);
+  useOutcomeRecord("time-loop-rescue", mission.phase === "rescued" ? "w" : mission.phase === "failed" ? "l" : null);
   const [muted, setMuted] = useState(false);
   const [shareCode, setShareCode] = useState("");
   const [shareNote, setShareNote] = useState("");

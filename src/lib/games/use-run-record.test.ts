@@ -34,3 +34,20 @@ describe("saveRunOnFinish", () => {
     expect(getBest("t")).toMatchObject({ value: 12.35, unit: "seconds" });
   });
 });
+
+describe("saveOutcomeOnChange", () => {
+  beforeEach(() => {
+    vi.stubGlobal("localStorage", memoryStorage());
+  });
+
+  it("records one result when the run ends, not while it stays ended", async () => {
+    const { saveOutcomeOnChange } = await import("./use-run-record");
+    const { getRecord } = await import("./records");
+    expect(saveOutcomeOnChange("sim", null, null)).toBe(false);
+    expect(saveOutcomeOnChange("sim", null, "w")).toBe(true);
+    expect(saveOutcomeOnChange("sim", "w", "w")).toBe(false);
+    expect(saveOutcomeOnChange("sim", "w", null)).toBe(false);
+    expect(saveOutcomeOnChange("sim", null, "l")).toBe(true);
+    expect(getRecord("sim")).toEqual({ w: 1, l: 1, d: 0 });
+  });
+});

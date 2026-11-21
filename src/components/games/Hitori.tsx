@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { GameContainer } from '../ui/game/GamePrimitives';
 import {
   createHitori,
@@ -86,6 +87,7 @@ export default function Hitori({ locale = 'ko' }: { locale?: string }) {
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
   const [state, setState] = useState<HitoriState>(() => createHitori());
   const [paused, setPaused] = useState(false);
+  useOutcomeRecord("hitori", state.won ? "w" : null);
   const [sound, setSound] = useState<boolean>(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {

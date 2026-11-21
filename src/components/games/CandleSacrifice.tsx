@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import {
   useCardTiltPro,
   MobileHapticsPro,
@@ -204,6 +205,7 @@ export default function CandleSacrifice({ locale }: Props) {
   );
   const { shakeCssVars, addTrauma, triggerHitStop } = useGameJuicePro();
   const [bloodPops, setBloodPops] = useState<Array<{ id: number; lane: number; text: string }>>([]);
+  useOutcomeRecord("candle-sacrifice", state.status === 'victory' ? "w" : state.status === 'defeat' ? "l" : null);
 
   const recordArcadePass = (won: number) => {
     try {

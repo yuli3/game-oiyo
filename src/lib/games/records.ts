@@ -170,6 +170,26 @@ function appendRecentRecord(input: Omit<RecentGameRecord, "id" | "at">): void {
   } catch {
     /* quota/private mode — recent history is best-effort */
   }
+  announceRun(entry);
+}
+
+/** Fired on window for every finished run saved here; run-xp.ts turns it into Arcade Pass XP. */
+export const RUN_RECORDED_EVENT = "oiyo:run-recorded";
+export type RunRecordedDetail = { game: string; kind: RecentGameRecord["kind"]; value: RecentGameRecord["value"]; won: boolean };
+
+function announceRun(entry: RecentGameRecord): void {
+  if (typeof window === "undefined" || typeof window.dispatchEvent !== "function" || typeof CustomEvent === "undefined") return;
+  const detail: RunRecordedDetail = {
+    game: entry.game,
+    kind: entry.kind,
+    value: entry.value,
+    won: entry.value === "w" || entry.personalBest === true || entry.kind === "daily",
+  };
+  try {
+    window.dispatchEvent(new CustomEvent<RunRecordedDetail>(RUN_RECORDED_EVENT, { detail }));
+  } catch {
+    /* listeners are optional */
+  }
 }
 
 /** Newest first. Invalid or user-edited entries are ignored independently. */

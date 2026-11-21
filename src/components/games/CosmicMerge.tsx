@@ -9,6 +9,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import Matter from "matter-js";
 import { celebrate } from "../../lib/games/celebration";
 import { COSMIC_MERGE_SPRITES, COSMIC_MERGE_UI_SPRITES } from "../../lib/games/sprites";
@@ -313,6 +314,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
   const [timeLeft, setTimeLeft] = useState<number>(TIME_ATTACK_DURATION_SEC);
   const [blackHoleUsed, setBlackHoleUsed] = useState<boolean>(false);
   const [score, setScore] = useState(0);
+  useRunRecord("cosmic-merge", phase === "result", score);
   const [bestScore, setBestScore] = useState(0);
   const [currentTier, setCurrentTier] = useState<number>(0);
   const [nextTier, setNextTier] = useState<number>(1);

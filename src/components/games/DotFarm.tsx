@@ -1,4 +1,5 @@
 import ScoreStages from "./ScoreStages";
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { FARM_STAGE_GOLD } from "../../lib/games/dot-farm";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -199,6 +200,7 @@ export default function DotFarm({ locale = "en" }: { locale?: string }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [gameState, setGameState] = useState<FarmState>(() => createFarmGame(Date.now()));
+  useOutcomeRecord("dot-farm", gameState.status === "victory" ? "w" : null);
   const [marketOpen, setMarketOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     try {

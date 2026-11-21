@@ -5,6 +5,7 @@
  * 끌어서 카메라를 돌리면 퍼즐이 아니라 시점이 이기므로 보기는 버튼만 쓴다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { celebrate } from "../../lib/games/celebration";
@@ -422,6 +423,7 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<DungeonState>(opening.current);
   const [cleared, setCleared] = useState<number[]>([]);
+  useOutcomeRecord("reverse-dungeon", state.status === "win" ? "w" : state.status === "lose" ? "l" : null);
   useEffect(() => {
     if (state.status === "win") setCleared(markStageCleared("reverse-dungeon", puzzleIndexForSeed(seed), PUZZLE_COUNT));
   }, [state.status, seed]);

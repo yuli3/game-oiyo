@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { Button } from "@/components/ui/button";
 import {
   initShotgunChess,
@@ -206,6 +207,7 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
   const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: (locale as any) || "ko" });
 
   const [game, setGame] = useState<ShotgunChessGame>(() => initShotgunChess(1));
+  useOutcomeRecord("shotgun-chess", game.status === "victory" ? "w" : game.status === "game_over" ? "l" : null);
   const [actionMode, setActionMode] = useState<"move" | "shoot">("move");
   const [soundEnabled, setSoundEnabled] = useState(true);
 

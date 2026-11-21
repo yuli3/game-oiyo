@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { Button } from '@/components/ui/button';
 import {
   BabaRuleShifterEngine,
@@ -79,6 +80,7 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
   const [activeRules, setActiveRules] = useState<Rule[]>(() => [...engineRef.current.getActiveRules()]);
   const [moveCount, setMoveCount] = useState(0);
   const [isWon, setIsWon] = useState(false);
+  useOutcomeRecord("rule-blocks", isWon ? "w" : null);
   const [canUndo, setCanUndo] = useState(false);
   const { shakeCssVars, addTrauma } = useGameJuicePro();
   const audioCtxRef = useRef<AudioContext | null>(null);
