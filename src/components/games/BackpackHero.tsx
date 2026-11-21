@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { SATCHEL_CRAWL_TEXT } from "../../lib/games/text/satchel-crawl";
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -130,6 +132,7 @@ function TiltBackpackItemButton({
 }
 
 export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
+  const { t, tm } = useGameText(SATCHEL_CRAWL_TEXT, locale);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<BackpackHeroEngine>(new BackpackHeroEngine(5, 6));
   const [engineState, setEngineState] = useState<BackpackHeroState>(() => engineRef.current.getState());
@@ -472,7 +475,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
           <div className="space-y-2 border-l border-border pl-4">
             <div className="flex items-center justify-between text-xs font-semibold">
               <span className="text-foreground flex items-center gap-1.5">
-                <span>{enemy.icon}</span> {enemy.name}
+                <span>{enemy.icon}</span> {t(enemy.name)}
               </span>
               <span className="font-mono text-muted-foreground">
                 {enemy.hp}/{enemy.maxHp}
@@ -488,9 +491,9 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
 
             <div className="flex items-center justify-between text-xs font-mono">
               <span className="text-muted-foreground">
-                {enemy.intent.type === 'attack' && `⚔️ ${enemy.intent.value} 공격 예정`}
-                {enemy.intent.type === 'defend' && `🛡️ +${enemy.intent.value} 방어 예정`}
-                {enemy.intent.type === 'buff' && '🔥 공격력 강화'}
+                {enemy.intent.type === 'attack' && t('⚔️ {0} 공격 예정', enemy.intent.value)}
+                {enemy.intent.type === 'defend' && t('🛡️ +{0} 방어 예정', enemy.intent.value)}
+                {enemy.intent.type === 'buff' && t('🔥 공격력 강화')}
               </span>
               {enemy.block > 0 && (
                 <span className="text-chart-1 font-bold">🛡️ +{enemy.block}</span>
@@ -612,7 +615,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
       <div className="bg-muted/30 p-2.5 rounded-lg border border-border h-16 overflow-y-auto font-mono text-xs text-muted-foreground space-y-0.5">
         {engineState.combatLog.map((log, idx) => (
           <div key={idx} className={idx === 0 ? 'text-foreground font-semibold' : ''}>
-            {log}
+            {tm(log)}
           </div>
         ))}
       </div>
@@ -652,7 +655,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
                         {lootSprite ? (
                           <img
                             src={lootSprite}
-                            alt={def.name}
+                            alt={t(def.name)}
                             className="size-full object-contain filter drop-shadow-xs select-none pointer-events-none"
                             draggable={false}
                           />
@@ -662,10 +665,10 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
                       </div>
                       <div className="min-w-0">
                         <span className="text-xs font-semibold text-foreground block">
-                          {def.name}
+                          {t(def.name)}
                         </span>
                         <span className="text-xs text-muted-foreground line-clamp-1">
-                          {def.description}
+                          {t(def.description)}
                         </span>
                       </div>
                     </div>
@@ -707,7 +710,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
               </p>
             </div>
             <div className="bg-muted/40 p-3 rounded-lg text-xs font-mono">
-              <span className="text-muted-foreground block">획득 골드</span>
+              <span className="text-muted-foreground block">{t("획득 골드")}</span>
               <span className="text-base font-bold text-foreground">💰 {engineState.gold}G</span>
             </div>
             <Button onClick={handleRestart} className="w-full">

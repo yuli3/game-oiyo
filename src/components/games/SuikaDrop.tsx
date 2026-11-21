@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { FRUIT_MERGE_TEXT } from "../../lib/games/text/fruit-merge-drop";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   CONTAINER_HEIGHT,
@@ -282,6 +284,7 @@ function resolveLocale(lang?: string): LocaleCode {
 export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
   const locale = resolveLocale(lang);
   const t = COPY[locale];
+  const { t: tx } = useGameText(FRUIT_MERGE_TEXT, locale);
 
   const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: locale as any });
 
@@ -401,7 +404,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
         title: t.title,
         slug: 'fruit-merge-drop',
         score: `${state.score} (${t.mergesLabel} ${state.mergesCount})`,
-        subtitle: `${topFruit} ${t.fruits[FRUIT_TIERS[state.maxTierReached]?.nameKey || 'cherry']} 달성!`,
+        subtitle: tx('{0} {1} 달성!', topFruit, t.fruits[FRUIT_TIERS[state.maxTierReached]?.nameKey || 'cherry']),
       });
       const copied = await copyShareCardToClipboard(canvas);
       if (copied) {
@@ -753,7 +756,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
             className="relative flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent"
           >
             <ScrollText className="h-4 w-4 text-primary" />
-            <span>과수원 지령</span>
+            <span>{tx('과수원 지령')}</span>
             {unclaimedQuestsCount > 0 && (
               <span className="flex size-4 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground animate-pulse">
                 {unclaimedQuestsCount}
@@ -767,13 +770,13 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
             className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent"
           >
             <Wrench className="h-4 w-4 text-warning" />
-            <span>과수원 강화</span>
+            <span>{tx('과수원 강화')}</span>
           </TiltSuikaButton>
 
           {/* 과일 즙 재화 배지 */}
           <div className="flex items-center gap-1 rounded-lg border border-warning/40 bg-warning/10 px-2.5 py-1 text-xs font-bold text-warning">
             <Droplets className="h-3.5 w-3.5" />
-            <span>{metaSave.walletJuice} 즙</span>
+            <span>{tx('{0} 즙', metaSave.walletJuice)}</span>
           </div>
 
           <span className="rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
@@ -810,7 +813,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
 
           <TiltSuikaButton
             onClick={handleShareScore}
-            title={locale === 'ko' ? '기록 공유' : 'Share Score'}
+            title={tx('기록 공유')}
             className="rounded-lg border border-border bg-background p-1 text-foreground transition hover:bg-accent"
           >
             {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
@@ -818,7 +821,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
 
           <TiltSuikaButton
             onClick={togglePortal}
-            title={isImmersive ? '창모드로 복귀' : '100dvh 전체화면 몰입'}
+            title={isImmersive ? tx('창모드로 복귀') : tx('100dvh 전체화면 몰입')}
             className="rounded-lg border border-border bg-background p-1 text-foreground transition hover:bg-accent"
           >
             {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -833,13 +836,13 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-black text-primary">{currentDialogue.name.ko}</span>
+            <span className="text-xs font-black text-primary">{currentDialogue.name[locale]}</span>
             <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-xs font-semibold text-primary">
-              {currentDialogue.title.ko}
+              {currentDialogue.title[locale]}
             </span>
           </div>
           <p className="text-xs text-foreground mt-0.5 line-clamp-2">
-            "{currentDialogue.text.ko}"
+            "{currentDialogue.text[locale]}"
           </p>
         </div>
       </div>
@@ -896,7 +899,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
                     className="flex items-center gap-1.5 rounded-xl border border-border bg-background px-4 py-2 text-sm font-bold text-foreground shadow-sm transition hover:bg-accent"
                   >
                     {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
-                    <span>{isCopied ? '복사됨!' : '점수 공유'}</span>
+                    <span>{isCopied ? tx('복사됨!') : tx('점수 공유')}</span>
                   </TiltSuikaButton>
                   <TiltSuikaButton
                     onClick={() => {
@@ -977,7 +980,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <ScrollText className="h-5 w-5 text-primary" />
-                <h3 className="text-base font-black">과수원 수확 지령서</h3>
+                <h3 className="text-base font-black">{tx("과수원 수확 지령서")}</h3>
               </div>
               <TiltSuikaButton
                 onClick={() => setIsQuestModalOpen(false)}
@@ -997,10 +1000,10 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
                   >
                     <div className="flex-1 pr-2">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-foreground">{q.title.ko}</span>
-                        <span className="text-xs font-bold text-warning">+{q.rewardJuice} 즙</span>
+                        <span className="text-xs font-bold text-foreground">{q.title[locale]}</span>
+                        <span className="text-xs font-bold text-warning">{tx('+{0} 즙', q.rewardJuice)}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">{q.desc.ko}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{q.desc[locale]}</p>
                       <div className="mt-1.5 flex items-center gap-2">
                         <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
                           <div
@@ -1017,7 +1020,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
                     <div>
                       {q.isClaimed ? (
                         <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">
-                          수령 완료
+                          {tx('수령 완료')}
                         </span>
                       ) : (
                         <TiltSuikaButton
@@ -1029,7 +1032,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
                               : 'bg-muted text-muted-foreground opacity-50 cursor-not-allowed'
                           }`}
                         >
-                          보상 수령
+                          {tx('보상 수령')}
                         </TiltSuikaButton>
                       )}
                     </div>
@@ -1048,12 +1051,12 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <Wrench className="h-5 w-5 text-warning" />
-                <h3 className="text-base font-black">포모도르의 과수원 연구소</h3>
+                <h3 className="text-base font-black">{tx("포모도르의 과수원 연구소")}</h3>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1 rounded-lg border border-warning/40 bg-warning/10 px-2 py-0.5 text-xs font-bold text-warning">
                   <Droplets className="h-3.5 w-3.5" />
-                  <span>{metaSave.walletJuice} 즙</span>
+                  <span>{tx('{0} 즙', metaSave.walletJuice)}</span>
                 </div>
                 <TiltSuikaButton
                   onClick={() => setIsMetaModalOpen(false)}
@@ -1082,12 +1085,12 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-foreground">{def.name.ko}</span>
+                          <span className="text-xs font-bold text-foreground">{def.name[locale]}</span>
                           <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-xs font-bold text-primary">
                             LV {curLv} / {def.maxLevel}
                           </span>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">{def.desc.ko}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{def.desc[locale]}</p>
                       </div>
                     </div>
 
@@ -1107,7 +1110,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
                           }`}
                         >
                           <Droplets className="h-3.5 w-3.5" />
-                          <span>{cost} 즙</span>
+                          <span>{tx('{0} 즙', cost)}</span>
                         </TiltSuikaButton>
                       )}
                     </div>

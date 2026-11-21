@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { BLADE_DROP_TEXT } from "../../lib/games/text/blade-drop-3d";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -198,6 +200,8 @@ class SliceMasterAudio {
 }
 
 export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
+  const { t } = useGameText(BLADE_DROP_TEXT, locale);
+  const L = (["ko", "en", "ja", "zh", "fr", "es"].includes(locale) ? locale : "en") as "ko" | "en" | "ja" | "zh" | "fr" | "es";
   const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: (locale as any) || "ko" });
   const [level, setLevel] = useState(1);
   const [metaState, setMetaState] = useState<SlicePlayerMetaState>(() => loadSliceMetaState());
@@ -427,7 +431,7 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
             onClick={() => setShowQuestModal(true)}
           >
             <Award className="w-3.5 h-3.5 text-chart-4 mr-1" />
-            <span className="hidden sm:inline">장인 의뢰</span>
+            <span className="hidden sm:inline">{t("장인 의뢰")}</span>
           </Button>
 
           <Button
@@ -436,14 +440,14 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
             onClick={() => setShowForgeModal(true)}
           >
             <Wrench className="w-3.5 h-3.5 text-primary mr-1" />
-            <span className="hidden sm:inline">대장간 연구</span>
+            <span className="hidden sm:inline">{t("대장간 연구")}</span>
           </Button>
 
           <Button
             size="icon-sm"
             variant="ghost"
             onClick={handleShareCard}
-            title="공유 카드"
+            title={t("공유 카드")}
           >
             {shareCardCopied ? <Check className="w-4 h-4 text-chart-2" /> : <Share2 className="w-4 h-4" />}
           </Button>
@@ -452,7 +456,7 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
             size="icon-sm"
             variant="ghost"
             onClick={togglePortal}
-            title="전체화면"
+            title={t("전체화면")}
           >
             {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </Button>
@@ -462,16 +466,16 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
       {/* ──────────────── Comms Lore Dialogue Strip ──────────────── */}
       <div className="w-full px-4 py-1.5 bg-muted/20 border-b border-border/50 flex items-center gap-2 text-xs z-10">
         <span className="text-base">{speaker.avatar}</span>
-        <span className="font-bold text-foreground shrink-0">{speaker.name.ko || speaker.name.en}:</span>
-        <span className="text-muted-foreground truncate">{activeComms.message.ko || activeComms.message.en}</span>
+        <span className="font-bold text-foreground shrink-0">{speaker.name[L] || speaker.name.en}:</span>
+        <span className="text-muted-foreground truncate">{activeComms.message[L] || activeComms.message.en}</span>
       </div>
 
       {/* ──────────────── Stat Tiles Bar ──────────────── */}
       <div className="w-full grid grid-cols-4 gap-2 px-3 py-2 bg-muted/10 border-b border-border/30 z-10">
-        <GameStatTile label="현재 점수" value={`${game.score}`} icon="🎯" />
-        <GameStatTile label="최고 점수" value={`${bestScore}`} icon="🏆" />
-        <GameStatTile label="절단 사물" value={`${game.sliceCount}`} icon="🍎" />
-        <GameStatTile label="보유 연마석" value={`${metaState.sharpnessStones} 🪨`} icon="✨" />
+        <GameStatTile label={t("현재 점수")} value={`${game.score}`} icon="🎯" />
+        <GameStatTile label={t("최고 점수")} value={`${bestScore}`} icon="🏆" />
+        <GameStatTile label={t("절단 사물")} value={`${game.sliceCount}`} icon="🍎" />
+        <GameStatTile label={t("보유 연마석")} value={`${metaState.sharpnessStones} 🪨`} icon="✨" />
       </div>
 
       {/* ──────────────── Main SVG Viewport ──────────────── */}
@@ -547,14 +551,14 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
           <div className="absolute inset-0 bg-background/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-200">
             <span className="text-5xl mb-2">💥</span>
             <h2 className="text-2xl font-black tracking-tight text-foreground mb-1">
-              칼날이 튕겨나갔습니다!
+              {t("칼날이 튕겨나갔습니다!")}
             </h2>
             <p className="text-sm text-muted-foreground mb-4">
-              칼자루로 바닥에 떨어지거나 장애물에 부딪혔습니다. 칼날 각도를 유지하세요!
+              {t("칼자루로 바닥에 떨어지거나 장애물에 부딪혔습니다. 칼날 각도를 유지하세요!")}
             </p>
             <div className="flex gap-3">
               <Button onClick={handleFlip} size="lg">
-                다시 도전하기 (Tap / Space)
+                {t("다시 도전하기 (Tap / Space)")}
               </Button>
             </div>
           </div>
@@ -564,15 +568,15 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
           <div className="absolute inset-0 bg-background/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-in zoom-in-95 duration-200">
             <span className="text-5xl mb-2">🎯</span>
             <h2 className="text-2xl font-black tracking-tight text-foreground mb-1">
-              과녁 정중앙 명중!
+              {t("과녁 정중앙 명중!")}
             </h2>
             <p className="text-sm text-muted-foreground mb-4">
-              스테이지를 완벽히 통과했습니다! 획득 연마석: +{game.stonesEarned} 🪨
+              {t("스테이지를 완벽히 통과했습니다! 획득 연마석: +{0} 🪨", game.stonesEarned)}
             </p>
             <div className="flex gap-3">
               <Button onClick={handleFlip} size="lg">
                 <Sparkles className="w-4 h-4 mr-2" />
-                다음 스테이지로 (Stage {level + 1})
+                {t("다음 스테이지로 (Stage {0})", level + 1)}
               </Button>
             </div>
           </div>
@@ -581,7 +585,7 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
 
       {/* ──────────────── Footer Action / Controls Bar ──────────────── */}
       <div className="w-full p-3 bg-muted/30 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-        <span>🖱️ 화면 탭 또는 [스페이스바]로 칼을 뒤집어 날리세요</span>
+        <span>{t("🖱️ 화면 탭 또는 [스페이스바]로 칼을 뒤집어 날리세요")}</span>
         <span className="font-medium">ASMR Knife Slicing 3D</span>
       </div>
 
@@ -593,8 +597,8 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
               <div className="flex items-center gap-2">
                 <span className="text-2xl">⚔️</span>
                 <div>
-                  <h3 className="text-base font-bold text-foreground">대장간 명검 각성 연구소</h3>
-                  <p className="text-xs text-muted-foreground">보유 연마석: {metaState.sharpnessStones} 🪨</p>
+                  <h3 className="text-base font-bold text-foreground">{t("대장간 명검 각성 연구소")}</h3>
+                  <p className="text-xs text-muted-foreground">{t("보유 연마석: {0} 🪨", metaState.sharpnessStones)}</p>
                 </div>
               </div>
               <button
@@ -622,12 +626,12 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
                       <span className="text-2xl">{def.icon}</span>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-foreground">{def.name.ko}</span>
+                          <span className="font-bold text-sm text-foreground">{def.name[L]}</span>
                           <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">
                             Lv.{currentLvl}/{def.maxLevel}
                           </span>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">{def.desc.ko}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{def.desc[L]}</p>
                       </div>
                     </div>
 
@@ -637,7 +641,7 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
                       disabled={isMax || !canAfford}
                       className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {isMax ? "최대 레벨" : `${cost} 🪨 연마`}
+                      {isMax ? t("최대 레벨") : t("{0} 🪨 연마", cost)}
                     </button>
                   </div>
                 );
@@ -655,8 +659,8 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
               <div className="flex items-center gap-2">
                 <span className="text-2xl">📜</span>
                 <div>
-                  <h3 className="text-base font-bold text-foreground">장인 한조의 작전 지령</h3>
-                  <p className="text-xs text-muted-foreground">도검 수련 의뢰를 완수하고 연마석을 획득하세요</p>
+                  <h3 className="text-base font-bold text-foreground">{t("장인 한조의 작전 지령")}</h3>
+                  <p className="text-xs text-muted-foreground">{t("도검 수련 의뢰를 완수하고 연마석을 획득하세요")}</p>
                 </div>
               </div>
               <button
@@ -678,12 +682,12 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
                   >
                     <div className="flex-1 mr-3">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold text-sm text-foreground">{q.title.ko}</span>
+                        <span className="font-bold text-sm text-foreground">{q.title[L]}</span>
                         <span className="text-xs font-mono text-muted-foreground">
                           {q.current}/{q.target}
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground">{q.desc.ko}</p>
+                      <p className="text-xs text-muted-foreground">{q.desc[L]}</p>
                       <div className="w-full h-1.5 rounded-full bg-muted mt-2 overflow-hidden">
                         <div
                           style={{ "--prog-pct": `${pct}%` } as React.CSSProperties}
@@ -698,7 +702,7 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
                       disabled={!q.completed || q.claimed}
                       className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-chart-4 hover:bg-chart-4/90 text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {q.claimed ? "수령 완료" : q.completed ? `+${q.rewardStones} 🪨 보상` : "진행 중"}
+                      {q.claimed ? t("수령 완료") : q.completed ? t("+{0} 🪨 보상", q.rewardStones) : t("진행 중")}
                     </button>
                   </div>
                 );

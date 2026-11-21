@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { STACK_TOWER_TEXT } from "../../lib/games/text/stack-tower";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import StackTowerScene from './StackTowerScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
@@ -331,6 +333,7 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
   }, [score, highScore, combo]);
 
   const isKo = locale === 'ko';
+  const { t: tx } = useGameText(STACK_TOWER_TEXT, locale);
 
   return (
     <div
@@ -474,7 +477,7 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
               >
                 <Share2 className="w-4 h-4" />
-                <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+                <span>{shareCopied ? tx("복사됨!") : tx("공유 카드")}</span>
               </button>
               <button
                 onClick={(e) => {
@@ -494,13 +497,13 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
       {/* Instructions footer */}
       <div className="grid grid-cols-3 gap-2 text-center text-xs text-muted-foreground bg-card p-3 rounded-xl border border-border">
         <div>
-          <span className="font-semibold text-foreground">Tap / Space</span>: 블록 배치
+          <span className="font-semibold text-foreground">Tap / Space</span>: {tx("블록 배치")}
         </div>
         <div>
-          <span className="font-semibold text-foreground">Perfect</span>: 콤보 가산점
+          <span className="font-semibold text-foreground">Perfect</span>: {tx("콤보 가산점")}
         </div>
         <div>
-          <span className="font-semibold text-foreground">Slice</span>: 빗나간 부분 절단
+          <span className="font-semibold text-foreground">Slice</span>: {tx("빗나간 부분 절단")}
         </div>
       </div>
     </div>

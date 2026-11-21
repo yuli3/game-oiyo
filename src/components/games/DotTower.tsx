@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { DOT_TOWER_TEXT } from "../../lib/games/text/dot-tower";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Volume2,
@@ -106,7 +108,7 @@ const COPY = {
   },
   ja: {
     title: "ドットタワー",
-    sub: "4種の防衛塔を配置し、15ウェ이브の影の軍勢から王国を守り抜こう",
+    sub: "4種の防衛塔を配置し、15ウェーブの影の軍勢から王国を守り抜こう",
     wave: "ウェーブ",
     life: "城門耐久",
     gold: "ゴールド",
@@ -212,6 +214,11 @@ const CANVAS_HEIGHT = GRID_ROWS * CELL_SIZE; // 300
 
 export default function DotTower({ locale = "en" }: { locale?: string }) {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+  const { t: tx, tm } = useGameText(DOT_TOWER_TEXT, locale);
+  const towerName = (name: string) => {
+    const def = Object.values(TOWER_DEFINITIONS).find((d) => d.names.ko === name);
+    return def ? def.names[locale] || def.names.en : undefined;
+  };
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [gameState, setGameState] = useState<TowerDefenseState>(() => createTowerGame(Date.now()));
@@ -709,7 +716,7 @@ export default function DotTower({ locale = "en" }: { locale?: string }) {
 
         {/* Status Bubble in Bottom Center */}
         <div className="absolute bottom-2 left-2 right-2 rounded-md border border-border bg-card/85 px-3 py-1 text-center text-xs font-medium text-foreground backdrop-blur-xs">
-          {gameState.logMessage}
+          {tm(gameState.logMessage, towerName)}
         </div>
       </div>
 
@@ -734,7 +741,7 @@ export default function DotTower({ locale = "en" }: { locale?: string }) {
                     : "border-border/50 bg-secondary/40 text-muted-foreground opacity-60"
                 }`}
               >
-                <span>{def.names.ko || def.names.en}</span>
+                <span>{def.names[locale] || def.names.en}</span>
                 <span className="text-warning">({def.cost}G)</span>
                 <span className="text-xs opacity-70">[{idx + 1}]</span>
               </button>
@@ -806,8 +813,8 @@ export default function DotTower({ locale = "en" }: { locale?: string }) {
             <h3 className="text-xl font-black text-destructive">{t.gameOverTitle}</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">{t.gameOverDesc}</p>
             <div className="flex items-center gap-4 text-xs font-bold text-foreground">
-              <span>도달 웨이브: {gameState.wave} / 15</span>
-              <span>총 격퇴: {gameState.totalKills}마리</span>
+              <span>{tx("도달 웨이브: {0} / 15", gameState.wave)}</span>
+              <span>{tx("총 격퇴: {0}마리", gameState.totalKills)}</span>
             </div>
             <button
               type="button"
@@ -829,9 +836,9 @@ export default function DotTower({ locale = "en" }: { locale?: string }) {
             <h3 className="text-xl font-black text-warning">{t.victoryTitle}</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">{t.victoryDesc}</p>
             <div className="flex items-center gap-4 text-xs font-bold text-foreground">
-              <span>남은 성벽 체력: {gameState.castleHp} HP</span>
-              <span>보유 골드: {gameState.gold.toLocaleString()} G</span>
-              <span>총 격퇴: {gameState.totalKills}</span>
+              <span>{tx("남은 성벽 체력: {0} HP", gameState.castleHp)}</span>
+              <span>{tx("보유 골드: {0} G", gameState.gold.toLocaleString())}</span>
+              <span>{tx("총 격퇴: {0}", gameState.totalKills)}</span>
             </div>
             <button
               type="button"

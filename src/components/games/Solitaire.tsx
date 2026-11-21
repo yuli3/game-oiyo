@@ -1,3 +1,5 @@
+import { useGameText } from "../../lib/games/game-text";
+import { SOLITAIRE_TEXT } from "../../lib/games/text/solitaire";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { celebrate } from "../../lib/games/celebration";
 import { Camera, Check, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
@@ -155,6 +157,7 @@ function TiltCardButton({ children, className = '', ...props }: React.ButtonHTML
 
 const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+  const { t: tx, tm } = useGameText(SOLITAIRE_TEXT, locale);
   const moveReason=MOVE_REASON[locale as keyof typeof COPY]??MOVE_REASON.en;
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'en' });
   const [mode, setMode] = useState<SolitaireMode>('daily');
@@ -345,13 +348,13 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     if (won) return;
     const hint = findSolitaireHint(game);
     if (!hint) {
-      setAnnouncement('더 이상 둘 수 있는 수가 없습니다.');
-      setHintMessage('더 이상 이동 가능한 수가 없습니다.');
+      setAnnouncement(tx('더 이상 둘 수 있는 수가 없습니다.'));
+      setHintMessage(tx('더 이상 이동 가능한 수가 없습니다.'));
       MobileHapticsPro.warning();
       return;
     }
-    setHintMessage(hint.description);
-    setAnnouncement(`힌트: ${hint.description}`);
+    setHintMessage(tm(hint.description));
+    setAnnouncement(tx('힌트: {0}', tm(hint.description)));
     if (hint.sourceColumn !== undefined) {
       const col = game.tableau[hint.sourceColumn];
       if (col?.length) {
@@ -368,7 +371,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     if (won) return;
     const { nextState, count } = autoCollectToFoundations(game);
     if (count === 0) {
-      setAnnouncement('현재 파운데이션으로 바로 올릴 수 있는 카드가 없습니다.');
+      setAnnouncement(tx('현재 파운데이션으로 바로 올릴 수 있는 카드가 없습니다.'));
       MobileHapticsPro.warning();
       return;
     }
@@ -378,7 +381,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     setMoves((m) => m + count);
     setGame(nextState);
     setHintMessage(null);
-    setAnnouncement(`${count}장의 카드를 파운데이션으로 자동 수납했습니다.`);
+    setAnnouncement(tx('{0}장의 카드를 파운데이션으로 자동 수납했습니다.', count));
     MobileHapticsPro.medium();
     if (!mutedRef.current) {
       audioRef.current?.playFoundationSnap();
@@ -583,9 +586,9 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             </TiltCardButton>
             <TiltCardButton type="button" onClick={() => setDrawMode((prev) => (prev === 1 ? 3 : 1))}
               className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              title={drawMode === 1 ? '1장 뽑기 (Turn 1)' : '3장 뽑기 (Turn 3)'}>
+              title={drawMode === 1 ? tx('1장 뽑기 (Turn 1)') : tx('3장 뽑기 (Turn 3)')}>
               <img src={SOLITAIRE_UI_SPRITES.ace} alt="" className="size-4 object-contain" />
-              <span>{drawMode === 1 ? '1장 뽑기' : '3장 뽑기'}</span>
+              <span>{drawMode === 1 ? tx('1장 뽑기') : tx('3장 뽑기')}</span>
             </TiltCardButton>
             <TiltCardButton type="button" onClick={undo} disabled={undoStack.length === 0 || won}
               className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
@@ -594,22 +597,22 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             </TiltCardButton>
             <TiltCardButton type="button" onClick={requestHint} disabled={won}
               className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 flex items-center gap-1.5"
-              title="힌트 (H)">
+              title={tx("힌트 (H)")}>
               <img src={SOLITAIRE_UI_SPRITES.hint} alt="" className="size-4 object-contain" />
-              <span>힌트</span>
+              <span>{tx("힌트")}</span>
             </TiltCardButton>
             <TiltCardButton type="button" onClick={autoFinish} disabled={won}
               className="min-h-11 rounded-lg border border-primary/40 bg-primary/5 px-3 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/10 disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 flex items-center gap-1.5"
-              title="파운데이션 자동 수납">
+              title={tx("파운데이션 자동 수납")}>
               <img src={SOLITAIRE_UI_SPRITES.crown} alt="" className="size-4 object-contain" />
-              <span>자동 수납</span>
+              <span>{tx("자동 수납")}</span>
             </TiltCardButton>
             <button type="button" onClick={() => setMuted((m) => !m)} aria-pressed={muted}
               className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              aria-label={muted ? '소리 켜기' : '소리 끄기'}
+              aria-label={muted ? tx('소리 켜기') : tx('소리 끄기')}
               title="Mute / Unmute (M)">
               {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
-              <span className="hidden sm:inline">{muted ? '소리 켜기' : '소리 끄기'}</span>
+              <span className="hidden sm:inline">{muted ? tx('소리 켜기') : tx('소리 끄기')}</span>
             </button>
             <button type="button" onClick={togglePortal} aria-pressed={isImmersive}
               className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
@@ -622,8 +625,8 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
         {hintMessage && (
           <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-            <span>💡 <strong>힌트:</strong> {hintMessage}</span>
-            <button type="button" onClick={() => setHintMessage(null)} className="ml-2 font-bold opacity-60 hover:opacity-100" aria-label="닫기">✕</button>
+            <span>💡 <strong>{tx('힌트:')}</strong> {hintMessage}</span>
+            <button type="button" onClick={() => setHintMessage(null)} className="ml-2 font-bold opacity-60 hover:opacity-100" aria-label={tx("닫기")}>✕</button>
           </div>
         )}
 
@@ -718,7 +721,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 className="min-h-11 px-4 py-2 rounded-xl border border-primary/40 bg-primary/10 text-xs font-bold text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5"
               >
                 {shareCardCopied ? <Check className="size-4" /> : <Camera className="size-4" />}
-                <span>{shareCardCopied ? '카드 복사됨!' : '스냅샷 카드'}</span>
+                <span>{shareCardCopied ? tx('카드 복사됨!') : tx('스냅샷 카드')}</span>
               </button>
               <button type="button" onClick={() => initGame(mode)} className="min-h-11 rounded-xl bg-primary px-8 py-2.5 font-black text-xs text-primary-foreground shadow-lg hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{t.reset}</button>
             </div>

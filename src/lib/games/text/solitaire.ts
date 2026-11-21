@@ -1,0 +1,32 @@
+import type { GameTextTable } from "../game-text";
+
+/** solitaire: Korean source → other locales (see game-text.ts). */
+export const SOLITAIRE_TEXT: GameTextTable = {
+  "더 이상 둘 수 있는 수가 없습니다.": { en: "No moves left.", ja: "もう打てる手がありません。", zh: "已经没有可走的步了。", fr: "Plus aucun coup possible.", es: "No quedan movimientos." },
+  "더 이상 이동 가능한 수가 없습니다.": { en: "No moves left.", ja: "もう動かせる手がありません。", zh: "已经没有可移动的牌了。", fr: "Plus aucun déplacement possible.", es: "No quedan movimientos." },
+  "힌트: {0}": { en: "Hint: {0}", ja: "ヒント：{0}", zh: "提示：{0}", fr: "Indice : {0}", es: "Pista: {0}" },
+  "현재 파운데이션으로 바로 올릴 수 있는 카드가 없습니다.": { en: "No card can go to the foundations right now.", ja: "今すぐ組札に上げられるカードはありません。", zh: "目前没有能直接放到基础堆的牌。", fr: "Aucune carte ne peut monter aux fondations pour l'instant.", es: "Ahora no hay cartas que puedan subir a las bases." },
+  "{0}장의 카드를 파운데이션으로 자동 수납했습니다.": { en: "Moved {0} cards to the foundations.", ja: "{0}枚のカードを組札へ自動で移しました。", zh: "已自动将 {0} 张牌收到基础堆。", fr: "{0} cartes envoyées aux fondations.", es: "{0} cartas enviadas a las bases." },
+  "1장 뽑기 (Turn 1)": { en: "Draw 1", ja: "1枚めくり", zh: "每次翻 1 张", fr: "Piocher 1", es: "Robar 1" },
+  "3장 뽑기 (Turn 3)": { en: "Draw 3", ja: "3枚めくり", zh: "每次翻 3 张", fr: "Piocher 3", es: "Robar 3" },
+  "1장 뽑기": { en: "Draw 1", ja: "1枚めくり", zh: "翻 1 张", fr: "Piocher 1", es: "Robar 1" },
+  "3장 뽑기": { en: "Draw 3", ja: "3枚めくり", zh: "翻 3 张", fr: "Piocher 3", es: "Robar 3" },
+  "힌트 (H)": { en: "Hint (H)", ja: "ヒント (H)", zh: "提示 (H)", fr: "Indice (H)", es: "Pista (H)" },
+  "힌트": { en: "Hint", ja: "ヒント", zh: "提示", fr: "Indice", es: "Pista" },
+  "힌트:": { en: "Hint:", ja: "ヒント：", zh: "提示：", fr: "Indice :", es: "Pista:" },
+  "파운데이션 자동 수납": { en: "Auto-move to foundations", ja: "組札へ自動移動", zh: "自动收到基础堆", fr: "Envoi auto aux fondations", es: "Enviar a las bases" },
+  "자동 수납": { en: "Auto", ja: "自動", zh: "自动收牌", fr: "Auto", es: "Auto" },
+  "소리 켜기": { en: "Sound on", ja: "サウンドオン", zh: "打开声音", fr: "Activer le son", es: "Activar sonido" },
+  "소리 끄기": { en: "Sound off", ja: "サウンドオフ", zh: "关闭声音", fr: "Couper le son", es: "Silenciar" },
+  "닫기": { en: "Close", ja: "閉じる", zh: "关闭", fr: "Fermer", es: "Cerrar" },
+  "카드 복사됨!": { en: "Card copied!", ja: "カードをコピーしました!", zh: "卡片已复制！", fr: "Carte copiée !", es: "¡Tarjeta copiada!" },
+  "스냅샷 카드": { en: "Snapshot card", ja: "スナップショット", zh: "快照卡片", fr: "Carte instantané", es: "Tarjeta de captura" },
+  "{0} {1} 카드를 파운데이션으로 올릴 수 있습니다.": { en: "The {0} of {1} can go to the foundations.", ja: "{1}の{0}を組札に上げられます。", zh: "{1} {0} 可以放到基础堆。", fr: "Le {0} de {1} peut monter aux fondations.", es: "El {0} de {1} puede subir a las bases." },
+  "덱에서 뽑은 {0} {1} 카드를 파운데이션으로 올립니다.": { en: "Move the {0} of {1} from the waste to the foundations.", ja: "山札からめくった{1}の{0}を組札へ。", zh: "把废牌堆的 {1} {0} 放到基础堆。", fr: "Envoyez le {0} de {1} de la défausse aux fondations.", es: "Sube el {0} de {1} del descarte a las bases." },
+  "{0}번 열의 뒷면 카드를 뒤집을 수 있습니다.": { en: "You can flip the face-down card in column {0}.", ja: "{0}列目の裏向きカードをめくれます。", zh: "可以翻开第 {0} 列的背面牌。", fr: "Vous pouvez retourner la carte cachée de la colonne {0}.", es: "Puedes girar la carta boca abajo de la columna {0}." },
+  "{0} 카드를 {1}번 열로 옮겨 뒷면 카드를 엽니다.": { en: "Move the {0} to column {1} to uncover a card.", ja: "{0}を{1}列目へ移して裏向きカードを開けます。", zh: "把 {0} 移到第 {1} 列，翻开背面牌。", fr: "Déplacez le {0} en colonne {1} pour découvrir une carte.", es: "Mueve el {0} a la columna {1} para descubrir una carta." },
+  "덱의 {0} {1} 카드를 {2}번 열로 배치합니다.": { en: "Place the {0} of {1} from the waste on column {2}.", ja: "山札の{1}の{0}を{2}列目へ置きます。", zh: "把废牌堆的 {1} {0} 放到第 {2} 列。", fr: "Posez le {0} de {1} de la défausse sur la colonne {2}.", es: "Coloca el {0} de {1} del descarte en la columna {2}." },
+  "{0} 카드를 {1}번 열로 연결합니다.": { en: "Move the {0} onto column {1}.", ja: "{0}を{1}列目につなげます。", zh: "把 {0} 接到第 {1} 列。", fr: "Déplacez le {0} sur la colonne {1}.", es: "Mueve el {0} a la columna {1}." },
+  "덱에서 새 카드를 뽑습니다.": { en: "Draw a new card from the stock.", ja: "山札から新しいカードをめくります。", zh: "从牌库翻一张新牌。", fr: "Piochez une nouvelle carte.", es: "Roba una carta nueva del mazo." },
+  "카드를 다시 뒤집어 덱을 순환합니다.": { en: "Turn the waste back over to recycle the stock.", ja: "カードを戻して山札を回します。", zh: "把废牌翻回牌库重新循环。", fr: "Retournez la défausse pour refaire la pioche.", es: "Da la vuelta al descarte para reciclar el mazo." },
+};
