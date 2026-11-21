@@ -93,3 +93,17 @@ export function useGameText(table: GameTextTable, initial?: string) {
   const tm = (message: string, resolve?: (value: string) => string | undefined) => translateGameMessage(table, locale, message, resolve);
   return { t, tm, locale };
 }
+
+/** For games written in English: GAME_TEXT_EN[slug][english] = { ko, ja, zh, fr, es }. English pages show the source. */
+export type EnglishSourceTable = Record<string, Partial<Record<"ko" | "ja" | "zh" | "fr" | "es", string>>>;
+
+export function translateEnglishText(table: EnglishSourceTable, locale: string, source: string, ...args: Array<string | number>): string {
+  const text = locale === "en" ? source : (table[source]?.[locale as "ko"] ?? source);
+  return fill(text, args);
+}
+
+export function useEnglishSourceText(table: EnglishSourceTable, initial?: string) {
+  const locale = usePageLocale(initial);
+  const t = (source: string, ...args: Array<string | number>) => translateEnglishText(table, locale, source, ...args);
+  return { t, locale };
+}

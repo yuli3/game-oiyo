@@ -1,4 +1,7 @@
 import StageBar from './StageBar';
+import { useEnglishSourceText } from "../../lib/games/game-text";
+import { SHADOW_STEALTH_TEXT } from "../../lib/games/text/shadow-stealth";
+import type { Locale } from "../../lib/i18n";
 import { loadClearedStages, markStageCleared, nextOpenStage } from '@/lib/games/stage-progress';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -34,7 +37,8 @@ import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 
 export default function ShadowStealth() {
-  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: 'en' });
+  const { t, locale } = useEnglishSourceText(SHADOW_STEALTH_TEXT);
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: locale as Locale });
   const [gameState, setGameState] = useState<ShadowStealthGameState>(() =>
     createShadowStealthGame(20261031)
   );
@@ -496,24 +500,24 @@ export default function ShadowStealth() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
         <GameStatTile
           icon="👁️"
-          label="Alert Status"
-          value={gameState.alertLevel > 50 ? 'HIGH ALARM' : gameState.alertLevel > 15 ? 'SUSPICIOUS' : 'STEALTH'}
+          label={t("Alert Status")}
+          value={gameState.alertLevel > 50 ? t('HIGH ALARM') : gameState.alertLevel > 15 ? t('SUSPICIOUS') : t('STEALTH')}
           highlight={gameState.alertLevel > 50}
         />
         <GameStatTile
           icon="📜"
-          label="Secret Scroll"
-          value={gameState.player.hasScroll ? 'ACQUIRED' : 'LOCATE SCROLL'}
+          label={t("Secret Scroll")}
+          value={gameState.player.hasScroll ? t('ACQUIRED') : t('LOCATE SCROLL')}
           highlight={gameState.player.hasScroll}
         />
         <GameStatTile
           icon="🗡️"
-          label="Shuriken / Smoke"
+          label={t("Shuriken / Smoke")}
           value={`${gameState.player.shurikens} / ${gameState.player.smokeBombs}`}
         />
         <div className="flex items-center justify-between rounded-xl border border-border bg-card p-3 shadow-xs">
           <div className="space-y-0.5">
-            <span className="text-xs font-medium text-muted-foreground">Infiltration Score</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("Infiltration Score")}</span>
             <div className="text-lg font-bold tabular-nums text-foreground flex items-center gap-1.5">
               <img src={SHADOW_STEALTH_UI_SPRITES.trophy} alt="Score" className="size-6 inline-block object-contain drop-shadow" />
               <span>{gameState.score}</span>
@@ -521,7 +525,7 @@ export default function ShadowStealth() {
           </div>
           <div className="flex gap-1">
             <Button variant="outline" size="sm" onClick={togglePortal}>
-              {isImmersive ? "Exit Focus" : "Focus"}
+              {isImmersive ? t("Exit Focus") : t("Focus")}
             </Button>
           </div>
         </div>
@@ -531,7 +535,7 @@ export default function ShadowStealth() {
         count={SHADOW_MISSIONS}
         current={mission - 1}
         cleared={clearedMissions}
-        locale="en"
+        locale={locale}
         onSelect={(i) => startMission(i + 1)}
       />
 
@@ -547,10 +551,10 @@ export default function ShadowStealth() {
 
           <div className="absolute top-2 left-2 flex gap-1 items-center bg-background/80 backdrop-blur-sm rounded p-1">
             <Badge variant="outline">
-              {gameState.player.isInShadow ? '🌑 Hidden in Shadow' : '☀️ Exposed to Light'}
+              {gameState.player.isInShadow ? t('🌑 Hidden in Shadow') : t('☀️ Exposed to Light')}
             </Badge>
             <Badge variant="outline">
-              Guards: {gameState.guards.filter((g) => g.state !== 'unconscious').length} Active
+              {t('Guards: {0} Active', gameState.guards.filter((g) => g.state !== 'unconscious').length)}
             </Badge>
           </div>
 
@@ -561,24 +565,24 @@ export default function ShadowStealth() {
                 alt="Victory"
                 className="size-18 animate-bounce drop-shadow mb-2 object-contain"
               />
-              <h3 className="text-xl font-bold text-foreground">Flawless Extraction!</h3>
+              <h3 className="text-xl font-bold text-foreground">{t("Flawless Extraction!")}</h3>
               <p className="text-xs text-muted-foreground mt-1 max-w-sm text-center">
-                You stole the Secret Scroll and escaped the Shogun Fortress unseen. Deterministic ghost replay tape compiled!
+                {t("You stole the Secret Scroll and escaped the Shogun Fortress unseen. Deterministic ghost replay tape compiled!")}
               </p>
               <div className="flex flex-wrap gap-2 mt-4 justify-center">
                 <Button size="sm" onClick={handleShareCard}>
-                  Share Card
+                  {t("Share Card")}
                 </Button>
                 <Button variant="secondary" size="sm" onClick={handleShareReplay}>
-                  {copied ? 'Replay Copied!' : 'Copy Ghost Token'}
+                  {copied ? t('Replay Copied!') : t('Copy Ghost Token')}
                 </Button>
                 {mission < SHADOW_MISSIONS && (
                   <Button size="sm" onClick={() => startMission(mission + 1)}>
-                    Next Mission ({mission + 1}/{SHADOW_MISSIONS})
+                    {t("Next Mission ({0}/{1})", mission + 1, SHADOW_MISSIONS)}
                   </Button>
                 )}
                 <Button variant="outline" size="sm" onClick={handleRestart}>
-                  Play Again
+                  {t("Play Again")}
                 </Button>
               </div>
             </div>
@@ -591,16 +595,16 @@ export default function ShadowStealth() {
                 alt="Smoke Bomb"
                 className="size-16 drop-shadow mb-2 object-contain animate-pulse"
               />
-              <h3 className="text-xl font-bold text-destructive">Shinobi Apprehended!</h3>
+              <h3 className="text-xl font-bold text-destructive">{t("Shinobi Apprehended!")}</h3>
               <p className="text-xs text-muted-foreground mt-1">
-                The Samurai Guards cornered you in the corridor.
+                {t("The Samurai Guards cornered you in the corridor.")}
               </p>
               <div className="flex gap-2 mt-4">
                 <Button size="sm" onClick={handleRestart}>
-                  Retry Infiltration
+                  {t("Retry Infiltration")}
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleShareCard}>
-                  Share Report
+                  {t("Share Report")}
                 </Button>
               </div>
             </div>
@@ -615,38 +619,38 @@ export default function ShadowStealth() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <div>
                 <h2 className="text-base font-semibold text-foreground">
-                  Shinobi Field Controls & Ninja Tools
+                  {t("Shinobi Field Controls & Ninja Tools")}
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Stick to darkened alcoves. Use shurikens for distractions and smoke bombs to block guard line-of-sight.
+                  {t("Stick to darkened alcoves. Use shurikens for distractions and smoke bombs to block guard line-of-sight.")}
                 </p>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={handleShareCard}>
-                  {shareCardCopied ? 'Copied!' : 'Share Card'}
+                  {shareCardCopied ? t('Copied!') : t('Share Card')}
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleShareReplay}>
-                  {copied ? 'Copied!' : 'Share Run Stats'}
+                  {copied ? t('Copied!') : t('Share Run Stats')}
                 </Button>
               </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               <div className="p-2 rounded bg-muted/40 border border-border">
-                <span className="font-semibold block text-foreground">Move</span>
-                <span className="text-muted-foreground">WASD or Arrow Keys</span>
+                <span className="font-semibold block text-foreground">{t("Move")}</span>
+                <span className="text-muted-foreground">{t("WASD or Arrow Keys")}</span>
               </div>
               <div className="p-2 rounded bg-muted/40 border border-border">
-                <span className="font-semibold block text-foreground">Shuriken Distraction</span>
-                <span className="text-muted-foreground">Space or F key</span>
+                <span className="font-semibold block text-foreground">{t("Shuriken Distraction")}</span>
+                <span className="text-muted-foreground">{t("Space or F key")}</span>
               </div>
               <div className="p-2 rounded bg-muted/40 border border-border">
-                <span className="font-semibold block text-foreground">Smoke Bomb Screen</span>
-                <span className="text-muted-foreground">E key (Blocks Guard LOS)</span>
+                <span className="font-semibold block text-foreground">{t("Smoke Bomb Screen")}</span>
+                <span className="text-muted-foreground">{t("E key (Blocks Guard LOS)")}</span>
               </div>
               <div className="p-2 rounded bg-muted/40 border border-border">
-                <span className="font-semibold block text-foreground">Silent Takedown</span>
-                <span className="text-muted-foreground">Q key (from behind guard)</span>
+                <span className="font-semibold block text-foreground">{t("Silent Takedown")}</span>
+                <span className="text-muted-foreground">{t("Q key (from behind guard)")}</span>
               </div>
             </div>
           </div>
