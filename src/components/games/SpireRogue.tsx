@@ -18,6 +18,7 @@ import {
   type RelicId,
   resolveCampfireChoice,
   selectSpireNode,
+  SPIRE_FLOOR_COUNT,
   type SpireCard,
   type SpireState,
 } from '../../lib/games/spire-rogue';
@@ -477,7 +478,7 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
       const clearedCount = state.map.filter((n) => n.cleared).length;
       const canvas = createShareCardCanvas({
         title: "Tower Deck Rogue",
-        subtitle: `Floor ${state.floor + 1} / 5`,
+        subtitle: `Floor ${state.floor + 1} / ${SPIRE_FLOOR_COUNT}`,
         score: `${clearedCount * 120 + state.player.hp * 10} PTS`,
         slug: "tower-deck-rogue",
         customStats: [
@@ -829,7 +830,7 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
         ctx.fillStyle = '#94a3b8';
         ctx.font = 'bold 15px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(`${t.title} — ${t.floorLabel} ${state.floor + 1} / 5`, w / 2, h / 2);
+        ctx.fillText(`${t.title} — ${t.floorLabel} ${state.floor + 1} / ${SPIRE_FLOOR_COUNT}`, w / 2, h / 2);
       }
 
       animId = requestAnimationFrame(render);
@@ -863,7 +864,7 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
           <span className="rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
-            {t.floorLabel}: {state.floor + 1}/5
+            {t.floorLabel}: {state.floor + 1}/{SPIRE_FLOOR_COUNT}
           </span>
           <span className="rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
             ❤️ {t.hpLabel}: {state.player.hp}/{state.player.maxHp}
@@ -926,7 +927,7 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
             <span className="text-xs text-muted-foreground">{t.mapHint}</span>
           </div>
           <div className="grid grid-cols-5 gap-2">
-            {[0, 1, 2, 3, 4].map((floorNum) => {
+            {Array.from({ length: SPIRE_FLOOR_COUNT }, (_, i) => i).map((floorNum) => {
               const floorNodes = state.map.filter((n) => n.floor === floorNum);
               return (
                 <div

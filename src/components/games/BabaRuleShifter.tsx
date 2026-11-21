@@ -59,6 +59,13 @@ function TiltDirButton({
   );
 }
 
+// Level names are stored as "한국어 (English)"; non-Korean pages show the English part.
+function levelTitle(name: string, locale: string): string {
+  const m = /^(.*?)\s*\((.+)\)$/.exec(name);
+  if (!m) return name;
+  return locale === 'ko' ? m[1] : m[2];
+}
+
 // The hero noun shows as PUFF on its text tile; the engine id stays "baba".
 function ruleWord(word: string): string {
   return word === 'baba' ? 'PUFF' : word.toUpperCase();
@@ -316,7 +323,7 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
           <span className="font-bold text-primary px-2 py-0.5 rounded bg-primary/10 border border-primary/20">
             Level {levelId} / {BABA_LEVELS.length}
           </span>
-          <span className="text-muted-foreground">{currentLevelDef.name}</span>
+          <span className="text-muted-foreground">{levelTitle(currentLevelDef.name, locale)}</span>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-foreground">👟 {moveCount}</span>

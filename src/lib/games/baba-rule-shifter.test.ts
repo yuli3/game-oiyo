@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { BabaRuleShifterEngine } from './baba-rule-shifter';
+import { BABA_LEVELS, BabaRuleShifterEngine, type Direction, type GridEntity } from './baba-rule-shifter';
 
 describe('BabaRuleShifterEngine', () => {
   let engine: BabaRuleShifterEngine;
@@ -111,5 +111,44 @@ describe('BabaRuleShifterEngine', () => {
 
     engine.move('right'); // Baba steps onto flag
     expect(engine.getIsWon()).toBe(true);
+  });
+
+  it('ships 10 to 50 levels and every level can be solved', () => {
+    expect(BABA_LEVELS.length).toBeGreaterThanOrEqual(10);
+    expect(BABA_LEVELS.length).toBeLessThanOrEqual(50);
+    // Breadth-first search over board states; finds the shortest win for each level.
+    const DIRS: Direction[] = ['up', 'down', 'left', 'right'];
+    for (const lvl of BABA_LEVELS) {
+      const eng = new BabaRuleShifterEngine(lvl.id) as unknown as {
+        entities: GridEntity[];
+        isWon: boolean;
+        compileRules(): void;
+        move(d: Direction): boolean;
+      };
+      const key = (es: GridEntity[]) => es.map((e) => `${e.type}@${e.x},${e.y}`).sort().join('|');
+      const start = eng.entities.map((e) => ({ ...e }));
+      const seen = new Set([key(start)]);
+      let frontier = [start];
+      let solved = false;
+      for (let depth = 0; depth < 40 && !solved && frontier.length; depth++) {
+        const next: GridEntity[][] = [];
+        for (const es of frontier) {
+          for (const d of DIRS) {
+            eng.entities = es.map((e) => ({ ...e }));
+            eng.isWon = false;
+            eng.compileRules();
+            if (!eng.move(d)) continue;
+            if (eng.isWon) solved = true;
+            const k = key(eng.entities);
+            if (!seen.has(k)) {
+              seen.add(k);
+              next.push(eng.entities.map((e) => ({ ...e })));
+            }
+          }
+        }
+        frontier = next;
+      }
+      expect(solved, lvl.name).toBe(true);
+    }
   });
 });

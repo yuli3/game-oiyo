@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   FTLEngine,
+  STAR_SKIFF_MAX_SECTOR,
   type ShipRoom,
   type ShipWeapon,
   type CrewMember,
@@ -693,7 +694,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
             {scrap} Scrap
           </span>
           <span className="text-destructive">🚀 {missiles} Missiles</span>
-          <span className="text-foreground">Sector {sector}</span>
+          <span className="text-foreground">Sector {sector} / {STAR_SKIFF_MAX_SECTOR}</span>
         </div>
 
         {/* Enemy Status HUD */}
@@ -796,10 +797,10 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
                   className="size-20 animate-bounce drop-shadow-xl mb-1 object-contain"
                 />
                 <h2 className="text-3xl font-black text-primary tracking-wider">
-                  SECTOR CLEARED
+                  ALL {STAR_SKIFF_MAX_SECTOR} SECTORS CLEARED
                 </h2>
                 <p className="text-muted-foreground text-xs max-w-sm text-center">
-                  The enemy flagship was incinerated. You escaped with valuable scrap.
+                  You beat the last enemy ship and crossed every sector.
                 </p>
               </>
             ) : (

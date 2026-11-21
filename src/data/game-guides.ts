@@ -6081,12 +6081,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "tower-deck-rogue": {
     origin: {
-      ko: "『타워 덱 로그 (Tower Deck Rogue)』는 OIYO 오리지널 턴제 카드 전술 게임입니다. 5개 층으로 이루어진 분기형 첨탑 지도(전투·엘리트·화롯불·보스)를 오르며, 적의 머리 위에 100% 공개되는 다음 턴 행동 의도(Intent)를 읽고 매 턴 주어지는 3에너지 안에서 공격·방어도(Block)·취약(Vulnerable)·힘(Strength) 시너지를 조합해 첨탑 보스 등불 망령를 토벌하는 깊이 있는 덱빌딩 재미를 웹에서 구현했습니다.",
-      en: "Tower Deck Rogue is an original OIYO turn-based roguelike deckbuilder. Ascend a 5-floor branching tower map (Combat, Elite, Campfire, Boss), read 100% transparent Enemy Intents above each foe, and weave 3-Energy Attack, Block, Vulnerable, and Strength card synergies to defeat the Lantern Wraith boss.",
-      ja: "『タワーデッキローグ（Tower Deck Rogue）』は、OIYOオリジナルのターン制カード戦術ゲームです。5階層の分岐マップ（通常戦・エリート・焚き火・ボス）を登り、敵の頭上に100%表示される次ターンの意図（Intent）を読みながら、毎ターン3エナジーで攻撃・ブロック・弱体・筋力のシナジーを組んでボス「灯火の亡霊」を討伐します。",
-      zh: "《塔顶卡牌肉鸽（Tower Deck Rogue）》是 OIYO 原创的回合制卡牌肉鸽。攀登由 5 层分支节点（普通战斗、精英、营火、首领）构成的尖塔，根据敌人头顶 100% 透明公开的下回合意图（Intent），在每回合 3 点能量内精妙调配打击、格挡、易伤与力量卡牌连锁，击败最终首领灯火怨灵。",
-      fr: "Tower Deck Rogue est un jeu roguelike de construction de deck au tour par tour. Gravissez une carte ramifiée sur 5 étages, lisez les intentions ennemies 100 % transparentes et combinez vos cartes d'attaque, d'armure et de force avec 3 Énergies par tour.",
-      es: "Tower Deck Rogue es un roguelike de construcción de mazos por turnos. Asciende por un mapa ramificado de 5 pisos, lee las intenciones enemigas 100 % transparentes y encadena sinergias de ataque, bloqueo, vulnerable y fuerza con 3 de energía por turno.",
+      ko: "『타워 덱 로그 (Tower Deck Rogue)』는 OIYO 오리지널 턴제 카드 전술 게임입니다. 10개 층으로 이루어진 분기형 첨탑 지도(전투·엘리트·화롯불·보스)를 오르며, 적의 머리 위에 100% 공개되는 다음 턴 행동 의도(Intent)를 읽고 매 턴 주어지는 3에너지 안에서 공격·방어도(Block)·취약(Vulnerable)·힘(Strength) 시너지를 조합해 첨탑 보스 등불 망령를 토벌하는 깊이 있는 덱빌딩 재미를 웹에서 구현했습니다.",
+      en: "Tower Deck Rogue is an original OIYO turn-based roguelike deckbuilder. Ascend a 10-floor branching tower map (Combat, Elite, Campfire, Boss), read 100% transparent Enemy Intents above each foe, and weave 3-Energy Attack, Block, Vulnerable, and Strength card synergies to defeat the Lantern Wraith boss.",
+      ja: "『タワーデッキローグ（Tower Deck Rogue）』は、OIYOオリジナルのターン制カード戦術ゲームです。10階層の分岐マップ（通常戦・エリート・焚き火・ボス）を登り、敵の頭上に100%表示される次ターンの意図（Intent）を読みながら、毎ターン3エナジーで攻撃・ブロック・弱体・筋力のシナジーを組んでボス「灯火の亡霊」を討伐します。",
+      zh: "《塔顶卡牌肉鸽（Tower Deck Rogue）》是 OIYO 原创的回合制卡牌肉鸽。攀登由 10 层分支节点（普通战斗、精英、营火、首领）构成的尖塔，根据敌人头顶 100% 透明公开的下回合意图（Intent），在每回合 3 点能量内精妙调配打击、格挡、易伤与力量卡牌连锁，击败最终首领灯火怨灵。",
+      fr: "Tower Deck Rogue est un jeu roguelike de construction de deck au tour par tour. Gravissez une carte ramifiée sur 10 étages, lisez les intentions ennemies 100 % transparentes et combinez vos cartes d'attaque, d'armure et de force avec 3 Énergies par tour.",
+      es: "Tower Deck Rogue es un roguelike de construcción de mazos por turnos. Asciende por un mapa ramificado de 10 pisos, lee las intenciones enemigas 100 % transparentes y encadena sinergias de ataque, bloqueo, vulnerable y fuerza con 3 de energía por turno.",
     },
     how: {
       ko: "1) 첨탑 지도에서 점선으로 연결된 다음 층 노드를 클릭해 진입하세요. 2) 전투가 시작되면 적 머리 위의 『의도(Intent: ⚔️공격 피해량 / 🛡방어 / ✨힘 강화)』를 먼저 확인하세요. 3) 매 턴 주어지는 ⚡3에너지를 사용해 손패의 카드를 클릭(또는 숫자키 1~5)하여 발동하세요. 적이 강하게 공격할 턴에는 『수비/어깨 으쓱』으로 방어도(🛡)를 쌓고, 빈틈이 보일 때는 『강타(취약 부여)』 후 공격 카드를 연계하면 1.5배 피해를 입힙니다. 4) 『턴 종료(E)』를 누르면 적이 예고된 행동을 실행하고 다음 턴 카드 5장을 새로 뽑습니다.",

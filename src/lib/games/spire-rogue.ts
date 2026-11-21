@@ -2,7 +2,7 @@
  * Spire Deckbuilder Rogue (#136) — Pure Turn-Based Deckbuilder & Spire Map Engine
  *
  * Implements:
- * - 5-floor branching Spire Map (Combat, Elite, Campfire Rest/Smith, Boss)
+ * - 10-floor branching tower map (Combat, Elite, Campfire Rest/Smith, Boss)
  * - Draw / Hand / Discard / Exhaust pile lifecycle with automatic reshuffling
  * - 3-Energy turn loop, Block mitigation, Strength (+DMG), Vulnerable (+50% DMG), Weak (-25% DMG)
  * - 100% transparent Enemy Intent system (Attack, Multi-Attack, Defend+Attack, Ritual Buff)
@@ -62,7 +62,7 @@ export type SpireNodeType = 'combat' | 'elite' | 'campfire' | 'boss';
 
 export interface SpireMapNode {
   id: string;
-  floor: number; // 0..4
+  floor: number; // 0..SPIRE_FLOOR_COUNT-1
   col: number; // 0..2
   type: SpireNodeType;
   nextIds: string[];
@@ -227,102 +227,43 @@ function createCardInstance(id: CardId, uidNum: number, upgraded = false): Spire
   };
 }
 
+/**
+ * Ten-floor tower (stage range 10-50, 2026-11-21). Each row lists [column, node type];
+ * a node links to every node on the next floor within one column of it.
+ */
+export const SPIRE_FLOOR_LAYOUT: ReadonlyArray<ReadonlyArray<readonly [number, SpireNodeType]>> = [
+  [[0, 'combat'], [2, 'combat']],
+  [[0, 'combat'], [1, 'elite'], [2, 'combat']],
+  [[0, 'elite'], [1, 'combat'], [2, 'elite']],
+  [[0, 'campfire'], [2, 'campfire']],
+  [[0, 'combat'], [1, 'combat'], [2, 'combat']],
+  [[0, 'elite'], [1, 'combat'], [2, 'campfire']],
+  [[0, 'combat'], [1, 'elite'], [2, 'combat']],
+  [[0, 'combat'], [2, 'combat']],
+  [[0, 'campfire'], [2, 'campfire']],
+  [[1, 'boss']],
+];
+export const SPIRE_FLOOR_COUNT = SPIRE_FLOOR_LAYOUT.length;
+export const BOSS_HP = 115;
+
 export function buildSpireMap(): SpireMapNode[] {
-  return [
-    // Floor 0: Entry Combat
-    {
-      id: 'f0-c0',
-      floor: 0,
-      col: 0,
-      type: 'combat',
-      nextIds: ['f1-c0', 'f1-c1'],
-      cleared: false,
-    },
-    {
-      id: 'f0-c2',
-      floor: 0,
-      col: 2,
-      type: 'combat',
-      nextIds: ['f1-c1', 'f1-c2'],
-      cleared: false,
-    },
-    // Floor 1: Combat or Elite
-    {
-      id: 'f1-c0',
-      floor: 1,
-      col: 0,
-      type: 'combat',
-      nextIds: ['f2-c0', 'f2-c1'],
-      cleared: false,
-    },
-    {
-      id: 'f1-c1',
-      floor: 1,
-      col: 1,
-      type: 'elite',
-      nextIds: ['f2-c0', 'f2-c1', 'f2-c2'],
-      cleared: false,
-    },
-    {
-      id: 'f1-c2',
-      floor: 1,
-      col: 2,
-      type: 'combat',
-      nextIds: ['f2-c1', 'f2-c2'],
-      cleared: false,
-    },
-    // Floor 2: Elite or Combat
-    {
-      id: 'f2-c0',
-      floor: 2,
-      col: 0,
-      type: 'elite',
-      nextIds: ['f3-c0', 'f3-c1'],
-      cleared: false,
-    },
-    {
-      id: 'f2-c1',
-      floor: 2,
-      col: 1,
-      type: 'combat',
-      nextIds: ['f3-c0', 'f3-c1'],
-      cleared: false,
-    },
-    {
-      id: 'f2-c2',
-      floor: 2,
-      col: 2,
-      type: 'elite',
-      nextIds: ['f3-c1'],
-      cleared: false,
-    },
-    // Floor 3: Campfire Rest before Boss
-    {
-      id: 'f3-c0',
-      floor: 3,
-      col: 0,
-      type: 'campfire',
-      nextIds: ['f4-boss'],
-      cleared: false,
-    },
-    {
-      id: 'f3-c1',
-      floor: 3,
-      col: 2,
-      type: 'campfire',
-      nextIds: ['f4-boss'],
-      cleared: false,
-    },
-    // Floor 4: Spire Boss
-    {
-      id: 'f4-boss',
-      floor: 4,
-      col: 1,
-      type: 'boss',
-      nextIds: [],
-      cleared: false,
-    },
-  ];
+  const nodeId = (floor: number, col: number, type: SpireNodeType) =>
+    type === 'boss' ? `f${floor}-boss` : `f${floor}-c${col}`;
+  return SPIRE_FLOOR_LAYOUT.flatMap((row, floor) =>
+    row.map(([col, type]) => {
+      const next = SPIRE_FLOOR_LAYOUT[floor + 1] ?? [];
+      const near = next.filter(([c]) => Math.abs(c - col) <= 1);
+      const targets = near.length > 0 ? near : next;
+      return {
+        id: nodeId(floor, col, type),
+        floor,
+        col,
+        type,
+        nextIds: targets.map(([c, t]) => nodeId(floor + 1, c, t)),
+        cleared: false,
+      };
+    })
+  );
 }
 
 function getEnemyIntentForTurn(enemyId: string, patternIdx: number): EnemyIntent {
@@ -363,13 +304,18 @@ function getEnemyIntentForTurn(enemyId: string, patternIdx: number): EnemyIntent
   return { type: 'attack', damage: 18, hits: 1, block: 0, strengthGain: 0, vulnerableApply: 0 };
 }
 
+/** Normal and elite foes gain 3% HP per floor so the upper tower stays a threat. */
+export function floorHp(base: number, floor: number): number {
+  return Math.round(base * (1 + 0.03 * floor));
+}
+
 export function createEnemyForNode(nodeType: SpireNodeType, floor: number): SpireEnemy {
   if (nodeType === 'boss') {
     return {
       id: 'hexaghost',
       nameKey: 'hexaghost',
-      hp: 110,
-      maxHp: 110,
+      hp: BOSS_HP,
+      maxHp: BOSS_HP,
       block: 0,
       strength: 0,
       vulnerable: 0,
@@ -384,8 +330,8 @@ export function createEnemyForNode(nodeType: SpireNodeType, floor: number): Spir
     return {
       id: 'gremlin_nob',
       nameKey: 'gremlin_nob',
-      hp: 72,
-      maxHp: 72,
+      hp: floorHp(72, floor),
+      maxHp: floorHp(72, floor),
       block: 0,
       strength: 0,
       vulnerable: 0,
@@ -398,7 +344,7 @@ export function createEnemyForNode(nodeType: SpireNodeType, floor: number): Spir
   }
   const isCultist = floor % 2 === 1;
   const id = isCultist ? 'cultist' : 'jaw_worm';
-  const hp = isCultist ? 46 : 42;
+  const hp = floorHp(isCultist ? 46 : 42, floor);
   return {
     id,
     nameKey: id,

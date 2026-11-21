@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { FTLEngine } from './ftl-mini';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { FTLEngine, STAR_SKIFF_MAX_SECTOR } from './ftl-mini';
 
 describe('FTLEngine', () => {
   let engine: FTLEngine;
@@ -134,5 +134,28 @@ describe('FTLEngine', () => {
     engine.update(2.0);
 
     expect(shieldRoom.damage).toBeLessThan(1.0);
+  });
+
+  it('wins the run when the last sector enemy falls, and counts one wreck once', () => {
+    expect(STAR_SKIFF_MAX_SECTOR).toBeGreaterThanOrEqual(10);
+    expect(STAR_SKIFF_MAX_SECTOR).toBeLessThanOrEqual(50);
+    vi.useFakeTimers();
+    try {
+      const eng = new FTLEngine();
+      eng.onEnemyDefeated();
+      eng.onEnemyDefeated(); // a second projectile hitting the same wreck
+      vi.runAllTimers();
+      expect(eng.sector).toBe(2);
+      expect(eng.enemyKills).toBe(1);
+
+      eng.sector = STAR_SKIFF_MAX_SECTOR;
+      eng.player.ftlCharge = 1;
+      expect(eng.jumpSector()).toBe(false);
+      eng.onEnemyDefeated();
+      expect(eng.gameOver).toBe(true);
+      expect(eng.victory).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
