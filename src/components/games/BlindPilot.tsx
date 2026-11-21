@@ -18,10 +18,15 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
+import StageBar from "./StageBar";
+import { loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
 import {
   ACTIONS,
+  PUZZLE_COUNT,
   STEP_CAP,
   createPilot,
+  puzzleIndexForSeed,
+  seedForPuzzle,
   needle,
   nextSeed,
   openActions,
@@ -814,9 +819,11 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
   const [highScore, setHighScore] = useState(() => loadHighScore("blind-pilot", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<PilotState>(opening.current);
+  const [cleared, setCleared] = useState<number[]>([]);
 
   useEffect(() => {
     if (state.status === "win") {
+      setCleared(markStageCleared("blind-pilot", puzzleIndexForSeed(seed), PUZZLE_COUNT));
       const score = Math.max(10, 100 - state.steps * 10);
       const { isNewBest, bestScore } = saveHighScore("blind-pilot", score);
       if (isNewBest) setHighScore(bestScore);
@@ -824,7 +831,7 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
         window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "blind-pilot", score } }));
       }
     }
-  }, [state.status, state.steps]);
+  }, [state.status, state.steps, seed]);
   const [shown, setShown] = useState<PilotState>(opening.current);
   const [call, setCall] = useState(() => attitudeOf(opening.current));
   const [glide, setGlide] = useState<PilotGlide | null>(null);
@@ -882,7 +889,9 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
   }, []);
 
   useEffect(() => {
-    const fromUrl = readSeed();
+    const done = loadClearedStages("blind-pilot", PUZZLE_COUNT);
+    setCleared(done);
+    const fromUrl = readSeed() || seedForPuzzle(nextOpenStage(done, PUZZLE_COUNT));
     if (fromUrl === 0) return;
     const next = createPilot(fromUrl);
     setSeed(fromUrl);
@@ -1072,6 +1081,13 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
         <p className="line-clamp-2 text-sm leading-6 text-muted-foreground sm:line-clamp-none">{copy.lead}</p>
         <p className="hidden text-xs leading-5 text-muted-foreground sm:block">{copy.keys}</p>
       </header>
+      <StageBar
+        count={PUZZLE_COUNT}
+        current={puzzleIndexForSeed(seed)}
+        cleared={cleared}
+        locale={locale}
+        onSelect={(i) => load(seedForPuzzle(i))}
+      />
       <div className="grid grid-cols-2 gap-2 text-center text-sm">
         <div className="rounded-xl bg-muted p-2">
           <b>{copy.steps}</b>

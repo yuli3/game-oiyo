@@ -66,13 +66,28 @@ interface PuzzleDef {
  * wing-low: the ball is frozen on center while the left wing is down, so the nose cannot move yet.
  * thrust-pitch: power is frozen on set and actually low. Adding thrust also raises the low nose.
  * night-turn: the horizon is frozen nose-high while the nose is level. Level the wings, then cut power.
+ * Stages 5-10 (stage range 2026-11-21) each keep one shortest approach, checked by a search in the tests.
+ * crosswind: the ball is frozen right while the left wing is down and thrust is high.
+ * go-around: power is frozen high while it is low, the nose is low and the right wing is down.
+ * sink-rate: the horizon is frozen nose-high while the nose is low behind a low left wing.
+ * overspeed: power is frozen high while it is low and the nose is high. Thrust first, then the nose.
+ * icing: the ball is frozen right while the left wing is down, the nose is high and thrust is low.
+ * last-light: the horizon is frozen nose-low while the nose is high, the right wing is down and thrust is low.
  */
 const PUZZLES: readonly PuzzleDef[] = [
   { id: "outer-marker", pitch: 1, bank: 0, power: 0, dead: "pitch", stuck: 0 },
   { id: "wing-low", pitch: 1, bank: -1, power: 0, dead: "bank", stuck: 0 },
   { id: "thrust-pitch", pitch: -1, bank: 0, power: -1, dead: "power", stuck: 0 },
   { id: "night-turn", pitch: 0, bank: 1, power: 1, dead: "pitch", stuck: 1 },
+  { id: "crosswind", pitch: 0, bank: -1, power: 1, dead: "bank", stuck: 1 },
+  { id: "go-around", pitch: -1, bank: 1, power: -1, dead: "power", stuck: 1 },
+  { id: "sink-rate", pitch: -1, bank: -1, power: 0, dead: "pitch", stuck: 1 },
+  { id: "overspeed", pitch: 1, bank: 0, power: -1, dead: "power", stuck: 1 },
+  { id: "icing", pitch: 1, bank: -1, power: -1, dead: "bank", stuck: 1 },
+  { id: "last-light", pitch: 1, bank: 1, power: -1, dead: "pitch", stuck: -1 },
 ];
+
+export const PUZZLE_COUNT = PUZZLES.length;
 
 const AXES: readonly Axis[] = ["pitch", "bank", "power"];
 
@@ -191,6 +206,12 @@ function makeState(puzzle: PuzzleDef, steps = 0, attitude?: { pitch: Trim; bank:
     miss: [],
     lastAction: null,
   };
+}
+
+/** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
+export function seedForPuzzle(index: number): number {
+  const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
 export function createPilot(seed = 0): PilotState {
