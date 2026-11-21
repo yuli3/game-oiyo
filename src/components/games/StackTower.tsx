@@ -1,4 +1,5 @@
 import { useGameText } from "../../lib/games/game-text";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import { STACK_TOWER_TEXT } from "../../lib/games/text/stack-tower";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import StackTowerScene from './StackTowerScene';
@@ -38,6 +39,7 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
   const [combo, setCombo] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [shareCopied, setShareCopied] = useState(false);
+  useRunRecord("stack-tower", status === 'gameover', score);
   const [audioEnabled, setAudioEnabled] = useState(() => {
     if (typeof window === 'undefined') return true;
     try {

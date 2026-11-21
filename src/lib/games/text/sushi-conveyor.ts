@@ -1,0 +1,31 @@
+import type { GameTextTable } from "../game-text";
+
+/** sushi-conveyor: Korean source → other locales (see game-text.ts). */
+export const SUSHI_CONVEYOR_TEXT: GameTextTable = {
+  "지령 ({0})": { en: "Orders ({0})", ja: "指令 ({0})", zh: "指令 ({0})", fr: "Missions ({0})", es: "Encargos ({0})" },
+  "설비연구 ({0} 🍵)": { en: "Research ({0} 🍵)", ja: "設備研究 ({0} 🍵)", zh: "设备研究 ({0} 🍵)", fr: "Recherche ({0} 🍵)", es: "Mejoras ({0} 🍵)" },
+  "자금": { en: "Cash", ja: "資金", zh: "资金", fr: "Caisse", es: "Caja" },
+  "명성치": { en: "Reputation", ja: "評判", zh: "声望", fr: "Réputation", es: "Reputación" },
+  "서빙 완료": { en: "Served", ja: "提供数", zh: "已上菜", fr: "Servis", es: "Servidos" },
+  "{0}접시": { en: "{0} plates", ja: "{0}皿", zh: "{0} 盘", fr: "{0} assiettes", es: "{0} platos" },
+  "상태": { en: "Status", ja: "状態", zh: "状态", fr: "État", es: "Estado" },
+  "🔥 피버 ({0}s)": { en: "🔥 Fever ({0}s)", ja: "🔥 フィーバー ({0}s)", zh: "🔥 狂热 ({0}s)", fr: "🔥 Fièvre ({0}s)", es: "🔥 Fiebre ({0}s)" },
+  "콤보 x{0}": { en: "Combo x{0}", ja: "コンボ x{0}", zh: "连击 x{0}", fr: "Combo x{0}", es: "Combo x{0}" },
+  "{0}일차 / {1} · 목표 {2}접시 · ¥{3}": { en: "Day {0} / {1} · Goal {2} plates · ¥{3}", ja: "{0}日目 / {1} · 目標 {2}皿 · ¥{3}", zh: "第 {0} 天 / {1} · 目标 {2} 盘 · ¥{3}", fr: "Jour {0} / {1} · Objectif {2} assiettes · ¥{3}", es: "Día {0} / {1} · Meta {2} platos · ¥{3}" },
+  "자금과 명성이 바닥났어요": { en: "You ran out of cash and reputation", ja: "資金と評判が尽きました", zh: "资金和声望都耗尽了", fr: "Plus d'argent ni de réputation", es: "Te quedaste sin dinero ni reputación" },
+  "{0}일 영업을 모두 마쳤어요!": { en: "You finished all {0} days!", ja: "{0}日間の営業をすべて終えました!", zh: "{0} 天营业全部完成！", fr: "Les {0} jours sont terminés !", es: "¡Completaste los {0} días!" },
+  "{0}일차 영업 성공!": { en: "Day {0} cleared!", ja: "{0}日目の営業成功!", zh: "第 {0} 天营业成功！", fr: "Jour {0} réussi !", es: "¡Día {0} superado!" },
+  "{0}일차 다시 영업": { en: "Replay day {0}", ja: "{0}日目をやり直す", zh: "重玩第 {0} 天", fr: "Rejouer le jour {0}", es: "Repetir el día {0}" },
+  "1일차부터 다시": { en: "Start again from day 1", ja: "1日目からやり直す", zh: "从第 1 天重新开始", fr: "Recommencer au jour 1", es: "Volver al día 1" },
+  "{0}일차 영업 시작": { en: "Open day {0}", ja: "{0}日目の営業開始", zh: "开始第 {0} 天营业", fr: "Ouvrir le jour {0}", es: "Abrir el día {0}" },
+  "¥{0} 준비 (단축키 {1})": { en: "¥{0} to prep (key {1})", ja: "¥{0} で準備 (キー {1})", zh: "备料 ¥{0}（快捷键 {1}）", fr: "¥{0} de préparation (touche {1})", es: "¥{0} de preparación (tecla {1})" },
+  "긴자 명인 작전 지령": { en: "Master chef's orders", ja: "銀座名人の指令", zh: "银座名厨指令", fr: "Missions du maître", es: "Encargos del maestro" },
+  "진행도: {0} / {1}": { en: "Progress: {0} / {1}", ja: "進行度: {0} / {1}", zh: "进度：{0} / {1}", fr: "Progression : {0} / {1}", es: "Progreso: {0} / {1}" },
+  "보상 수령": { en: "Claim reward", ja: "報酬を受け取る", zh: "领取奖励", fr: "Récupérer", es: "Cobrar recompensa" },
+  "수령 완료": { en: "Claimed", ja: "受取済み", zh: "已领取", fr: "Récupéré", es: "Cobrado" },
+  "진행 중": { en: "In progress", ja: "進行中", zh: "进行中", fr: "En cours", es: "En curso" },
+  "주방 5대 영구 설비 연구소": { en: "Kitchen research lab (5 permanent upgrades)", ja: "厨房の永続設備研究所（5種）", zh: "厨房永久设备研究所（5 项）", fr: "Labo de la cuisine (5 améliorations permanentes)", es: "Laboratorio de cocina (5 mejoras permanentes)" },
+  "{0} 🍵 황금 와사비": { en: "{0} 🍵 golden wasabi", ja: "{0} 🍵 黄金わさび", zh: "{0} 🍵 黄金芥末", fr: "{0} 🍵 wasabi doré", es: "{0} 🍵 wasabi dorado" },
+  "최대 레벨": { en: "Max level", ja: "最大レベル", zh: "已满级", fr: "Niveau max", es: "Nivel máximo" },
+  "{0} 🍵 강화": { en: "Upgrade for {0} 🍵", ja: "{0} 🍵 で強化", zh: "{0} 🍵 强化", fr: "Améliorer ({0} 🍵)", es: "Mejorar por {0} 🍵" },
+};

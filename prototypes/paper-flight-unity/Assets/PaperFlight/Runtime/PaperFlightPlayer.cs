@@ -167,6 +167,7 @@ public class PaperFlightPlayer : MonoBehaviour
 
     private void Awake()
     {
+        switch (OiyoLang.Pick("ko", "en", "ja", "es")) { case "en": CurrentLang = GameLang.EN; break; case "ja": CurrentLang = GameLang.JA; break; case "es": CurrentLang = GameLang.ES; break; default: CurrentLang = GameLang.KO; break; }
         mainCam = Camera.main;
         if (mainCam == null)
         {

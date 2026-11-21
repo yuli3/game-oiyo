@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRunRecord } from '../../lib/games/use-run-record';
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
@@ -199,6 +200,7 @@ export default function KoreanHistoryQuiz({ locale }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  useRunRecord('korean-history-quiz', finished, score);
   const [history, setHistory] = useState<boolean[]>([]);
   const [shareCopied, setShareCopied] = useState(false);
   const [muted, setMuted] = useState(() => {

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
@@ -159,6 +160,7 @@ export default function OrbitalFlight3D() {
 
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [shareCardCopied, setShareCardCopied] = useState(false);
+  useRunRecord("orbital-flight-3d", gameState.gameOver, gameState.score);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {

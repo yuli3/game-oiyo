@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useRunRecord } from '../../lib/games/use-run-record';
 import RetroHighwayScene from './RetroHighwayScene';
 import { ArcadeTouchControls } from '../ui/game/ArcadeTouchControls';
 import {
@@ -180,6 +181,7 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
   const [state, setState] = useState<HighwayState>(createInitialHighwayState);
   const [bestDist, setBestDist] = useState<number>(0);
   const [shareCopied, setShareCopied] = useState(false);
+  useRunRecord("retro-highway-3d", state.player.status === 'gameover', state.player.score);
   const [liveDelta, setLiveDelta] = useState<{ formatted: string; isAhead: boolean }>({
     formatted: 'PB 준비',
     isAhead: true,

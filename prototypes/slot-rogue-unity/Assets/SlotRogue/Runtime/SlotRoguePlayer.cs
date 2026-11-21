@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class SlotRoguePlayer : MonoBehaviour
 {
+    // Page language (?lang=): Korean when ko, English for every other locale.
+    static bool _isKoInit, _isKo;
+    static bool IsKo { get { if (!_isKoInit) { _isKo = OiyoLang.Pick("ko", "en") == "ko"; _isKoInit = true; } return _isKo; } }
+    static string T(string ko, string en) => IsKo ? ko : en;
     const int GridRows = 4;
     const int GridCols = 4;
     const int TotalSlots = GridRows * GridCols;
@@ -35,24 +39,25 @@ public class SlotRoguePlayer : MonoBehaviour
         public string nameKo;
         public string nameEn;
         public string effectKo;
+        public string effectEn;
         public int baseValue;
         public Color color;
     }
 
     static readonly SymbolSpec[] SymbolCatalog = new SymbolSpec[]
     {
-        new SymbolSpec { type = SymbolType.Coin, icon = "🪙", nameKo = "동전", nameEn = "Coin", effectKo = "기본 +1 골드 지급", baseValue = 1, color = new Color(0.95f, 0.8f, 0.2f) },
-        new SymbolSpec { type = SymbolType.Cat, icon = "🐱", nameKo = "고양이", nameEn = "Cat", effectKo = "인접한 우유를 마시고 +9G (우유 소멸)", baseValue = 1, color = new Color(0.95f, 0.55f, 0.2f) },
-        new SymbolSpec { type = SymbolType.Milk, icon = "🥛", nameKo = "우유", nameEn = "Milk", effectKo = "기본 +1 골드 (고양이가 마심)", baseValue = 1, color = new Color(0.92f, 0.94f, 0.98f) },
-        new SymbolSpec { type = SymbolType.Miner, icon = "⛏️", nameKo = "광부", nameEn = "Miner", effectKo = "인접한 광석을 캐서 +15G 및 보석으로 변환", baseValue = 1, color = new Color(0.3f, 0.7f, 0.9f) },
-        new SymbolSpec { type = SymbolType.Ore, icon = "🪨", nameKo = "광석", nameEn = "Ore", effectKo = "기본 +1 골드 (광부가 채굴)", baseValue = 1, color = new Color(0.55f, 0.55f, 0.6f) },
-        new SymbolSpec { type = SymbolType.Gem, icon = "💎", nameKo = "보석", nameEn = "Gem", effectKo = "기본 +5 골드 지급", baseValue = 5, color = new Color(0.2f, 0.95f, 0.85f) },
-        new SymbolSpec { type = SymbolType.Flower, icon = "🌻", nameKo = "꽃", nameEn = "Flower", effectKo = "인접한 태양 하나당 +4G 추가", baseValue = 1, color = new Color(0.95f, 0.85f, 0.15f) },
-        new SymbolSpec { type = SymbolType.Sun, icon = "☀️", nameKo = "태양", nameEn = "Sun", effectKo = "기본 +3 골드 및 인접 꽃 강화", baseValue = 3, color = new Color(1.0f, 0.45f, 0.1f) },
-        new SymbolSpec { type = SymbolType.Thief, icon = "🦹", nameKo = "도둑", nameEn = "Thief", effectKo = "인접한 금고를 열어 +35G (금고 소멸)", baseValue = 2, color = new Color(0.65f, 0.35f, 0.85f) },
-        new SymbolSpec { type = SymbolType.Safe, icon = "🔐", nameKo = "금고", nameEn = "Safe", effectKo = "기본 +1 골드 (도둑이 해제)", baseValue = 1, color = new Color(0.3f, 0.35f, 0.4f) },
-        new SymbolSpec { type = SymbolType.King, icon = "🤴", nameKo = "왕", nameEn = "King", effectKo = "인접한 왕관 하나당 +5G 추가", baseValue = 4, color = new Color(0.25f, 0.45f, 0.9f) },
-        new SymbolSpec { type = SymbolType.Crown, icon = "👑", nameKo = "왕관", nameEn = "Crown", effectKo = "기본 +5 골드 지급", baseValue = 5, color = new Color(1.0f, 0.82f, 0.1f) }
+        new SymbolSpec { type = SymbolType.Coin, icon = "🪙", nameKo = "동전", nameEn = "Coin", effectKo = "기본 +1 골드 지급", effectEn = "Base +1 gold", baseValue = 1, color = new Color(0.95f, 0.8f, 0.2f) },
+        new SymbolSpec { type = SymbolType.Cat, icon = "🐱", nameKo = "고양이", nameEn = "Cat", effectKo = "인접한 우유를 마시고 +9G (우유 소멸)", effectEn = "Drinks adjacent Milk for +9G (Milk removed)", baseValue = 1, color = new Color(0.95f, 0.55f, 0.2f) },
+        new SymbolSpec { type = SymbolType.Milk, icon = "🥛", nameKo = "우유", nameEn = "Milk", effectKo = "기본 +1 골드 (고양이가 마심)", effectEn = "Base +1 gold (Cats drink it)", baseValue = 1, color = new Color(0.92f, 0.94f, 0.98f) },
+        new SymbolSpec { type = SymbolType.Miner, icon = "⛏️", nameKo = "광부", nameEn = "Miner", effectKo = "인접한 광석을 캐서 +15G 및 보석으로 변환", effectEn = "Mines adjacent Ore for +15G and turns it into a Gem", baseValue = 1, color = new Color(0.3f, 0.7f, 0.9f) },
+        new SymbolSpec { type = SymbolType.Ore, icon = "🪨", nameKo = "광석", nameEn = "Ore", effectKo = "기본 +1 골드 (광부가 채굴)", effectEn = "Base +1 gold (Miners dig it)", baseValue = 1, color = new Color(0.55f, 0.55f, 0.6f) },
+        new SymbolSpec { type = SymbolType.Gem, icon = "💎", nameKo = "보석", nameEn = "Gem", effectKo = "기본 +5 골드 지급", effectEn = "Base +5 gold", baseValue = 5, color = new Color(0.2f, 0.95f, 0.85f) },
+        new SymbolSpec { type = SymbolType.Flower, icon = "🌻", nameKo = "꽃", nameEn = "Flower", effectKo = "인접한 태양 하나당 +4G 추가", effectEn = "+4G for each adjacent Sun", baseValue = 1, color = new Color(0.95f, 0.85f, 0.15f) },
+        new SymbolSpec { type = SymbolType.Sun, icon = "☀️", nameKo = "태양", nameEn = "Sun", effectKo = "기본 +3 골드 및 인접 꽃 강화", effectEn = "Base +3 gold and boosts adjacent Flowers", baseValue = 3, color = new Color(1.0f, 0.45f, 0.1f) },
+        new SymbolSpec { type = SymbolType.Thief, icon = "🦹", nameKo = "도둑", nameEn = "Thief", effectKo = "인접한 금고를 열어 +35G (금고 소멸)", effectEn = "Cracks an adjacent Safe for +35G (Safe removed)", baseValue = 2, color = new Color(0.65f, 0.35f, 0.85f) },
+        new SymbolSpec { type = SymbolType.Safe, icon = "🔐", nameKo = "금고", nameEn = "Safe", effectKo = "기본 +1 골드 (도둑이 해제)", effectEn = "Base +1 gold (Thieves crack it)", baseValue = 1, color = new Color(0.3f, 0.35f, 0.4f) },
+        new SymbolSpec { type = SymbolType.King, icon = "🤴", nameKo = "왕", nameEn = "King", effectKo = "인접한 왕관 하나당 +5G 추가", effectEn = "+5G for each adjacent Crown", baseValue = 4, color = new Color(0.25f, 0.45f, 0.9f) },
+        new SymbolSpec { type = SymbolType.Crown, icon = "👑", nameKo = "왕관", nameEn = "Crown", effectKo = "기본 +5 골드 지급", effectEn = "Base +5 gold", baseValue = 5, color = new Color(1.0f, 0.82f, 0.1f) }
     };
 
     // Stage Definitions (10 Boss Encounters)
@@ -62,23 +67,25 @@ public class SlotRoguePlayer : MonoBehaviour
         public string bossNameKo;
         public string bossNameEn;
         public string titleKo;
+        public string titleEn;
         public int rentDue;
         public int spinsAllowed;
         public string quoteKo;
+        public string quoteEn;
     }
 
     static readonly StageDef[] Stages = new StageDef[]
     {
-        new StageDef { stage = 1, bossNameKo = "슬라임 사채업자", bossNameEn = "Slime Landlord", titleKo = "골목길 빈민가", rentDue = 25, spinsAllowed = 5, quoteKo = "\"월세 25골드 준비됐겠지? 슬라임이라고 얕보지 마라!\"" },
-        new StageDef { stage = 2, bossNameKo = "고블린 전당포주", bossNameEn = "Goblin Pawnbroker", titleKo = "고블린 시장", rentDue = 55, spinsAllowed = 5, quoteKo = "\"보석이든 광석이든 가져와! 55골드 못 내면 쫓겨난다, 키킥!\"" },
-        new StageDef { stage = 3, bossNameKo = "사막 도적단 두목", bossNameEn = "Bandit Chieftain", titleKo = "무법자 오아시스", rentDue = 110, spinsAllowed = 5, quoteKo = "\"금고를 털든 뭘 하든 110골드를 채워라. 안 그러면 모래에 묻힌다.\"" },
-        new StageDef { stage = 4, bossNameKo = "태양의 드루이드", bossNameEn = "Solar Druid", titleKo = "태양의 신전", rentDue = 190, spinsAllowed = 5, quoteKo = "\"태양의 축복을 받은 꽃을 피워라. 190골드의 제물이 필요하다.\"" },
-        new StageDef { stage = 5, bossNameKo = "황금 카지노 남작", bossNameEn = "Golden Casino Baron", titleKo = "네온 카지노 홀 (중간보스)", rentDue = 300, spinsAllowed = 5, quoteKo = "\"300골드! 카지노 하우스는 언제나 이긴다. 네 운을 증명해봐라!\"" },
-        new StageDef { stage = 6, bossNameKo = "해적 선장 블랙비어드", bossNameEn = "Captain Blackbeard", titleKo = "보물섬 해적항", rentDue = 450, spinsAllowed = 5, quoteKo = "\"선실 임대료 450골드다! 못 내면 상어 밥으로 던져버릴 테다!\"" },
-        new StageDef { stage = 7, bossNameKo = "고대 연금술 협회장", bossNameEn = "Alchemist Guildmaster", titleKo = "비전 연금 실험실", rentDue = 650, spinsAllowed = 5, quoteKo = "\"현자의 돌을 만들든 금을 연성하든 650골드의 연구비를 내시오.\"" },
-        new StageDef { stage = 8, bossNameKo = "용암 드워프 대장장이 왕", bossNameEn = "Magma Forge King", titleKo = "지하 용암 대장간", rentDue = 920, spinsAllowed = 5, quoteKo = "\"우리의 모루를 쓰려면 920골드의 불값을 치러야 마땅하다!\"" },
-        new StageDef { stage = 9, bossNameKo = "그림자 암시장 대부", bossNameEn = "Shadow Syndicate Boss", titleKo = "암흑 지하 신디케이트", rentDue = 1300, spinsAllowed = 5, quoteKo = "\"1300골드. 자비는 없다. 어둠의 빚은 반드시 갚아야 하지.\"" },
-        new StageDef { stage = 10, bossNameKo = "탐욕의 악마 마몬", bossNameEn = "Mammon Arch-Demon", titleKo = "탐욕의 황금 제단 (최종보스)", rentDue = 1800, spinsAllowed = 5, quoteKo = "\"최후의 빚 1800골드! 영혼을 바치든 천문학적 잭팟을 터뜨리든 해봐라!\"" }
+        new StageDef { stage = 1, bossNameKo = "슬라임 사채업자", bossNameEn = "Slime Landlord", titleKo = "골목길 빈민가", titleEn = "Back-Alley Slums", rentDue = 25, spinsAllowed = 5, quoteKo = "\"월세 25골드 준비됐겠지? 슬라임이라고 얕보지 마라!\"", quoteEn = "\"Got the 25 gold rent ready? Don't underestimate a slime!\"" },
+        new StageDef { stage = 2, bossNameKo = "고블린 전당포주", bossNameEn = "Goblin Pawnbroker", titleKo = "고블린 시장", titleEn = "Goblin Market", rentDue = 55, spinsAllowed = 5, quoteKo = "\"보석이든 광석이든 가져와! 55골드 못 내면 쫓겨난다, 키킥!\"", quoteEn = "\"Gems, ore, whatever! No 55 gold and you're out, heh heh!\"" },
+        new StageDef { stage = 3, bossNameKo = "사막 도적단 두목", bossNameEn = "Bandit Chieftain", titleKo = "무법자 오아시스", titleEn = "Outlaw Oasis", rentDue = 110, spinsAllowed = 5, quoteKo = "\"금고를 털든 뭘 하든 110골드를 채워라. 안 그러면 모래에 묻힌다.\"", quoteEn = "\"Crack safes or whatever, just make 110 gold. Or the sand gets you.\"" },
+        new StageDef { stage = 4, bossNameKo = "태양의 드루이드", bossNameEn = "Solar Druid", titleKo = "태양의 신전", titleEn = "Temple of the Sun", rentDue = 190, spinsAllowed = 5, quoteKo = "\"태양의 축복을 받은 꽃을 피워라. 190골드의 제물이 필요하다.\"", quoteEn = "\"Grow flowers blessed by the sun. I require an offering of 190 gold.\"" },
+        new StageDef { stage = 5, bossNameKo = "황금 카지노 남작", bossNameEn = "Golden Casino Baron", titleKo = "네온 카지노 홀 (중간보스)", titleEn = "Neon Casino Hall (Mid-Boss)", rentDue = 300, spinsAllowed = 5, quoteKo = "\"300골드! 카지노 하우스는 언제나 이긴다. 네 운을 증명해봐라!\"", quoteEn = "\"300 gold! The house always wins. Prove your luck!\"" },
+        new StageDef { stage = 6, bossNameKo = "해적 선장 블랙비어드", bossNameEn = "Captain Blackbeard", titleKo = "보물섬 해적항", titleEn = "Treasure Island Harbor", rentDue = 450, spinsAllowed = 5, quoteKo = "\"선실 임대료 450골드다! 못 내면 상어 밥으로 던져버릴 테다!\"", quoteEn = "\"Cabin rent is 450 gold! Miss it and you're shark food!\"" },
+        new StageDef { stage = 7, bossNameKo = "고대 연금술 협회장", bossNameEn = "Alchemist Guildmaster", titleKo = "비전 연금 실험실", titleEn = "Arcane Alchemy Lab", rentDue = 650, spinsAllowed = 5, quoteKo = "\"현자의 돌을 만들든 금을 연성하든 650골드의 연구비를 내시오.\"", quoteEn = "\"Make a philosopher's stone or transmute gold, but pay 650 gold in research fees.\"" },
+        new StageDef { stage = 8, bossNameKo = "용암 드워프 대장장이 왕", bossNameEn = "Magma Forge King", titleKo = "지하 용암 대장간", titleEn = "Underground Magma Forge", rentDue = 920, spinsAllowed = 5, quoteKo = "\"우리의 모루를 쓰려면 920골드의 불값을 치러야 마땅하다!\"", quoteEn = "\"Use our anvils and you pay 920 gold for the fire!\"" },
+        new StageDef { stage = 9, bossNameKo = "그림자 암시장 대부", bossNameEn = "Shadow Syndicate Boss", titleKo = "암흑 지하 신디케이트", titleEn = "Shadow Underground Syndicate", rentDue = 1300, spinsAllowed = 5, quoteKo = "\"1300골드. 자비는 없다. 어둠의 빚은 반드시 갚아야 하지.\"", quoteEn = "\"1300 gold. No mercy. Debts to the dark are always paid.\"" },
+        new StageDef { stage = 10, bossNameKo = "탐욕의 악마 마몬", bossNameEn = "Mammon Arch-Demon", titleKo = "탐욕의 황금 제단 (최종보스)", titleEn = "Golden Altar of Greed (Final Boss)", rentDue = 1800, spinsAllowed = 5, quoteKo = "\"최후의 빚 1800골드! 영혼을 바치든 천문학적 잭팟을 터뜨리든 해봐라!\"", quoteEn = "\"The final debt: 1800 gold! Sell your soul or hit an astronomical jackpot!\"" }
     };
 
     // Game State
@@ -105,7 +112,7 @@ public class SlotRoguePlayer : MonoBehaviour
     bool isGameOver = false;
     bool isVictory = false;
     bool showStageSelectModal = false;
-    string lastActionLog = "레버를 당겨 슬롯을 회전시키세요!";
+    string lastActionLog = "";
     int lastSpinPayout = 0;
 
     // Audio & Camera
@@ -117,6 +124,7 @@ public class SlotRoguePlayer : MonoBehaviour
 
     void Awake()
     {
+        lastActionLog = T("레버를 당겨 슬롯을 회전시키세요!", "Pull the lever to spin the slots!");
         mainCam = Camera.main;
         if (mainCam == null)
         {
@@ -250,7 +258,7 @@ public class SlotRoguePlayer : MonoBehaviour
         }
         UpdateSlotVisuals();
 
-        lastActionLog = "Stage " + (currentStageIndex + 1) + ": " + def.bossNameKo + " 등장! 월세 " + def.rentDue + "G 목표.";
+        lastActionLog = IsKo ? "Stage " + (currentStageIndex + 1) + ": " + def.bossNameKo + " 등장! 월세 " + def.rentDue + "G 목표." : "Stage " + (currentStageIndex + 1) + ": " + def.bossNameEn + " appears! Rent due: " + def.rentDue + "G.";
         PlaySound(440f, 0.15f);
     }
 
@@ -389,7 +397,7 @@ public class SlotRoguePlayer : MonoBehaviour
                         if (nr >= 0 && nr < GridRows && nc >= 0 && nc < GridCols && gridSymbols[nr, nc] == SymbolType.Milk)
                         {
                             totalPayout += 9;
-                            synergyLogs.Add("🐱 고양이가 우유를 마심! (+9G)");
+                            synergyLogs.Add(T("🐱 고양이가 우유를 마심! (+9G)", "🐱 Cat drank the milk! (+9G)"));
                             gridSymbols[nr, nc] = SymbolType.Coin; // Consumed to coin
                             break;
                         }
@@ -405,7 +413,7 @@ public class SlotRoguePlayer : MonoBehaviour
                         if (nr >= 0 && nr < GridRows && nc >= 0 && nc < GridCols && gridSymbols[nr, nc] == SymbolType.Ore)
                         {
                             totalPayout += 15;
-                            synergyLogs.Add("⛏️ 광부가 광석을 캐서 보석 발견! (+15G)");
+                            synergyLogs.Add(T("⛏️ 광부가 광석을 캐서 보석 발견! (+15G)", "⛏️ Miner dug ore and found a gem! (+15G)"));
                             gridSymbols[nr, nc] = SymbolType.Gem; // Turned into Gem
                             break;
                         }
@@ -421,7 +429,7 @@ public class SlotRoguePlayer : MonoBehaviour
                         if (nr >= 0 && nr < GridRows && nc >= 0 && nc < GridCols && gridSymbols[nr, nc] == SymbolType.Safe)
                         {
                             totalPayout += 35;
-                            synergyLogs.Add("🦹 도둑이 금고를 털었습니다! (+35G)");
+                            synergyLogs.Add(T("🦹 도둑이 금고를 털었습니다! (+35G)", "🦹 Thief cracked the safe! (+35G)"));
                             gridSymbols[nr, nc] = SymbolType.Coin;
                             break;
                         }
@@ -437,7 +445,7 @@ public class SlotRoguePlayer : MonoBehaviour
                         if (nr >= 0 && nr < GridRows && nc >= 0 && nc < GridCols && gridSymbols[nr, nc] == SymbolType.Sun)
                         {
                             totalPayout += 4;
-                            synergyLogs.Add("🌻 꽃이 햇빛을 받아 만개! (+4G)");
+                            synergyLogs.Add(T("🌻 꽃이 햇빛을 받아 만개! (+4G)", "🌻 Flower bloomed in the sun! (+4G)"));
                         }
                     }
                 }
@@ -451,7 +459,7 @@ public class SlotRoguePlayer : MonoBehaviour
                         if (nr >= 0 && nr < GridRows && nc >= 0 && nc < GridCols && gridSymbols[nr, nc] == SymbolType.Crown)
                         {
                             totalPayout += 5;
-                            synergyLogs.Add("🤴 왕이 왕관을 착용! (+5G)");
+                            synergyLogs.Add(T("🤴 왕이 왕관을 착용! (+5G)", "🤴 King put on the crown! (+5G)"));
                         }
                     }
                 }
@@ -464,12 +472,12 @@ public class SlotRoguePlayer : MonoBehaviour
 
         if (synergyLogs.Count > 0)
         {
-            lastActionLog = string.Join(" | ", synergyLogs.ToArray()) + " => 총 +" + totalPayout + "G 획득!";
+            lastActionLog = string.Join(" | ", synergyLogs.ToArray()) + T(" => 총 +", " => total +") + totalPayout + T("G 획득!", "G earned!");
             PlaySound(880f, 0.25f);
         }
         else
         {
-            lastActionLog = "스핀 완료: +" + totalPayout + "G 획득!";
+            lastActionLog = T("스핀 완료: +", "Spin done: +") + totalPayout + T("G 획득!", "G earned!");
             PlaySound(660f, 0.15f);
         }
 
@@ -492,7 +500,7 @@ public class SlotRoguePlayer : MonoBehaviour
         {
             SymbolType chosen = draftChoices[choiceIdx];
             playerDeck.Add(chosen);
-            lastActionLog = SymbolCatalog[(int)chosen].nameKo + " 심볼을 덱에 추가했습니다!";
+            lastActionLog = IsKo ? SymbolCatalog[(int)chosen].nameKo + " 심볼을 덱에 추가했습니다!" : "Added " + SymbolCatalog[(int)chosen].nameEn + " to your deck!";
             PlaySound(784f, 0.15f);
         }
         isDrafting = false;
@@ -515,20 +523,20 @@ public class SlotRoguePlayer : MonoBehaviour
 
             if (currentStageIndex < MaxStages - 1)
             {
-                lastActionLog = "★ 월세 " + def.rentDue + "G 납부 성공! 다음 보스에게 도전합니다. ★";
+                lastActionLog = T("★ 월세 ", "★ Paid the ") + def.rentDue + T("G 납부 성공! 다음 보스에게 도전합니다. ★", "G rent! On to the next boss. ★");
                 currentStageIndex++;
                 spinsRemaining = Stages[currentStageIndex].spinsAllowed;
             }
             else
             {
                 isVictory = true;
-                lastActionLog = "★ 탐욕의 악마 마몬을 꺾고 카지노를 정복했습니다! ★";
+                lastActionLog = T("★ 탐욕의 악마 마몬을 꺾고 카지노를 정복했습니다! ★", "★ You beat Mammon, demon of greed, and conquered the casino! ★");
             }
         }
         else
         {
             isGameOver = true;
-            lastActionLog = "월세 " + def.rentDue + "G 부족으로 파산했습니다...";
+            lastActionLog = T("월세 ", "Could not pay the ") + def.rentDue + T("G 부족으로 파산했습니다...", "G rent. Bankrupt...");
             PlaySound(150f, 0.4f);
         }
     }
@@ -609,15 +617,15 @@ public class SlotRoguePlayer : MonoBehaviour
             normal = { textColor = Color.white }
         };
 
-        GUI.Label(new Rect(20, 12, 400, 24), "Stage " + (currentStageIndex + 1) + ". " + def.bossNameKo + " (" + def.titleKo + ")", stageTitle);
-        GUI.Label(new Rect(20, 34, 450, 22), "💰 보유: " + playerCoins + "G | 🎯 목표 월세: " + def.rentDue + "G | ⏳ 남은 스핀: " + spinsRemaining + "회 | 🃏 덱: " + playerDeck.Count + "장", subTitle);
+        GUI.Label(new Rect(20, 12, 400, 24), "Stage " + (currentStageIndex + 1) + ". " + T(def.bossNameKo, def.bossNameEn) + " (" + T(def.titleKo, def.titleEn) + ")", stageTitle);
+        GUI.Label(new Rect(20, 34, 450, 22), T("💰 보유: ", "💰 Gold: ") + playerCoins + T("G | 🎯 목표 월세: ", "G | 🎯 Rent due: ") + def.rentDue + T("G | ⏳ 남은 스핀: ", "G | ⏳ Spins left: ") + spinsRemaining + T("회 | 🃏 덱: ", " | 🃏 Deck: ") + playerDeck.Count + T("장", ""), subTitle);
 
-        if (GUI.Button(new Rect(w - 180, 15, 75, 42), "🗺️ 스테이지"))
+        if (GUI.Button(new Rect(w - 180, 15, 75, 42), T("🗺️ 스테이지", "🗺️ Stages")))
         {
             showStageSelectModal = !showStageSelectModal;
         }
 
-        if (GUI.Button(new Rect(w - 95, 15, 75, 42), "🔄 재시작"))
+        if (GUI.Button(new Rect(w - 95, 15, 75, 42), T("🔄 재시작", "🔄 Restart")))
         {
             InitStage(currentStageIndex);
         }
@@ -638,13 +646,13 @@ public class SlotRoguePlayer : MonoBehaviour
             fontSize = 11,
             normal = { textColor = new Color(1f, 0.7f, 0.5f) }
         };
-        GUI.Label(new Rect(20, h - barH + 20, w - 200, 20), def.quoteKo, quoteStyle);
+        GUI.Label(new Rect(20, h - barH + 20, w - 200, 20), T(def.quoteKo, def.quoteEn), quoteStyle);
 
         // Spin Button
         GUI.enabled = (!isSpinning && !isDrafting && spinsRemaining > 0 && !isGameOver && !isVictory);
         Color oldCol = GUI.backgroundColor;
         GUI.backgroundColor = new Color(1f, 0.75f, 0.2f);
-        if (GUI.Button(new Rect(w - 160, h - barH - 2, 140, 52), "🎰 스핀 (SPIN)"))
+        if (GUI.Button(new Rect(w - 160, h - barH - 2, 140, 52), T("🎰 스핀 (SPIN)", "🎰 SPIN")))
         {
             TriggerSpin();
         }
@@ -683,7 +691,7 @@ public class SlotRoguePlayer : MonoBehaviour
         int h = Screen.height;
 
         Rect r = new Rect(w / 2 - 240, h / 2 - 120, 480, 240);
-        GUI.Box(r, "🃏 새 심볼 획득 (덱빌딩)");
+        GUI.Box(r, T("🃏 새 심볼 획득 (덱빌딩)", "🃏 New symbol (deck-building)"));
 
         GUIStyle cardTitle = new GUIStyle(GUI.skin.label)
         {
@@ -710,17 +718,17 @@ public class SlotRoguePlayer : MonoBehaviour
             Rect cardRect = new Rect(r.x + 20 + i * (cardW + 10), r.y + 40, cardW, cardH);
             GUI.Box(cardRect, GUIContent.none);
 
-            GUI.Label(new Rect(cardRect.x, cardRect.y + 8, cardW, 25), spec.icon + " " + spec.nameKo, cardTitle);
-            GUI.Label(new Rect(cardRect.x + 5, cardRect.y + 32, cardW - 10, 50), spec.effectKo, cardDesc);
+            GUI.Label(new Rect(cardRect.x, cardRect.y + 8, cardW, 25), spec.icon + " " + T(spec.nameKo, spec.nameEn), cardTitle);
+            GUI.Label(new Rect(cardRect.x + 5, cardRect.y + 32, cardW - 10, 50), T(spec.effectKo, spec.effectEn), cardDesc);
 
-            if (GUI.Button(new Rect(cardRect.x + 15, cardRect.y + 85, cardW - 30, 28), "선택"))
+            if (GUI.Button(new Rect(cardRect.x + 15, cardRect.y + 85, cardW - 30, 28), T("선택", "Pick")))
             {
                 SelectDraft(i);
             }
         }
 
         // Skip Button
-        if (GUI.Button(new Rect(r.x + 180, r.y + 185, 120, 36), "스킵 (Skip)"))
+        if (GUI.Button(new Rect(r.x + 180, r.y + 185, 120, 36), T("스킵 (Skip)", "Skip")))
         {
             SelectDraft(-1);
         }
@@ -741,9 +749,9 @@ public class SlotRoguePlayer : MonoBehaviour
             alignment = TextAnchor.MiddleCenter,
             normal = { textColor = new Color(1f, 0.35f, 0.35f) }
         };
-        GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), "월세를 내지 못해 파산했습니다!", title);
+        GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), T("월세를 내지 못해 파산했습니다!", "You couldn't pay the rent. Bankrupt!"), title);
 
-        if (GUI.Button(new Rect(r.x + 90, r.y + 85, 180, 45), "현재 스테이지 재도전"))
+        if (GUI.Button(new Rect(r.x + 90, r.y + 85, 180, 45), T("현재 스테이지 재도전", "Retry this stage")))
         {
             InitStage(currentStageIndex);
         }
@@ -772,9 +780,9 @@ public class SlotRoguePlayer : MonoBehaviour
         };
 
         GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), "★ ALL STAGES CLEAR! ★", title);
-        GUI.Label(new Rect(r.x, r.y + 55, r.width, 25), "탐욕의 악마 마몬의 1800G 빚을 모두 갚고 카지노를 정복했습니다!", sub);
+        GUI.Label(new Rect(r.x, r.y + 55, r.width, 25), T("탐욕의 악마 마몬의 1800G 빚을 모두 갚고 카지노를 정복했습니다!", "You paid off Mammon's 1800G debt and conquered the casino!"), sub);
 
-        if (GUI.Button(new Rect(r.x + 130, r.y + 105, 180, 45), "새로운 카지노 런 시작"))
+        if (GUI.Button(new Rect(r.x + 130, r.y + 105, 180, 45), T("새로운 카지노 런 시작", "Start a new casino run")))
         {
             playerCoins = 10;
             InitStage(0);
@@ -786,7 +794,7 @@ public class SlotRoguePlayer : MonoBehaviour
         int w = Screen.width;
         int h = Screen.height;
 
-        GUI.Box(new Rect(30, 70, w - 60, h - 140), "🗺️ 스테이지 선택 (Stage Select: Stage 1 ~ 10)");
+        GUI.Box(new Rect(30, 70, w - 60, h - 140), T("🗺️ 스테이지 선택 (Stage Select: Stage 1 ~ 10)", "🗺️ Stage Select (Stage 1 ~ 10)"));
 
         int cols = 2;
         int itemW = (w - 110) / cols;
@@ -799,7 +807,7 @@ public class SlotRoguePlayer : MonoBehaviour
             Rect btnRect = new Rect(45 + col * (itemW + 10), 105 + row * (itemH + 8), itemW, itemH);
 
             StageDef s = Stages[i];
-            string text = "Stage " + s.stage + ". " + s.bossNameKo + " [월세 " + s.rentDue + "G] (" + s.titleKo + ")";
+            string text = IsKo ? "Stage " + s.stage + ". " + s.bossNameKo + " [월세 " + s.rentDue + "G] (" + s.titleKo + ")" : "Stage " + s.stage + ". " + s.bossNameEn + " [Rent " + s.rentDue + "G] (" + s.titleEn + ")";
 
             if (GUI.Button(btnRect, text))
             {

@@ -270,6 +270,7 @@ public class StarBlasterPlayer : MonoBehaviour
 
     void Awake()
     {
+        switch (OiyoLang.Pick("ko", "en", "ja", "es")) { case "en": lang = BlasterLanguage.EN; break; case "ja": lang = BlasterLanguage.JA; break; case "es": lang = BlasterLanguage.ES; break; default: lang = BlasterLanguage.KO; break; }
         Application.targetFrameRate = 60;
         mainCam = Camera.main;
         if (mainCam == null)

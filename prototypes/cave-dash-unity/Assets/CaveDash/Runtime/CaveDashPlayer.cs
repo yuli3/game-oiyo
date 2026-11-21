@@ -276,6 +276,7 @@ public class CaveDashPlayer : MonoBehaviour
 
     void Awake()
     {
+        switch (OiyoLang.Pick("ko", "en", "ja", "es")) { case "en": lang = CaveLanguage.EN; break; case "ja": lang = CaveLanguage.JA; break; case "es": lang = CaveLanguage.ES; break; default: lang = CaveLanguage.KO; break; }
         Application.targetFrameRate = 60;
         mainCam = Camera.main;
         if (mainCam == null)

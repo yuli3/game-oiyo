@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useRunRecord } from "../../lib/games/use-run-record";
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import { celebrate } from '../../lib/games/celebration';
 import {
@@ -121,6 +122,7 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
   const [selectedSlot, setSelectedSlot] = useState<{ orbitIndex: number; slotIndex: number } | null>(null);
   const [selectedTurretId, setSelectedTurretId] = useState<string | null>(null);
   const [shareCardCopied, setShareCardCopied] = useState(false);
+  useRunRecord("orbital-defense-3d", gameState.isGameOver, gameState.score);
 
   const handleShareCard = useCallback(async () => {
     const canvas = createShareCardCanvas({

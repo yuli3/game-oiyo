@@ -1,4 +1,5 @@
 import { useGameText } from "../../lib/games/game-text";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import { DOT_TOWER_TEXT } from "../../lib/games/text/dot-tower";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -222,6 +223,7 @@ export default function DotTower({ locale = "en" }: { locale?: string }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [gameState, setGameState] = useState<TowerDefenseState>(() => createTowerGame(Date.now()));
+  useRunRecord("dot-tower", gameState.status === "game_over" || gameState.status === "victory", gameState.wave);
   const [selectedBuildType, setSelectedBuildType] = useState<TowerType>("archer");
 
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {

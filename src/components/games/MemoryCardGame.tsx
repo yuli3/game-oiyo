@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useRunRecord } from '../../lib/games/use-run-record';
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '@/components/ui/game/GamePrimitives';
 import { useArcadePortal } from '@/lib/games/arcade-portal';
@@ -163,6 +164,7 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const [state, setState] = useState<MemoryState | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
+  useRunRecord('memory-card-game', state?.status === 'won', elapsedMs / 1000, 'seconds');
   const [restored, setRestored] = useState(false);
   const [paused, setPaused] = useState(false);
   const [shareCardCopied, setShareCardCopied] = useState(false);
