@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { createPlaySessionTracker, gameContextFromPath, sendPlayEvent } from "./play-telemetry";
+import { describe, expect, it, vi } from "vitest";
+import { createPlaySessionTracker, gameContextFromPath, PLAY_START_EVENT, sendPlayEvent } from "./play-telemetry";
 
 describe("gameContextFromPath", () => {
   it("reads locale prefix and slug", () => {
@@ -34,5 +34,22 @@ describe("createPlaySessionTracker", () => {
     tr.end("unmount");
     expect(sent.map((s) => s[0])).toEqual(["game_session_start", "game_session_end"]);
     expect(sent[1][1]).toMatchObject({ game_id: "tile-rummy", locale: "ja", duration_s: 42, reason: "exit" });
+  });
+});
+
+describe("play start event", () => {
+  it("announces the start once so the first-play coach can show", () => {
+    const seen: string[] = [];
+    const target = new EventTarget();
+    target.addEventListener(PLAY_START_EVENT, (e) => seen.push((e as CustomEvent<{ gameId: string }>).detail.gameId));
+    vi.stubGlobal("window", target);
+    try {
+      const tracker = createPlaySessionTracker(() => "/en/solitaire/", () => 0, () => true);
+      tracker.start();
+      tracker.start();
+      expect(seen).toEqual(["solitaire"]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
