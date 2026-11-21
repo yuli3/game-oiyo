@@ -1,3 +1,5 @@
+import ScoreStages from "./ScoreStages";
+import { FARM_STAGE_GOLD } from "../../lib/games/dot-farm";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Volume2,
@@ -605,6 +607,8 @@ export default function DotFarm({ locale = "en" }: { locale?: string }) {
           </div>
         </div>
       </div>
+
+      <ScoreStages slug="dot-farm" targets={FARM_STAGE_GOLD} score={gameState.money} locale={locale} unit={t.money} />
 
       {/* Main Canvas Viewport */}
       <div className="relative flex w-full justify-center overflow-hidden rounded-lg border border-border bg-card shadow-inner">
