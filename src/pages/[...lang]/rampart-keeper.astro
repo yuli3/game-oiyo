@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import RampartKeeper from "../../components/games/RampartKeeper";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "성벽 지기 — 블록을 쌓고 바위를 떨어뜨리는 무료 물리 디펜스 게임",
+    description: "성문 앞에 나무·돌·들보를 쌓고, 몰려오는 공성병에게 바위를 떨어뜨리세요. 공성추·거인·폭탄 수레가 나오는 30웨이브. 설치 없이 브라우저에서 바로.",
+  },
+  en: {
+    title: "Rampart Keeper — Free physics defense game: stack blocks, drop boulders",
+    description: "Stack planks, stones and beams in front of the gate and drop boulders on the invaders. Rams, giants and bomb carts across 30 waves, free in your browser.",
+  },
+  ja: {
+    title: "城壁の守り手 — ブロックを積み岩を落とす無料物理ディフェンス",
+    description: "城門の前に木材・石・梁を積み、押し寄せる敵に岩を落とそう。破城槌・巨人・爆弾車が出る30ウェーブ。ブラウザですぐ遊べます。",
+  },
+  zh: {
+    title: "城墙守卫 — 堆方块、砸巨石的免费物理防守游戏",
+    description: "在城门前堆木块、石块和横梁，向涌来的攻城兵砸下巨石。攻城锤、巨人、炸弹车共30波，浏览器即玩。",
+  },
+  fr: {
+    title: "Gardien du rempart — Jeu de défense physique gratuit : empilez, lâchez des rochers",
+    description: "Empilez planches, pierres et poutres devant la porte et lâchez des rochers sur les assaillants. Béliers, géants et charrettes explosives sur 30 vagues, dans le navigateur.",
+  },
+  es: {
+    title: "Guardián de la muralla — Juego gratis de defensa con física: apila bloques y suelta rocas",
+    description: "Apila tablas, piedras y vigas ante la puerta y suelta rocas sobre los invasores. Arietes, gigantes y carros bomba en 30 oleadas, en el navegador.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["rampart-keeper"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <RampartKeeper client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="rampart-keeper" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

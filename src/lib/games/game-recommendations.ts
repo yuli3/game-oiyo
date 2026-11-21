@@ -177,6 +177,10 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
   "cat-expedition": { emoji: "🐈", cat: "arcade", name: {"ko":"고양이 원정대","en":"Cat Expedition","ja":"ねこ遠征隊","zh":"猫咪远征队","fr":"L'Expédition des chats","es":"La Expedición Gatuna"} },
   "trap-stairs": { emoji: "🪜", cat: "arcade", name: {"ko":"함정 계단","en":"Trap Stairs","ja":"罠の階段","zh":"陷阱台阶","fr":"L'Escalier piégé","es":"La Escalera Trampa"} },
   "alley-appraiser": { emoji: "🔍", cat: "puzzle", name: {"ko":"골목 감정소","en":"Alley Appraiser","ja":"路地裏鑑定所","zh":"胡同鉴定铺","fr":"L'Expert de la ruelle","es":"El Tasador del Callejón"} },
+  "rampart-keeper": { emoji: "🏯", cat: "arcade", name: {"ko":"성벽 지기","en":"Rampart Keeper","ja":"城壁の守り手","zh":"城墙守卫","fr":"Gardien du rempart","es":"Guardián de la muralla"} },
+  "link-duel": { emoji: "⚔️", cat: "puzzle", name: {"ko":"링크 대결","en":"Link Duel","ja":"リンク対決","zh":"链接对决","fr":"Duel par lien","es":"Duelo por enlace"} },
+  "season-workshop": { emoji: "🥣", cat: "arcade", name: {"ko":"절기 공방","en":"Season Workshop","ja":"節気工房","zh":"节气工坊","fr":"L'Atelier des saisons","es":"El Taller de las Estaciones"} },
+  "tidy-nook": { emoji: "🧺", cat: "puzzle", name: {"ko":"아늑한 방 정리","en":"Tidy Nook","ja":"ほっこり片付け","zh":"温馨收纳","fr":"Coin rangé","es":"Rincón ordenado"} },
   "firefly-keeper": { emoji: "🏮", cat: "arcade", name: {"ko":"반딧불 등지기","en":"Firefly Keeper","ja":"ほたるの灯守り","zh":"萤火守灯人","fr":"Gardien des lucioles","es":"Guardián de luciérnagas"} },
   "hanyang-timeslip": { emoji: "⏳", cat: "arcade", name: {"ko":"한양 타임슬립","en":"Hanyang Timeslip","ja":"漢陽タイムスリップ","zh":"汉阳时光穿越","fr":"Hanyang Timeslip","es":"Hanyang Timeslip"} },
   "dot-fishing": { emoji: "🎣", cat: "arcade", name: {"ko":"도트 피싱","en":"Dot Fishing","ja":"ドットフィッシング","zh":"点点钓鱼","fr":"Dot Fishing","es":"Dot Fishing"} },
@@ -191,6 +195,10 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
  * Players finishing or exploring these games receive hand-tuned next-best suggestions.
  */
 export const CURATED_CLUSTERS: Record<string, string[]> = {
+  "rampart-keeper": ["dot-tower", "truss-bridge", "shield-isle-tactics", "trap-stairs"],
+  "link-duel": ["rhythm-tap", "memory-card-game", "aim-trainer", "number-guessing"],
+  "season-workshop": ["dot-farm", "cheese-factory", "village", "alley-appraiser"],
+  "tidy-nook": ["sticker-cozy", "block-burst", "water-sort-3d", "frame-weaver"],
   "cat-expedition": ["cat-fishing", "dot-dungeon-rogue", "tower-deck-rogue", "trap-stairs"],
   "trap-stairs": ["dot-runner", "charge-climb", "cave-dash", "alley-appraiser"],
   "alley-appraiser": ["border-inspector", "dot-farm", "museum-night", "omission-detective"],
