@@ -4280,12 +4280,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
           es: "¿Afecta el orden de los Comodines a la puntuación?",
         },
         a: {
-          ko: "네! 조커는 왼쪽에서 오른쪽 순서로 계산됩니다. +Mult(가산 배율) 조커를 왼쪽에 두고, ×Mult(곱셈 배율) 조커를 오른쪽에 배치해야 점수가 기하급수적으로 폭발합니다. 청사진(Blueprint) 조커는 자신의 바로 오른쪽 조커를 복사합니다.",
-          en: "Yes! Jokers trigger from left to right. Placing +Mult Jokers to the left and ×Mult Jokers to the right results in exponential score explosions. Blueprint copies the Joker immediately to its right.",
-          ja: "はい！ジョーカーは左から右へ順に適用されます。+Mult（加算）を左、×Mult（乗算）を右に配置すると爆発的な高得点になります。設計図（Blueprint）は右隣のジョーカーをコピーします。",
-          zh: "是的！小丑从左到右依次触发结算。将+Mult（加算）放在左侧，×Mult（乘算）放在右侧可以产生爆炸性的高分。蓝图（Blueprint）会直接复制其右侧小丑的技能。",
-          fr: "Oui ! Les Jokers s'activent de gauche à droite. Mettez les Jokers +Mult à gauche et ×Mult à droite pour maximiser les multiplicateurs. Le Plan (Blueprint) copie le Joker à sa droite.",
-          es: "¡Sí! Los Comodines se activan de izquierda a derecha. Coloca los de suma (+Mult) a la izquierda y los de multiplicación (×Mult) a la derecha para un multiplicador masivo. El Plano copia al Comodín a su derecha.",
+          ko: "네! 조커는 왼쪽에서 오른쪽 순서로 계산됩니다. +Mult(가산 배율) 조커를 왼쪽에 두고, ×Mult(곱셈 배율) 조커를 오른쪽에 배치해야 점수가 기하급수적으로 폭발합니다. 거울 쌍둥이 조커는 자신의 바로 오른쪽 조커를 복사합니다.",
+          en: "Yes! Jokers trigger from left to right. Placing +Mult Jokers to the left and ×Mult Jokers to the right results in exponential score explosions. Mirror Twin copies the Joker immediately to its right.",
+          ja: "はい！ジョーカーは左から右へ順に適用されます。+Mult（加算）を左、×Mult（乗算）を右に配置すると爆発的な高得点になります。鏡の双子は右隣のジョーカーをコピーします。",
+          zh: "是的！小丑从左到右依次触发结算。将+Mult（加算）放在左侧，×Mult（乘算）放在右侧可以产生爆炸性的高分。镜像双生会直接复制其右侧小丑的技能。",
+          fr: "Oui ! Les Jokers s'activent de gauche à droite. Mettez les Jokers +Mult à gauche et ×Mult à droite pour maximiser les multiplicateurs. Le Jumeau miroir copie le Joker à sa droite.",
+          es: "¡Sí! Los Comodines se activan de izquierda a derecha. Coloca los de suma (+Mult) a la izquierda y los de multiplicación (×Mult) a la derecha para un multiplicador masivo. El Gemelo espejo copia al Comodín a su derecha.",
         },
       },
       {
