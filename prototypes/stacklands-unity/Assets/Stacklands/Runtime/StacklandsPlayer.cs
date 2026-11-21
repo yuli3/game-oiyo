@@ -40,7 +40,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
     Vector3 _dragOffset;
 
     int _moon = 1;
-    const int MaxMoons = 8;
+    const int MaxMoons = 10;
     float _moonTimer;
     const float MoonDuration = 35f;
     int _coins = 6;
@@ -670,7 +670,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
         if (_gameOver || _victory)
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 160, Screen.height * 0.5f - 50, 320, 100), "");
-            GUI.Label(new Rect(Screen.width * 0.5f - 140, Screen.height * 0.5f - 32, 280, 28), _victory ? "VILLAGE SURVIVED ALL 8 MOONS!" : "VILLAGE FELL", bold);
+            GUI.Label(new Rect(Screen.width * 0.5f - 140, Screen.height * 0.5f - 32, 280, 28), _victory ? $"VILLAGE SURVIVED ALL {MaxMoons} MOONS!" : "VILLAGE FELL", bold);
             if (GUI.Button(new Rect(Screen.width * 0.5f - 65, Screen.height * 0.5f + 8, 130, 28), "Play Again (R)"))
             {
                 ResetVillage();

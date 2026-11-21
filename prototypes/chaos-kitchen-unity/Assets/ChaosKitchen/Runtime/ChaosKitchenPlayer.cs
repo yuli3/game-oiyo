@@ -63,6 +63,13 @@ public class ChaosKitchenPlayer : MonoBehaviour
     float _shakeTrauma;
 
     float _roundTime = 90f;
+    // 10 shifts: each needs a higher score, with faster orders and shorter timers.
+    const int FinalShift = 10;
+    int _shift = 1;
+    bool _shiftCleared;
+    bool _victory;
+    int ShiftTarget => 300 + (_shift - 1) * 120;
+    float ShiftPace => Mathf.Max(0.64f, 1f - (_shift - 1) * 0.04f);
     int _score;
     int _combo;
     int _servedCount;
@@ -342,6 +349,14 @@ public class ChaosKitchenPlayer : MonoBehaviour
         SpawnOrder();
     }
 
+    void StartNextShift()
+    {
+        if (_victory) { _shift = 1; _victory = false; }
+        else if (_shiftCleared) _shift++;
+        _shiftCleared = false;
+        ResetMatch(Mode.Playing);
+    }
+
     void SpawnOrder()
     {
         if (_orders.Count >= 4) return;
@@ -350,8 +365,8 @@ public class ChaosKitchenPlayer : MonoBehaviour
         {
             label = burger ? "BURGER (Patty->Stove + Bun + Plate)" : "SALAD (Tomato->Chop + Plate)",
             targetDish = burger ? ItemKind.BurgerDish : ItemKind.SaladDish,
-            timeLeft = burger ? 38f : 28f,
-            maxTime = burger ? 38f : 28f,
+            timeLeft = (burger ? 38f : 28f) * ShiftPace,
+            maxTime = (burger ? 38f : 28f) * ShiftPace,
             reward = burger ? 140 : 90
         });
     }
@@ -365,7 +380,7 @@ public class ChaosKitchenPlayer : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
             {
-                ResetMatch(Mode.Playing);
+                StartNextShift();
             }
             UpdateCamera(dt);
             return;
@@ -375,6 +390,8 @@ public class ChaosKitchenPlayer : MonoBehaviour
         if (_roundTime <= 0f)
         {
             _roundTime = 0f;
+            _shiftCleared = _score >= ShiftTarget;
+            if (_shiftCleared && _shift >= FinalShift) _victory = true;
             _mode = Mode.GameOver;
             return;
         }
@@ -383,7 +400,7 @@ public class ChaosKitchenPlayer : MonoBehaviour
         _orderSpawnCd -= dt;
         if (_orderSpawnCd <= 0f)
         {
-            _orderSpawnCd = 9.5f;
+            _orderSpawnCd = Mathf.Max(5f, 9.5f - (_shift - 1) * 0.5f);
             SpawnOrder();
         }
         for (int i = _orders.Count - 1; i >= 0; i--)
@@ -762,20 +779,20 @@ public class ChaosKitchenPlayer : MonoBehaviour
         if (_mode == Mode.Title)
         {
             GUI.Box(new Rect(w * 0.5f - 260, h * 0.5f - 145, 520, 290), "");
-            GUI.Label(new Rect(w * 0.5f - 240, h * 0.5f - 125, 480, 48), "CHAOS KITCHEN — UNITY", _titleStyle);
+            GUI.Label(new Rect(w * 0.5f - 240, h * 0.5f - 125, 480, 48), "CHAOS KITCHEN", _titleStyle);
             GUI.Label(new Rect(w * 0.5f - 240, h * 0.5f - 68, 480, 96),
                 "WASD / Drag: Run & Dash (Shift)\nSpace / E: Pick Up, Place, Plate & Serve on Bottom Belt\nQ / Right-Click: Throw Ingredients Across Kitchen!",
                 _subStyle);
             if (GUI.Button(new Rect(w * 0.5f - 110, h * 0.5f + 56, 220, 48), "OPEN KITCHEN", _btnStyle))
             {
-                ResetMatch(Mode.Playing);
+                StartNextShift();
             }
             return;
         }
 
         // Top Order & Score Bar
         GUI.Box(new Rect(10, 8, w - 20, 52), "");
-        GUI.Label(new Rect(22, 18, 220, 28), $"TIME {Mathf.CeilToInt(_roundTime)}s · SCORE {_score} (x{_combo})", _hudStyle);
+        GUI.Label(new Rect(22, 18, 560, 28), $"SHIFT {_shift}/{FinalShift} · TIME {Mathf.CeilToInt(_roundTime)}s · SCORE {_score}/{ShiftTarget} (x{_combo})", _hudStyle);
 
         for (int i = 0; i < _orders.Count; i++)
         {
@@ -790,11 +807,11 @@ public class ChaosKitchenPlayer : MonoBehaviour
         if (_mode == Mode.GameOver)
         {
             GUI.Box(new Rect(w * 0.5f - 200, h * 0.5f - 105, 400, 210), "");
-            GUI.Label(new Rect(w * 0.5f - 180, h * 0.5f - 85, 360, 46), "SHIFT COMPLETE!", _titleStyle);
-            GUI.Label(new Rect(w * 0.5f - 180, h * 0.5f - 32, 360, 50), $"Dishes Served: {_servedCount}\nFinal Score: {_score}", _subStyle);
-            if (GUI.Button(new Rect(w * 0.5f - 100, h * 0.5f + 36, 200, 44), "PLAY AGAIN", _btnStyle))
+            GUI.Label(new Rect(w * 0.5f - 180, h * 0.5f - 85, 360, 46), _victory ? "ALL SHIFTS CLEARED!" : (_shiftCleared ? $"SHIFT {_shift} CLEARED!" : "SHIFT FAILED"), _titleStyle);
+            GUI.Label(new Rect(w * 0.5f - 180, h * 0.5f - 32, 360, 50), $"Dishes Served: {_servedCount}\nScore: {_score} / Target {ShiftTarget}", _subStyle);
+            if (GUI.Button(new Rect(w * 0.5f - 100, h * 0.5f + 36, 200, 44), _victory ? "PLAY AGAIN" : (_shiftCleared ? "NEXT SHIFT" : "RETRY SHIFT"), _btnStyle))
             {
-                ResetMatch(Mode.Playing);
+                StartNextShift();
             }
         }
     }

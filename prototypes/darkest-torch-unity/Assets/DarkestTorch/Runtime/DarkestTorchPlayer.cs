@@ -55,10 +55,10 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
 
     float _partyX;
     float _torch = 100f;
-    int _torchesLeft = 5;
+    int _torchesLeft = 8;
     int _gold;
     int _corridor = 1;
-    const int BossCorridor = 5;
+    const int BossCorridor = 10;
 
     bool _inCombat;
     bool _playerTurn = true;
@@ -176,7 +176,7 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
 
         _partyX = 0f;
         _torch = 100f;
-        _torchesLeft = 5;
+        _torchesLeft = 8;
         _gold = 0;
         _corridor = 1;
         _inCombat = false;
@@ -271,8 +271,8 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
             _enemies.Add(new Enemy
             {
                 Name = makeBoss ? "Necromancer Lord" : (i % 2 == 0 ? "Bone Soldier" : "Cultist"),
-                Hp = makeBoss ? 58 : (14 + corridorNum * 3),
-                MaxHp = makeBoss ? 58 : (14 + corridorNum * 3),
+                Hp = makeBoss ? 88 : (14 + corridorNum * 3),
+                MaxHp = makeBoss ? 88 : (14 + corridorNum * 3),
                 IsBoss = makeBoss,
                 X = ex,
                 Root = root
@@ -478,6 +478,8 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
             else
             {
                 _corridor++;
+                // 10-corridor run: a short rest between corridors keeps the party alive to the boss.
+                foreach (var h in _heroes) if (h.Hp > 0) h.Hp = Mathf.Min(h.MaxHp, h.Hp + 6);
                 SetBanner($"Wave Cleared! +Gold. March forward to Corridor {_corridor}!");
             }
             return;

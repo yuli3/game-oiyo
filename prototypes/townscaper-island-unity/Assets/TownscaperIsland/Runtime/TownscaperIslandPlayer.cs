@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class TownscaperIslandPlayer : MonoBehaviour
 {
+    // Page language (?lang=): Korean when ko, English for every other locale.
+    static bool _isKoInit, _isKo;
+    static bool IsKo { get { if (!_isKoInit) { _isKo = OiyoLang.Pick("ko", "en") == "ko"; _isKoInit = true; } return _isKo; } }
+    static string T(string ko, string en) => IsKo ? ko : en;
     const int GridSize = 8;
     const int MaxHeight = 6;
     const float BlockWidth = 1.0f;
@@ -20,6 +24,7 @@ public class TownscaperIslandPlayer : MonoBehaviour
         new Color(0.76f, 0.41f, 0.24f), // 5: Terracotta
     };
 
+    static readonly string[] PaletteNamesEn = { "Coral Red", "Ochre Yellow", "Mediterranean Teal", "White Stone", "Lavender Purple", "Terracotta" };
     static readonly string[] PaletteNames = new string[]
     {
         "코랄 레드", "황토 옐로우", "지중해 틸", "화이트 스톤", "라벤더 퍼플", "테라코타"
@@ -33,6 +38,7 @@ public class TownscaperIslandPlayer : MonoBehaviour
         public string titleEn;
         public string descKo;
         public string objectiveKo;
+        public string objectiveEn;
         public int reqBlocks;
         public int reqHeight;
         public int reqColors;
@@ -44,18 +50,18 @@ public class TownscaperIslandPlayer : MonoBehaviour
 
     static readonly StageDef[] Stages = new StageDef[]
     {
-        new StageDef { id = 1, titleKo = "석조 방파제", titleEn = "Stone Breakwater", descKo = "바다 위에 석조 부두 블록을 5개 연결하여 방파제를 축조하세요.", objectiveKo = "부두 블록 5개 이상 건설 (1층)", reqBlocks = 5, reqHeight = 1, reqColors = 1, reqLighthouse = false, reqArchBridge = false, reqGarden = false, reqTowers = 0 },
-        new StageDef { id = 2, titleKo = "어촌 코티지", titleEn = "Fisherman Cottage", descKo = "블록을 위로 3층까지 쌓아 아담한 박공 지붕 주택을 완성하세요.", objectiveKo = "높이 3층 주택 1동 완성", reqBlocks = 3, reqHeight = 3, reqColors = 1, reqLighthouse = false, reqArchBridge = false, reqGarden = false, reqTowers = 0 },
-        new StageDef { id = 3, titleKo = "해안 등대", titleEn = "Coastal Lighthouse", descKo = "바다 한가운데에 5층 이상 솟아오른 회전 조명 등대를 세우세요.", objectiveKo = "높이 5층 이상 등대 축조", reqBlocks = 5, reqHeight = 5, reqColors = 1, reqLighthouse = true, reqArchBridge = false, reqGarden = false, reqTowers = 0 },
-        new StageDef { id = 4, titleKo = "운하 아치교", titleEn = "Canal Archway", descKo = "두 건물 사이에 물길을 둔 채 2층으로 연결하여 운하 아치를 만드세요.", objectiveKo = "수면 위 아치 다리 1개 형성", reqBlocks = 4, reqHeight = 2, reqColors = 1, reqLighthouse = false, reqArchBridge = true, reqGarden = false, reqTowers = 0 },
-        new StageDef { id = 5, titleKo = "비밀 중정 정원", titleEn = "Courtyard Garden", descKo = "4면을 건물로 둘러싸아 잔디와 나무가 자라는 아늑한 중정을 만드세요.", objectiveKo = "폐쇄형 중정 정원 1개 조성", reqBlocks = 4, reqHeight = 1, reqColors = 1, reqLighthouse = false, reqArchBridge = false, reqGarden = true, reqTowers = 0 },
-        new StageDef { id = 6, titleKo = "쌍둥이 첨탑", titleEn = "Twin Spires", descKo = "4층 이상 솟아오른 두 개의 고딕 첨탑 타워를 나란히 세우세요.", objectiveKo = "높이 4층 이상 타워 2동 건설", reqBlocks = 8, reqHeight = 4, reqColors = 1, reqLighthouse = false, reqArchBridge = false, reqGarden = false, reqTowers = 2 },
-        new StageDef { id = 7, titleKo = "계단식 언덕마을", titleEn = "Terraced Hill Town", descKo = "1층, 2층, 3층, 4층 블록이 계단처럼 자연스럽게 이어지도록 축조하세요.", objectiveKo = "1~4층 층위가 모두 포함된 10블록 마을", reqBlocks = 10, reqHeight = 4, reqColors = 2, reqLighthouse = false, reqArchBridge = false, reqGarden = false, reqTowers = 0 },
-        new StageDef { id = 8, titleKo = "오색 항구마을", titleEn = "Rainbow Port", descKo = "최소 4가지 이상의 파스텔 색상을 조화롭게 배치하여 다채로운 항구를 가꾸세요.", objectiveKo = "4색 이상 사용 및 12블록 건축", reqBlocks = 12, reqHeight = 2, reqColors = 4, reqLighthouse = false, reqArchBridge = false, reqGarden = false, reqTowers = 0 },
-        new StageDef { id = 9, titleKo = "성채 요새", titleEn = "Citadel Fortress", descKo = "16개 이상의 블록과 5층 본성(Keep)을 갖춘 견고한 해상 요새를 세우세요.", objectiveKo = "총 16블록 이상 및 최고층 5층", reqBlocks = 16, reqHeight = 5, reqColors = 2, reqLighthouse = false, reqArchBridge = false, reqGarden = false, reqTowers = 1 },
-        new StageDef { id = 10, titleKo = "물의 도시 베네치아", titleEn = "Water Venice", descKo = "수로를 가로지르는 운하 아치교를 2개 이상 축조하여 수변 도시를 완성하세요.", objectiveKo = "운하 아치교 2개 이상 건설", reqBlocks = 12, reqHeight = 2, reqColors = 2, reqLighthouse = false, reqArchBridge = true, reqGarden = false, reqTowers = 0 },
-        new StageDef { id = 11, titleKo = "천공의 공중회랑", titleEn = "Sky Colonnade", descKo = "아치 기둥 위에 3층 이상의 높은 회랑 블록을 6개 이상 띄워 올리세요.", objectiveKo = "3층 이상 공중 블록 6개 건설", reqBlocks = 14, reqHeight = 3, reqColors = 2, reqLighthouse = false, reqArchBridge = true, reqGarden = false, reqTowers = 0 },
-        new StageDef { id = 12, titleKo = "지중해 아크로폴리스", titleEn = "Mediterranean Acropolis", descKo = "총 24개 이상의 블록, 4색 이상, 등대와 중정, 아치교를 총망라한 대걸작을 완성하세요.", objectiveKo = "24블록, 4색, 등대+정원+아치교 완성", reqBlocks = 24, reqHeight = 5, reqColors = 4, reqLighthouse = true, reqArchBridge = true, reqGarden = true, reqTowers = 1 }
+        new StageDef { id = 1, titleKo = "석조 방파제", titleEn = "Stone Breakwater", descKo = "바다 위에 석조 부두 블록을 5개 연결하여 방파제를 축조하세요.", objectiveKo = "부두 블록 5개 이상 건설 (1층)", objectiveEn = "Build 5+ pier blocks (1 level)", reqBlocks = 5, reqHeight = 1, reqColors = 1, reqLighthouse = false, reqArchBridge = false, reqGarden = false, reqTowers = 0 },
+        new StageDef { id = 2, titleKo = "어촌 코티지", titleEn = "Fisherman Cottage", descKo = "블록을 위로 3층까지 쌓아 아담한 박공 지붕 주택을 완성하세요.", objectiveKo = "높이 3층 주택 1동 완성", objectiveEn = "Finish one 3-level house", reqBlocks = 3, reqHeight = 3, reqColors = 1, reqLighthouse = false, reqArchBridge = false, reqGarden = false, reqTowers = 0 },
+        new StageDef { id = 3, titleKo = "해안 등대", titleEn = "Coastal Lighthouse", descKo = "바다 한가운데에 5층 이상 솟아오른 회전 조명 등대를 세우세요.", objectiveKo = "높이 5층 이상 등대 축조", objectiveEn = "Build a lighthouse 5+ levels tall", reqBlocks = 5, reqHeight = 5, reqColors = 1, reqLighthouse = true, reqArchBridge = false, reqGarden = false, reqTowers = 0 },
+        new StageDef { id = 4, titleKo = "운하 아치교", titleEn = "Canal Archway", descKo = "두 건물 사이에 물길을 둔 채 2층으로 연결하여 운하 아치를 만드세요.", objectiveKo = "수면 위 아치 다리 1개 형성", objectiveEn = "Form one arch bridge over water", reqBlocks = 4, reqHeight = 2, reqColors = 1, reqLighthouse = false, reqArchBridge = true, reqGarden = false, reqTowers = 0 },
+        new StageDef { id = 5, titleKo = "비밀 중정 정원", titleEn = "Courtyard Garden", descKo = "4면을 건물로 둘러싸아 잔디와 나무가 자라는 아늑한 중정을 만드세요.", objectiveKo = "폐쇄형 중정 정원 1개 조성", objectiveEn = "Create one enclosed courtyard garden", reqBlocks = 4, reqHeight = 1, reqColors = 1, reqLighthouse = false, reqArchBridge = false, reqGarden = true, reqTowers = 0 },
+        new StageDef { id = 6, titleKo = "쌍둥이 첨탑", titleEn = "Twin Spires", descKo = "4층 이상 솟아오른 두 개의 고딕 첨탑 타워를 나란히 세우세요.", objectiveKo = "높이 4층 이상 타워 2동 건설", objectiveEn = "Build two towers 4+ levels tall", reqBlocks = 8, reqHeight = 4, reqColors = 1, reqLighthouse = false, reqArchBridge = false, reqGarden = false, reqTowers = 2 },
+        new StageDef { id = 7, titleKo = "계단식 언덕마을", titleEn = "Terraced Hill Town", descKo = "1층, 2층, 3층, 4층 블록이 계단처럼 자연스럽게 이어지도록 축조하세요.", objectiveKo = "1~4층 층위가 모두 포함된 10블록 마을", objectiveEn = "A 10-block town with every height from 1 to 4", reqBlocks = 10, reqHeight = 4, reqColors = 2, reqLighthouse = false, reqArchBridge = false, reqGarden = false, reqTowers = 0 },
+        new StageDef { id = 8, titleKo = "오색 항구마을", titleEn = "Rainbow Port", descKo = "최소 4가지 이상의 파스텔 색상을 조화롭게 배치하여 다채로운 항구를 가꾸세요.", objectiveKo = "4색 이상 사용 및 12블록 건축", objectiveEn = "Use 4+ colors and build 12 blocks", reqBlocks = 12, reqHeight = 2, reqColors = 4, reqLighthouse = false, reqArchBridge = false, reqGarden = false, reqTowers = 0 },
+        new StageDef { id = 9, titleKo = "성채 요새", titleEn = "Citadel Fortress", descKo = "16개 이상의 블록과 5층 본성(Keep)을 갖춘 견고한 해상 요새를 세우세요.", objectiveKo = "총 16블록 이상 및 최고층 5층", objectiveEn = "16+ blocks with a 5-level top", reqBlocks = 16, reqHeight = 5, reqColors = 2, reqLighthouse = false, reqArchBridge = false, reqGarden = false, reqTowers = 1 },
+        new StageDef { id = 10, titleKo = "물의 도시 베네치아", titleEn = "Water Venice", descKo = "수로를 가로지르는 운하 아치교를 2개 이상 축조하여 수변 도시를 완성하세요.", objectiveKo = "운하 아치교 2개 이상 건설", objectiveEn = "Build 2+ canal arch bridges", reqBlocks = 12, reqHeight = 2, reqColors = 2, reqLighthouse = false, reqArchBridge = true, reqGarden = false, reqTowers = 0 },
+        new StageDef { id = 11, titleKo = "천공의 공중회랑", titleEn = "Sky Colonnade", descKo = "아치 기둥 위에 3층 이상의 높은 회랑 블록을 6개 이상 띄워 올리세요.", objectiveKo = "3층 이상 공중 블록 6개 건설", objectiveEn = "Build 6 aerial blocks at level 3+", reqBlocks = 14, reqHeight = 3, reqColors = 2, reqLighthouse = false, reqArchBridge = true, reqGarden = false, reqTowers = 0 },
+        new StageDef { id = 12, titleKo = "지중해 아크로폴리스", titleEn = "Mediterranean Acropolis", descKo = "총 24개 이상의 블록, 4색 이상, 등대와 중정, 아치교를 총망라한 대걸작을 완성하세요.", objectiveKo = "24블록, 4색, 등대+정원+아치교 완성", objectiveEn = "24 blocks, 4 colors, lighthouse + garden + arch bridge", reqBlocks = 24, reqHeight = 5, reqColors = 4, reqLighthouse = true, reqArchBridge = true, reqGarden = true, reqTowers = 1 }
     };
 
     // Cell data structure
@@ -762,24 +768,24 @@ public class TownscaperIslandPlayer : MonoBehaviour
         };
 
         string stageTitle = currentStageIndex >= 0
-            ? "Stage " + (currentStageIndex + 1) + ". " + Stages[currentStageIndex].titleKo + " (" + Stages[currentStageIndex].titleEn + ")"
-            : "자유 창작 샌드박스 (Free Sandbox)";
+            ? "Stage " + (currentStageIndex + 1) + ". " + (IsKo ? Stages[currentStageIndex].titleKo + " (" + Stages[currentStageIndex].titleEn + ")" : Stages[currentStageIndex].titleEn)
+            : T("자유 창작 샌드박스 (Free Sandbox)", "Free Sandbox");
 
         string objective = currentStageIndex >= 0
-            ? "목표: " + Stages[currentStageIndex].objectiveKo
-            : "원하는 지중해 섬마을을 자유롭게 건축하세요.";
+            ? T("목표: " + Stages[currentStageIndex].objectiveKo, "Goal: " + Stages[currentStageIndex].objectiveEn)
+            : T("원하는 지중해 섬마을을 자유롭게 건축하세요.", "Build the Mediterranean island town you want.");
 
         GUI.Label(new Rect(20, 12, 450, 24), stageTitle, titleStyle);
         GUI.Label(new Rect(20, 32, 450, 22), objective, subStyle);
 
         // Stage Select Button
-        if (GUI.Button(new Rect(w - 180, 15, 75, 40), "🗺️ 스테이지"))
+        if (GUI.Button(new Rect(w - 180, 15, 75, 40), T("🗺️ 스테이지", "🗺️ Stages")))
         {
             showStageSelectModal = !showStageSelectModal;
         }
 
         // Reset Button
-        if (GUI.Button(new Rect(w - 95, 15, 75, 40), "🔄 초기화"))
+        if (GUI.Button(new Rect(w - 95, 15, 75, 40), T("🔄 초기화", "🔄 Reset")))
         {
             InitStage(currentStageIndex);
         }
@@ -793,7 +799,7 @@ public class TownscaperIslandPlayer : MonoBehaviour
         GUI.Box(new Rect(10, h - barH - 10, w - 20, barH), GUIContent.none);
 
         // Build vs Demolish Mode Toggle
-        string modeLabel = isDemolishMode ? "⛏️ 철거 모드" : "🔨 건축 모드";
+        string modeLabel = isDemolishMode ? T("⛏️ 철거 모드", "⛏️ Demolish") : T("🔨 건축 모드", "🔨 Build");
         Color modeCol = isDemolishMode ? new Color(1f, 0.6f, 0.6f) : new Color(0.6f, 0.9f, 1f);
         GUI.color = modeCol;
         if (GUI.Button(new Rect(20, h - barH, 110, 55), modeLabel))
@@ -810,7 +816,7 @@ public class TownscaperIslandPlayer : MonoBehaviour
         {
             GUI.color = PaletteColors[i];
             bool isSel = (selectedPalette == i && !isDemolishMode);
-            string label = (isSel ? "✓ " : "") + PaletteNames[i];
+            string label = (isSel ? "✓ " : "") + T(PaletteNames[i], PaletteNamesEn[i]);
 
             if (GUI.Button(new Rect(startX + i * (btnW + 6), h - barH, btnW, 55), label))
             {
@@ -845,18 +851,18 @@ public class TownscaperIslandPlayer : MonoBehaviour
         };
 
         GUI.Label(new Rect(bannerRect.x, bannerRect.y + 15, bannerRect.width, 35), "★ STAGE CLEAR! ★", clearStyle);
-        GUI.Label(new Rect(bannerRect.x, bannerRect.y + 55, bannerRect.width, 25), "지중해 섬마을 과제를 완벽히 달성했습니다!", msgStyle);
+        GUI.Label(new Rect(bannerRect.x, bannerRect.y + 55, bannerRect.width, 25), T("지중해 섬마을 과제를 완벽히 달성했습니다!", "Island town goal complete!"), msgStyle);
 
         if (currentStageIndex < Stages.Length - 1)
         {
-            if (GUI.Button(new Rect(bannerRect.x + 110, bannerRect.y + 95, 180, 45), "다음 스테이지 ▶"))
+            if (GUI.Button(new Rect(bannerRect.x + 110, bannerRect.y + 95, 180, 45), T("다음 스테이지 ▶", "Next stage ▶")))
             {
                 InitStage(currentStageIndex + 1);
             }
         }
         else
         {
-            if (GUI.Button(new Rect(bannerRect.x + 110, bannerRect.y + 95, 180, 45), "자유 샌드박스 시작"))
+            if (GUI.Button(new Rect(bannerRect.x + 110, bannerRect.y + 95, 180, 45), T("자유 샌드박스 시작", "Start free sandbox")))
             {
                 InitStage(-1);
             }
@@ -868,7 +874,7 @@ public class TownscaperIslandPlayer : MonoBehaviour
         int w = Screen.width;
         int h = Screen.height;
 
-        GUI.Box(new Rect(30, 70, w - 60, h - 140), "🗺️ 스테이지 선택 (Stage Select)");
+        GUI.Box(new Rect(30, 70, w - 60, h - 140), T("🗺️ 스테이지 선택 (Stage Select)", "🗺️ Stage Select"));
 
         int cols = 4;
         int itemW = (w - 120) / cols;
@@ -881,7 +887,7 @@ public class TownscaperIslandPlayer : MonoBehaviour
             Rect btnRect = new Rect(50 + col * (itemW + 10), 110 + row * (itemH + 12), itemW, itemH);
 
             string stars = stageStars[i] > 0 ? " ★★★" : "";
-            string text = (i + 1) + ". " + Stages[i].titleKo + stars + "\n" + Stages[i].objectiveKo;
+            string text = (i + 1) + ". " + T(Stages[i].titleKo, Stages[i].titleEn) + stars + "\n" + T(Stages[i].objectiveKo, Stages[i].objectiveEn);
 
             if (GUI.Button(btnRect, text))
             {
@@ -892,7 +898,7 @@ public class TownscaperIslandPlayer : MonoBehaviour
 
         // Free Sandbox Button
         Rect sandRect = new Rect(50, 110 + 3 * (itemH + 12), w - 100, 45);
-        if (GUI.Button(sandRect, "🏖️ 자유 창작 샌드박스 모드 (제약 없이 마음껏 건축)"))
+        if (GUI.Button(sandRect, T("🏖️ 자유 창작 샌드박스 모드 (제약 없이 마음껏 건축)", "🏖️ Free sandbox (build with no limits)")))
         {
             showStageSelectModal = false;
             InitStage(-1);

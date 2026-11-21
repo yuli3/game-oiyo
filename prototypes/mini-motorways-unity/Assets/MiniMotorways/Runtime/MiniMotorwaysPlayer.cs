@@ -72,6 +72,8 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
     int _motorwayCount = 1;
     int _trips;
     int _week = 1;
+    const int FinalWeek = 10;
+    bool _victory;
     float _weekTimer;
     const float WeekDuration = 28f;
     bool _pendingUpgradeChoice;
@@ -216,6 +218,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
         _motorwayMode = false;
         _motorwayStart = null;
         _gameOver = false;
+        _victory = false;
 
         // Starter buildings across the river
         AddHouse(2, 2, ColorGroup.Red);
@@ -314,6 +317,12 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
         if (_weekTimer >= WeekDuration)
         {
             _weekTimer = 0f;
+            if (_week >= FinalWeek)
+            {
+                _victory = true;
+                _gameOver = true;
+                return;
+            }
             _week++;
             SpawnNewBuildingsForWeek();
             _pendingUpgradeChoice = true;
@@ -665,8 +674,8 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
     {
         var bold = new GUIStyle(GUI.skin.box) { fontSize = 14, fontStyle = FontStyle.Bold };
         GUI.Box(new Rect(14, 12, 470, 62), "");
-        GUI.Label(new Rect(24, 18, 450, 24), $"ROAD WEAVER  |  TRIPS: {_trips}  |  WEEK {_week} ({Mathf.CeilToInt(WeekDuration - _weekTimer)}s)", bold);
-        GUI.Label(new Rect(24, 44, 450, 22), $"Roads: {_roadTiles}  •  Bridges: {_bridges}  •  Expressways: {_motorwayCount}  •  Mode: {(_motorwayMode ? "MOTORWAY (Click 2 tiles)" : (_eraseMode ? "ERASE" : "DRAW ROAD"))}");
+        GUI.Label(new Rect(24, 18, 450, 24), $"ROAD WEAVER  |  TRIPS: {_trips}  |  WEEK {_week}/{FinalWeek} ({Mathf.CeilToInt(WeekDuration - _weekTimer)}s)", bold);
+        GUI.Label(new Rect(24, 44, 450, 22), $"Roads: {_roadTiles}  •  Bridges: {_bridges}  •  Expressways: {_motorwayCount}  •  Mode: {(_motorwayMode ? "EXPRESSWAY (Click 2 tiles)" : (_eraseMode ? "ERASE" : "DRAW ROAD"))}");
 
         if (GUI.Button(new Rect(500, 14, 110, 28), _eraseMode ? "Mode: Erase ✓" : "Erase (E)"))
         {
@@ -706,7 +715,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
         if (_gameOver)
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 170, Screen.height * 0.5f - 55, 340, 110), "");
-            GUI.Label(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f - 36, 300, 28), "GRIDLOCK OVERLOAD!", bold);
+            GUI.Label(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f - 36, 300, 28), _victory ? $"CITY THRIVED — ALL {FinalWeek} WEEKS!" : "GRIDLOCK OVERLOAD!", bold);
             GUI.Label(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f - 8, 300, 24), $"Completed {_trips} Trips over {_week} Weeks");
             if (GUI.Button(new Rect(Screen.width * 0.5f - 65, Screen.height * 0.5f + 20, 130, 28), "Rebuild (R)"))
             {
