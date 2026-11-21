@@ -1,4 +1,5 @@
 import { useGameText } from "../../lib/games/game-text";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
 import { BLADE_DROP_TEXT } from "../../lib/games/text/blade-drop-3d";
 import React, { useEffect, useRef, useState, useCallback } from "react";
@@ -212,6 +213,7 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
 
   const modifiers = buildSliceMetaModifiers(metaState);
   const [game, setGame] = useState<SliceMasterGame>(() => createSliceMasterLevel(1, modifiers));
+  useRunRecord("blade-drop-3d", game.status === "gameover" || game.status === "completed", game.score);
   const [bestScore, setBestScore] = useState(0);
   const { addTrauma, shakeCssVars } = useGameJuicePro();
   const [shareCardCopied, setShareCardCopied] = useState(false);

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import {
   Volume2,
   VolumeX,
@@ -189,6 +190,7 @@ export default function DotDungeonRogue({ locale = "en" }: { locale?: string }) 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [gameState, setGameState] = useState<DungeonState>(() => createDungeonGame(Date.now()));
+  useRunRecord("dot-dungeon-rogue", gameState.status !== "playing", gameState.score);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {

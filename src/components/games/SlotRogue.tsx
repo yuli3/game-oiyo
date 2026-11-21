@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useRunRecord } from "../../lib/games/use-run-record";
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { useAudioContext } from '../../lib/games/use-audio-context';
 import { playProceduralSfx } from '../../lib/games/audio-mixer';
@@ -112,6 +113,7 @@ export default function SlotRogue({ locale }: Props) {
   const isKo = locale === 'ko';
   const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: (locale as any) || "ko" });
   const [state, setState] = useState<SlotRogueState>(() => createSlotRogueState());
+  useRunRecord("slot-rogue", state.status === 'victory' || state.status === 'evicted', state.coins);
   const [shareCardCopied, setShareCardCopied] = useState(false);
   const getAudioContext = useAudioContext();
   const playSfx = useCallback((cue: "spin" | "coin" | "gem" | "win" | "fail" | "place" | "tap") => {

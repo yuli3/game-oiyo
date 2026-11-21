@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   initializeChaosKitchen,
@@ -61,6 +62,7 @@ function TiltKitchenButton({
 
 export function ChaosKitchen({ lang = "ko" }: { lang?: string }) {
   const [gameState, setGameState] = useState<ChaosKitchenState>(() => initializeChaosKitchen());
+  useRunRecord("chaos-kitchen", gameState.status === "cleared" || gameState.status === "failed", gameState.score);
   const [metaSave, setMetaSave] = useState<KitchenMetaSave>(() => loadKitchenMetaSave());
   const [quests, setQuests] = useState<ChaosKitchenQuest[]>(() => loadKitchenQuests());
   const [showQuests, setShowQuests] = useState(false);

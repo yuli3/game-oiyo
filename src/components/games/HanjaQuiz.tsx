@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useRunRecord } from '../../lib/games/use-run-record'
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react'
 import { useArcadePortal } from '../../lib/games/arcade-portal'
 import { celebrate } from '../../lib/games/celebration'
@@ -198,6 +199,7 @@ export default function HanjaQuiz({ locale }: Props) {
   const [selected, setSelected] = useState<string | null>(null)
   const [score, setScore] = useState(0)
   const [finished, setFinished] = useState(false)
+  useRunRecord('hanja-quiz', finished, score)
   const [history, setHistory] = useState<boolean[]>([])
   const [muted, setMuted] = useState(() => {
     if (typeof window === 'undefined') return false
