@@ -1794,3 +1794,34 @@ export const TRAP_STAIRS_SPRITES = {
   hidden: "/assets/sprites/trap-stairs/hidden.webp",
   pad: "/assets/sprites/trap-stairs/pad.webp",
 } as const;
+
+const CE = "/assets/sprites/cat-expedition";
+export const CAT_EXPEDITION_SPRITES = {
+  cats: {
+    chonk: `${CE}/cat-chonk.webp`,
+    hunter: `${CE}/cat-hunter.webp`,
+    kneader: `${CE}/cat-kneader.webp`,
+    static: `${CE}/cat-static.webp`,
+    shadow: `${CE}/cat-shadow.webp`,
+    boxer: `${CE}/cat-boxer.webp`,
+  },
+  enemies: {
+    rat: `${CE}/enemy-rat.webp`,
+    pigeon: `${CE}/enemy-pigeon.webp`,
+    stray: `${CE}/enemy-stray.webp`,
+    "rat-boss": `${CE}/enemy-rat-boss.webp`,
+    vacuum: `${CE}/enemy-vacuum.webp`,
+    crow: `${CE}/enemy-crow.webp`,
+    fan: `${CE}/enemy-fan.webp`,
+    "vacuum-boss": `${CE}/enemy-vacuum-boss.webp`,
+    raccoon: `${CE}/enemy-raccoon.webp`,
+    owl: `${CE}/enemy-owl.webp`,
+    cloud: `${CE}/enemy-cloud.webp`,
+    "owl-boss": `${CE}/enemy-owl-boss.webp`,
+  },
+  backdrops: {
+    alley: `${CE}/bg-alley.webp`,
+    site: `${CE}/bg-site.webp`,
+    roof: `${CE}/bg-roof.webp`,
+  },
+} as const;
