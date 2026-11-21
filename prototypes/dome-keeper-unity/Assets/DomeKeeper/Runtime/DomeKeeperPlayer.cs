@@ -72,6 +72,8 @@ public class DomeKeeperPlayer : MonoBehaviour
     int _domeHp = 100;
     int _domeMaxHp = 100;
     int _wave = 1;
+    const int FinalWave = 10;
+    bool _victory;
     float _waveTimer = 28f;
     int _enemiesRemainingToSpawn;
     float _spawnCd;
@@ -333,6 +335,7 @@ public class DomeKeeperPlayer : MonoBehaviour
         _domeHp = 100;
         _domeMaxHp = 100;
         _wave = 1;
+        _victory = false;
         _waveTimer = 28f;
         _enemiesRemainingToSpawn = 0;
         _score = 0;
@@ -791,6 +794,13 @@ public class DomeKeeperPlayer : MonoBehaviour
         if (_enemiesRemainingToSpawn == 0 && _enemies.Count == 0)
         {
             _laserLine.enabled = false;
+            if (_wave >= FinalWave)
+            {
+                _victory = true;
+                _score += 500;
+                _mode = GameMode.GameOver;
+                return;
+            }
             _wave++;
             _waveTimer = 30f;
             _score += 120;
@@ -911,8 +921,8 @@ public class DomeKeeperPlayer : MonoBehaviour
         // Top HUD Bar
         GUI.Box(new Rect(12, 10, w - 24, 44), "");
         string modeTxt = _mode == GameMode.Defense
-            ? $"WAVE {_wave} DEFENSE! ({_enemies.Count + _enemiesRemainingToSpawn} Hostiles)"
-            : $"WAVE {_wave} MINING · NEXT WAVE IN {Mathf.CeilToInt(_waveTimer)}s";
+            ? $"WAVE {_wave}/{FinalWave} DEFENSE! ({_enemies.Count + _enemiesRemainingToSpawn} Hostiles)"
+            : $"WAVE {_wave}/{FinalWave} MINING · NEXT WAVE IN {Mathf.CeilToInt(_waveTimer)}s";
         GUI.Label(new Rect(24, 20, 420, 26), modeTxt, _hudStyle);
         GUI.Label(new Rect(w * 0.5f - 160, 20, 340, 26),
             $"DOME HP {_domeHp}/{_domeMaxHp}   IRON {_iron}   COBALT {_cobalt}   WATER {_water}",
@@ -929,7 +939,7 @@ public class DomeKeeperPlayer : MonoBehaviour
         if (_mode == GameMode.GameOver)
         {
             GUI.Box(new Rect(w * 0.5f - 210, h * 0.5f - 110, 420, 220), "");
-            GUI.Label(new Rect(w * 0.5f - 190, h * 0.5f - 90, 380, 46), "DOME BREACHED", _titleStyle);
+            GUI.Label(new Rect(w * 0.5f - 190, h * 0.5f - 90, 380, 46), _victory ? "DOME HELD — ALL WAVES CLEARED" : "DOME BREACHED", _titleStyle);
             GUI.Label(new Rect(w * 0.5f - 190, h * 0.5f - 36, 380, 56),
                 $"Reached Wave {_wave} · Ores Delivered: {_oresDelivered}\nFinal Score: {_score}",
                 _subStyle);

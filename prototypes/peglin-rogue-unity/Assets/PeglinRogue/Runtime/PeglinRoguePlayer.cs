@@ -5,6 +5,10 @@ using UnityEngine;
 
 public class PeglinRoguePlayer : MonoBehaviour
 {
+    // Page language (?lang=): Korean when ko, English for every other locale.
+    static bool _isKoInit, _isKo;
+    static bool IsKo { get { if (!_isKoInit) { _isKo = OiyoLang.Pick("ko", "en") == "ko"; _isKoInit = true; } return _isKo; } }
+    static string T(string ko, string en) => IsKo ? ko : en;
     public enum PegType { Normal, Crit, Refresh, Bomb, Bumper }
 
     public class PegData
@@ -316,7 +320,7 @@ public class PeglinRoguePlayer : MonoBehaviour
         isBallActive = false;
         ballGo.SetActive(false);
 
-        ShowBanner("STAGE " + s.stageNum + ": " + s.titleKo + "!", 2.5f);
+        ShowBanner("STAGE " + s.stageNum + ": " + T(s.titleKo, s.name) + "!", 2.5f);
         GeneratePegsForStage(s.stageNum);
     }
 
@@ -902,7 +906,7 @@ public class PeglinRoguePlayer : MonoBehaviour
 
         // Center Status / Turn Combo
         GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(250));
-        GUILayout.Label("<color=#facc15><b>STAGE " + (currentStageIdx + 1) + "/12</b></color>: " + stages[currentStageIdx].titleKo);
+        GUILayout.Label("<color=#facc15><b>STAGE " + (currentStageIdx + 1) + "/12</b></color>: " + T(stages[currentStageIdx].titleKo, stages[currentStageIdx].name));
         string critTag = isCritActive ? " <color=#fde047>[CRIT x2!]</color>" : "";
         GUILayout.Label("🎯 Turn Dmg: <b>" + turnBaseDamage + "</b> (" + turnHits + " hits)" + critTag);
         GUILayout.EndVertical();
@@ -966,7 +970,7 @@ public class PeglinRoguePlayer : MonoBehaviour
             GUILayout.Space(15);
             GUILayout.Label("<size=18><color=#4ade80><b>★ STAGE CLEARED! ★</b></color></size>", GetCenterStyle(Color.green));
             GUILayout.Space(8);
-            GUILayout.Label("Defeated " + stages[currentStageIdx].titleKo + "!", GetCenterStyle(Color.white));
+            GUILayout.Label("Defeated " + T(stages[currentStageIdx].titleKo, stages[currentStageIdx].name) + "!", GetCenterStyle(Color.white));
             GUILayout.Label("Hero healed +30 HP! Ready for next encounter.", GetCenterStyle(Color.cyan));
             GUILayout.Space(12);
             GUILayout.BeginHorizontal();
@@ -989,7 +993,7 @@ public class PeglinRoguePlayer : MonoBehaviour
             GUILayout.Space(15);
             GUILayout.Label("<size=18><color=#ef4444><b>☠️ YOU WERE DEFEATED ☠️</b></color></size>", GetCenterStyle(Color.red));
             GUILayout.Space(8);
-            GUILayout.Label("Stage " + (currentStageIdx + 1) + ": " + stages[currentStageIdx].titleKo, GetCenterStyle(Color.white));
+            GUILayout.Label("Stage " + (currentStageIdx + 1) + ": " + T(stages[currentStageIdx].titleKo, stages[currentStageIdx].name), GetCenterStyle(Color.white));
             GUILayout.Space(12);
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
@@ -1020,7 +1024,7 @@ public class PeglinRoguePlayer : MonoBehaviour
                     {
                         var st = stages[idx];
                         string bossTag = st.isBoss ? " ★ BOSS" : "";
-                        string btnText = "<b>Stage " + st.stageNum + "</b>: " + st.titleKo + bossTag + "\n(HP: " + st.maxHp + " | Atk: " + st.attack + ")";
+                        string btnText = "<b>Stage " + st.stageNum + "</b>: " + T(st.titleKo, st.name) + bossTag + "\n(HP: " + st.maxHp + " | Atk: " + st.attack + ")";
                         if (GUILayout.Button(btnText, GUILayout.Height(50)))
                         {
                             showStageSelect = false;

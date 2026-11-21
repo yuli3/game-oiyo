@@ -259,6 +259,7 @@ public class BeatSlicePlayer : MonoBehaviour
 
     void Awake()
     {
+        switch (OiyoLang.Pick("ko", "en", "ja", "es")) { case "en": lang = BeatLanguage.EN; break; case "ja": lang = BeatLanguage.JA; break; case "es": lang = BeatLanguage.ES; break; default: lang = BeatLanguage.KO; break; }
         Application.targetFrameRate = 60;
         mainCam = Camera.main;
         if (mainCam == null)

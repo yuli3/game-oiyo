@@ -52,7 +52,7 @@ public sealed class FrostpunkPlayer : MonoBehaviour
     float _stress;
 
     int _day = 1;
-    const int MaxDays = 6;
+    const int MaxDays = 10;
     float _dayTimer;
     const float DayLengthSec = 32f;
     BuildingType _selectedTool = BuildingType.CoalThumper;
