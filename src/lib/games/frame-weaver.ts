@@ -1,7 +1,6 @@
 /**
- * Gorogoa Frame Weaver (#133) — 2x2 Multi-Frame Zoom, Pan, Swap & Stencil Layer Puzzle Engine
+ * Frame Weaver (#133) — 2x2 multi-frame zoom, swap & stencil layer puzzle engine
  *
- * Inspired by Jason Roberts' Gorogoa (2017):
  * - 2x2 grid (slots 0: Top-Left, 1: Top-Right, 2: Bottom-Left, 3: Bottom-Right)
  * - Each panel has multiple zoom levels (0: Wide, 1: Close-up)
  * - Panels can be swapped across slots, zoomed in/out, or have stencil cutout layers stacked onto another panel
@@ -64,7 +63,7 @@ export interface ChapterSpec {
   rule: ChapterRule;
 }
 
-export interface GorogoaState {
+export interface FrameWeaverState {
   chapterIndex: number;
   panels: PanelState[];
   selectedSlot: SlotIndex | null;
@@ -327,7 +326,155 @@ export const CHAPTERS: ChapterSpec[] = [
   },
 ];
 
-export function createGorogoaState(chapterIndex = 0): GorogoaState {
+type Loc = "ko" | "en" | "ja" | "zh" | "fr" | "es";
+type Text6 = Record<Loc, string>;
+const LOCS: Loc[] = ["ko", "en", "ja", "zh", "fr", "es"];
+
+/** Every scene drawn in the first three chapters, by panel id, so later chapters can recombine them. */
+const PANEL_LIBRARY: Record<string, PanelDefinition> = Object.fromEntries(
+  CHAPTERS.flatMap((c) => c.panels).map((p) => [p.id, p]),
+);
+
+const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+
+interface RemixSpec {
+  id: string;
+  name: Text6;
+  /** Panel ids with their starting slots. */
+  slots: Record<string, SlotIndex>;
+  horizontal?: [string, string];
+  vertical?: [string, string];
+  stack: { stencil: string; target: string };
+}
+
+function fill(template: Text6, loc: Loc, vars: Record<string, string>): string {
+  return template[loc].replace(/\{(\w+)\}/g, (_, k: string) => vars[k] ?? "");
+}
+
+const OBJ_H: Text6 = {
+  ko: "{a}(좌)와 {b}(우)를 확대해 나란히 두고, {s}를 확대해 {t} 위에 겹치세요.",
+  en: "Zoom into {a} and {b}, set them side by side (Left -> Right), and stack {s} onto {t}.",
+  ja: "{a}(左)と{b}(右)を拡大して並べ、{s}を拡大して{t}に重ねましょう。",
+  zh: "放大{a}（左）与{b}（右）并左右并排，再放大{s}并叠加到{t}上。",
+  fr: "Zoomez sur {a} et {b}, placez-les côte à côte (Gauche -> Droite) et superposez {s} sur {t}.",
+  es: "Haz zoom en {a} y {b}, colócalos de izquierda a derecha y superpón {s} sobre {t}.",
+};
+const OBJ_V: Text6 = {
+  ko: "{a}(위)와 {b}(아래)를 확대해 세로로 맞추고, {s}를 확대해 {t} 위에 겹치세요.",
+  en: "Zoom into {a} and {b}, line them up (Top -> Bottom), and stack {s} onto {t}.",
+  ja: "{a}(上)と{b}(下)を拡大して縦に揃え、{s}を拡大して{t}に重ねましょう。",
+  zh: "放大{a}（上）与{b}（下）并上下对齐，再放大{s}并叠加到{t}上。",
+  fr: "Zoomez sur {a} et {b}, alignez-les (Haut -> Bas) et superposez {s} sur {t}.",
+  es: "Haz zoom en {a} y {b}, alinéalos de arriba abajo y superpón {s} sobre {t}.",
+};
+const OBJ_HV: Text6 = {
+  ko: "{a}를 왼쪽 위에 두고 오른쪽에 {b}, 아래에 {c}를 맞추세요. 셋 다 확대한 뒤 {s}를 {c} 위에 겹치세요.",
+  en: "Put {a} top-left with {b} to its right and {c} below it. Zoom into all three, then stack {s} onto {c}.",
+  ja: "{a}を左上に置き、右に{b}、下に{c}を揃えます。3枚とも拡大し、{s}を{c}に重ねましょう。",
+  zh: "把{a}放在左上，右边放{b}，下方放{c}。三张都放大后，把{s}叠加到{c}上。",
+  fr: "Placez {a} en haut à gauche, {b} à sa droite et {c} en dessous. Zoomez sur les trois, puis superposez {s} sur {c}.",
+  es: "Pon {a} arriba a la izquierda, {b} a su derecha y {c} debajo. Haz zoom en los tres y superpón {s} sobre {c}.",
+};
+const HINT_PREFIX: Text6 = { ko: "힌트: ", en: "Hint: ", ja: "ヒント: ", zh: "提示：", fr: "Indice : ", es: "Pista: " };
+const HINT_STACK_FIRST: Text6 = {
+  ko: "먼저 {s}를 확대(🔍+)해 {t}와 교환하면 틀이 겹쳐요. 그다음 나머지 두 장의 자리를 맞추세요.",
+  en: "Zoom {s} first (🔍+) and swap it with {t} to lay the stencil, then fix the other two frames.",
+  ja: "まず{s}を拡大(🔍+)して{t}と入れ替えると枠が重なります。次に残り2枚の位置を揃えましょう。",
+  zh: "先放大{s}（🔍+）并与{t}交换即可叠框，然后摆好另外两张。",
+  fr: "Zoomez d'abord sur {s} (🔍+) et échangez-le avec {t} pour poser le pochoir, puis placez les deux autres cadres.",
+  es: "Primero haz zoom en {s} (🔍+) e intercámbialo con {t} para colocar la plantilla; luego ordena los otros dos marcos.",
+};
+const CHAPTER_WORD: Text6 = { ko: "제{n}장", en: "Chapter {r}", ja: "第{n}章", zh: "第{n}章", fr: "Chapitre {r}", es: "Capítulo {r}" };
+
+function remixChapter(num: number, spec: RemixSpec): ChapterSpec {
+  const title = (id: string, loc: Loc) => PANEL_LIBRARY[id].title[loc];
+  const text = (make: (loc: Loc) => string): Text6 =>
+    Object.fromEntries(LOCS.map((loc) => [loc, make(loc)])) as Text6;
+  const zoomIds = [...(spec.horizontal ?? []), ...(spec.vertical ?? [])];
+  const both = spec.horizontal && spec.vertical;
+  return {
+    id: spec.id,
+    chapterNum: num,
+    title: text((loc) => `${fill(CHAPTER_WORD, loc, { n: String(num), r: ROMAN[num] })}${loc === "zh" || loc === "ja" ? "：" : ": "}${spec.name[loc]}`),
+    objective: text((loc) => {
+      const vars = { s: title(spec.stack.stencil, loc), t: title(spec.stack.target, loc) };
+      if (both && spec.horizontal && spec.vertical)
+        return fill(OBJ_HV, loc, { ...vars, a: title(spec.horizontal[0], loc), b: title(spec.horizontal[1], loc), c: title(spec.vertical[1], loc) });
+      const pair = (spec.horizontal ?? spec.vertical)!;
+      return fill(spec.horizontal ? OBJ_H : OBJ_V, loc, { ...vars, a: title(pair[0], loc), b: title(pair[1], loc) });
+    }),
+    hintText: text((loc) => HINT_PREFIX[loc] + fill(HINT_STACK_FIRST, loc, { s: title(spec.stack.stencil, loc), t: title(spec.stack.target, loc) })),
+    panels: Object.entries(spec.slots).map(([id, slot]) => ({ ...PANEL_LIBRARY[id], initialSlot: slot, initialZoom: 0 })),
+    rule: {
+      requiredZooms: Object.fromEntries([...new Set(zoomIds)].map((id) => [id, 1])),
+      ...(spec.horizontal ? { horizontalPair: spec.horizontal } : {}),
+      ...(spec.vertical ? { verticalPair: spec.vertical } : {}),
+      requiredStack: { stencilPanelId: spec.stack.stencil, targetPanelId: spec.stack.target },
+    },
+  };
+}
+
+/**
+ * Chapters IV-X recombine the drawn scenes into new frame puzzles (stage range 10-50, 2026-11-21).
+ * Each stencil keeps its own target, since the stacked art is drawn per pair.
+ */
+const REMIXES: RemixSpec[] = [
+  {
+    id: "study-under-stars",
+    name: { ko: "별 아래의 서재", en: "The Study Under the Stars", ja: "星の下の書斎", zh: "星空下的书房", fr: "L'Étude sous les Étoiles", es: "El Estudio Bajo las Estrellas" },
+    slots: { tower_base: 0, night_telescope: 1, star_sky: 2, seeker_room: 3 },
+    vertical: ["seeker_room", "tower_base"],
+    stack: { stencil: "night_telescope", target: "star_sky" },
+  },
+  {
+    id: "orchard-lamp",
+    name: { ko: "과수원의 등불", en: "The Orchard Lamp", ja: "果樹園の灯", zh: "果园灯火", fr: "La Lampe du Verger", es: "La Lámpara del Huerto" },
+    slots: { lighthouse_right: 0, sanctuary_bell: 1, crimson_tree: 2, sun_dial: 3 },
+    horizontal: ["crimson_tree", "lighthouse_right"],
+    stack: { stencil: "sun_dial", target: "sanctuary_bell" },
+  },
+  {
+    id: "rooftop-spring",
+    name: { ko: "지붕 위의 샘", en: "The Spring on the Roof", ja: "屋根の上の泉", zh: "屋顶之泉", fr: "La Source sur le Toit", es: "El Manantial del Tejado" },
+    slots: { fountain_courtyard: 0, tower_top: 1, stone_arch: 2, rooftop_left: 3 },
+    vertical: ["rooftop_left", "tower_top"],
+    stack: { stencil: "stone_arch", target: "fountain_courtyard" },
+  },
+  {
+    id: "stair-to-orchard",
+    name: { ko: "과수원으로 가는 계단", en: "The Stair to the Orchard", ja: "果樹園への階段", zh: "通往果园的阶梯", fr: "L'Escalier du Verger", es: "La Escalera al Huerto" },
+    slots: { crimson_tree: 0, star_sky: 1, tower_top: 2, night_telescope: 3 },
+    horizontal: ["tower_top", "crimson_tree"],
+    stack: { stencil: "night_telescope", target: "star_sky" },
+  },
+  {
+    id: "bell-on-the-roof",
+    name: { ko: "지붕 위의 종소리", en: "A Bell Over the Rooftops", ja: "屋根に響く鐘", zh: "屋顶钟声", fr: "Une Cloche sur les Toits", es: "Una Campana Sobre los Tejados" },
+    slots: { sun_dial: 0, seeker_room: 1, sanctuary_bell: 2, rooftop_left: 3 },
+    horizontal: ["rooftop_left", "seeker_room"],
+    stack: { stencil: "sun_dial", target: "sanctuary_bell" },
+  },
+  {
+    id: "harbor-arch",
+    name: { ko: "항구의 아치", en: "The Harbor Arch", ja: "港のアーチ", zh: "港湾拱门", fr: "L'Arche du Port", es: "El Arco del Puerto" },
+    slots: { tower_base: 0, fountain_courtyard: 1, lighthouse_right: 2, stone_arch: 3 },
+    vertical: ["lighthouse_right", "tower_base"],
+    stack: { stencil: "stone_arch", target: "fountain_courtyard" },
+  },
+  {
+    id: "woven-night",
+    name: { ko: "하나로 엮인 밤", en: "The Woven Night", ja: "織り上がる夜", zh: "交织之夜", fr: "La Nuit Tissée", es: "La Noche Tejida" },
+    slots: { night_telescope: 0, star_sky: 1, lighthouse_right: 2, tower_top: 3 },
+    horizontal: ["tower_top", "lighthouse_right"],
+    vertical: ["tower_top", "star_sky"],
+    stack: { stencil: "night_telescope", target: "star_sky" },
+  },
+];
+
+const FIRST_REMIX = CHAPTERS.length + 1;
+CHAPTERS.push(...REMIXES.map((r, i) => remixChapter(FIRST_REMIX + i, r)));
+
+export function createFrameWeaverState(chapterIndex = 0): FrameWeaverState {
   const safeIdx = Math.max(0, Math.min(CHAPTERS.length - 1, chapterIndex));
   const spec = CHAPTERS[safeIdx];
 
@@ -351,7 +498,7 @@ export function createGorogoaState(chapterIndex = 0): GorogoaState {
   };
 }
 
-export function checkChapterSolved(state: GorogoaState): boolean {
+export function checkChapterSolved(state: FrameWeaverState): boolean {
   const spec = CHAPTERS[state.chapterIndex];
   const rule = spec.rule;
 
@@ -401,7 +548,7 @@ export function checkChapterSolved(state: GorogoaState): boolean {
   return true;
 }
 
-function updateSolvedStatus(state: GorogoaState): void {
+function updateSolvedStatus(state: FrameWeaverState): void {
   if (checkChapterSolved(state)) {
     state.isChapterCleared = true;
     state.connectionAnimProgress = 1;
@@ -411,7 +558,7 @@ function updateSolvedStatus(state: GorogoaState): void {
   }
 }
 
-export function togglePanelZoom(state: GorogoaState, panelId: string): boolean {
+export function togglePanelZoom(state: FrameWeaverState, panelId: string): boolean {
   if (state.isChapterCleared) return false;
   const spec = CHAPTERS[state.chapterIndex];
   const def = spec.panels.find((d) => d.id === panelId);
@@ -425,7 +572,7 @@ export function togglePanelZoom(state: GorogoaState, panelId: string): boolean {
 }
 
 export function interactSlots(
-  state: GorogoaState,
+  state: FrameWeaverState,
   slotA: SlotIndex,
   slotB: SlotIndex
 ): { action: "swapped" | "stacked" | "none" } {
@@ -483,7 +630,7 @@ export function interactSlots(
 /**
  * Performs one smart assistive step toward solving the current chapter
  */
-export function applyHintStep(state: GorogoaState): boolean {
+export function applyHintStep(state: FrameWeaverState): boolean {
   if (state.isChapterCleared) return false;
   const spec = CHAPTERS[state.chapterIndex];
   const rule = spec.rule;

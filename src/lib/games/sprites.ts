@@ -996,11 +996,11 @@ export const DARKEST_TORCH_SPRITES = {
   trophy: "/assets/sprites/darkest-torch/trophy-torch-3d-128.png",
 } as const;
 
-export const GOROGOA_FRAME_SPRITES = {
-  frame: "/assets/sprites/gorogoa-frame/frame-stencil-3d-128.png",
-  fruit: "/assets/sprites/gorogoa-frame/fruit-crimson-3d-128.png",
-  moth: "/assets/sprites/gorogoa-frame/moth-star-3d-128.png",
-  trophy: "/assets/sprites/gorogoa-frame/trophy-gorogoa-3d-128.png",
+export const FRAME_WEAVER_SPRITES = {
+  frame: "/assets/sprites/frame-weaver/frame-stencil-3d-128.png",
+  fruit: "/assets/sprites/frame-weaver/fruit-crimson-3d-128.png",
+  moth: "/assets/sprites/frame-weaver/moth-star-3d-128.png",
+  trophy: "/assets/sprites/frame-weaver/trophy-frame-3d-128.png",
 } as const;
 
 export const CHRONO_DETECTIVE_SPRITES = {
