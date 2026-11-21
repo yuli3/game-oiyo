@@ -5,6 +5,7 @@ import {
   rotateSelectedTool,
   stepFactorio,
   applyStageBlueprint,
+  STAGES,
 } from "./factorio-mini";
 
 describe("Factorio Automation Mini Engine", () => {
@@ -64,5 +65,20 @@ describe("Factorio Automation Mini Engine", () => {
     }
     expect(state.isCleared).toBe(true);
     expect(state.rp).toBeGreaterThanOrEqual(state.targetRp);
+  });
+
+  it("ships 10 to 50 sectors and every blueprint reaches its research goal", () => {
+    expect(STAGES.length).toBeGreaterThanOrEqual(10);
+    expect(STAGES.length).toBeLessThanOrEqual(50);
+    STAGES.forEach((spec, i) => {
+      for (const lang of ["ko", "en", "ja", "zh", "fr", "es"] as const) {
+        expect(spec.name[lang].length).toBeGreaterThan(0);
+        expect(spec.description[lang].length).toBeGreaterThan(0);
+      }
+      const state = createFactorioState(i);
+      applyStageBlueprint(state);
+      for (let t = 0; t < 120 && !state.isCleared; t += 0.05) stepFactorio(state, 0.05);
+      expect(state.isCleared, spec.id).toBe(true);
+    });
   });
 });

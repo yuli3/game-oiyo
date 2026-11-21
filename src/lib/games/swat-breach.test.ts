@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
+  MISSIONS,
   addWaypointOrFlash,
+  applyAutoTacticalPlan,
   clearOperatorWaypoints,
   createSwatBreachState,
   hasLineOfSight,
@@ -136,5 +138,30 @@ describe("Tactical SWAT Breach Engine", () => {
       expect(log.sender.es).toBeDefined();
       expect(log.message.ko).toBeDefined();
     }
+  });
+
+  it("ships 10 to 50 missions, each with a valid floorplan and full translations", () => {
+    expect(MISSIONS.length).toBeGreaterThanOrEqual(10);
+    expect(MISSIONS.length).toBeLessThanOrEqual(50);
+    expect(new Set(MISSIONS.map((m) => m.id)).size).toBe(MISSIONS.length);
+    MISSIONS.forEach((m, i) => {
+      expect(m.missionNum).toBe(i + 1);
+      expect(m.layout).toHaveLength(8);
+      for (const row of m.layout) expect(row).toHaveLength(10);
+      for (const lang of ["ko", "en", "ja", "zh", "fr", "es"] as const) {
+        expect(m.title[lang].length).toBeGreaterThan(0);
+        expect(m.briefing[lang].length).toBeGreaterThan(0);
+      }
+    });
+  });
+
+  it("clears every mission with its auto tactical plan", () => {
+    MISSIONS.forEach((_, i) => {
+      const state = createSwatBreachState(i);
+      applyAutoTacticalPlan(state);
+      startBreachExecution(state);
+      for (let step = 0; step < 900 && state.phase === "executing"; step++) stepSwatBreach(state, 1 / 30);
+      expect(state.phase, MISSIONS[i].id).toBe("victory");
+    });
   });
 });

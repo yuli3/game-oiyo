@@ -104,7 +104,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
   const [playerFreePower, setPlayerFreePower] = useState(1);
   const [playerTotalPower, setPlayerTotalPower] = useState(10);
 
-  const [enemyName, setEnemyName] = useState('Rebel Scout');
+  const [enemyName, setEnemyName] = useState('Rust Scout');
   const [enemyHull, setEnemyHull] = useState(12);
   const [enemyMaxHull, setEnemyMaxHull] = useState(12);
   const [enemyShields, setEnemyShields] = useState(1);
@@ -662,7 +662,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
           <div className="flex flex-col min-w-32">
             <div className="flex justify-between text-xs font-bold items-center">
               <span className="text-primary flex items-center gap-1">
-                <img src={FTL_MINI_SPRITES.cruiser} alt="Kestrel Cruiser" className="size-4 object-contain inline-block" />
+                <img src={FTL_MINI_SPRITES.cruiser} alt="Skiff Cruiser" className="size-4 object-contain inline-block" />
                 USS Antigravity
               </span>
               <span>{playerHull}/{playerMaxHull}</span>
@@ -956,7 +956,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
           <div className="flex items-center gap-2 pt-2 border-t border-border/40">
             <div className="flex-1 flex flex-col">
               <div className="flex justify-between text-xs font-bold text-info">
-                <span>FTL Drive</span>
+                <span>Warp Drive</span>
                 <span>{playerFtl}%</span>
               </div>
               <div className="w-full bg-muted h-2 rounded-full overflow-hidden mt-1 border border-border/40">
@@ -976,7 +976,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
                   : 'bg-muted text-muted-foreground opacity-50 cursor-not-allowed'
               }`}
             >
-              FTL Jump
+              Warp Jump
             </TiltFTLButton>
           </div>
         </div>

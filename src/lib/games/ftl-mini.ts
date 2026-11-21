@@ -224,7 +224,7 @@ export class FTLEngine {
       });
     }
 
-    const enemyNames = ['Rebel Scout', 'Pirate Interceptor', 'Auto-Assault Drone', 'Mantis Fighter'];
+    const enemyNames = ['Rust Scout', 'Pirate Interceptor', 'Auto-Assault Drone', 'Hornet Fighter'];
     const name = enemyNames[(sector - 1) % enemyNames.length];
 
     return {
@@ -534,7 +534,7 @@ export class FTLEngine {
     this.player.ftlCharge = 0;
     this.sector++;
     this.enemy = this.createEnemyShip(this.sector);
-    this.addFloatingText(`FTL Jump: Sector ${this.sector}!`, 50, 20, '#38bdf8');
+    this.addFloatingText(`Warp Jump: Sector ${this.sector}!`, 50, 20, '#38bdf8');
     return true;
   }
 

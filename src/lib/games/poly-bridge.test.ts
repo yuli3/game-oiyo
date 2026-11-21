@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BRIDGE_LEVELS,
   addOrConnectBridgeNode,
   applyAutoTrussBlueprint,
   createBridgeLevelState,
@@ -51,5 +52,18 @@ describe('Poly Bridge Truss Architect (#139)', () => {
       if (state.phase !== 'simulating') break;
     }
     expect(state.phase).toBe('victory');
+  });
+
+  it('ships 10 to 50 gorges and every Auto-Truss Blueprint fits its budget and carries the truck', () => {
+    expect(BRIDGE_LEVELS.length).toBeGreaterThanOrEqual(10);
+    expect(BRIDGE_LEVELS.length).toBeLessThanOrEqual(50);
+    BRIDGE_LEVELS.forEach((lvl, i) => {
+      expect(lvl.index).toBe(i);
+      let state = applyAutoTrussBlueprint(createBridgeLevelState(i));
+      expect(state.spent, lvl.nameKey).toBeLessThanOrEqual(state.budget);
+      state = startBridgeSimulation(state);
+      for (let step = 0; step < 400 && state.phase === 'simulating'; step++) state = stepBridgePhysics(state, 0.03);
+      expect(state.phase, lvl.nameKey).toBe('victory');
+    });
   });
 });

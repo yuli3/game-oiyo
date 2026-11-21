@@ -208,8 +208,8 @@ export function createInitialDarkestTorchState(
     heroes: [
       {
         id: "crusader",
-        nameKo: "성전사 (Crusader)",
-        nameEn: "Crusader",
+        nameKo: "횃불 기사 (Torch Knight)",
+        nameEn: "Torch Knight",
         emoji: "⚔️",
         rank: 1,
         hp: 62,
@@ -221,8 +221,8 @@ export function createInitialDarkestTorchState(
       },
       {
         id: "highwayman",
-        nameKo: "노상강도 (Highwayman)",
-        nameEn: "Highwayman",
+        nameKo: "떠돌이 총잡이 (Drifter)",
+        nameEn: "Drifter",
         emoji: "🔫",
         rank: 2,
         hp: 50,
@@ -234,8 +234,8 @@ export function createInitialDarkestTorchState(
       },
       {
         id: "plague-doctor",
-        nameKo: "역병의사 (Plague Doctor)",
-        nameEn: "Plague Doctor",
+        nameKo: "약초꾼 (Herbalist)",
+        nameEn: "Herbalist",
         emoji: "🧪",
         rank: 3,
         hp: 44,
@@ -247,8 +247,8 @@ export function createInitialDarkestTorchState(
       },
       {
         id: "vestal",
-        nameKo: "성녀 (Vestal)",
-        nameEn: "Vestal",
+        nameKo: "등불 수녀 (Lantern Nun)",
+        nameEn: "Lantern Nun",
         emoji: "✨",
         rank: 4,
         hp: 48,
@@ -388,7 +388,7 @@ export function executeHeroSkill(
     nextEnemies = nextEnemies.map((e) =>
       e.id === target.id ? { ...e, hp: Math.max(0, e.hp - dmg) } : e
     );
-    logs.push(`⚔️ Crusader Smite hit ${target.nameEn} for ${dmg} DMG!`);
+    logs.push(`⚔️ Torch Knight Smite hit ${target.nameEn} for ${dmg} DMG!`);
   } else if (skillId === "point-blank" && target) {
     const hwm = nextHeroes.find((h) => h.id === "highwayman") ?? nextHeroes[1];
     const dmg = Math.round((hwm?.atk ?? 22) * 1.35);
@@ -418,7 +418,7 @@ export function executeHeroSkill(
       hp: Math.min(h.maxHp, h.hp + 14),
       stress: Math.max(0, h.stress - 6),
     }));
-    logs.push(`✨ Vestal Divine Comfort restored +14 HP and -6 Stress to party!`);
+    logs.push(`✨ Lantern Nun Comfort restored +14 HP and -6 Stress to party!`);
   } else if (skillId === "inspiring-torch") {
     nextTorch = Math.min(100, nextTorch + 22);
     nextHeroes = nextHeroes.map((h) => ({

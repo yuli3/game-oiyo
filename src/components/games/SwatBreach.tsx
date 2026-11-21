@@ -207,6 +207,8 @@ const I18N: Record<
 };
 
 const CELL_SIZE = 62;
+// Furthest unlocked mission, so a returning player resumes where they left off.
+const SWAT_MISSION_KEY = "oiyo:swat-breach:mission";
 const OFFSET_X = 40;
 const OFFSET_Y = 22;
 
@@ -381,6 +383,13 @@ export default function SwatBreach({ locale = "ko" }: Props) {
     }
 
     if (st.phase === "victory") {
+      try {
+        const next = Math.min(MISSIONS.length - 1, st.missionIndex + 1);
+        const saved = Number(window.localStorage.getItem(SWAT_MISSION_KEY) ?? 0);
+        if (next > saved) window.localStorage.setItem(SWAT_MISSION_KEY, String(next));
+      } catch {
+        // Storage blocked: progress just is not remembered.
+      }
       const dateKey = new Date().toISOString().slice(0, 10);
       const pass = loadArcadePassProgress(dateKey);
       const updated = reportMissionProgress(pass, "swat-breach", st.missionIndex + 1);
@@ -395,6 +404,17 @@ export default function SwatBreach({ locale = "ko" }: Props) {
     },
     [buildMetaModifiers, metaState, syncUi]
   );
+
+  useEffect(() => {
+    let saved = 0;
+    try {
+      saved = Number(window.localStorage.getItem(SWAT_MISSION_KEY) ?? 0);
+    } catch {
+      saved = 0;
+    }
+    if (Number.isInteger(saved) && saved > 0 && saved < MISSIONS.length) loadMission(saved);
+    // Resume once on mount only.
+  }, []);
 
   const handleSelectOp = useCallback(
     (opId: "alpha" | "bravo") => {
@@ -786,7 +806,12 @@ export default function SwatBreach({ locale = "ko" }: Props) {
           <Shield className="w-5 h-5 text-primary" />
           <div>
             <h2 className="text-sm font-bold tracking-tight text-primary">{t.title}</h2>
-            <p className="text-xs text-muted-foreground">{curMission.title[lang]}</p>
+            <p className="text-xs text-muted-foreground">
+              {curMission.title[lang]}
+              <span className="ml-1 tabular-nums opacity-80">
+                · {uiMissionIdx + 1} / {MISSIONS.length}
+              </span>
+            </p>
           </div>
         </div>
 

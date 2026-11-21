@@ -8,6 +8,7 @@ import {
   updateGolfPhysics,
   advanceToNextHole,
   COURSES,
+  holeLabel,
 } from '../../lib/games/mini-golf';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import type { Locale } from '../../lib/i18n';
@@ -565,7 +566,7 @@ export default function MiniGolf({ locale }: Props) {
         <div className="flex items-center gap-2">
           <span className="text-sm sm:text-base font-bold text-foreground">⛳ {t.title}</span>
           <span className="text-xs text-muted-foreground hidden sm:inline">
-            · {currentHole.name}
+            · {holeLabel(currentHole, locale)}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -653,7 +654,7 @@ export default function MiniGolf({ locale }: Props) {
             <h2 className="text-2xl sm:text-3xl font-black text-foreground mb-1">{t.holedTitle}</h2>
             <p className="text-sm text-muted-foreground mb-4">{t.holedSubtitle}</p>
             <div className="bg-card border border-border rounded-xl p-4 mb-6 text-center min-w-48">
-              <span className="text-xs text-muted-foreground block mb-1">{currentHole.name}</span>
+              <span className="text-xs text-muted-foreground block mb-1">{holeLabel(currentHole, locale)}</span>
               <span className="text-2xl font-black text-primary font-mono">
                 {gameState.strokesThisHole} {t.strokes} (Par {currentHole.par})
               </span>

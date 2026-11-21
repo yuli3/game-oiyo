@@ -9,6 +9,8 @@ export interface GolfHole {
   id: number;
   par: number;
   name: string;
+  /** Localized hole name; falls back to `name` (English). */
+  label?: Partial<Record<"ko" | "en" | "ja" | "zh" | "fr" | "es", string>>;
   startPos: { x: number; y: number; z: number };
   holePos: { x: number; y: number; z: number };
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
@@ -36,12 +38,13 @@ export interface MiniGolfState {
   lastEvent?: "wall_hit" | "sand" | "water_hazard" | "hole_in";
 }
 
-// 3 Curated 3D Voxel Mini Golf Holes
+// 10 curated 3D voxel mini golf holes (stage range 10-50, 2026-11-21)
 export const COURSES: GolfHole[] = [
   {
     id: 1,
     par: 3,
     name: "Classic Fairway",
+    label: { ko: "클래식 페어웨이", en: "Classic Fairway", ja: "クラシックフェアウェイ", zh: "经典球道", fr: "Allée classique", es: "Calle clásica" },
     startPos: { x: 0, y: 0.15, z: 6 },
     holePos: { x: 0, y: 0.15, z: -5 },
     bounds: { minX: -2.5, maxX: 2.5, minZ: -7, maxZ: 7.5 },
@@ -58,6 +61,7 @@ export const COURSES: GolfHole[] = [
     id: 2,
     par: 3,
     name: "Twin Bunkers & S-Turn",
+    label: { ko: "쌍둥이 벙커와 S자 커브", en: "Twin Bunkers & S-Turn", ja: "ツインバンカーとS字カーブ", zh: "双沙坑与 S 弯", fr: "Double bunker et virage en S", es: "Doble búnker y curva en S" },
     startPos: { x: -1.5, y: 0.15, z: 5.5 },
     holePos: { x: 1.5, y: 0.15, z: -5 },
     bounds: { minX: -3.5, maxX: 3.5, minZ: -7, maxZ: 7 },
@@ -71,6 +75,7 @@ export const COURSES: GolfHole[] = [
     id: 3,
     par: 4,
     name: "Island Green Bridge",
+    label: { ko: "섬 그린 다리", en: "Island Green Bridge", ja: "アイランドグリーンの橋", zh: "岛屿果岭之桥", fr: "Pont du green insulaire", es: "Puente del green isla" },
     startPos: { x: 0, y: 0.15, z: 6 },
     holePos: { x: 0, y: 0.15, z: -5.5 },
     bounds: { minX: -3.5, maxX: 3.5, minZ: -7.5, maxZ: 7.5 },
@@ -80,7 +85,121 @@ export const COURSES: GolfHole[] = [
       { x: 0, z: 0, height: 0, type: "green" },
     ],
   },
+  {
+    id: 4,
+    par: 3,
+    name: "Sand Trap Alley",
+    label: { ko: "모래 함정 골목", en: "Sand Trap Alley", ja: "砂の罠の小道", zh: "沙坑小巷", fr: "Allée des bunkers", es: "Callejón de arena" },
+    startPos: { x: 0, y: 0.15, z: 6 },
+    holePos: { x: 0, y: 0.15, z: -5.5 },
+    bounds: { minX: -3, maxX: 3, minZ: -7, maxZ: 7.5 },
+    tiles: [
+      { x: 0, z: 0, height: 0, type: "sand" },
+      { x: -1.6, z: -3, height: 0, type: "sand" },
+      { x: 1.6, z: -3, height: 0, type: "sand" },
+      { x: 0, z: -3.6, height: 0, type: "green" },
+    ],
+  },
+  {
+    id: 5,
+    par: 4,
+    name: "Dogleg Wall",
+    label: { ko: "꺾인 벽 코스", en: "Dogleg Wall", ja: "ドッグレッグの壁", zh: "折角墙", fr: "Mur en coude", es: "Muro en codo" },
+    startPos: { x: -2, y: 0.15, z: 6 },
+    holePos: { x: 2, y: 0.15, z: -5 },
+    bounds: { minX: -3.5, maxX: 3.5, minZ: -7, maxZ: 7.5 },
+    tiles: [
+      { x: -2.8, z: 0, height: 0.2, type: "wall" },
+      { x: -1.4, z: 0, height: 0.2, type: "wall" },
+      { x: 0, z: 0, height: 0.2, type: "wall" },
+      { x: 1.4, z: -3, height: 0, type: "sand" },
+    ],
+  },
+  {
+    id: 6,
+    par: 3,
+    name: "Water Crossing",
+    label: { ko: "물길 건너기", en: "Water Crossing", ja: "水路越え", zh: "跨越水道", fr: "Traversée du ruisseau", es: "Cruce del arroyo" },
+    startPos: { x: 0, y: 0.15, z: 6 },
+    holePos: { x: 0, y: 0.15, z: -5 },
+    bounds: { minX: -3.5, maxX: 3.5, minZ: -7, maxZ: 7.5 },
+    tiles: [
+      { x: -1, z: 0, height: -0.2, type: "water" },
+      { x: 1, z: 0, height: -0.2, type: "water" },
+      { x: 0, z: -3, height: 0, type: "green" },
+    ],
+  },
+  {
+    id: 7,
+    par: 4,
+    name: "Bumper Maze",
+    label: { ko: "범퍼 미로", en: "Bumper Maze", ja: "バンパー迷路", zh: "弹板迷宫", fr: "Labyrinthe à rebonds", es: "Laberinto de topes" },
+    startPos: { x: 0, y: 0.15, z: 6 },
+    holePos: { x: 0, y: 0.15, z: -5.5 },
+    bounds: { minX: -3.5, maxX: 3.5, minZ: -7, maxZ: 7.5 },
+    tiles: [
+      { x: -1.6, z: 2, height: 0.2, type: "wall" },
+      { x: 1.6, z: 2, height: 0.2, type: "wall" },
+      { x: 0, z: -1, height: 0.2, type: "wall" },
+      { x: -2.6, z: -3.5, height: 0.2, type: "wall" },
+      { x: 2.6, z: -3.5, height: 0.2, type: "wall" },
+    ],
+  },
+  {
+    id: 8,
+    par: 4,
+    name: "Narrow Bridge",
+    label: { ko: "좁은 다리", en: "Narrow Bridge", ja: "細い橋", zh: "窄桥", fr: "Pont étroit", es: "Puente estrecho" },
+    startPos: { x: 0, y: 0.15, z: 6 },
+    holePos: { x: 0, y: 0.15, z: -5.5 },
+    bounds: { minX: -3.5, maxX: 3.5, minZ: -7.5, maxZ: 7.5 },
+    tiles: [
+      { x: -2.5, z: 1, height: -0.2, type: "water" },
+      { x: 2.5, z: 1, height: -0.2, type: "water" },
+      { x: -2.5, z: -1, height: -0.2, type: "water" },
+      { x: 2.5, z: -1, height: -0.2, type: "water" },
+      { x: 0, z: -3.8, height: 0, type: "sand" },
+    ],
+  },
+  {
+    id: 9,
+    par: 4,
+    name: "Zigzag Terraces",
+    label: { ko: "지그재그 계단", en: "Zigzag Terraces", ja: "ジグザグ段々", zh: "之字梯台", fr: "Terrasses en zigzag", es: "Terrazas en zigzag" },
+    startPos: { x: 0, y: 0.15, z: 7 },
+    holePos: { x: 0, y: 0.15, z: -6.5 },
+    bounds: { minX: -3.5, maxX: 3.5, minZ: -8, maxZ: 8 },
+    tiles: [
+      { x: -2.8, z: 3, height: 0.2, type: "wall" },
+      { x: -1.4, z: 3, height: 0.2, type: "wall" },
+      { x: 0, z: 3, height: 0.2, type: "wall" },
+      { x: 0, z: -1.5, height: 0.2, type: "wall" },
+      { x: 1.4, z: -1.5, height: 0.2, type: "wall" },
+      { x: 2.8, z: -1.5, height: 0.2, type: "wall" },
+    ],
+  },
+  {
+    id: 10,
+    par: 4,
+    name: "Grand Finale",
+    label: { ko: "그랜드 피날레", en: "Grand Finale", ja: "グランドフィナーレ", zh: "压轴终章", fr: "Grand final", es: "Gran final" },
+    startPos: { x: 0, y: 0.15, z: 7 },
+    holePos: { x: 0, y: 0.15, z: -6.5 },
+    bounds: { minX: -3.5, maxX: 3.5, minZ: -8, maxZ: 8 },
+    tiles: [
+      { x: -2.5, z: 3, height: -0.2, type: "water" },
+      { x: 2.5, z: 3, height: -0.2, type: "water" },
+      { x: 0, z: 0, height: 0.2, type: "wall" },
+      { x: -1.6, z: -3.5, height: 0, type: "sand" },
+      { x: 1.6, z: -3.5, height: 0, type: "sand" },
+      { x: 0, z: -5, height: 0, type: "green" },
+    ],
+  },
 ];
+
+export function holeLabel(hole: GolfHole, locale: string): string {
+  return hole.label?.[locale as keyof NonNullable<GolfHole["label"]>] ?? hole.name;
+}
 
 export const HOLE_CUP_RADIUS = 0.35;
 export const MAX_PUTT_SPEED = 14;

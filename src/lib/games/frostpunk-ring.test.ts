@@ -31,7 +31,7 @@ describe("frostpunk-ring engine", () => {
     expect(state.laws["overdrive-couplings"].enacted).toBe(true);
   });
 
-  it("survives the 6-day Great Whiteout when coal supply and generator levels are maintained", () => {
+  it("survives the 10-day Great Whiteout when coal supply and generator levels are maintained", () => {
     let state = createInitialFrostpunkRingState(99);
     state = constructFrostBuilding(state, "r1-s1", "coal-thumper");
     state = constructFrostBuilding(state, "r1-s3", "coal-thumper");
@@ -39,11 +39,20 @@ describe("frostpunk-ring engine", () => {
     state = toggleGeneratorOverdrive(state);
     state = toggleGeneratorOverdrive(state); // keep stress safe
 
-    for (let i = 0; i < 36 && state.status === "playing"; i += 1) {
+    for (let i = 0; i < 70 && state.status === "playing"; i += 1) {
       state = stepFrostpunkHour(state, 4);
     }
 
     expect(state.status).toBe("won");
     expect(state.lastEvent).toBe("whiteout-survived");
+    expect(state.day).toBe(10);
+  });
+
+  it("an idle city that never builds more coal runs dry before the whiteout ends", () => {
+    let state = createInitialFrostpunkRingState(99);
+    for (let i = 0; i < 70 && state.status === "playing"; i += 1) {
+      state = stepFrostpunkHour(state, 4);
+    }
+    expect(state.status).toBe("lost");
   });
 });

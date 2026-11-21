@@ -847,11 +847,11 @@ export default function FactorioMini({ locale = "ko" }: Props) {
 
         {/* Research Progress Bar */}
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between text-xs font-bold">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
             <span className="text-primary">
               🔬 {t.rpLabel}: {uiRp} / {uiTargetRp} RP ({progressPct}%)
             </span>
-            <div className="flex gap-1.5">
+            <div className="flex flex-wrap justify-end gap-1.5">
               {STAGES.map((s, idx) => (
                 <TiltFactorioButton
                   key={s.id}
