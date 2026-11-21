@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class SliceMasterPlayer : MonoBehaviour
 {
+    // Page language (?lang=): Korean when ko, English for every other locale.
+    static bool _isKoInit, _isKo;
+    static bool IsKo { get { if (!_isKoInit) { _isKo = OiyoLang.Pick("ko", "en") == "ko"; _isKoInit = true; } return _isKo; } }
+    static string T(string ko, string en) => IsKo ? ko : en;
     const int MaxStages = 12;
 
     // Stage Definition
@@ -13,6 +17,7 @@ public class SliceMasterPlayer : MonoBehaviour
         public string titleKo;
         public string titleEn;
         public string themeDescKo;
+        public string themeDescEn;
         public Color objColorA;
         public Color objColorB;
         public int targetCount;
@@ -21,18 +26,18 @@ public class SliceMasterPlayer : MonoBehaviour
 
     static readonly StageDef[] Stages = new StageDef[]
     {
-        new StageDef { stage = 1, titleKo = "과일 시장", titleEn = "Fruit Market", themeDescKo = "수박과 오렌지를 경쾌하게 슬라이스하세요!", objColorA = new Color(0.9f, 0.2f, 0.2f), objColorB = new Color(1.0f, 0.6f, 0.1f), targetCount = 8, hazardCount = 1 },
-        new StageDef { stage = 2, titleKo = "프랑스 베이커리", titleEn = "French Bakery", themeDescKo = "바게트와 크루아상을 얇게 저미세요.", objColorA = new Color(0.85f, 0.65f, 0.35f), objColorB = new Color(0.95f, 0.85f, 0.6f), targetCount = 10, hazardCount = 2 },
-        new StageDef { stage = 3, titleKo = "스위트 캔디랜드", titleEn = "Sweet Candyland", themeDescKo = "말랑말랑한 젤리와 마시멜로를 자르세요.", objColorA = new Color(0.95f, 0.4f, 0.7f), objColorB = new Color(0.4f, 0.8f, 0.95f), targetCount = 11, hazardCount = 2 },
-        new StageDef { stage = 4, titleKo = "아침 식탁", titleEn = "Breakfast Diner", themeDescKo = "팬케이크와 베이컨, 치즈를 슬라이스하세요.", objColorA = new Color(0.95f, 0.8f, 0.2f), objColorB = new Color(0.75f, 0.3f, 0.2f), targetCount = 12, hazardCount = 3 },
-        new StageDef { stage = 5, titleKo = "주방 도마 위기 (중간보스)", titleEn = "Kitchen Havoc", themeDescKo = "철제 분쇄기와 대형 멜론이 있는 고난도 주방!", objColorA = new Color(0.3f, 0.85f, 0.4f), objColorB = new Color(0.9f, 0.25f, 0.25f), targetCount = 14, hazardCount = 4 },
-        new StageDef { stage = 6, titleKo = "문구점 연필깎이", titleEn = "Stationery Workshop", themeDescKo = "나무 연필과 알록달록 지우개를 깎으세요.", objColorA = new Color(0.3f, 0.5f, 0.9f), objColorB = new Color(0.95f, 0.7f, 0.2f), targetCount = 13, hazardCount = 3 },
-        new StageDef { stage = 7, titleKo = "비누 조각 ASMR", titleEn = "Soap Carving Studio", themeDescKo = "층층이 쌓인 파스텔 비누를 사각사각 베어내세요.", objColorA = new Color(0.6f, 0.9f, 0.8f), objColorB = new Color(0.85f, 0.65f, 0.95f), targetCount = 14, hazardCount = 3 },
-        new StageDef { stage = 8, titleKo = "열대 정글 과수원", titleEn = "Tropical Orchard", themeDescKo = "단단한 파인애플과 용과를 일도양단하세요.", objColorA = new Color(0.95f, 0.85f, 0.1f), objColorB = new Color(0.9f, 0.15f, 0.4f), targetCount = 15, hazardCount = 4 },
-        new StageDef { stage = 9, titleKo = "빙하 얼음 동굴", titleEn = "Glacier Chill", themeDescKo = "투명한 얼음 큐브와 빙과류를 깨뜨리세요.", objColorA = new Color(0.7f, 0.9f, 1.0f), objColorB = new Color(0.4f, 0.6f, 0.9f), targetCount = 15, hazardCount = 4 },
-        new StageDef { stage = 10, titleKo = "초콜릿 공장", titleEn = "Chocolate Factory", themeDescKo = "바삭한 초콜릿 바와 헤이즐넛 웨이퍼를 쪼개세요.", objColorA = new Color(0.45f, 0.25f, 0.15f), objColorB = new Color(0.85f, 0.7f, 0.5f), targetCount = 16, hazardCount = 4 },
-        new StageDef { stage = 11, titleKo = "닌자 수련 도장", titleEn = "Ninja Training Dojo", themeDescKo = "공중에 솟은 대나무와 수리검 함정을 피하세요.", objColorA = new Color(0.35f, 0.75f, 0.35f), objColorB = new Color(0.8f, 0.5f, 0.2f), targetCount = 16, hazardCount = 5 },
-        new StageDef { stage = 12, titleKo = "궁극의 미식 마스터 (최종보스)", titleEn = "Grand Gourmet Finale", themeDescKo = "5단 웨딩 케이크와 촘촘한 가시 바퀴를 뚫고 전설에 도달하세요!", objColorA = new Color(1.0f, 0.85f, 0.3f), objColorB = new Color(0.95f, 0.3f, 0.5f), targetCount = 20, hazardCount = 6 }
+        new StageDef { stage = 1, titleKo = "과일 시장", titleEn = "Fruit Market", themeDescKo = "수박과 오렌지를 경쾌하게 슬라이스하세요!", themeDescEn = "Slice watermelons and oranges with a snap!", objColorA = new Color(0.9f, 0.2f, 0.2f), objColorB = new Color(1.0f, 0.6f, 0.1f), targetCount = 8, hazardCount = 1 },
+        new StageDef { stage = 2, titleKo = "프랑스 베이커리", titleEn = "French Bakery", themeDescKo = "바게트와 크루아상을 얇게 저미세요.", themeDescEn = "Shave baguettes and croissants thin.", objColorA = new Color(0.85f, 0.65f, 0.35f), objColorB = new Color(0.95f, 0.85f, 0.6f), targetCount = 10, hazardCount = 2 },
+        new StageDef { stage = 3, titleKo = "스위트 캔디랜드", titleEn = "Sweet Candyland", themeDescKo = "말랑말랑한 젤리와 마시멜로를 자르세요.", themeDescEn = "Cut through squishy jellies and marshmallows.", objColorA = new Color(0.95f, 0.4f, 0.7f), objColorB = new Color(0.4f, 0.8f, 0.95f), targetCount = 11, hazardCount = 2 },
+        new StageDef { stage = 4, titleKo = "아침 식탁", titleEn = "Breakfast Diner", themeDescKo = "팬케이크와 베이컨, 치즈를 슬라이스하세요.", themeDescEn = "Slice pancakes, bacon and cheese.", objColorA = new Color(0.95f, 0.8f, 0.2f), objColorB = new Color(0.75f, 0.3f, 0.2f), targetCount = 12, hazardCount = 3 },
+        new StageDef { stage = 5, titleKo = "주방 도마 위기 (중간보스)", titleEn = "Kitchen Havoc", themeDescKo = "철제 분쇄기와 대형 멜론이 있는 고난도 주방!", themeDescEn = "A tough kitchen with steel grinders and giant melons!", objColorA = new Color(0.3f, 0.85f, 0.4f), objColorB = new Color(0.9f, 0.25f, 0.25f), targetCount = 14, hazardCount = 4 },
+        new StageDef { stage = 6, titleKo = "문구점 연필깎이", titleEn = "Stationery Workshop", themeDescKo = "나무 연필과 알록달록 지우개를 깎으세요.", themeDescEn = "Carve wooden pencils and colorful erasers.", objColorA = new Color(0.3f, 0.5f, 0.9f), objColorB = new Color(0.95f, 0.7f, 0.2f), targetCount = 13, hazardCount = 3 },
+        new StageDef { stage = 7, titleKo = "비누 조각 ASMR", titleEn = "Soap Carving Studio", themeDescKo = "층층이 쌓인 파스텔 비누를 사각사각 베어내세요.", themeDescEn = "Shave layered pastel soap, slice by slice.", objColorA = new Color(0.6f, 0.9f, 0.8f), objColorB = new Color(0.85f, 0.65f, 0.95f), targetCount = 14, hazardCount = 3 },
+        new StageDef { stage = 8, titleKo = "열대 정글 과수원", titleEn = "Tropical Orchard", themeDescKo = "단단한 파인애플과 용과를 일도양단하세요.", themeDescEn = "Split hard pineapples and dragon fruit in one cut.", objColorA = new Color(0.95f, 0.85f, 0.1f), objColorB = new Color(0.9f, 0.15f, 0.4f), targetCount = 15, hazardCount = 4 },
+        new StageDef { stage = 9, titleKo = "빙하 얼음 동굴", titleEn = "Glacier Chill", themeDescKo = "투명한 얼음 큐브와 빙과류를 깨뜨리세요.", themeDescEn = "Crack clear ice cubes and frozen treats.", objColorA = new Color(0.7f, 0.9f, 1.0f), objColorB = new Color(0.4f, 0.6f, 0.9f), targetCount = 15, hazardCount = 4 },
+        new StageDef { stage = 10, titleKo = "초콜릿 공장", titleEn = "Chocolate Factory", themeDescKo = "바삭한 초콜릿 바와 헤이즐넛 웨이퍼를 쪼개세요.", themeDescEn = "Snap crunchy chocolate bars and hazelnut wafers.", objColorA = new Color(0.45f, 0.25f, 0.15f), objColorB = new Color(0.85f, 0.7f, 0.5f), targetCount = 16, hazardCount = 4 },
+        new StageDef { stage = 11, titleKo = "닌자 수련 도장", titleEn = "Ninja Training Dojo", themeDescKo = "공중에 솟은 대나무와 수리검 함정을 피하세요.", themeDescEn = "Dodge rising bamboo and shuriken traps.", objColorA = new Color(0.35f, 0.75f, 0.35f), objColorB = new Color(0.8f, 0.5f, 0.2f), targetCount = 16, hazardCount = 5 },
+        new StageDef { stage = 12, titleKo = "궁극의 미식 마스터 (최종보스)", titleEn = "Grand Gourmet Finale", themeDescKo = "5단 웨딩 케이크와 촘촘한 가시 바퀴를 뚫고 전설에 도달하세요!", themeDescEn = "Cut through a five-tier wedding cake and spiked wheels to become a legend!", objColorA = new Color(1.0f, 0.85f, 0.3f), objColorB = new Color(0.95f, 0.3f, 0.5f), targetCount = 20, hazardCount = 6 }
     };
 
     class SliceableTarget
@@ -550,16 +555,16 @@ public class SliceMasterPlayer : MonoBehaviour
             normal = { textColor = Color.white }
         };
 
-        string comboStr = comboCount > 1 ? " | 🔥 콤보 x" + comboCount : "";
-        GUI.Label(new Rect(20, 12, 420, 24), "Stage " + (currentStageIndex + 1) + ". " + def.titleKo + " (" + def.titleEn + ")", stageTitle);
-        GUI.Label(new Rect(20, 34, 450, 22), "★ 점수: " + score + "점 | 🔪 슬라이스: " + totalSliced + "/" + def.targetCount + comboStr, subTitle);
+        string comboStr = comboCount > 1 ? T(" | 🔥 콤보 x", " | 🔥 Combo x") + comboCount : "";
+        GUI.Label(new Rect(20, 12, 420, 24), "Stage " + (currentStageIndex + 1) + ". " + (IsKo ? def.titleKo + " (" + def.titleEn + ")" : def.titleEn), stageTitle);
+        GUI.Label(new Rect(20, 34, 450, 22), T("★ 점수: ", "★ Score: ") + score + T("점 | 🔪 슬라이스: ", " | 🔪 Slices: ") + totalSliced + "/" + def.targetCount + comboStr, subTitle);
 
-        if (GUI.Button(new Rect(w - 180, 15, 75, 42), "🗺️ 스테이지"))
+        if (GUI.Button(new Rect(w - 180, 15, 75, 42), T("🗺️ 스테이지", "🗺️ Stages")))
         {
             showStageSelectModal = !showStageSelectModal;
         }
 
-        if (GUI.Button(new Rect(w - 95, 15, 75, 42), "🔄 재시작"))
+        if (GUI.Button(new Rect(w - 95, 15, 75, 42), T("🔄 재시작", "🔄 Restart")))
         {
             InitStage(currentStageIndex);
         }
@@ -571,7 +576,7 @@ public class SliceMasterPlayer : MonoBehaviour
             alignment = TextAnchor.MiddleCenter,
             normal = { textColor = new Color(0.9f, 0.95f, 1f) }
         };
-        GUI.Label(new Rect(0, h - 45, w, 30), "화면 클릭 / 스페이스바: 나이프 점프 & 공중 플립 회전", guideStyle);
+        GUI.Label(new Rect(0, h - 45, w, 30), T("화면 클릭 / 스페이스바: 나이프 점프 & 공중 플립 회전", "Click / Space: knife jump & mid-air flip"), guideStyle);
     }
 
     void DrawGameOverBanner()
@@ -588,9 +593,9 @@ public class SliceMasterPlayer : MonoBehaviour
             alignment = TextAnchor.MiddleCenter,
             normal = { textColor = new Color(1f, 0.35f, 0.35f) }
         };
-        GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), "칼날이 부러졌습니다!", title);
+        GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), T("칼날이 부러졌습니다!", "The blade broke!"), title);
 
-        if (GUI.Button(new Rect(r.x + 90, r.y + 85, 180, 45), "현재 스테이지 재도전"))
+        if (GUI.Button(new Rect(r.x + 90, r.y + 85, 180, 45), T("현재 스테이지 재도전", "Retry this stage")))
         {
             InitStage(currentStageIndex);
         }
@@ -618,18 +623,18 @@ public class SliceMasterPlayer : MonoBehaviour
         };
 
         GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), "★ STAGE CLEAR! (x" + earnedMultiplier + ") ★", title);
-        GUI.Label(new Rect(r.x, r.y + 55, r.width, 25), "골 배율 표적에 칼을 꽂아 최종 " + score + "점을 획득했습니다!", sub);
+        GUI.Label(new Rect(r.x, r.y + 55, r.width, 25), T("골 배율 표적에 칼을 꽂아 최종 ", "You stuck the goal target for a final ") + score + T("점을 획득했습니다!", " points!"), sub);
 
         if (currentStageIndex < MaxStages - 1)
         {
-            if (GUI.Button(new Rect(r.x + 110, r.y + 105, 180, 45), "다음 스테이지 ▶"))
+            if (GUI.Button(new Rect(r.x + 110, r.y + 105, 180, 45), T("다음 스테이지 ▶", "Next stage ▶")))
             {
                 InitStage(currentStageIndex + 1);
             }
         }
         else
         {
-            if (GUI.Button(new Rect(r.x + 110, r.y + 105, 180, 45), "전체 12스테이지 정복!"))
+            if (GUI.Button(new Rect(r.x + 110, r.y + 105, 180, 45), T("전체 12스테이지 정복!", "All 12 stages conquered!")))
             {
                 InitStage(0);
             }
@@ -640,7 +645,7 @@ public class SliceMasterPlayer : MonoBehaviour
     {
         int w = Screen.width;
         int h = Screen.height;
-        GUI.Box(new Rect(30, 70, w - 60, h - 140), "🗺️ 스테이지 선택 (Stage Select: Stage 1 ~ 12)");
+        GUI.Box(new Rect(30, 70, w - 60, h - 140), T("🗺️ 스테이지 선택 (Stage Select: Stage 1 ~ 12)", "🗺️ Stage Select (Stage 1 ~ 12)"));
 
         int cols = 3;
         int itemW = (w - 120) / cols;
@@ -653,7 +658,7 @@ public class SliceMasterPlayer : MonoBehaviour
             Rect btnRect = new Rect(45 + col * (itemW + 10), 105 + row * (itemH + 10), itemW, itemH);
 
             StageDef s = Stages[i];
-            string text = (i + 1) + ". " + s.titleKo + "\n" + s.themeDescKo;
+            string text = (i + 1) + ". " + T(s.titleKo, s.titleEn) + "\n" + T(s.themeDescKo, s.themeDescEn);
 
             if (GUI.Button(btnRect, text))
             {

@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class MiniGolfPlayer : MonoBehaviour
 {
+    // Page language (?lang=): Korean when ko, English for every other locale.
+    static bool _isKoInit, _isKo;
+    static bool IsKo { get { if (!_isKoInit) { _isKo = OiyoLang.Pick("ko", "en") == "ko"; _isKoInit = true; } return _isKo; } }
+    static string T(string ko, string en) => IsKo ? ko : en;
     const int TotalHoles = 12;
     const float BallRadius = 0.15f;
     const float CupRadius = 0.35f;
@@ -440,12 +444,12 @@ public class MiniGolfPlayer : MonoBehaviour
     void EvaluateCelebration(int strokes, int par)
     {
         int diff = strokes - par;
-        if (strokes == 1) celebrationTitle = "★ HOLE IN ONE! (홀인원 대기록!) ★";
-        else if (diff <= -2) celebrationTitle = "★ EAGLE! (이글!) ★";
-        else if (diff == -1) celebrationTitle = "★ BIRDIE! (버디!) ★";
-        else if (diff == 0) celebrationTitle = "★ PAR! (파 세이브) ★";
-        else if (diff == 1) celebrationTitle = "BOGEY (보기)";
-        else celebrationTitle = "DOUBLE BOGEY+ (더블 보기)";
+        if (strokes == 1) celebrationTitle = T("★ HOLE IN ONE! (홀인원 대기록!) ★", "★ HOLE IN ONE! ★");
+        else if (diff <= -2) celebrationTitle = T("★ EAGLE! (이글!) ★", "★ EAGLE! ★");
+        else if (diff == -1) celebrationTitle = T("★ BIRDIE! (버디!) ★", "★ BIRDIE! ★");
+        else if (diff == 0) celebrationTitle = T("★ PAR! (파 세이브) ★", "★ PAR! ★");
+        else if (diff == 1) celebrationTitle = T("BOGEY (보기)", "BOGEY");
+        else celebrationTitle = T("DOUBLE BOGEY+ (더블 보기)", "DOUBLE BOGEY+");
     }
 
     void NextHole()
@@ -550,15 +554,15 @@ public class MiniGolfPlayer : MonoBehaviour
             normal = { textColor = Color.white }
         };
 
-        GUI.Label(new Rect(20, 12, 450, 24), "Hole " + def.holeNum + "/12. " + def.titleKo + " (Par " + def.par + ")", holeTitle);
-        GUI.Label(new Rect(20, 34, 450, 22), "⛳ 이번 홀 타수: " + strokesThisHole + "타 | 🏆 누적 총타수: " + totalStrokes + "타", subTitle);
+        GUI.Label(new Rect(20, 12, 450, 24), "Hole " + def.holeNum + "/12. " + T(def.titleKo, def.titleEn) + " (Par " + def.par + ")", holeTitle);
+        GUI.Label(new Rect(20, 34, 450, 22), T("⛳ 이번 홀 타수: ", "⛳ Strokes this hole: ") + strokesThisHole + T("타 | 🏆 누적 총타수: ", " | 🏆 Total strokes: ") + totalStrokes + T("타", ""), subTitle);
 
-        if (GUI.Button(new Rect(w - 180, 15, 75, 42), "🗺️ 홀 선택"))
+        if (GUI.Button(new Rect(w - 180, 15, 75, 42), T("🗺️ 홀 선택", "🗺️ Holes")))
         {
             showHoleSelectModal = !showHoleSelectModal;
         }
 
-        if (GUI.Button(new Rect(w - 95, 15, 75, 42), "🔄 티 리셋"))
+        if (GUI.Button(new Rect(w - 95, 15, 75, 42), T("🔄 티 리셋", "🔄 Reset tee")))
         {
             InitHole(currentHoleIndex);
         }
@@ -572,8 +576,8 @@ public class MiniGolfPlayer : MonoBehaviour
                 alignment = TextAnchor.MiddleCenter,
                 normal = { textColor = new Color(0.9f, 0.95f, 1f) }
             };
-            string powerTxt = status == GameStatus.Dragging ? " [파워: " + Mathf.RoundToInt(aimPower * 100) + "%]" : "";
-            GUI.Label(new Rect(0, h - 45, w, 30), "화면을 클릭 & 드래그하여 조준 및 퍼팅 파워를 조절하세요!" + powerTxt, guide);
+            string powerTxt = status == GameStatus.Dragging ? T(" [파워: ", " [Power: ") + Mathf.RoundToInt(aimPower * 100) + "%]" : "";
+            GUI.Label(new Rect(0, h - 45, w, 30), T("화면을 클릭 & 드래그하여 조준 및 퍼팅 파워를 조절하세요!", "Click & drag to aim and set putting power!") + powerTxt, guide);
         }
     }
 
@@ -618,18 +622,18 @@ public class MiniGolfPlayer : MonoBehaviour
 
         HoleDef def = Holes[currentHoleIndex];
         GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), celebrationTitle, title);
-        GUI.Label(new Rect(r.x, r.y + 55, r.width, 25), "Hole " + def.holeNum + " 완성! (Par " + def.par + " vs " + strokesThisHole + "타)", sub);
+        GUI.Label(new Rect(r.x, r.y + 55, r.width, 25), "Hole " + def.holeNum + T(" 완성! (Par ", " done! (Par ") + def.par + " vs " + strokesThisHole + T("타)", ")"), sub);
 
         if (currentHoleIndex < TotalHoles - 1)
         {
-            if (GUI.Button(new Rect(r.x + 110, r.y + 105, 180, 45), "다음 홀 이동 ▶ (Space)"))
+            if (GUI.Button(new Rect(r.x + 110, r.y + 105, 180, 45), T("다음 홀 이동 ▶ (Space)", "Next hole ▶ (Space)")))
             {
                 NextHole();
             }
         }
         else
         {
-            if (GUI.Button(new Rect(r.x + 110, r.y + 105, 180, 45), "챔피언십 성적 확인"))
+            if (GUI.Button(new Rect(r.x + 110, r.y + 105, 180, 45), T("챔피언십 성적 확인", "See championship result")))
             {
                 status = GameStatus.TournamentComplete;
             }
@@ -641,7 +645,7 @@ public class MiniGolfPlayer : MonoBehaviour
         int w = Screen.width;
         int h = Screen.height;
         Rect r = new Rect(w / 2 - 240, h / 2 - 120, 480, 240);
-        GUI.Box(r, "🏆 12홀 토너먼트 완주 축하!");
+        GUI.Box(r, T("🏆 12홀 토너먼트 완주 축하!", "🏆 12-hole tournament complete!"));
 
         GUIStyle title = new GUIStyle(GUI.skin.label)
         {
@@ -661,12 +665,12 @@ public class MiniGolfPlayer : MonoBehaviour
         int totalPar = 0;
         foreach (var hole in Holes) totalPar += hole.par;
         int diff = totalStrokes - totalPar;
-        string diffStr = diff <= 0 ? (diff == 0 ? "E (이븐 파)" : diff + " 언더파!") : "+" + diff + " 오버파";
+        string diffStr = diff <= 0 ? (diff == 0 ? T("E (이븐 파)", "E (even par)") : diff + T(" 언더파!", " under par!")) : "+" + diff + T(" 오버파", " over par");
 
-        GUI.Label(new Rect(r.x, r.y + 40, r.width, 30), "전체 12홀 토너먼트 완주!", title);
-        GUI.Label(new Rect(r.x, r.y + 80, r.width, 25), "최종 총타수: " + totalStrokes + "타 (Par " + totalPar + " 대비 " + diffStr + ")", sub);
+        GUI.Label(new Rect(r.x, r.y + 40, r.width, 30), T("전체 12홀 토너먼트 완주!", "All 12 holes complete!"), title);
+        GUI.Label(new Rect(r.x, r.y + 80, r.width, 25), T("최종 총타수: ", "Total strokes: ") + totalStrokes + T("타 (Par ", " (Par ") + totalPar + T(" 대비 ", " → ") + diffStr + ")", sub);
 
-        if (GUI.Button(new Rect(r.x + 150, r.y + 150, 180, 45), "새 토너먼트 시작"))
+        if (GUI.Button(new Rect(r.x + 150, r.y + 150, 180, 45), T("새 토너먼트 시작", "New tournament")))
         {
             totalStrokes = 0;
             InitHole(0);
@@ -677,7 +681,7 @@ public class MiniGolfPlayer : MonoBehaviour
     {
         int w = Screen.width;
         int h = Screen.height;
-        GUI.Box(new Rect(30, 70, w - 60, h - 140), "🗺️ 12홀 코스 선택 (Mini Golf Course Select)");
+        GUI.Box(new Rect(30, 70, w - 60, h - 140), T("🗺️ 12홀 코스 선택 (Mini Golf Course Select)", "🗺️ 12-Hole Course Select"));
 
         int cols = 3;
         int itemW = (w - 120) / cols;
@@ -690,8 +694,8 @@ public class MiniGolfPlayer : MonoBehaviour
             Rect btnRect = new Rect(45 + col * (itemW + 10), 105 + row * (itemH + 10), itemW, itemH);
 
             HoleDef hdef = Holes[i];
-            string scoreInfo = holeScores[i] > 0 ? " [" + holeScores[i] + "타]" : "";
-            string text = "Hole " + hdef.holeNum + ". " + hdef.titleKo + scoreInfo + "\nPar " + hdef.par;
+            string scoreInfo = holeScores[i] > 0 ? " [" + holeScores[i] + T("타]", " strokes]") : "";
+            string text = "Hole " + hdef.holeNum + ". " + T(hdef.titleKo, hdef.titleEn) + scoreInfo + "\nPar " + hdef.par;
 
             if (GUI.Button(btnRect, text))
             {

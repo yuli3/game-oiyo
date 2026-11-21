@@ -1,4 +1,5 @@
 ---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import TownscaperIsland from "../../components/games/TownscaperIsland";
 import GameGuide from "../../components/GameGuide.astro";
@@ -47,7 +48,9 @@ const m = meta[locale] || meta.en;
 ---
 
 <BaseLayout title={m.title} description={m.description} heading={m.title}>
-  <TownscaperIsland client:load locale={locale} />
+  <UnityMainShell slug="harbor-blocks" build="townscaper-island-unity" locale={locale} name={m.title.split(" — ")[0]} poster={undefined}>
+      <TownscaperIsland client:visible locale={locale} />
+    </UnityMainShell>
   <div class="mx-auto max-w-3xl px-4 mt-8">
     <GameGuide slug="harbor-blocks" locale={locale} name={m.title.split(" — ")[0]} />
   </div>

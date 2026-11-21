@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class DotDungeonRoguePlayer : MonoBehaviour
 {
+    // Page language (?lang=): Korean when ko, English for every other locale.
+    static bool _isKoInit, _isKo;
+    static bool IsKo { get { if (!_isKoInit) { _isKo = OiyoLang.Pick("ko", "en") == "ko"; _isKoInit = true; } return _isKo; } }
+    static string T(string ko, string en) => IsKo ? ko : en;
     const int MapW = 22;
     const int MapH = 16;
     const int MaxFloors = 10;
@@ -16,6 +20,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         public string nameKo;
         public string nameEn;
         public string enemyNameKo;
+        public string enemyNameEn;
         public int enemyHp;
         public int enemyAtk;
         public int enemyDef;
@@ -27,16 +32,16 @@ public class DotDungeonRoguePlayer : MonoBehaviour
 
     static readonly FloorDef[] FloorDefs = new FloorDef[]
     {
-        new FloorDef { floor = 1, nameKo = "초록 슬라임 하수도", nameEn = "Slime Sewers", enemyNameKo = "슬라임", enemyHp = 12, enemyAtk = 4, enemyDef = 1, wallColor = new Color(0.2f, 0.3f, 0.25f), floorColor = new Color(0.12f, 0.18f, 0.15f), enemyColor = new Color(0.2f, 0.8f, 0.3f), isBossFloor = false },
-        new FloorDef { floor = 2, nameKo = "쥐들의 납골당", nameEn = "Rat Crypt", enemyNameKo = "거대 쥐", enemyHp = 18, enemyAtk = 6, enemyDef = 2, wallColor = new Color(0.3f, 0.28f, 0.25f), floorColor = new Color(0.18f, 0.16f, 0.14f), enemyColor = new Color(0.6f, 0.45f, 0.35f), isBossFloor = false },
-        new FloorDef { floor = 3, nameKo = "해골 병사의 묘지", nameEn = "Skeleton Catacombs", enemyNameKo = "스켈레톤", enemyHp = 25, enemyAtk = 8, enemyDef = 3, wallColor = new Color(0.35f, 0.35f, 0.38f), floorColor = new Color(0.16f, 0.16f, 0.18f), enemyColor = new Color(0.9f, 0.9f, 0.85f), isBossFloor = false },
-        new FloorDef { floor = 4, nameKo = "맹독 거미 동굴", nameEn = "Venom Grotto", enemyNameKo = "독거미", enemyHp = 32, enemyAtk = 11, enemyDef = 4, wallColor = new Color(0.22f, 0.2f, 0.3f), floorColor = new Color(0.13f, 0.12f, 0.18f), enemyColor = new Color(0.7f, 0.2f, 0.8f), isBossFloor = false },
-        new FloorDef { floor = 5, nameKo = "오크 족장 성채 (중간보스)", nameEn = "Orc Citadel", enemyNameKo = "오크 족장", enemyHp = 65, enemyAtk = 15, enemyDef = 6, wallColor = new Color(0.38f, 0.22f, 0.2f), floorColor = new Color(0.2f, 0.12f, 0.1f), enemyColor = new Color(0.9f, 0.3f, 0.2f), isBossFloor = true },
-        new FloorDef { floor = 6, nameKo = "그림자 망령의 회랑", nameEn = "Wraith Corridor", enemyNameKo = "그림자 망령", enemyHp = 45, enemyAtk = 17, enemyDef = 5, wallColor = new Color(0.18f, 0.22f, 0.32f), floorColor = new Color(0.1f, 0.12f, 0.18f), enemyColor = new Color(0.4f, 0.6f, 0.9f), isBossFloor = false },
-        new FloorDef { floor = 7, nameKo = "용암 대장간", nameEn = "Magma Foundry", enemyNameKo = "화염 골렘", enemyHp = 58, enemyAtk = 20, enemyDef = 7, wallColor = new Color(0.45f, 0.2f, 0.15f), floorColor = new Color(0.25f, 0.1f, 0.08f), enemyColor = new Color(1.0f, 0.45f, 0.1f), isBossFloor = false },
-        new FloorDef { floor = 8, nameKo = "흑마법 강령원", nameEn = "Necromancer Sanctum", enemyNameKo = "사령술사", enemyHp = 70, enemyAtk = 23, enemyDef = 8, wallColor = new Color(0.28f, 0.15f, 0.35f), floorColor = new Color(0.15f, 0.08f, 0.2f), enemyColor = new Color(0.6f, 0.1f, 0.7f), isBossFloor = false },
-        new FloorDef { floor = 9, nameKo = "흑요석 미노타우로스 미궁", nameEn = "Minotaur Labyrinth", enemyNameKo = "미노타우로스", enemyHp = 88, enemyAtk = 27, enemyDef = 9, wallColor = new Color(0.25f, 0.25f, 0.28f), floorColor = new Color(0.12f, 0.12f, 0.14f), enemyColor = new Color(0.85f, 0.2f, 0.2f), isBossFloor = false },
-        new FloorDef { floor = 10, nameKo = "고대 화룡의 제단 (최종보스)", nameEn = "Ancient Dragon Lair", enemyNameKo = "고대 화룡 (Dragon)", enemyHp = 180, enemyAtk = 34, enemyDef = 12, wallColor = new Color(0.5f, 0.15f, 0.15f), floorColor = new Color(0.25f, 0.08f, 0.08f), enemyColor = new Color(1.0f, 0.15f, 0.15f), isBossFloor = true }
+        new FloorDef { floor = 1, nameKo = "초록 슬라임 하수도", nameEn = "Slime Sewers", enemyNameKo = "슬라임", enemyNameEn = "Slime", enemyHp = 12, enemyAtk = 4, enemyDef = 1, wallColor = new Color(0.2f, 0.3f, 0.25f), floorColor = new Color(0.12f, 0.18f, 0.15f), enemyColor = new Color(0.2f, 0.8f, 0.3f), isBossFloor = false },
+        new FloorDef { floor = 2, nameKo = "쥐들의 납골당", nameEn = "Rat Crypt", enemyNameKo = "거대 쥐", enemyNameEn = "Giant Rat", enemyHp = 18, enemyAtk = 6, enemyDef = 2, wallColor = new Color(0.3f, 0.28f, 0.25f), floorColor = new Color(0.18f, 0.16f, 0.14f), enemyColor = new Color(0.6f, 0.45f, 0.35f), isBossFloor = false },
+        new FloorDef { floor = 3, nameKo = "해골 병사의 묘지", nameEn = "Skeleton Catacombs", enemyNameKo = "스켈레톤", enemyNameEn = "Skeleton", enemyHp = 25, enemyAtk = 8, enemyDef = 3, wallColor = new Color(0.35f, 0.35f, 0.38f), floorColor = new Color(0.16f, 0.16f, 0.18f), enemyColor = new Color(0.9f, 0.9f, 0.85f), isBossFloor = false },
+        new FloorDef { floor = 4, nameKo = "맹독 거미 동굴", nameEn = "Venom Grotto", enemyNameKo = "독거미", enemyNameEn = "Venom Spider", enemyHp = 32, enemyAtk = 11, enemyDef = 4, wallColor = new Color(0.22f, 0.2f, 0.3f), floorColor = new Color(0.13f, 0.12f, 0.18f), enemyColor = new Color(0.7f, 0.2f, 0.8f), isBossFloor = false },
+        new FloorDef { floor = 5, nameKo = "오크 족장 성채 (중간보스)", nameEn = "Orc Citadel", enemyNameKo = "오크 족장", enemyNameEn = "Orc Chieftain", enemyHp = 65, enemyAtk = 15, enemyDef = 6, wallColor = new Color(0.38f, 0.22f, 0.2f), floorColor = new Color(0.2f, 0.12f, 0.1f), enemyColor = new Color(0.9f, 0.3f, 0.2f), isBossFloor = true },
+        new FloorDef { floor = 6, nameKo = "그림자 망령의 회랑", nameEn = "Wraith Corridor", enemyNameKo = "그림자 망령", enemyNameEn = "Shadow Wraith", enemyHp = 45, enemyAtk = 17, enemyDef = 5, wallColor = new Color(0.18f, 0.22f, 0.32f), floorColor = new Color(0.1f, 0.12f, 0.18f), enemyColor = new Color(0.4f, 0.6f, 0.9f), isBossFloor = false },
+        new FloorDef { floor = 7, nameKo = "용암 대장간", nameEn = "Magma Foundry", enemyNameKo = "화염 골렘", enemyNameEn = "Flame Golem", enemyHp = 58, enemyAtk = 20, enemyDef = 7, wallColor = new Color(0.45f, 0.2f, 0.15f), floorColor = new Color(0.25f, 0.1f, 0.08f), enemyColor = new Color(1.0f, 0.45f, 0.1f), isBossFloor = false },
+        new FloorDef { floor = 8, nameKo = "흑마법 강령원", nameEn = "Necromancer Sanctum", enemyNameKo = "사령술사", enemyNameEn = "Necromancer", enemyHp = 70, enemyAtk = 23, enemyDef = 8, wallColor = new Color(0.28f, 0.15f, 0.35f), floorColor = new Color(0.15f, 0.08f, 0.2f), enemyColor = new Color(0.6f, 0.1f, 0.7f), isBossFloor = false },
+        new FloorDef { floor = 9, nameKo = "흑요석 미노타우로스 미궁", nameEn = "Minotaur Labyrinth", enemyNameKo = "미노타우로스", enemyNameEn = "Minotaur", enemyHp = 88, enemyAtk = 27, enemyDef = 9, wallColor = new Color(0.25f, 0.25f, 0.28f), floorColor = new Color(0.12f, 0.12f, 0.14f), enemyColor = new Color(0.85f, 0.2f, 0.2f), isBossFloor = false },
+        new FloorDef { floor = 10, nameKo = "고대 화룡의 제단 (최종보스)", nameEn = "Ancient Dragon Lair", enemyNameKo = "고대 화룡 (Dragon)", enemyNameEn = "Ancient Dragon", enemyHp = 180, enemyAtk = 34, enemyDef = 12, wallColor = new Color(0.5f, 0.15f, 0.15f), floorColor = new Color(0.25f, 0.08f, 0.08f), enemyColor = new Color(1.0f, 0.15f, 0.15f), isBossFloor = true }
     };
 
     enum TileType { Wall, Floor, Stairs, Chest }
@@ -98,7 +103,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
     bool isGameOver = false;
     bool isGameVictory = false;
     bool showFloorSelectModal = false;
-    string lastCombatLog = "던전에 진입했습니다. 계단을 찾아 아래층으로 내려가세요.";
+    string lastCombatLog = "";
 
     // Visuals & Light
     GameObject heroObj;
@@ -115,6 +120,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
 
     void Awake()
     {
+        lastCombatLog = T("던전에 진입했습니다. 계단을 찾아 아래층으로 내려가세요.", "You entered the dungeon. Find the stairs and head down.");
         mainCam = Camera.main;
         if (mainCam == null)
         {
@@ -291,14 +297,14 @@ public class DotDungeonRoguePlayer : MonoBehaviour
             if (pos == new Vector2Int(playerX, playerY) || pos == stairsPos) continue;
 
             bool isBoss = def.isBossFloor && (i == 0);
-            SpawnMonster(def.enemyNameKo, pos.x, pos.y, isBoss ? def.enemyHp * 2 : def.enemyHp, isBoss ? def.enemyAtk + 6 : def.enemyAtk, def.enemyDef, isBoss, def.enemyColor);
+            SpawnMonster(T(def.enemyNameKo, def.enemyNameEn), pos.x, pos.y, isBoss ? def.enemyHp * 2 : def.enemyHp, isBoss ? def.enemyAtk + 6 : def.enemyAtk, def.enemyDef, isBoss, def.enemyColor);
         }
 
         // 7. Instantiate 3D Map Tiles
         BuildMapVisuals();
         ComputeFOV();
 
-        lastCombatLog = "B" + currentFloor + "F: " + def.nameKo + " (" + def.nameEn + ")에 도착했습니다.";
+        lastCombatLog = IsKo ? "B" + currentFloor + "F: " + def.nameKo + " (" + def.nameEn + ")에 도착했습니다." : "Reached B" + currentFloor + "F: " + def.nameEn + ".";
         PlaySound(440f, 0.15f);
     }
 
@@ -523,7 +529,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Period))
         {
             // Wait turn
-            AdvanceTurn("용사가 한 턴 대기하며 호흡을 가다듬었습니다.");
+            AdvanceTurn(T("용사가 한 턴 대기하며 호흡을 가다듬었습니다.", "The hero waits a turn and catches their breath."));
             return;
         }
         else if (Input.GetKeyDown(KeyCode.Alpha1)) { UsePotion(); return; }
@@ -586,7 +592,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         SpawnFloatingText("-" + dmg, m.visualObj.transform.position + Vector3.up * 1f, Color.yellow);
         PlaySound(600f, 0.1f);
 
-        lastCombatLog = m.name + "에게 " + dmg + "의 피해를 입혔습니다! (남은 HP: " + Mathf.Max(0, m.hp) + ")";
+        lastCombatLog = m.name + T("에게 ", " takes ") + dmg + T("의 피해를 입혔습니다! (남은 HP: ", " damage! (HP left: ") + Mathf.Max(0, m.hp) + ")";
 
         if (m.hp <= 0)
         {
@@ -639,20 +645,20 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         if (rewardType == 0)
         {
             potionCount++;
-            lastCombatLog = "보물상자를 열어 [생명력 회복 포션]을 획득했습니다!";
+            lastCombatLog = T("보물상자를 열어 [생명력 회복 포션]을 획득했습니다!", "Opened a chest: got a [Healing Potion]!");
             SpawnFloatingText("+1 Potion", playerRenderPos + Vector3.up * 1.5f, Color.green);
         }
         else if (rewardType == 1)
         {
             elixirCount++;
-            lastCombatLog = "보물상자를 열어 [힘의 엘릭서]를 획득했습니다!";
+            lastCombatLog = T("보물상자를 열어 [힘의 엘릭서]를 획득했습니다!", "Opened a chest: got an [Elixir of Strength]!");
             SpawnFloatingText("+1 Elixir", playerRenderPos + Vector3.up * 1.5f, new Color(0.8f, 0.4f, 1f));
         }
         else
         {
             int gold = UnityEngine.Random.Range(20, 45);
             playerGold += gold;
-            lastCombatLog = "보물상자를 열어 " + gold + " 골드를 획득했습니다!";
+            lastCombatLog = T("보물상자를 열어 ", "Opened a chest: got ") + gold + T(" 골드를 획득했습니다!", " gold!");
             SpawnFloatingText("+" + gold + " Gold", playerRenderPos + Vector3.up * 1.5f, Color.yellow);
         }
         PlaySound(784f, 0.2f);
@@ -689,7 +695,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
                 playerHp -= mDmg;
                 SpawnFloatingText("-" + mDmg, playerRenderPos + Vector3.up * 1.2f, Color.red);
                 PlaySound(220f, 0.12f);
-                lastCombatLog = m.name + "의 공격! 용사가 " + mDmg + "의 피해를 입었습니다.";
+                lastCombatLog = m.name + T("의 공격! 용사가 ", " attacks! The hero takes ") + mDmg + T("의 피해를 입었습니다.", " damage.");
 
                 if (playerHp <= 0)
                 {
@@ -735,7 +741,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         playerHp = Mathf.Min(playerMaxHp, playerHp + heal);
         SpawnFloatingText("+" + heal + " HP", playerRenderPos + Vector3.up * 1.5f, Color.green);
         PlaySound(523f, 0.2f);
-        AdvanceTurn("치유 물약을 마셔 HP " + heal + "을 회복했습니다.");
+        AdvanceTurn(T("치유 물약을 마셔 HP ", "Drank a healing potion: recovered ") + heal + T("을 회복했습니다.", " HP."));
     }
 
     void UseElixir()
@@ -745,7 +751,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         playerAtk += 4;
         SpawnFloatingText("+4 ATK!", playerRenderPos + Vector3.up * 1.5f, Color.magenta);
         PlaySound(659f, 0.25f);
-        AdvanceTurn("힘의 엘릭서를 마셔 영구 공격력이 +4 증가했습니다!");
+        AdvanceTurn(T("힘의 엘릭서를 마셔 영구 공격력이 +4 증가했습니다!", "Drank the Elixir of Strength: attack permanently +4!"));
     }
 
     void SpawnFloatingText(string txt, Vector3 wpos, Color col)
@@ -833,17 +839,17 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         };
 
         FloorDef def = FloorDefs[currentFloor - 1];
-        GUI.Label(new Rect(20, 12, 380, 24), "B" + currentFloor + "F: " + def.nameKo + " (" + def.nameEn + ")", floorStyle);
+        GUI.Label(new Rect(20, 12, 380, 24), (IsKo ? "B" + currentFloor + "F: " + def.nameKo + " (" + def.nameEn + ")" : "B" + currentFloor + "F: " + def.nameEn), floorStyle);
         GUI.Label(new Rect(20, 34, 380, 22), "HP: " + playerHp + "/" + playerMaxHp + " | ATK: " + playerAtk + " | DEF: " + playerDef + " | Lv." + playerLevel + " | 💰 " + playerGold + "G", subStyle);
 
         // Quick Stage Select button
-        if (GUI.Button(new Rect(w - 180, 15, 75, 40), "🗺️ 층 선택"))
+        if (GUI.Button(new Rect(w - 180, 15, 75, 40), T("🗺️ 층 선택", "🗺️ Floors")))
         {
             showFloorSelectModal = !showFloorSelectModal;
         }
 
         // Restart floor
-        if (GUI.Button(new Rect(w - 95, 15, 75, 40), "🔄 재도전"))
+        if (GUI.Button(new Rect(w - 95, 15, 75, 40), T("🔄 재도전", "🔄 Retry")))
         {
             GenerateFloor(currentFloor);
         }
@@ -865,14 +871,14 @@ public class DotDungeonRoguePlayer : MonoBehaviour
             fontSize = 11,
             normal = { textColor = new Color(0.7f, 0.75f, 0.85f) }
         };
-        GUI.Label(new Rect(20, h - barH + 18, w - 270, 20), "이동/공격: 방향키, WASD | 대기: Space | 포션: [1] | 엘릭서: [2]", keyHintStyle);
+        GUI.Label(new Rect(20, h - barH + 18, w - 270, 20), T("이동/공격: 방향키, WASD | 대기: Space | 포션: [1] | 엘릭서: [2]", "Move/attack: Arrows, WASD | Wait: Space | Potion: [1] | Elixir: [2]"), keyHintStyle);
 
         // Potions / Elixirs Buttons
-        if (GUI.Button(new Rect(w - 240, h - barH + 5, 105, 45), "🧪 포션 (" + potionCount + ")"))
+        if (GUI.Button(new Rect(w - 240, h - barH + 5, 105, 45), T("🧪 포션 (", "🧪 Potion (") + potionCount + ")"))
         {
             UsePotion();
         }
-        if (GUI.Button(new Rect(w - 125, h - barH + 5, 105, 45), "⚡ 엘릭서 (" + elixirCount + ")"))
+        if (GUI.Button(new Rect(w - 125, h - barH + 5, 105, 45), T("⚡ 엘릭서 (", "⚡ Elixir (") + elixirCount + ")"))
         {
             UseElixir();
         }
@@ -913,9 +919,9 @@ public class DotDungeonRoguePlayer : MonoBehaviour
             alignment = TextAnchor.MiddleCenter,
             normal = { textColor = new Color(1f, 0.35f, 0.35f) }
         };
-        GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), "던전에서 쓰러졌습니다...", title);
+        GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), T("던전에서 쓰러졌습니다...", "You fell in the dungeon..."), title);
 
-        if (GUI.Button(new Rect(r.x + 90, r.y + 90, 180, 45), "현재 층 재도전 (R)"))
+        if (GUI.Button(new Rect(r.x + 90, r.y + 90, 180, 45), T("현재 층 재도전 (R)", "Retry this floor (R)")))
         {
             playerHp = playerMaxHp;
             GenerateFloor(currentFloor);
@@ -943,10 +949,10 @@ public class DotDungeonRoguePlayer : MonoBehaviour
             normal = { textColor = Color.white }
         };
 
-        GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), "★ B10F 고대 화룡 정복 완료! ★", title);
-        GUI.Label(new Rect(r.x, r.y + 55, r.width, 25), "고대 드래곤의 아뮬렛을 획득하고 지상으로 귀환했습니다!", sub);
+        GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), T("★ B10F 고대 화룡 정복 완료! ★", "★ B10F Ancient Dragon defeated! ★"), title);
+        GUI.Label(new Rect(r.x, r.y + 55, r.width, 25), T("고대 드래곤의 아뮬렛을 획득하고 지상으로 귀환했습니다!", "You claimed the Ancient Dragon's amulet and returned to the surface!"), sub);
 
-        if (GUI.Button(new Rect(r.x + 130, r.y + 105, 180, 45), "새로운 던전 탐험 시작"))
+        if (GUI.Button(new Rect(r.x + 130, r.y + 105, 180, 45), T("새로운 던전 탐험 시작", "Start a new expedition")))
         {
             playerHp = 100;
             playerMaxHp = 100;
@@ -960,7 +966,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
     {
         int w = Screen.width;
         int h = Screen.height;
-        GUI.Box(new Rect(30, 70, w - 60, h - 140), "🗺️ 던전 층 선택 (Dungeon Floor Select: B1F ~ B10F)");
+        GUI.Box(new Rect(30, 70, w - 60, h - 140), T("🗺️ 던전 층 선택 (Dungeon Floor Select: B1F ~ B10F)", "🗺️ Dungeon Floor Select (B1F ~ B10F)"));
 
         int cols = 2;
         int itemW = (w - 110) / cols;
@@ -974,7 +980,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
 
             FloorDef f = FloorDefs[i];
             string bossTag = f.isBossFloor ? " [BOSS!]" : "";
-            string text = "B" + f.floor + "F: " + f.nameKo + bossTag + " (" + f.enemyNameKo + ")";
+            string text = "B" + f.floor + "F: " + T(f.nameKo, f.nameEn) + bossTag + " (" + T(f.enemyNameKo, f.enemyNameEn) + ")";
 
             if (GUI.Button(btnRect, text))
             {

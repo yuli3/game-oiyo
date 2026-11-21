@@ -98,6 +98,7 @@ public class TwoHandsPlayer : MonoBehaviour
 
     private void Awake()
     {
+        switch (OiyoLang.Pick("ko", "en", "ja", "es")) { case "en": currentLang = Language.EN; break; case "ja": currentLang = Language.JA; break; case "es": currentLang = Language.ES; break; default: currentLang = Language.KO; break; }
         InitCamera();
         InitAudio();
         InitStages();

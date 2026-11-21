@@ -58,6 +58,8 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
     int _silver;
     int _sunkCount;
     int _wave = 1;
+    const int FinalWave = 10;
+    bool _victory;
     float _fireCooldown;
     float _boostCooldown;
     float _boostActiveTimer;
@@ -295,6 +297,12 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
 
         if (_enemies.Count == 0)
         {
+            if (_wave >= FinalWave)
+            {
+                _victory = true;
+                _gameOver = true;
+                return;
+            }
             _wave++;
             _silver += 50 * _wave;
             SpawnWave(_wave);
@@ -626,6 +634,7 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
         _silver = 0;
         _sunkCount = 0;
         _wave = 1;
+        _victory = false;
         _gameOver = false;
         SpawnWave(_wave);
         SpawnPickups(6);
@@ -634,8 +643,8 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
     void OnGUI()
     {
         var boxStyle = new GUIStyle(GUI.skin.box) { fontSize = 15, fontStyle = FontStyle.Bold };
-        GUI.Box(new Rect(14, 14, 340, 92), "");
-        GUI.Label(new Rect(26, 22, 320, 24), $"VIKING LONGSHIP  |  WAVE {_wave}  |  SILVER {_silver}", boxStyle);
+        GUI.Box(new Rect(14, 14, 440, 92), "");
+        GUI.Label(new Rect(26, 22, 420, 24), $"VIKING LONGSHIP  |  WAVE {_wave}/{FinalWave}  |  SILVER {_silver}", boxStyle);
         GUI.Label(new Rect(26, 48, 320, 22), $"HULL: {_hull}/{MaxHull}   SUNK: {_sunkCount}   WIND: {Mathf.RoundToInt(_windAngleDeg)}°");
         string boostTxt = _boostCooldown <= 0f ? "READY (SHIFT / E)" : $"{_boostCooldown:0.0}s";
         GUI.Label(new Rect(26, 72, 320, 22), $"WASD/Click Steer • Space/Click Fire • Surge: {boostTxt}");
@@ -643,7 +652,7 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
         if (_gameOver)
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 170, Screen.height * 0.5f - 55, 340, 110), "");
-            GUI.Label(new Rect(Screen.width * 0.5f - 140, Screen.height * 0.5f - 35, 280, 30), "SHIPWRECKED IN VALHALLA SEAS", boxStyle);
+            GUI.Label(new Rect(Screen.width * 0.5f - 140, Screen.height * 0.5f - 35, 280, 30), (_victory ? $"ALL {FinalWave} WAVES CLEARED!" : "SHIPWRECKED IN VALHALLA SEAS"), boxStyle);
             GUI.Label(new Rect(Screen.width * 0.5f - 140, Screen.height * 0.5f - 5, 280, 24), $"Wave {_wave} • Silver {_silver} • Ships Sunk {_sunkCount}");
             if (GUI.Button(new Rect(Screen.width * 0.5f - 70, Screen.height * 0.5f + 22, 140, 28), "Sail Again (R)"))
             {

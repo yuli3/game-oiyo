@@ -266,6 +266,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
     void Awake()
     {
+        switch (OiyoLang.Pick("ko", "en", "ja", "es")) { case "en": lang = DefenseLanguage.EN; break; case "ja": lang = DefenseLanguage.JA; break; case "es": lang = DefenseLanguage.ES; break; default: lang = DefenseLanguage.KO; break; }
         Application.targetFrameRate = 60;
         mainCam = Camera.main;
         if (mainCam == null)

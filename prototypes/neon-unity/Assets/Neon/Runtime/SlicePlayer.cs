@@ -95,6 +95,8 @@ public sealed class SlicePlayer : MonoBehaviour
         musicOn = PlayerPrefs.GetInt(SaveKey + ".music", 1) == 1;
         reducedMotion = PlayerPrefs.GetInt(SaveKey + ".motion", 0) == 1;
         language = Mathf.Clamp(PlayerPrefs.GetInt(SaveKey + ".language", 0), 0, 5);
+        string urlLang = OiyoLang.UrlCode();
+        if (urlLang != null) language = System.Array.IndexOf(new[] { "ko", "en", "ja", "zh", "fr", "es" }, urlLang);
         codex = ObservatoryCodex.Deserialize(PlayerPrefs.GetString(SaveKey + ".codex", ""));
     }
 

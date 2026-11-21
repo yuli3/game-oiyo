@@ -1,4 +1,5 @@
 ---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ChaosKitchen from "../../components/games/ChaosKitchen";
 import GameGuide from "../../components/GameGuide.astro";
@@ -47,7 +48,9 @@ const m = meta[locale] || meta.en;
 ---
 
 <BaseLayout title={m.title} description={m.description} heading={m.title}>
-  <ChaosKitchen client:load />
+  <UnityMainShell slug="chaos-kitchen" build="chaos-kitchen-unity" locale={locale} name={m.title.split(" — ")[0]} poster={undefined}>
+      <ChaosKitchen client:visible />
+    </UnityMainShell>
   <div class="mx-auto max-w-3xl px-4 mt-8">
     <GameGuide slug="chaos-kitchen" locale={locale} name={m.title.split(" — ")[0]} />
   </div>

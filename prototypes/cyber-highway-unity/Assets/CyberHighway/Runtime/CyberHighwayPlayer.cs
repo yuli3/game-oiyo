@@ -278,6 +278,7 @@ public class CyberHighwayPlayer : MonoBehaviour
 
     void Awake()
     {
+        switch (OiyoLang.Pick("ko", "en", "ja", "es")) { case "en": lang = CyberLanguage.EN; break; case "ja": lang = CyberLanguage.JA; break; case "es": lang = CyberLanguage.ES; break; default: lang = CyberLanguage.KO; break; }
         Application.targetFrameRate = 60;
         mainCam = Camera.main;
         if (mainCam == null)
