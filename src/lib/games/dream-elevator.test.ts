@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  PUZZLE_COUNT,
+  puzzleIndexForSeed,
+  seedForPuzzle,
   ACTS,
   CAMERA_POSES,
   STEP_CAP,
@@ -20,7 +23,12 @@ const SOLUTIONS: Record<string, readonly Act[]> = {
   "first-bell": ["swap", "up", "swap", "up", "swap", "up"],
   "wrong-dream": ["swap", "up", "swap", "down", "up", "swap", "up", "swap", "up"],
   "borrowed-stone": ["swap", "up", "swap", "down", "up", "swap", "up", "swap", "up"],
-  "wake-mote": ["swap", "up", "swap", "up", "up", "swap", "down", "up"],
+  "wake-mote": ["swap", "up", "swap", "up", "up", "swap", "down", "up"],  "stone-sleep": ["swap", "up", "swap", "down", "up", "swap", "up", "up"],
+  "loose-hour": ["swap", "up", "swap", "down", "up", "up", "swap", "up"],
+  "echo-stone": ["swap", "up", "up", "swap", "down", "swap", "up", "swap", "up"],
+  "night-shift": ["swap", "up", "swap", "up", "swap", "down", "up", "swap", "up"],
+  "mote-loop": ["swap", "up", "swap", "up", "swap", "down", "up", "swap", "up"],
+  "hour-return": ["swap", "up", "up", "swap", "down", "swap", "up", "swap", "up"],
 };
 
 function replay(id: string, acts: readonly Act[]): DreamState {
@@ -28,7 +36,7 @@ function replay(id: string, acts: readonly Act[]): DreamState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 80; seed += 1) {
+  for (let seed = 0; seed < 400; seed += 1) {
     if (createDream(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -77,6 +85,11 @@ describe("dream elevator", () => {
     expect(CAMERA_POSES[0][0]).toBe(0);
     expect(CAMERA_POSES[0][2]).toBeGreaterThan(0);
     expect(CAMERA_POSES).toHaveLength(4);
+  });
+
+  it("ships ten stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(10);
+    for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
   });
 
   it("keeps one hand-checked shortest ride for each shaft", () => {
@@ -159,7 +172,7 @@ describe("dream elevator", () => {
 
   it("rebuilds the same shaft from the same seed", () => {
     const seen = new Set<string>();
-    for (let seed = 0; seed < 40; seed += 1) {
+    for (let seed = 0; seed < 200; seed += 1) {
       const dream = createDream(seed);
       expect(createDream(seed)).toEqual(dream);
       expect(mixSeed(seed)).toBe(mixSeed(seed));
