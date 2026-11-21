@@ -19,7 +19,12 @@ describe("parsePrototypeResult", () => {
     expect(parsePrototypeResult({ type: "oiyo:game-result", slug: "whale-city", outcome: "w", score: 812.4 }, "whale-city"))
       .toEqual({ slug: "whale-city", outcome: "w", score: 812 });
     expect(parsePrototypeResult({ type: "oiyo:game-result", slug: "echo-shift", outcome: "w" }, "whale-city")).toBeNull();
-    expect(parsePrototypeResult({ type: "oiyo:game-result", slug: "whale-city", outcome: "win" }, "whale-city")).toBeNull();
+    expect(parsePrototypeResult({ type: "oiyo:game-result", slug: "firefly-keeper", outcome: "win", score: 3 }, "firefly-keeper"))
+      .toEqual({ slug: "firefly-keeper", outcome: "w", score: 3 });
+    expect(parsePrototypeResult({ type: "oiyo:game-result", slug: "firefly-keeper", outcome: "loss", score: 0 }, "firefly-keeper"))
+      .toEqual({ slug: "firefly-keeper", outcome: "l" });
+    expect(parsePrototypeResult({ type: "oiyo:game-result", slug: "whale-city", outcome: "victory" }, "whale-city")).toBeNull();
+    expect(parsePrototypeResult({ type: "oiyo:game-result", slug: "whale-city", outcome: "toString" }, "whale-city")).toBeNull();
     expect(parsePrototypeResult({ type: "other", slug: "whale-city", outcome: "w" }, "whale-city")).toBeNull();
     expect(parsePrototypeResult("w", "whale-city")).toBeNull();
     expect(parsePrototypeResult({ type: "oiyo:game-result", slug: "whale-city", outcome: "l", score: -5 }, "whale-city"))
