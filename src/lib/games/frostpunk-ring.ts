@@ -361,8 +361,11 @@ export function stepFrostpunkHour(
     }
   }
 
+  // The colder the day, the harder the generator burns (balance pass 2026-11-21:
+  // before this an idle city survived every day, so the later days need a plan).
+  const coldBurn = 1 + (Math.abs(ambientTempC) / 70) * 1.1;
   const coalBurnPerHour = state.generatorOn
-    ? state.generatorLevel * 7 + (state.overdriveActive ? 5 : 0)
+    ? Math.round(state.generatorLevel * 7 * coldBurn) + (state.overdriveActive ? 5 : 0)
     : 0;
   const totalCoalBurn = coalBurnPerHour * hoursToAdvance;
 

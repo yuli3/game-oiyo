@@ -59,6 +59,11 @@ function TiltDirButton({
   );
 }
 
+// The hero noun shows as PUFF on its text tile; the engine id stays "baba".
+function ruleWord(word: string): string {
+  return word === 'baba' ? 'PUFF' : word.toUpperCase();
+}
+
 export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<BabaRuleShifterEngine>(new BabaRuleShifterEngine(1));
@@ -258,7 +263,7 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
 
       // Text blocks
       case 'text_baba':
-        return <span className="text-xs font-black font-mono text-destructive">BABA</span>;
+        return <span className="text-xs font-black font-mono text-destructive">PUFF</span>;
       case 'text_flag':
         return <span className="text-xs font-black font-mono text-warning">FLAG</span>;
       case 'text_wall':
@@ -334,7 +339,7 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
             key={idx}
             className="px-2 py-0.5 rounded bg-card border border-border text-xs font-mono font-bold text-primary shadow-xs"
           >
-            {rule.subject.toUpperCase()} IS {rule.predicate.toUpperCase()}
+            {ruleWord(rule.subject)} IS {ruleWord(rule.predicate)}
           </span>
         ))}
       </div>

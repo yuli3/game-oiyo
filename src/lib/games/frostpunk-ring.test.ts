@@ -47,4 +47,12 @@ describe("frostpunk-ring engine", () => {
     expect(state.lastEvent).toBe("whiteout-survived");
     expect(state.day).toBe(10);
   });
+
+  it("an idle city that never builds more coal runs dry before the whiteout ends", () => {
+    let state = createInitialFrostpunkRingState(99);
+    for (let i = 0; i < 70 && state.status === "playing"; i += 1) {
+      state = stepFrostpunkHour(state, 4);
+    }
+    expect(state.status).toBe("lost");
+  });
 });

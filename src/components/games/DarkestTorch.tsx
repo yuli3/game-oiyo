@@ -411,7 +411,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
           <div className="mt-4">
             <div className="mb-2 text-xs font-black uppercase tracking-wider text-muted-foreground">
               {isKo
-                ? '전술 스킬 발동 (스킬마다 전열 타격·넉백 교대·역병·성녀 치유·횃불 고무 수행):'
+                ? '전술 스킬 발동 (스킬마다 전열 타격·넉백 교대·역병·수녀 치유·횃불 고무 수행):'
                 : 'Execute Tactical Skill:'}
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -421,8 +421,8 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
               >
                 ⚔️{' '}
                 {isKo
-                  ? '성전사 강타 (Smite — 단일 강타 + 치명타 보정)'
-                  : 'Crusader Smite (Single Target Strike)'}
+                  ? '횃불 기사 강타 (Smite — 단일 강타 + 치명타 보정)'
+                  : 'Torch Knight Smite (Single Target Strike)'}
               </TiltTorchButton>
               <TiltTorchButton
                 onClick={() => onSkill('point-blank')}
@@ -430,7 +430,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
               >
                 🔫{' '}
                 {isKo
-                  ? '노상강도 영거리 사격 (135% 피해 + R1↔R2 전열 교대)'
+                  ? '총잡이 영거리 사격 (135% 피해 + R1↔R2 전열 교대)'
                   : 'Point Blank Shot (135% DMG + R1↔R2 Shift)'}
               </TiltTorchButton>
               <TiltTorchButton
@@ -439,7 +439,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
               >
                 🧪{' '}
                 {isKo
-                  ? '역병의사 맹독 수류탄 (적 전체 광역 역병 타격)'
+                  ? '약초꾼 맹독 수류탄 (적 전체 광역 역병 타격)'
                   : 'Plague Grenade (AoE Blight All Enemies)'}
               </TiltTorchButton>
               <TiltTorchButton
@@ -448,8 +448,8 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
               >
                 ✨{' '}
                 {isKo
-                  ? '성녀 신성한 위로 (파티 전원 +14 HP & -6 스트레스)'
-                  : 'Vestal Divine Comfort (+14 Party HP & -6 Stress)'}
+                  ? '등불 수녀 신성한 위로 (파티 전원 +14 HP & -6 스트레스)'
+                  : 'Lantern Nun Comfort (+14 Party HP & -6 Stress)'}
               </TiltTorchButton>
               <TiltTorchButton
                 onClick={() => onSkill('inspiring-torch')}
@@ -457,7 +457,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
               >
                 🕯️{' '}
                 {isKo
-                  ? '성전사 고무의 외침 (횃불 광량 +22 & 파티 전원 스트레스 -14)'
+                  ? '횃불 기사 고무의 외침 (횃불 광량 +22 & 파티 전원 스트레스 -14)'
                   : 'Inspiring Cry (+22 Torchlight & -14 Party Stress)'}
               </TiltTorchButton>
             </div>
