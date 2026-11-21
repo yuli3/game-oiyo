@@ -33,6 +33,18 @@ export function sendPlayEvent(name: string, params: Record<string, unknown>, win
   }
 }
 
+/** Window event fired when a play session starts (first-play coach listens to it). */
+export const PLAY_START_EVENT = "oiyo:play-start";
+
+function announceStart(gameId: string): void {
+  if (typeof window === "undefined" || typeof window.dispatchEvent !== "function" || typeof CustomEvent !== "function") return;
+  try {
+    window.dispatchEvent(new CustomEvent(PLAY_START_EVENT, { detail: { gameId } }));
+  } catch {
+    // Never let a listener break the game start.
+  }
+}
+
 export interface PlaySessionTracker {
   start: () => void;
   end: (reason: "exit" | "pagehide" | "unmount") => void;
@@ -51,6 +63,7 @@ export function createPlaySessionTracker(
       startedAt = now();
       const { gameId, locale } = gameContextFromPath(getPath());
       send("game_session_start", { game_id: gameId, locale });
+      announceStart(gameId);
     },
     end(reason) {
       if (startedAt === null) return;

@@ -7,6 +7,7 @@ import { GAME_INSIGHTS } from "../data/game-insights";
 import { STRATEGY_GUIDES } from "../data/game-strategy";
 import type { Locale } from "../lib/i18n";
 import GamePlayBeacon from "./games/GamePlayBeacon";
+import FirstPlayCoach from "./games/FirstPlayCoach";
 import { getFallbackGameGuide } from "../lib/seo/game-guide-fallback";
 import { videoGameJsonLd, faqPageJsonLd } from "../lib/seo/structured-data";
 import { getGameRecommendations } from "../lib/games/game-recommendations";
@@ -62,8 +63,14 @@ const jsonLd = g ? [
     answer: f.a[locale] ?? f.a.en,
   }))),
 ] : null;
+
+// 첫 플레이 안내(2026-11-21): 실제 가이드가 있는 게임만, 자체 튜토리얼이 있는 게임은 제외.
+const OWN_TUTORIAL = new Set(["minesweeper", "skyward-atlas"]);
+const coachHow = !OWN_TUTORIAL.has(slug) ? GAME_GUIDES[slug]?.how?.[locale] ?? "" : "";
+const COACH_OK = { ko: "알겠어요", en: "Got it", ja: "OK", zh: "知道了", fr: "Compris", es: "Entendido" } as Record<Locale, string>;
 ---
 
+{coachHow && <FirstPlayCoach client:only="react" slug={slug} title={H.how[locale]} how={coachHow} okLabel={COACH_OK[locale]} />}
 {/* 2026-10-13: this null-rendering beacon only records browser interactions;
     keep the guide's static HTML while avoiding unnecessary React SSR. */}
 <GamePlayBeacon client:only="react" slug={slug} />
