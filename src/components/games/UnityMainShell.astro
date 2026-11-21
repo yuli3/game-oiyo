@@ -34,34 +34,34 @@ const ui = labels[locale] ?? labels.en;
 const src = `/prototypes/${build}/index.html?lang=${locale}&release=1`;
 ---
 
-<section class="ums" data-unity-main={slug} data-src={src} data-locale={locale}>
-  <div class="ums__tabs" role="tablist" aria-label={name}>
-    <button type="button" role="tab" id={`${slug}-tab-main`} aria-controls={`${slug}-panel-main`} aria-selected="true" data-tab="main">{ui.main}</button>
-    <button type="button" role="tab" id={`${slug}-tab-quick`} aria-controls={`${slug}-panel-quick`} aria-selected="false" tabindex="-1" data-tab="quick">{ui.quick}</button>
-    <button type="button" class="ums__fs" data-fullscreen aria-label={ui.fullscreen} hidden>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5m13 5h5v-5" /></svg>
-      <span>{ui.fullscreen}</span>
+<section class="mx-auto max-w-7xl px-2" data-unity-main={slug} data-src={src} data-locale={locale}>
+  <div class="mb-3 flex flex-wrap items-center gap-2" role="tablist" aria-label={name}>
+    <button type="button" role="tab" id={`${slug}-tab-main`} aria-controls={`${slug}-panel-main`} aria-selected="true" data-tab="main" class="min-h-11 rounded-full border border-border bg-card px-4 py-2 font-bold text-foreground cursor-pointer aria-selected:border-primary aria-selected:bg-primary aria-selected:text-primary-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary">{ui.main}</button>
+    <button type="button" role="tab" id={`${slug}-tab-quick`} aria-controls={`${slug}-panel-quick`} aria-selected="false" tabindex="-1" data-tab="quick" class="min-h-11 rounded-full border border-border bg-card px-4 py-2 font-bold text-foreground cursor-pointer aria-selected:border-primary aria-selected:bg-primary aria-selected:text-primary-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary">{ui.quick}</button>
+    <button type="button" class="ml-auto inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 font-bold text-foreground cursor-pointer" data-fullscreen aria-label={ui.fullscreen} hidden>
+      <svg class="size-4 stroke-current stroke-2" fill="none" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3H3v5M16 3h5v5M8 21H3v-5m13 5h5v-5" /></svg>
+      <span class="sr-only sm:not-sr-only">{ui.fullscreen}</span>
     </button>
   </div>
 
-  <div class="ums__panel" role="tabpanel" id={`${slug}-panel-main`} aria-labelledby={`${slug}-tab-main`} data-panel="main">
-    <div class="ums__frame" data-frame>
-      <button type="button" class="ums__exit" data-exit-fullscreen aria-label={ui.exit} hidden>{ui.exit}</button>
-      <div class="ums__poster" data-poster>
-        {poster && <img src={poster} alt="" loading="eager" decoding="async" />}
-        <div class="ums__cta">
-          <button type="button" class="ums__play" data-play>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+  <div role="tabpanel" id={`${slug}-panel-main`} aria-labelledby={`${slug}-tab-main`} data-panel="main">
+    <div class="relative w-full overflow-hidden rounded-xl bg-secondary-foreground shadow-xl h-150 max-h-svh sm:h-auto sm:aspect-video sm:rounded-2xl [&:fullscreen]:h-screen [&:fullscreen]:w-screen [&:fullscreen]:rounded-none" data-frame>
+      <button type="button" class="absolute top-4 right-4 z-10 min-h-11 rounded-xl border border-white/35 bg-secondary-foreground/90 px-3 py-2 font-bold text-white cursor-pointer" data-exit-fullscreen aria-label={ui.exit} hidden>{ui.exit}</button>
+      <div class="absolute inset-0 grid place-items-center" data-poster>
+        {poster && <img class="absolute inset-0 size-full object-cover brightness-60" src={poster} alt="" loading="eager" decoding="async" />}
+        <div class="relative flex flex-col items-center gap-3 p-4 text-center">
+          <button type="button" class="inline-flex min-h-14 items-center gap-2 rounded-full bg-warning px-6 py-3 text-lg font-extrabold text-warning-foreground shadow-2xl cursor-pointer hover:opacity-90 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white" data-play>
+            <svg class="size-6 fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
             <span>{ui.play}</span>
           </button>
-          <p>{ui.note}</p>
+          <p class="m-0 max-w-xs text-sm text-white drop-shadow">{ui.note}</p>
         </div>
       </div>
     </div>
-    <p class="ums__hint">{ui.hint}</p>
+    <p class="mt-2 text-center text-xs text-muted-foreground">{ui.hint}</p>
   </div>
 
-  <div class="ums__panel" role="tabpanel" id={`${slug}-panel-quick`} aria-labelledby={`${slug}-tab-quick`} data-panel="quick" hidden>
+  <div class="[&_a[href*='-unity/']]:hidden" role="tabpanel" id={`${slug}-panel-quick`} aria-labelledby={`${slug}-tab-quick`} data-panel="quick" hidden>
     <slot />
   </div>
 </section>
@@ -87,6 +87,7 @@ const src = `/prototypes/${build}/index.html?lang=${locale}&release=1`;
       iframe.title = shell.getAttribute("aria-label") || document.title;
       iframe.allow = "fullscreen; autoplay";
       iframe.referrerPolicy = "same-origin";
+      iframe.className = "absolute inset-0 size-full border-0 bg-secondary-foreground";
       frame.appendChild(iframe);
       poster?.setAttribute("hidden", "");
       if (fsButton && canFullscreen) fsButton.hidden = false;
@@ -143,35 +144,3 @@ const src = `/prototypes/${build}/index.html?lang=${locale}&release=1`;
     if (params.get("play") === "quick" || location.hash === "#quick") select("quick");
   }
 </script>
-
-<style>
-  .ums { --ums-ink: #173f38; --ums-line: #b8c8c2; --ums-bg: #101915; max-width:80rem; margin-inline:auto; padding-inline:.5rem; }
-  .ums__tabs { display:flex; align-items:center; gap:.5rem; margin-bottom:.75rem; flex-wrap:wrap; }
-  .ums__tabs [role="tab"] { min-height:44px; border:1px solid var(--ums-line); border-radius:999px; background:#fff; padding:.55rem 1.05rem; color:var(--ums-ink); font-weight:750; cursor:pointer; }
-  .ums__tabs [role="tab"][aria-selected="true"] { background:var(--ums-ink); border-color:var(--ums-ink); color:#fff; }
-  .ums__tabs [role="tab"]:focus-visible, .ums__fs:focus-visible, .ums__play:focus-visible { outline:3px solid #2a806a; outline-offset:3px; }
-  .ums__fs { margin-left:auto; display:inline-flex; min-height:44px; align-items:center; gap:.5rem; border:1px solid var(--ums-line); border-radius:12px; background:#fff; padding:.55rem .85rem; color:var(--ums-ink); font-weight:750; cursor:pointer; }
-  .ums__fs[hidden] { display:none; }
-  .ums__fs svg { width:1.1rem; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-  .ums__frame { position:relative; overflow:hidden; border-radius:16px; background:var(--ums-bg); box-shadow:0 18px 45px rgba(23,63,56,.18); width:100%; height:clamp(420px, min(84vh, 62.5vw), 900px); }
-  .ums__frame :global(iframe) { position:absolute; inset:0; width:100%; height:100%; border:0; background:var(--ums-bg); }
-  .ums__frame:fullscreen { width:100vw; height:100vh; max-height:none; border-radius:0; }
-  .ums__poster { position:absolute; inset:0; display:grid; place-items:center; }
-  .ums__poster[hidden] { display:none; }
-  .ums__poster img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:brightness(.62) saturate(1.05); }
-  .ums__cta { position:relative; display:flex; flex-direction:column; align-items:center; gap:.75rem; padding:1rem; text-align:center; }
-  .ums__play { display:inline-flex; min-height:56px; align-items:center; gap:.6rem; border:0; border-radius:999px; background:#f5c84c; padding:.9rem 1.6rem; color:#1b1404; font-size:1.1rem; font-weight:850; cursor:pointer; box-shadow:0 10px 28px rgba(0,0,0,.35); }
-  .ums__play:hover { background:#ffd96b; }
-  .ums__play svg { width:1.4rem; fill:currentColor; }
-  .ums__cta p { margin:0; max-width:36ch; color:#f1f5f3; font-size:.85rem; text-shadow:0 1px 3px rgba(0,0,0,.6); }
-  .ums__exit { position:absolute; z-index:3; top:1rem; right:1rem; min-height:44px; border:1px solid rgba(255,255,255,.35); border-radius:12px; background:rgba(8,25,22,.9); padding:.65rem .85rem; color:#fff; font-weight:750; cursor:pointer; }
-  .ums__exit[hidden] { display:none; }
-  .ums__hint { margin:.65rem 0 0; color:#6c7b76; font-size:.78rem; text-align:center; }
-  .ums__panel[hidden] { display:none; }
-  /* The React game's own "Play the 3D version" link is redundant inside this shell. */
-  [data-panel="quick"] :global(a[href*="-unity/"]) { display:none; }
-  @media (max-width: 640px) {
-    .ums__frame { width:auto; height:78vh; min-height:520px; border-radius:12px; }
-    .ums__fs span { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
-  }
-</style>
