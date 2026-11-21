@@ -474,17 +474,49 @@ public class BlockBlastPlayer : MonoBehaviour
         baseBlockMat = new Material(OiyoShaders.Safe(litShader));
         baseBlockMat.color = Color.white;
 
-        boardSlotMat = new Material(OiyoShaders.Safe(litShader));
-        boardSlotMat.color = new Color(0.08f, 0.12f, 0.18f, 0.9f);
+        // Painted tiles from scripts/make_art.py; draw order is set by render queue.
+        boardSlotMat = SpriteMat("slot", Color.white, 2600);
+        boardBorderMat = SpriteMat("frame", Color.white, 2500);
+        ghostBlockMat = SpriteMat("ghost", Color.white, 3050);
+        shardMat = SpriteMat("spark", Color.white, 3100);
 
-        boardBorderMat = new Material(OiyoShaders.Safe(litShader));
-        boardBorderMat.color = new Color(0.04f, 0.06f, 0.10f, 1f);
+        // Full-screen painted backdrop behind the board.
+        var bg = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        bg.name = "Backdrop";
+        Destroy(bg.GetComponent<Collider>());
+        bg.transform.position = new Vector3(0f, 0.9f, 5f);
+        bg.transform.localScale = new Vector3(40f, 20f, 1f);
+        bg.GetComponent<Renderer>().material = SpriteMat("backdrop", Color.white, 2400);
+    }
 
-        ghostBlockMat = new Material(OiyoShaders.Safe(litShader));
-        ghostBlockMat.color = new Color(0.2f, 1f, 0.8f, 0.45f);
+    static readonly Dictionary<string, Texture2D> _tex = new Dictionary<string, Texture2D>();
+    static readonly Dictionary<string, Material> _mats = new Dictionary<string, Material>();
 
-        shardMat = new Material(OiyoShaders.Safe(litShader));
-        shardMat.color = Color.white;
+    static Material SpriteMat(string texName, Color tint, int queue)
+    {
+        if (!_tex.TryGetValue(texName, out var t))
+        {
+            t = Resources.Load<Texture2D>("BB/" + texName);
+            if (t != null) t.wrapMode = TextureWrapMode.Clamp;
+            _tex[texName] = t;
+        }
+        var m = new Material(Shader.Find("Sprites/Default"));
+        m.mainTexture = t;
+        m.color = tint;
+        m.renderQueue = queue;
+        return m;
+    }
+
+    // One shared material per tile type (board blocks) or per type+layer (hand pieces).
+    static Material TileMat(CellType type, int queue)
+    {
+        string key = type + "/" + queue;
+        if (!_mats.TryGetValue(key, out var m))
+        {
+            m = SpriteMat("tile_" + type, Color.white, queue);
+            _mats[key] = m;
+        }
+        return m;
     }
 
     private void BuildBoardStructure()
@@ -698,19 +730,14 @@ public class BlockBlastPlayer : MonoBehaviour
             go.name = string.Format("Block_{0}_{1}_{2}", r, c, type);
             go.transform.position = GetCellCenter(r, c);
             go.transform.localScale = new Vector3(CellBlockSize, CellBlockSize, 0.65f);
-            go.GetComponent<Renderer>().material = CreateMaterialForType(type);
+            go.GetComponent<Renderer>().sharedMaterial = CreateMaterialForType(type);
             gridGos[r, c] = go;
         }
     }
 
     private Material CreateMaterialForType(CellType type)
     {
-        Shader litShader = Shader.Find("Universal Render Pipeline/Lit");
-        if (litShader == null) litShader = Shader.Find("Standard");
-
-        var mat = new Material(OiyoShaders.Safe(litShader));
-        mat.color = GetColorForCellType(type);
-        return mat;
+        return TileMat(type, 3000);
     }
 
     private Color GetColorForCellType(CellType type)
@@ -768,7 +795,7 @@ public class BlockBlastPlayer : MonoBehaviour
                         blockGo.transform.SetParent(hp.rootGo.transform);
                         blockGo.transform.localPosition = new Vector3((c - cOffset) * CellPitch * pieceScale, (r - rOffset) * CellPitch * pieceScale, 0f);
                         blockGo.transform.localScale = new Vector3(CellBlockSize * pieceScale, CellBlockSize * pieceScale, 0.5f * pieceScale);
-                        blockGo.GetComponent<Renderer>().material = CreateMaterialForType(template.type);
+                        blockGo.GetComponent<Renderer>().sharedMaterial = TileMat(template.type, 3010);
                         hp.blockGos.Add(blockGo);
                     }
                 }
@@ -1170,7 +1197,7 @@ public class BlockBlastPlayer : MonoBehaviour
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.transform.position = pos;
             go.transform.localScale = Vector3.one * shard.scale;
-            go.GetComponent<Renderer>().material = CreateMaterialForType(CellType.Cyan);
+            go.GetComponent<Renderer>().material = shardMat;
             go.GetComponent<Renderer>().material.color = color;
             shard.go = go;
 

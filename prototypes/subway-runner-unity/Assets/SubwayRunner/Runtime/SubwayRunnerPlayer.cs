@@ -134,6 +134,54 @@ public class SubwayRunnerPlayer : MonoBehaviour
         audioSource.playOnAwake = false;
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/SR) ----
+    private static readonly Dictionary<string, Texture2D> artTex = new Dictionary<string, Texture2D>();
+    private Material trackMat, leftWallMat, rightWallMat, runnerMat;
+
+    private static Texture2D ArtTex(string name)
+    {
+        if (!artTex.TryGetValue(name, out var t))
+        {
+            t = Resources.Load<Texture2D>("SR/" + name);
+            artTex[name] = t;
+        }
+        return t;
+    }
+
+    // Unlit, alpha cut-out, tiling-aware; falls back to Sprites/Default if the shader is missing.
+    private static Material ArtMat(string texName, float tileX = 1f, float tileY = 1f)
+    {
+        var sh = Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        var t = ArtTex(texName);
+        if (t != null)
+        {
+            t.wrapMode = (tileX != 1f || tileY != 1f) ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+            m.mainTexture = t;
+        }
+        m.mainTextureScale = new Vector2(tileX, tileY);
+        m.color = Color.white;
+        return m;
+    }
+
+    private static GameObject ArtQuad(string name, Transform parent = null)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        if (parent != null) go.transform.SetParent(parent, false);
+        return go;
+    }
+
+    // Scroll the floor and wall textures with the run so the tunnel visibly rushes past.
+    private void ScrollTunnel()
+    {
+        float t = currentDistance / 4f;
+        if (trackMat != null) trackMat.mainTextureOffset = new Vector2(0f, t);
+        if (leftWallMat != null) leftWallMat.mainTextureOffset = new Vector2(t, 0f);
+        if (rightWallMat != null) rightWallMat.mainTextureOffset = new Vector2(-t, 0f);
+    }
+
     private void CreateSubwayTrackVisuals()
     {
         // 3-lane subway track bed
@@ -141,9 +189,8 @@ public class SubwayRunnerPlayer : MonoBehaviour
         bed.name = "TrackBed";
         bed.transform.position = new Vector3(0f, -0.1f, 35f);
         bed.transform.localScale = new Vector3(7.5f, 0.2f, 120f);
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = new Color(0.08f, 0.10f, 0.18f);
-        bed.GetComponent<MeshRenderer>().material = mat;
+        trackMat = ArtMat("track", 1f, 30f);
+        bed.GetComponent<MeshRenderer>().material = trackMat;
 
         // 3 Steel Rails with sleepers
         for (int i = 0; i < 3; i++)
@@ -153,9 +200,26 @@ public class SubwayRunnerPlayer : MonoBehaviour
             CreateRail(new Vector3(x + 0.45f, 0.05f, 35f), 120f);
         }
 
-        // Side Tunnel Walls & Neon Ribs
-        CreateWall(new Vector3(-4.0f, 2.5f, 35f), new Vector3(0.3f, 5.5f, 120f), new Color(0.12f, 0.15f, 0.24f));
-        CreateWall(new Vector3(4.0f, 2.5f, 35f), new Vector3(0.3f, 5.5f, 120f), new Color(0.12f, 0.15f, 0.24f));
+        // Side tunnel walls: inward-facing quads so the texture runs along the track
+        var lw = ArtQuad("TunnelWallL");
+        lw.transform.position = new Vector3(-3.85f, 2.5f, 35f);
+        lw.transform.rotation = Quaternion.Euler(0f, -90f, 0f);
+        lw.transform.localScale = new Vector3(120f, 5.5f, 1f);
+        leftWallMat = ArtMat("wall", 30f, 1f);
+        lw.GetComponent<MeshRenderer>().material = leftWallMat;
+
+        var rw = ArtQuad("TunnelWallR");
+        rw.transform.position = new Vector3(3.85f, 2.5f, 35f);
+        rw.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+        rw.transform.localScale = new Vector3(120f, 5.5f, 1f);
+        rightWallMat = ArtMat("wall", 30f, 1f);
+        rw.GetComponent<MeshRenderer>().material = rightWallMat;
+
+        // Light at the end of the tunnel
+        var end = ArtQuad("TunnelEnd");
+        end.transform.position = new Vector3(0f, 2.5f, 94f);
+        end.transform.localScale = new Vector3(8f, 5.6f, 1f);
+        end.GetComponent<MeshRenderer>().material = ArtMat("tunnel_end");
     }
 
     private void CreateRail(Vector3 pos, float length)
@@ -165,7 +229,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
         rail.transform.position = pos;
         rail.transform.localScale = new Vector3(0.08f, 0.1f, length);
         var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = new Color(0.35f, 0.65f, 0.95f);
+        mat.color = new Color(0.62f, 0.68f, 0.78f);
         rail.GetComponent<MeshRenderer>().material = mat;
     }
 
@@ -191,29 +255,14 @@ public class SubwayRunnerPlayer : MonoBehaviour
         hoverboardGo.transform.SetParent(playerGo.transform);
         hoverboardGo.transform.localPosition = new Vector3(0f, -0.2f, 0f);
         hoverboardGo.transform.localScale = new Vector3(0.65f, 0.12f, 1.2f);
-        var boardMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        boardMat.color = new Color(0.1f, 0.9f, 1.0f);
-        hoverboardGo.GetComponent<MeshRenderer>().material = boardMat;
+        hoverboardGo.GetComponent<MeshRenderer>().material = ArtMat("hoverboard");
 
-        // Player Body (Runner Model)
-        playerBodyGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        playerBodyGo.name = "PlayerBody";
-        playerBodyGo.transform.SetParent(playerGo.transform);
-        playerBodyGo.transform.localPosition = new Vector3(0f, 0.45f, 0f);
-        playerBodyGo.transform.localScale = new Vector3(0.6f, 1.0f, 0.45f);
-        var bodyMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        bodyMat.color = new Color(0.95f, 0.35f, 0.15f);
-        playerBodyGo.GetComponent<MeshRenderer>().material = bodyMat;
-
-        // Head & Cap
-        var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        head.name = "PlayerHead";
-        head.transform.SetParent(playerGo.transform);
-        head.transform.localPosition = new Vector3(0f, 1.15f, 0f);
-        head.transform.localScale = Vector3.one * 0.45f;
-        var headMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        headMat.color = new Color(0.95f, 0.85f, 0.7f);
-        head.GetComponent<MeshRenderer>().material = headMat;
+        // Runner sprite (seen from behind); the texture swaps to a crouch while sliding
+        playerBodyGo = ArtQuad("PlayerBody", playerGo.transform);
+        playerBodyGo.transform.localPosition = new Vector3(0f, 0.62f, 0f);
+        playerBodyGo.transform.localScale = new Vector3(0.9f, 1.5f, 1f);
+        runnerMat = ArtMat("runner");
+        playerBodyGo.GetComponent<MeshRenderer>().material = runnerMat;
     }
 
     private void InitStages()
@@ -451,9 +500,11 @@ public class SubwayRunnerPlayer : MonoBehaviour
         go.name = "SubwayTrain";
         go.transform.position = new Vector3(LaneX[lane], 1.4f, z);
         go.transform.localScale = item.size;
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = moving ? new Color(0.95f, 0.2f, 0.2f) : new Color(0.2f, 0.4f, 0.8f);
-        go.GetComponent<MeshRenderer>().material = mat;
+        string livery = moving ? "red" : "blue";
+        go.GetComponent<MeshRenderer>().material = ArtMat("train_side_" + livery);
+        var face = ArtQuad("TrainFace", go.transform);
+        face.transform.localPosition = new Vector3(0f, 0f, -0.502f);
+        face.GetComponent<MeshRenderer>().material = ArtMat("train_front_" + livery);
         go.transform.SetParent(parent);
         item.go = go;
 
@@ -470,13 +521,10 @@ public class SubwayRunnerPlayer : MonoBehaviour
             size = new Vector3(1.6f, 0.65f, 0.35f)
         };
 
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        go.name = "LowHurdle";
+        var go = ArtQuad("LowHurdle");
         go.transform.position = new Vector3(LaneX[lane], 0.35f, z);
         go.transform.localScale = item.size;
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = new Color(1.0f, 0.6f, 0.1f);
-        go.GetComponent<MeshRenderer>().material = mat;
+        go.GetComponent<MeshRenderer>().material = ArtMat("hurdle");
         go.transform.SetParent(parent);
         item.go = go;
 
@@ -494,13 +542,10 @@ public class SubwayRunnerPlayer : MonoBehaviour
             yHeight = 1.3f
         };
 
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        go.name = "HighBarrier";
+        var go = ArtQuad("HighBarrier");
         go.transform.position = new Vector3(LaneX[lane], 1.6f, z);
         go.transform.localScale = item.size;
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = new Color(0.95f, 0.15f, 0.3f);
-        go.GetComponent<MeshRenderer>().material = mat;
+        go.GetComponent<MeshRenderer>().material = ArtMat("barrier");
         go.transform.SetParent(parent);
         item.go = go;
 
@@ -517,14 +562,10 @@ public class SubwayRunnerPlayer : MonoBehaviour
             size = new Vector3(0.5f, 0.5f, 0.5f)
         };
 
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        go.name = "GoldCoin";
+        var go = ArtQuad("GoldCoin");
         go.transform.position = new Vector3(LaneX[lane], 0.65f, z);
-        go.transform.localScale = new Vector3(0.45f, 0.08f, 0.45f);
-        go.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = new Color(1.0f, 0.85f, 0.1f);
-        go.GetComponent<MeshRenderer>().material = mat;
+        go.transform.localScale = new Vector3(0.55f, 0.55f, 1f);
+        go.GetComponent<MeshRenderer>().material = ArtMat("coin");
         go.transform.SetParent(parent);
         item.go = go;
 
@@ -541,19 +582,17 @@ public class SubwayRunnerPlayer : MonoBehaviour
             size = new Vector3(0.7f, 0.7f, 0.7f)
         };
 
-        var go = GameObject.CreatePrimitive(type == ObstacleType.PowerupJetpack ? PrimitiveType.Cylinder : PrimitiveType.Sphere);
-        go.name = "Powerup_" + type;
+        var go = ArtQuad("Powerup_" + type);
         go.transform.position = new Vector3(LaneX[lane], 0.75f, z);
-        go.transform.localScale = Vector3.one * 0.65f;
+        go.transform.localScale = new Vector3(0.8f, 0.8f, 1f);
 
         Color col = Color.green;
         if (type == ObstacleType.PowerupMagnet) col = new Color(0.9f, 0.2f, 0.3f); // Red magnet
         else if (type == ObstacleType.PowerupJetpack) col = new Color(0.2f, 0.85f, 1.0f); // Cyan jetpack
         else if (type == ObstacleType.PowerupMultiplier) col = new Color(0.95f, 0.85f, 0.1f); // 2X Gold
 
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = col;
-        go.GetComponent<MeshRenderer>().material = mat;
+        string badge = type == ObstacleType.PowerupMagnet ? "magnet" : type == ObstacleType.PowerupJetpack ? "jetpack" : "x2";
+        go.GetComponent<MeshRenderer>().material = ArtMat(badge);
         go.transform.SetParent(parent);
         item.go = go;
 
@@ -567,6 +606,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
         HandleInput();
         UpdatePlayerPhysics();
         UpdateTrackItems();
+        ScrollTunnel();
         UpdateParticles();
         UpdateCameraFollow();
 
@@ -683,13 +723,11 @@ public class SubwayRunnerPlayer : MonoBehaviour
             // Squash profile when sliding
             if (isSliding && jetpackTimer <= 0f)
             {
-                playerBodyGo.transform.localScale = new Vector3(0.6f, 0.35f, 0.85f);
-                playerBodyGo.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+                runnerMat.mainTexture = ArtTex("runner_slide");
             }
             else
             {
-                playerBodyGo.transform.localScale = new Vector3(0.6f, 1.0f, 0.45f);
-                playerBodyGo.transform.localPosition = new Vector3(0f, 0.45f, 0f);
+                runnerMat.mainTexture = ArtTex("runner");
             }
         }
     }

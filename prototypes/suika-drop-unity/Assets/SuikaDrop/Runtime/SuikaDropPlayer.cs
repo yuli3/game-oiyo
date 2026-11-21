@@ -59,6 +59,7 @@ public class SuikaDropPlayer : MonoBehaviour
         public bool isPendingMerge = false;
         public GameObject go;
         public Material mat;
+        public float angle;
     }
 
     public class Bumper
@@ -206,18 +207,49 @@ public class SuikaDropPlayer : MonoBehaviour
         };
     }
 
+    // Painted sprites made by scripts/make_art.py (Resources/SD).
+    static readonly Dictionary<string, Texture2D> _tex = new Dictionary<string, Texture2D>();
+    static Texture2D Tex(string name)
+    {
+        if (!_tex.TryGetValue(name, out var t))
+        {
+            t = Resources.Load<Texture2D>("SD/" + name);
+            if (t != null) t.wrapMode = TextureWrapMode.Clamp;
+            _tex[name] = t;
+        }
+        return t;
+    }
+
+    static Material SpriteMat(string texName, Color tint)
+    {
+        var m = new Material(Shader.Find("Sprites/Default"));
+        m.mainTexture = Tex(texName);
+        m.color = tint;
+        return m;
+    }
+
+    // A camera-facing quad (no collider: physics here is our own circle maths).
+    static GameObject SpriteQuad(string name)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        var col = go.GetComponent<Collider>();
+        if (col != null) Destroy(col);
+        return go;
+    }
+
     void BuildContainerVisuals()
     {
-        glassMat = new Material(Shader.Find("Sprites/Default"));
-        glassMat.color = new Color(0.2f, 0.35f, 0.55f);
+        glassMat = SpriteMat("wood", Color.white);
+        glassMat.renderQueue = 2600;
 
         // Background Backdrop
         var bg = GameObject.CreatePrimitive(PrimitiveType.Quad);
         bg.name = "Backdrop";
         bg.transform.position = new Vector3(0f, -0.2f, 0.5f);
         bg.transform.localScale = new Vector3(containerW + 0.2f, ContainerH, 1f);
-        var bgMat = new Material(Shader.Find("Sprites/Default"));
-        bgMat.color = new Color(0.08f, 0.12f, 0.20f);
+        var bgMat = SpriteMat("backdrop", Color.white);
+        bgMat.renderQueue = 2500; // always behind the fruit sprites (queue 3000)
         bg.GetComponent<MeshRenderer>().material = bgMat;
 
         // Container Walls
@@ -247,12 +279,10 @@ public class SuikaDropPlayer : MonoBehaviour
         deadlineLineGo.GetComponent<MeshRenderer>().material = redLineMat;
 
         // Dropper Aim Indicator
-        dropperGuideGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        dropperGuideGo.name = "DropperGuide";
+        dropperGuideGo = SpriteQuad("DropperGuide");
         dropperGuideGo.transform.position = new Vector3(0f, DropSpawnY, -0.2f);
         dropperGuideGo.transform.localScale = Vector3.one * 0.45f;
-        var guideMat = new Material(Shader.Find("Sprites/Default"));
-        guideMat.color = new Color(1f, 1f, 1f, 0.8f);
+        var guideMat = SpriteMat("fruit0", new Color(1f, 1f, 1f, 0.7f));
         dropperGuideGo.GetComponent<MeshRenderer>().material = guideMat;
 
         UpdateContainerWallPositions();
@@ -463,14 +493,10 @@ public class SuikaDropPlayer : MonoBehaviour
         foreach (var bDef in s.bumpers)
         {
             var b = new Bumper { pos = bDef.pos, radius = bDef.radius };
-            var bGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            bGo.name = "Bumper";
+            var bGo = SpriteQuad("Bumper");
             bGo.transform.position = new Vector3(b.pos.x, b.pos.y, -0.1f);
-            bGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-            bGo.transform.localScale = new Vector3(b.radius * 2f, 0.2f, b.radius * 2f);
-            var m = new Material(Shader.Find("Sprites/Default"));
-            m.color = new Color(0.9f, 0.35f, 0.95f);
-            bGo.GetComponent<MeshRenderer>().material = m;
+            bGo.transform.localScale = new Vector3(b.radius * 2f, b.radius * 2f, 1f);
+            bGo.GetComponent<MeshRenderer>().material = SpriteMat("bumper", Color.white);
             b.go = bGo;
             activeBumpers.Add(b);
         }
@@ -578,19 +604,17 @@ public class SuikaDropPlayer : MonoBehaviour
     {
         var tierDef = fruitTiers[currentDropTier];
         dropperGuideGo.transform.localScale = Vector3.one * (tierDef.radius * 2f);
-        dropperGuideGo.GetComponent<MeshRenderer>().material.color = tierDef.color;
+        dropperGuideGo.GetComponent<MeshRenderer>().material.mainTexture = Tex("fruit" + currentDropTier);
     }
 
     void SpawnFruit(int tier, Vector2 pos, bool isJoker)
     {
         var tierDef = fruitTiers[tier];
-        var fGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        fGo.name = "Fruit_T" + tier;
+        var fGo = SpriteQuad("Fruit_T" + tier);
         fGo.transform.position = new Vector3(pos.x, pos.y, -0.1f);
         fGo.transform.localScale = Vector3.one * (tierDef.radius * 2f);
 
-        var mat = new Material(Shader.Find("Sprites/Default"));
-        mat.color = isJoker ? new Color(1f, 1f, 1f) : tierDef.color;
+        var mat = SpriteMat(isJoker ? "joker" : "fruit" + tier, Color.white);
         fGo.GetComponent<MeshRenderer>().material = mat;
 
         fruits.Add(new Fruit
@@ -726,6 +750,9 @@ public class SuikaDropPlayer : MonoBehaviour
                 if (f.popAnim > 1.0f) f.popAnim = Mathf.Max(1.0f, f.popAnim - dt * 3f);
                 f.go.transform.position = new Vector3(f.pos.x, f.pos.y, -0.1f);
                 f.go.transform.localScale = Vector3.one * (f.radius * 2f * f.popAnim);
+                // roll the sprite with its sideways motion so resting fruit settle naturally
+                f.angle -= f.vel.x / Mathf.Max(0.1f, f.radius) * dt * Mathf.Rad2Deg;
+                f.go.transform.rotation = Quaternion.Euler(0f, 0f, f.angle);
             }
         }
     }
