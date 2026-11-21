@@ -4,7 +4,7 @@
  * 다리가 서는 칸의 바로 서쪽에 포자가 있으면 그 포자는 먹힌다.
  * 바람은 가장 동쪽 포자만 한 칸 동쪽으로 민다. 그 칸이 다리이거나 연못 밖이면 포자는 사라진다.
  * 다리는 한 번 서면 남지 않는 법이 없고, 연못이 표식과 같아지면 그 계절이 끝난다.
- * 네 계절은 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 생물을 움직이지 않는다.
+ * 열 계절은 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 생물을 움직이지 않는다.
  *
  * 카메라 0 은 월드 +z 다. 화면 오른쪽이 월드 +x(동쪽)이고 화면 왼쪽이 서쪽이다.
  * fed-bridge: 동쪽 포자는 연못 밖으로 나가고, 남은 포자가 동쪽 끝 앞에 서면 다리가 먹는다.
@@ -61,8 +61,16 @@ const PUZZLES: readonly PondDef[] = [
   { id: "fed-bridge", cells: [EMPTY, EMPTY, SPORE, EMPTY, SPORE], goal: [EMPTY, EMPTY, EMPTY, EMPTY, LEGS] },
   { id: "beside-bridge", cells: [SPORE, EMPTY, EMPTY, SPORE, EMPTY], goal: [EMPTY, EMPTY, SPORE, EMPTY, LEGS] },
   { id: "held-spore", cells: [EMPTY, EMPTY, SPORE, EMPTY, EMPTY], goal: [EMPTY, EMPTY, LEGS, SPORE, LEGS] },
-  { id: "late-legs", cells: [EMPTY, EMPTY, EMPTY, EMPTY, LEGS], goal: [EMPTY, EMPTY, LEGS, EMPTY, LEGS] },
+  { id: "late-legs", cells: [EMPTY, EMPTY, EMPTY, EMPTY, LEGS], goal: [EMPTY, EMPTY, LEGS, EMPTY, LEGS] },  // Stages 5-10 (stage range 2026-11-21): each keeps one shortest season, checked by a search in the tests.
+  { id: "twin-legs", cells: [EMPTY, SPORE, SPORE, EMPTY, EMPTY], goal: [EMPTY, EMPTY, SPORE, LEGS, EMPTY] },
+  { id: "spore-gate", cells: [SPORE, EMPTY, EMPTY, SPORE, EMPTY], goal: [EMPTY, EMPTY, EMPTY, LEGS, EMPTY] },
+  { id: "cross-pond", cells: [SPORE, EMPTY, SPORE, EMPTY, EMPTY], goal: [EMPTY, EMPTY, LEGS, EMPTY, LEGS] },
+  { id: "stone-step", cells: [SPORE, EMPTY, LEGS, EMPTY, EMPTY], goal: [EMPTY, SPORE, LEGS, LEGS, EMPTY] },
+  { id: "late-bloom", cells: [EMPTY, SPORE, EMPTY, EMPTY, EMPTY], goal: [SPORE, LEGS, LEGS, LEGS, SPORE] },
+  { id: "long-drift", cells: [SPORE, EMPTY, EMPTY, EMPTY, EMPTY], goal: [EMPTY, SPORE, EMPTY, LEGS, EMPTY] },
 ];
+
+export const PUZZLE_COUNT = PUZZLES.length;
 
 function normalize(x: number, y: number, z: number): [number, number, number] {
   const length = Math.hypot(x, y, z) || 1;
@@ -219,6 +227,12 @@ export function puzzleIndexForSeed(seed: number): number {
 export function nextSeed(seed: number): number {
   const current = Number.isFinite(seed) ? Math.trunc(seed) : 0;
   return mixSeed(current + 1);
+}
+
+/** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
+export function seedForPuzzle(index: number): number {
+  const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
 export function createPond(seed = 0): PondState {
