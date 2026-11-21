@@ -167,6 +167,37 @@ public class BrickBreakerPlayer : MonoBehaviour
         audioSource.playOnAwake = false;
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/BK) ----
+    private static readonly Dictionary<string, Texture2D> artTex = new Dictionary<string, Texture2D>();
+
+    private static Texture2D ArtTex(string name)
+    {
+        if (!artTex.TryGetValue(name, out var t))
+        {
+            t = Resources.Load<Texture2D>("BK/" + name);
+            if (t != null) t.wrapMode = TextureWrapMode.Clamp;
+            artTex[name] = t;
+        }
+        return t;
+    }
+
+    private static Material ArtMat(string texName, Color tint, int queue = 3000)
+    {
+        var m = new Material(Shader.Find("Sprites/Default"));
+        m.mainTexture = ArtTex(texName);
+        m.color = tint;
+        m.renderQueue = queue;
+        return m;
+    }
+
+    private static GameObject ArtQuad(string name)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        return go;
+    }
+
     private void CreateArenaVisuals()
     {
         // 3D Boundary Frame with glowing neon edges
@@ -179,9 +210,8 @@ public class BrickBreakerPlayer : MonoBehaviour
         backPlane.name = "BackPlane";
         backPlane.transform.position = new Vector3(0f, (ArenaMinY + ArenaMaxY) * 0.5f, 0.6f);
         backPlane.transform.localScale = new Vector3(ArenaMaxX - ArenaMinX + 1.2f, ArenaMaxY - ArenaMinY + 1.2f, 1f);
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = new Color(0.06f, 0.08f, 0.16f);
-        backPlane.GetComponent<MeshRenderer>().material = mat;
+        Destroy(backPlane.GetComponent<Collider>());
+        backPlane.GetComponent<MeshRenderer>().material = ArtMat("backdrop", Color.white, 2500);
     }
 
     private void CreateWall(Vector3 pos, Vector3 scale, Color color)
@@ -190,20 +220,15 @@ public class BrickBreakerPlayer : MonoBehaviour
         wall.name = "Wall";
         wall.transform.position = pos;
         wall.transform.localScale = scale;
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = color;
-        wall.GetComponent<MeshRenderer>().material = mat;
+        wall.GetComponent<MeshRenderer>().material = ArtMat(scale.x < scale.y ? "rail_v" : "rail_h", Color.white, 2600);
     }
 
     private void CreatePaddleVisual()
     {
-        paddleGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        paddleGo.name = "Paddle";
+        paddleGo = ArtQuad("Paddle");
         paddleGo.transform.position = paddlePos;
         paddleGo.transform.localScale = new Vector3(paddleCurrentWidth, paddleHeight, 0.6f);
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = new Color(0.15f, 0.85f, 1.0f);
-        paddleGo.GetComponent<MeshRenderer>().material = mat;
+        paddleGo.GetComponent<MeshRenderer>().material = ArtMat("paddle", new Color(0.15f, 0.85f, 1.0f));
     }
 
     private void InitStages()
@@ -512,15 +537,12 @@ public class BrickBreakerPlayer : MonoBehaviour
         };
         if (customSize.HasValue) b.size = customSize.Value;
 
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        go.name = "Brick_" + type;
+        var go = ArtQuad("Brick_" + type);
         go.transform.position = pos;
         go.transform.localScale = b.size;
         go.transform.SetParent(parent);
 
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = color;
-        go.GetComponent<MeshRenderer>().material = mat;
+        go.GetComponent<MeshRenderer>().material = ArtMat("brick_" + type, color);
         b.go = go;
 
         list.Add(b);
@@ -573,12 +595,10 @@ public class BrickBreakerPlayer : MonoBehaviour
         ball.isAttached = attachToPaddle;
         ball.attachOffset = 0f;
 
-        var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        go.name = "Ball";
-        go.transform.localScale = Vector3.one * (ball.radius * 2f);
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = new Color(0.9f, 0.95f, 1.0f);
-        go.GetComponent<MeshRenderer>().material = mat;
+        var go = ArtQuad("Ball");
+        // the painted ball fills 72% of its texture; the rest is its glow
+        go.transform.localScale = new Vector3(ball.radius * 2f / 0.72f, ball.radius * 2f / 0.72f, 1f);
+        go.GetComponent<MeshRenderer>().material = ArtMat("ball", new Color(0.9f, 0.95f, 1.0f), 3050);
         ball.go = go;
 
         if (attachToPaddle)
@@ -617,7 +637,7 @@ public class BrickBreakerPlayer : MonoBehaviour
         {
             paddleCurrentWidth = paddleBaseWidth;
         }
-        if (paddleGo != null) paddleGo.transform.localScale = new Vector3(paddleCurrentWidth, paddleHeight, 0.6f);
+        if (paddleGo != null) paddleGo.transform.localScale = new Vector3(paddleCurrentWidth, paddleHeight, 1f);
     }
 
     private void HandleInput()
@@ -941,6 +961,7 @@ public class BrickBreakerPlayer : MonoBehaviour
                 {
                     float ratio = (float)br.hp / br.maxHp;
                     rend.material.color = Color.Lerp(Color.white, br.baseColor, ratio);
+                    if (br.type == BrickType.Normal) rend.material.mainTexture = ArtTex("brick_Cracked");
                 }
             }
         }
@@ -967,15 +988,12 @@ public class BrickBreakerPlayer : MonoBehaviour
     private void SpawnPowerup(Vector3 pos, PowerupType type)
     {
         var p = new PowerupDrop { position = pos, type = type };
-        var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        go.name = "Powerup_" + type;
+        var go = ArtQuad("Powerup_" + type);
         go.transform.position = pos;
-        go.transform.localScale = new Vector3(0.35f, 0.25f, 0.35f);
+        go.transform.localScale = new Vector3(0.8f, 0.5f, 1f);
 
         Color pCol = (type == PowerupType.MultiBall) ? new Color(0.2f, 1f, 0.5f) : ((type == PowerupType.Laser) ? Color.yellow : new Color(0.3f, 0.8f, 1f));
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = pCol;
-        go.GetComponent<MeshRenderer>().material = mat;
+        go.GetComponent<MeshRenderer>().material = ArtMat("pow_" + type, Color.white, 3020);
         p.go = go;
 
         powerups.Add(p);
@@ -988,7 +1006,7 @@ public class BrickBreakerPlayer : MonoBehaviour
             var p = powerups[i];
             p.position.y -= 3.2f * Time.deltaTime;
             p.go.transform.position = p.position;
-            p.go.transform.Rotate(0f, 180f * Time.deltaTime, 90f * Time.deltaTime);
+            p.go.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 5f) * 12f);
 
             // Collect by paddle
             if (Mathf.Abs(p.position.y - paddlePos.y) < paddleHeight * 0.5f + 0.3f &&

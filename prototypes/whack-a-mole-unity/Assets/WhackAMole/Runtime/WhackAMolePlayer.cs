@@ -366,13 +366,48 @@ public class WhackAMolePlayer : MonoBehaviour
         lightGo.transform.rotation = Quaternion.Euler(50f, -25f, 0f);
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/WM) ----
+    private static readonly Dictionary<string, Texture2D> artTex = new Dictionary<string, Texture2D>();
+
+    private static Texture2D ArtTex(string name)
+    {
+        if (!artTex.TryGetValue(name, out var t))
+        {
+            t = Resources.Load<Texture2D>("WM/" + name);
+            if (t != null) t.wrapMode = TextureWrapMode.Clamp;
+            artTex[name] = t;
+        }
+        return t;
+    }
+
+    private static Material SpriteMat(string texName, Color tint, int queue)
+    {
+        var m = new Material(Shader.Find("Sprites/Default"));
+        m.mainTexture = ArtTex(texName);
+        m.color = tint;
+        m.renderQueue = queue;
+        return m;
+    }
+
+    private static GameObject ArtQuad(string name)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        return go;
+    }
+
+    // Sprites face the tilted orthographic camera.
+    private static readonly Quaternion FaceCam = Quaternion.Euler(54f, 0f, 0f);
+
     private void CreateMaterials()
     {
         Shader lit = Shader.Find("Universal Render Pipeline/Lit");
         if (lit == null) lit = Shader.Find("Standard");
 
         tableMat = new Material(OiyoShaders.Safe(lit));
-        tableMat.color = new Color(0.18f, 0.42f, 0.25f); // Carnival Felt Green
+        tableMat.color = new Color(0.8f, 0.8f, 0.8f); // the scene light is bright; keep the felt deep
+        tableMat.mainTexture = ArtTex("table"); // felt top with a stitched wooden rim
 
         holeMat = new Material(OiyoShaders.Safe(lit));
         holeMat.color = new Color(0.04f, 0.05f, 0.08f); // Black Hole Depth
@@ -393,7 +428,8 @@ public class WhackAMolePlayer : MonoBehaviour
         crownMat.color = new Color(0.98f, 0.84f, 0.0f); // Royal Gold
 
         malletWoodMat = new Material(OiyoShaders.Safe(lit));
-        malletWoodMat.color = new Color(0.68f, 0.45f, 0.25f); // Oak Mallet
+        malletWoodMat.color = new Color(0.72f, 0.72f, 0.72f);
+        malletWoodMat.mainTexture = ArtTex("wood");
 
         noseMat = new Material(OiyoShaders.Safe(lit));
         noseMat.color = new Color(0.95f, 0.65f, 0.65f); // Pink Nose
@@ -406,6 +442,13 @@ public class WhackAMolePlayer : MonoBehaviour
         carnivalTableGo.transform.position = new Vector3(0f, -0.4f, 0f);
         carnivalTableGo.transform.localScale = new Vector3(10.5f, 0.8f, 9.5f);
         carnivalTableGo.GetComponent<Renderer>().material = tableMat;
+
+        // Fairground tent backdrop far behind the table, drawn before everything else
+        var bg = ArtQuad("Backdrop");
+        bg.transform.position = mainCam.transform.position + mainCam.transform.forward * 30f;
+        bg.transform.rotation = FaceCam;
+        bg.transform.localScale = new Vector3(44f, 22f, 1f);
+        bg.GetComponent<Renderer>().material = SpriteMat("backdrop", Color.white, 1000);
     }
 
     private void BuildMalletModel()
@@ -540,11 +583,11 @@ public class WhackAMolePlayer : MonoBehaviour
                 holePositions.Add(pos);
 
                 // Hole Rim (Flat black cylinder)
-                var holeGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                holeGo.name = string.Format("Hole_{0}_{1}", r, c);
+                var holeGo = ArtQuad(string.Format("Hole_{0}_{1}", r, c));
                 holeGo.transform.position = pos;
-                holeGo.transform.localScale = new Vector3(1.6f, 0.04f, 1.6f);
-                holeGo.GetComponent<Renderer>().material = holeMat;
+                holeGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f); // lying on the felt
+                holeGo.transform.localScale = new Vector3(2.0f, 2.0f, 1f);
+                holeGo.GetComponent<Renderer>().material = SpriteMat("hole", Color.white, 2950);
                 holeRimGos.Add(holeGo);
             }
         }
@@ -652,6 +695,7 @@ public class WhackAMolePlayer : MonoBehaviour
                 // Cracked helmet!
                 PlayTone(880f, 0.12f, "square");
                 if (critter.accessoryGo != null) Destroy(critter.accessoryGo);
+                if (critter.headGo != null) critter.headGo.GetComponent<Renderer>().material.mainTexture = ArtTex("critter_HardHat_cracked");
                 SpawnFloatingFeedback("CRACK!", holePositions[holeIdx], Color.yellow);
             }
             else
@@ -809,45 +853,15 @@ public class WhackAMolePlayer : MonoBehaviour
         root.transform.position = new Vector3(holePositions[chosenHole].x, critter.currentY, holePositions[chosenHole].z);
         critter.rootGo = root;
 
-        // Head/Body Cylinder
-        var head = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        head.transform.SetParent(root.transform);
-        head.transform.localPosition = new Vector3(0f, 0.45f, 0f);
-        head.transform.localScale = (type == CritterType.KingBoss) ? new Vector3(1.3f, 0.6f, 1.3f) : new Vector3(0.95f, 0.5f, 0.95f);
-
-        Material mat = (type == CritterType.Golden) ? goldenMat :
-                       (type == CritterType.Bomb) ? bombMat : moleMat;
-        head.GetComponent<Renderer>().material = mat;
+        // Painted critter sprite (the table hides whatever is still below the felt)
+        var head = ArtQuad("Body");
+        head.transform.SetParent(root.transform, false);
+        head.transform.localPosition = new Vector3(0f, 0.55f, 0f);
+        head.transform.rotation = FaceCam;
+        float size = (type == CritterType.KingBoss) ? 2.0f : 1.6f;
+        head.transform.localScale = new Vector3(size, size, 1f);
+        head.GetComponent<Renderer>().material = SpriteMat("critter_" + type, Color.white, 3000);
         critter.headGo = head;
-
-        // Pink Nose
-        var nose = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        nose.transform.SetParent(head.transform);
-        nose.transform.localPosition = new Vector3(0f, 0.2f, 0.48f);
-        nose.transform.localScale = new Vector3(0.35f, 0.35f, 0.35f);
-        nose.GetComponent<Renderer>().material = noseMat;
-
-        // Accessory
-        if (type == CritterType.HardHat)
-        {
-            var hat = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            hat.name = "Helmet";
-            hat.transform.SetParent(head.transform);
-            hat.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-            hat.transform.localScale = new Vector3(1.1f, 0.25f, 1.1f);
-            hat.GetComponent<Renderer>().material = helmetMat;
-            critter.accessoryGo = hat;
-        }
-        else if (type == CritterType.KingBoss)
-        {
-            var crown = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            crown.name = "Crown";
-            crown.transform.SetParent(head.transform);
-            crown.transform.localPosition = new Vector3(0f, 0.75f, 0f);
-            crown.transform.localScale = new Vector3(0.85f, 0.25f, 0.85f);
-            crown.GetComponent<Renderer>().material = crownMat;
-            critter.accessoryGo = crown;
-        }
 
         activeCritters[chosenHole] = critter;
     }
@@ -862,11 +876,11 @@ public class WhackAMolePlayer : MonoBehaviour
             s.color = color;
             s.scale = UnityEngine.Random.Range(0.2f, 0.35f);
 
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var go = ArtQuad("Star");
             go.transform.position = s.pos;
-            go.transform.localScale = Vector3.one * s.scale;
-            go.GetComponent<Renderer>().material = new Material(OiyoShaders.Safe(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard")));
-            go.GetComponent<Renderer>().material.color = color;
+            go.transform.rotation = FaceCam * Quaternion.Euler(0f, 0f, UnityEngine.Random.Range(0f, 72f));
+            go.transform.localScale = Vector3.one * s.scale * 1.6f;
+            go.GetComponent<Renderer>().material = SpriteMat("star", color, 3100);
             s.go = go;
 
             activeStars.Add(s);
@@ -885,7 +899,7 @@ public class WhackAMolePlayer : MonoBehaviour
             if (s.go != null)
             {
                 s.go.transform.position = s.pos;
-                s.go.transform.localScale = Vector3.one * (s.scale * (1f - s.life / s.maxLife));
+                s.go.transform.localScale = Vector3.one * (s.scale * 1.6f * (1f - s.life / s.maxLife));
             }
 
             if (s.life >= s.maxLife)
