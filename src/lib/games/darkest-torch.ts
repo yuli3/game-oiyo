@@ -51,7 +51,7 @@ export type HeroSkillId =
 export interface DarkestTorchState {
   seed: number;
   status: "playing" | "won" | "lost";
-  room: number; // 1..3
+  room: number; // 1..MAX_ROOMS
   maxRooms: number;
   turn: number;
   torch: number; // 0..100
@@ -66,7 +66,34 @@ export interface DarkestTorchState {
   zoomCurveScale: number;
 }
 
+/** Rooms per expedition (2026-11-21: 3 → 10 so a run has at least 10 stages). */
+export const MAX_ROOMS = 10;
+/** Camp between rooms: each living hero recovers a little HP and stress. */
+export const ROOM_REST_HP = 6;
+export const ROOM_REST_STRESS = 8;
+
+/** Rooms 1–4 use the crypt pack, 5–9 the court pack, the last room the Necromancer. */
+function roomPack(room: number): 1 | 2 | 3 {
+  if (room >= MAX_ROOMS) return 3;
+  return room <= 4 ? 1 : 2;
+}
+
+/** Later rooms of the same pack field tougher versions of the same enemies. */
+export function roomScale(room: number): number {
+  const pack = roomPack(room);
+  const first = pack === 1 ? 1 : pack === 2 ? 5 : MAX_ROOMS;
+  return 1 + 0.12 * (room - first);
+}
+
 function createRoomEnemies(room: number): DungeonEnemy[] {
+  const scale = roomScale(room);
+  return basePackEnemies(roomPack(room)).map((enemy) => {
+    const hp = Math.round(enemy.hp * scale);
+    return { ...enemy, id: `${enemy.id}-r${room}`, hp, maxHp: hp, atk: Math.round(enemy.atk * scale) };
+  });
+}
+
+function basePackEnemies(room: 1 | 2 | 3): DungeonEnemy[] {
   if (room === 1) {
     return [
       {
@@ -172,7 +199,7 @@ export function createInitialDarkestTorchState(
     seed,
     status: "playing",
     room: 1,
-    maxRooms: 3,
+    maxRooms: MAX_ROOMS,
     turn: 1,
     torch: 85,
     torchesInPack: 3,
@@ -434,13 +461,18 @@ export function executeHeroSkill(
     }
 
     const nextRoom = state.room + 1;
+    const restedHeroes = nextHeroes.map((hero) =>
+      hero.hp > 0
+        ? { ...hero, hp: Math.min(hero.maxHp, hero.hp + ROOM_REST_HP), stress: Math.max(0, hero.stress - ROOM_REST_STRESS) }
+        : hero
+    );
     return {
       ...state,
       room: nextRoom,
       turn: state.turn + 1,
       torch: nextTorch,
       gold: nextGold + 150,
-      heroes: nextHeroes,
+      heroes: restedHeroes,
       enemies: createRoomEnemies(nextRoom),
       combatLog: [
         `🚪 Room ${state.room} cleared! Advancing to Room ${nextRoom}/${state.maxRooms}...`,

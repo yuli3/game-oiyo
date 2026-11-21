@@ -122,6 +122,29 @@ export interface Enemy {
   intent: EnemyIntent;
 }
 
+/** Floors per run (2026-11-21: 5 → 10 so a run has at least 10 stages). */
+export const MAX_FLOOR = 10;
+/** Enemy tier (1..5 in DUNGEON_ENEMIES) for each floor; the last floor is the Lich. */
+const FLOOR_TIER = [1, 1, 2, 2, 3, 3, 4, 4, 4, 5];
+/** HP restored when stepping down to the next floor (a short rest between fights). */
+export const FLOOR_REST_HEAL = 8;
+
+export function floorTier(floor: number): number {
+  return FLOOR_TIER[Math.min(Math.max(floor, 1), MAX_FLOOR) - 1];
+}
+
+/** Difficulty on the original 1..5 scale, spread over MAX_FLOOR floors. */
+export function floorDifficulty(floor: number): number {
+  return 1 + ((Math.min(Math.max(floor, 1), MAX_FLOOR) - 1) * 4) / (MAX_FLOOR - 1);
+}
+
+/** Later floors of the same tier get tougher versions of the same monsters. */
+export function floorHpScale(floor: number): number {
+  const tier = floorTier(floor);
+  const firstOfTier = FLOOR_TIER.indexOf(tier) + 1;
+  return 1 + 0.15 * (floor - firstOfTier);
+}
+
 export const DUNGEON_ENEMIES: Record<number, Omit<Enemy, 'block' | 'intent'>[]> = {
   1: [
     { id: 'cave_slime', name: '동굴 슬라임 (Cave Slime)', icon: '🟢', hp: 22, maxHp: 22 },
@@ -194,7 +217,7 @@ export class BackpackHeroEngine {
       maxEnergy: 3,
       gold: 0,
       floor: 1,
-      maxFloor: 5,
+      maxFloor: MAX_FLOOR,
       currentEnemy: null,
       gameState: 'battle',
       lootPool: [],
@@ -565,6 +588,7 @@ export class BackpackHeroEngine {
     if (this.state.gameState !== 'loot') return;
 
     this.state.floor++;
+    this.state.playerHp = Math.min(this.state.playerMaxHp, this.state.playerHp + FLOOR_REST_HEAL);
     this.state.playerBlock = 0;
     this.state.energy = this.state.maxEnergy;
     this.spawnFloorEnemy(this.state.floor);
@@ -573,26 +597,29 @@ export class BackpackHeroEngine {
   }
 
   private spawnFloorEnemy(floor: number): void {
-    const list = DUNGEON_ENEMIES[floor] ?? DUNGEON_ENEMIES[1];
+    const list = DUNGEON_ENEMIES[floorTier(floor)] ?? DUNGEON_ENEMIES[1];
     const picked = list[Math.floor(Math.random() * list.length)];
+    const hp = Math.round(picked.hp * floorHpScale(floor));
 
     const enemy: Enemy = {
       ...picked,
+      hp,
+      maxHp: hp,
       block: 0,
-      intent: { type: 'attack', value: 6 + floor * 3 },
+      intent: { type: 'attack', value: Math.round(6 + floorDifficulty(floor) * 3) },
     };
     this.rollEnemyIntent(enemy);
     this.state.currentEnemy = enemy;
   }
 
   private rollEnemyIntent(enemy: Enemy): void {
-    const floor = this.state.floor;
+    const floor = floorDifficulty(this.state.floor);
     const roll = Math.random();
 
     if (roll < 0.65) {
-      enemy.intent = { type: 'attack', value: 6 + floor * 2 + Math.floor(Math.random() * 4) };
+      enemy.intent = { type: 'attack', value: Math.round(6 + floor * 2) + Math.floor(Math.random() * 4) };
     } else if (roll < 0.85) {
-      enemy.intent = { type: 'defend', value: 5 + floor * 2 };
+      enemy.intent = { type: 'defend', value: Math.round(5 + floor * 2) };
     } else {
       enemy.intent = { type: 'buff', value: 3 };
     }
@@ -633,7 +660,7 @@ export class BackpackHeroEngine {
       maxEnergy: 3,
       gold: 0,
       floor: 1,
-      maxFloor: 5,
+      maxFloor: MAX_FLOOR,
       currentEnemy: null,
       gameState: 'battle',
       lootPool: [],

@@ -38,6 +38,16 @@ export interface House {
   destroyed: boolean;
 }
 
+/** Waves per island (2026-11-21: 3 → 10 so each island has at least 10 stages). */
+export const MAX_WAVE = 10;
+/** Soldiers each surviving squad gets back between waves. */
+export const WAVE_REINFORCEMENT = 2;
+
+/** Ships per wave: 3, 3, 4, 4, 5, 5, 6, 6, 7, 7. */
+export function shipsForWave(wave: number): number {
+  return 3 + Math.floor((Math.max(1, wave) - 1) / 2);
+}
+
 export interface UnitSquad {
   id: string;
   type: SquadType;
@@ -240,7 +250,7 @@ export class BadNorthEngine {
       arrows: [],
       gold: 0,
       wave: 1,
-      maxWave: 3,
+      maxWave: MAX_WAVE,
       waveTimer: 0,
       gameStatus: "playing",
       selectedSquadId: "squad_infantry",
@@ -254,7 +264,7 @@ export class BadNorthEngine {
    */
   private generateWaveShips(wave: number, width: number, height: number): RaiderShip[] {
     const ships: RaiderShip[] = [];
-    const count = 2 + wave; // 웨이브당 3, 4, 5척
+    const count = shipsForWave(wave);
 
     for (let i = 0; i < count; i++) {
       // 4개 방향(동서남북 바다 외곽)에서 무작위 접근
@@ -294,6 +304,7 @@ export class BadNorthEngine {
       let type: RaiderType = "militia";
       if (wave >= 2 && i % 2 === 1) type = "shield";
       if (wave >= 3 && i === count - 1) type = "berserker";
+      if (wave >= 6 && i === 0) type = "berserker";
 
       ships.push({
         id: `ship_w${wave}_${i}`,
@@ -665,8 +676,11 @@ export class BadNorthEngine {
 
     if (allShipsLanded && allRaidersDead) {
       if (this.state.wave < this.state.maxWave) {
-        // 다음 웨이브 시작
+        // 다음 웨이브 시작: 살아남은 분대는 병력을 조금 보충받는다.
         this.state.wave++;
+        for (const squad of this.state.squads) {
+          if (squad.count > 0) squad.count = Math.min(squad.maxCount, squad.count + WAVE_REINFORCEMENT);
+        }
         this.state.ships = this.generateWaveShips(
           this.state.wave,
           this.state.islandWidth,

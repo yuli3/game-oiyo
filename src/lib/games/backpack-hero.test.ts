@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { BackpackHeroEngine, ITEM_CATALOG } from './backpack-hero';
+import { BackpackHeroEngine, ITEM_CATALOG, MAX_FLOOR, floorDifficulty, floorHpScale, floorTier } from './backpack-hero';
 
 describe('BackpackHeroEngine', () => {
   let engine: BackpackHeroEngine;
@@ -104,5 +104,22 @@ describe('BackpackHeroEngine', () => {
     expect(unlocked).toBe(true);
     expect(engine.getState().unlockedSlots[0][1]).toBe(true);
     expect(engine.getState().expandChoicesLeft).toBe(1);
+  });
+});
+
+describe('ten-floor run', () => {
+  it('has 10 floors and only the last one is the Lich', () => {
+    expect(MAX_FLOOR).toBe(10);
+    expect(new BackpackHeroEngine(5, 6).getState().maxFloor).toBe(10);
+    const tiers = Array.from({ length: MAX_FLOOR }, (_, i) => floorTier(i + 1));
+    expect(tiers.filter((t) => t === 5)).toHaveLength(1);
+    expect(tiers[MAX_FLOOR - 1]).toBe(5);
+    for (let i = 1; i < tiers.length; i++) expect(tiers[i]).toBeGreaterThanOrEqual(tiers[i - 1]);
+  });
+  it('keeps the old difficulty curve, spread over twice the floors', () => {
+    expect(floorDifficulty(1)).toBe(1);
+    expect(floorDifficulty(MAX_FLOOR)).toBe(5);
+    expect(floorHpScale(1)).toBe(1);
+    expect(floorHpScale(2)).toBeGreaterThan(1);
   });
 });

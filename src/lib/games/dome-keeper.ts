@@ -135,7 +135,7 @@ export function createInitialDomeKeeperState(seed: number = 20261026): DomeKeepe
   return {
     seed,
     wave: 1,
-    maxWaves: 3,
+    maxWaves: MAX_WAVES,
     phase: 'mining',
     status: 'playing',
     waveTimerSec: 30,
@@ -312,18 +312,27 @@ export function upgradeDomeSystem(
   };
 }
 
+/** Waves per run (2026-11-21: 3 → 10 so a run has at least 10 stages). */
+export const MAX_WAVES = 10;
+
+/** Invader strength: the old 3-wave curve stretched over 10 waves, ending one step harder (1 → 4). */
+export function waveStrength(wave: number): number {
+  return 1 + (Math.min(Math.max(wave, 1), MAX_WAVES) - 1) / 3;
+}
+
 export function startAlienWaveDefense(state: DomeKeeperState): DomeKeeperState {
   if (state.status !== 'playing') return state;
   const w = state.wave;
+  const ws = waveStrength(w);
   const invaders: AlienInvader[] = [
     {
       id: `w${w}-swarmer-L`,
       name: 'Chitin Swarmer',
       angleDeg: 35,
       distance: 80,
-      hp: 24 + w * 12,
-      maxHp: 24 + w * 12,
-      attackDamage: 12 + w * 4,
+      hp: Math.round(24 + ws * 12),
+      maxHp: Math.round(24 + ws * 12),
+      attackDamage: Math.round(12 + ws * 4),
       speed: 20,
       isBoss: false,
       aiState: 'approach',
@@ -333,9 +342,9 @@ export function startAlienWaveDefense(state: DomeKeeperState): DomeKeeperState {
       name: 'Acid Spitter',
       angleDeg: 145,
       distance: 90,
-      hp: 30 + w * 14,
-      maxHp: 30 + w * 14,
-      attackDamage: 15 + w * 5,
+      hp: Math.round(30 + ws * 14),
+      maxHp: Math.round(30 + ws * 14),
+      attackDamage: Math.round(15 + ws * 5),
       speed: 18,
       isBoss: false,
       aiState: 'approach',
@@ -348,9 +357,9 @@ export function startAlienWaveDefense(state: DomeKeeperState): DomeKeeperState {
       name: w === state.maxWaves ? 'Apex Leviathan Boss' : 'Armored Diver',
       angleDeg: 90,
       distance: 100,
-      hp: 50 + w * 22,
-      maxHp: 50 + w * 22,
-      attackDamage: 22 + w * 6,
+      hp: Math.round(50 + ws * 22),
+      maxHp: Math.round(50 + ws * 22),
+      attackDamage: Math.round(22 + ws * 6),
       speed: 15,
       isBoss: w === state.maxWaves,
       aiState: 'approach',
@@ -502,7 +511,7 @@ export function applyRelicOverdrivePreset(state: DomeKeeperState): DomeKeeperSta
 
   return {
     ...base,
-    wave: 3,
+    wave: MAX_WAVES,
     grid: nextGrid,
     iron: 24,
     cobalt: 10,
