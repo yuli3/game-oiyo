@@ -306,6 +306,54 @@ export function createShadowStealthGame(seed: number = 20261031): ShadowStealthG
   };
 }
 
+/** Missions in one campaign (stage range 10-50, 2026-11-21). */
+export const SHADOW_MISSIONS = 10;
+
+/** Missions cycle through the four mirror images of the fortress; guards get faster and sharper each mission. */
+export function shadowMissionMirror(mission: number): { flipX: boolean; flipY: boolean } {
+  const m = (((Math.floor(mission) - 1) % 4) + 4) % 4;
+  return { flipX: m === 1 || m === 3, flipY: m === 2 || m === 3 };
+}
+
+export function mirrorShadowPoint(p: Point2D, mission: number): Point2D {
+  const { flipX, flipY } = shadowMissionMirror(mission);
+  return { x: flipX ? ARENA_WIDTH - p.x : p.x, y: flipY ? ARENA_HEIGHT - p.y : p.y };
+}
+
+export function createShadowStealthMission(mission: number, seed: number = 20261031): ShadowStealthGameState {
+  const n = Math.min(Math.max(Math.floor(mission), 1), SHADOW_MISSIONS);
+  const game = createShadowStealthGame(seed);
+  const { flipX, flipY } = shadowMissionMirror(n);
+  const pt = <T extends Point2D>(p: T): T => ({ ...p, ...mirrorShadowPoint(p, n) });
+  const rect = <T extends { x: number; y: number; w: number; h: number }>(r: T): T => ({
+    ...r,
+    x: flipX ? ARENA_WIDTH - r.x - r.w : r.x,
+    y: flipY ? ARENA_HEIGHT - r.y - r.h : r.y,
+  });
+  const angle = (a: number) => {
+    let out = a;
+    if (flipX) out = Math.PI - out;
+    if (flipY) out = -out;
+    return out;
+  };
+  const step = n - 1;
+  game.walls = game.walls.map(rect);
+  game.shadows = game.shadows.map(rect);
+  game.guards = game.guards.map((g) => ({
+    ...pt(g),
+    facingRad: angle(g.facingRad),
+    targetFacingRad: angle(g.targetFacingRad),
+    waypoints: g.waypoints.map(pt),
+    walkSpeed: g.walkSpeed * (1 + 0.035 * step),
+    viewRange: g.viewRange * (1 + 0.02 * step),
+    fovRad: g.fovRad * (1 + 0.015 * step),
+  }));
+  game.player = { ...pt(game.player), facingRad: angle(game.player.facingRad), shurikens: n >= 7 ? 2 : game.player.shurikens };
+  game.scrollLocation = pt(game.scrollLocation);
+  game.escapeLocation = pt(game.escapeLocation);
+  return game;
+}
+
 /**
  * Checks if point is inside any shadow zone
  */
@@ -642,7 +690,7 @@ export function stepShadowStealth(
  * Simulates 10 autonomous ninja infiltrator runs using waypoint sneak heuristics.
  * Verifies clear rate >= 80% and replay tape integrity.
  */
-export function runShadowStealthBalanceAudit(runs: number = 10): {
+export function runShadowStealthBalanceAudit(runs: number = 10, mission: number = 1): {
   passed: boolean;
   clearRate: number;
   victories: number;
@@ -654,7 +702,7 @@ export function runShadowStealthBalanceAudit(runs: number = 10): {
   let sampleToken: string | undefined;
 
   for (let r = 0; r < runs; r++) {
-    const game = createShadowStealthGame(20261031 + r);
+    const game = mission === 1 ? createShadowStealthGame(20261031 + r) : createShadowStealthMission(mission, 20261031 + r);
     const maxTicks = 60 * 60; // 60 seconds at 60fps
 
     // Precise corridor navigation through wall openings:
@@ -680,6 +728,7 @@ export function runShadowStealthBalanceAudit(runs: number = 10): {
       { x: 120, y: 310 },
       { x: 50, y: 80 }, // Escape boat
     ];
+    for (let k = 0; k < sneakPath.length; k++) sneakPath[k] = mirrorShadowPoint(sneakPath[k], mission);
     let pathIdx = 0;
 
     for (let tick = 0; tick < maxTicks; tick++) {

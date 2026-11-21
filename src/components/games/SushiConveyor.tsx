@@ -10,7 +10,10 @@ import {
   SUSHI_RECIPES,
   type SushiConveyorState,
   type SushiType,
+  SUSHI_DAYS,
+  sushiDayGoal,
 } from "../../lib/games/sushi-conveyor";
+import { markStageCleared } from "@/lib/games/stage-progress";
 import { INITIAL_SUSHI_QUESTS, type SushiQuest } from "../../lib/games/sushi-conveyor-quests";
 import { SUSHI_DIALOGUES } from "../../lib/games/sushi-conveyor-lore";
 import {
@@ -71,6 +74,20 @@ export function SushiConveyor() {
     craftSushi?: SushiType;
     buyUpgrade?: "beltSpeed" | "plateValue" | "autoPrep";
   }>({});
+
+  // Ten service days (stage range 10-50): a cleared day is remembered, upgrades carry into the next day.
+  useEffect(() => {
+    if (gameState.status === "day_cleared") markStageCleared("sushi-conveyor", gameState.day - 1, SUSHI_DAYS);
+  }, [gameState.status, gameState.day]);
+  const startDay = useCallback(
+    (day: number, keepUpgrades: boolean) => {
+      setGameState((prev) =>
+        initializeSushiConveyor(buildMetaModifiers(loadSushiMetaState()), day, keepUpgrades ? prev.upgrades : undefined),
+      );
+    },
+    [buildMetaModifiers],
+  );
+  const dayGoal = sushiDayGoal(gameState.day);
 
   // Sync meta state wasabi earnings from game
   useEffect(() => {
@@ -532,6 +549,40 @@ export function SushiConveyor() {
       {/* Canvas Spline Viewport */}
       <div className="relative w-full aspect-video max-h-120 bg-background flex items-center justify-center">
         <canvas ref={canvasRef} width={720} height={480} className="w-full h-full object-contain" />
+        <div className="absolute left-2 top-2 rounded-lg border border-border bg-background/85 px-2 py-1 text-xs font-bold tabular-nums text-foreground">
+          {gameState.day}일차 / {SUSHI_DAYS} · 목표 {dayGoal.served}접시 · ¥{dayGoal.cash.toLocaleString()}
+        </div>
+        {(gameState.status === "day_cleared" || gameState.status === "bankrupt") && (
+          <div role="status" className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/85 p-4 text-center backdrop-blur-sm">
+            <p className="text-xl font-black text-foreground">
+              {gameState.status === "bankrupt"
+                ? "자금과 명성이 바닥났어요"
+                : gameState.day >= SUSHI_DAYS
+                  ? `${SUSHI_DAYS}일 영업을 모두 마쳤어요!`
+                  : `${gameState.day}일차 영업 성공!`}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {gameState.totalServed}접시 · ¥{gameState.cash.toLocaleString()}
+            </p>
+            <button
+              type="button"
+              onClick={() =>
+                gameState.status === "bankrupt"
+                  ? startDay(gameState.day, false)
+                  : gameState.day >= SUSHI_DAYS
+                    ? startDay(1, false)
+                    : startDay(gameState.day + 1, true)
+              }
+              className="min-h-11 rounded-xl bg-primary px-6 text-sm font-bold text-primary-foreground"
+            >
+              {gameState.status === "bankrupt"
+                ? `${gameState.day}일차 다시 영업`
+                : gameState.day >= SUSHI_DAYS
+                  ? "1일차부터 다시"
+                  : `${gameState.day + 1}일차 영업 시작`}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Crafting Action Pad */}

@@ -176,3 +176,20 @@ describe("sushi-conveyor engine", () => {
     }
   });
 });
+
+describe("ten service days", () => {
+  it("raises the goal each day and keeps day 2 at the old single-day goal", async () => {
+    const { sushiDayGoal, SUSHI_DAYS, initializeSushiConveyor } = await import("./sushi-conveyor");
+    expect(SUSHI_DAYS).toBe(10);
+    expect(sushiDayGoal(2)).toMatchObject({ served: 25, cash: 3000 });
+    for (let d = 2; d <= SUSHI_DAYS; d += 1) {
+      expect(sushiDayGoal(d).served).toBeGreaterThan(sushiDayGoal(d - 1).served);
+      expect(sushiDayGoal(d).patience).toBeLessThan(sushiDayGoal(d - 1).patience);
+    }
+    const upgrades = { beltSpeedLevel: 3, plateValueLevel: 2, autoPrepLevel: 1 };
+    const day5 = initializeSushiConveyor(undefined, 5, upgrades);
+    expect(day5.day).toBe(5);
+    expect(day5.upgrades).toEqual(upgrades);
+    expect(initializeSushiConveyor(undefined, 99).day).toBe(SUSHI_DAYS);
+  });
+});

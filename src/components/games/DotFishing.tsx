@@ -1,3 +1,4 @@
+import ScoreStages from "./ScoreStages";
 import { useGameText } from "../../lib/games/game-text";
 import { DOT_FISHING_TEXT } from "../../lib/games/text/dot-fishing";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -33,6 +34,7 @@ import {
   FishingRng,
   type FishingGameState,
   type FishingZone,
+  FISHING_STAGE_SPECIES,
 } from "../../lib/games/dot-fishing";
 import {
   RetroChiptuneSynth,
@@ -783,6 +785,13 @@ export default function DotFishing({ locale = "en" }: { locale?: string }) {
                 <X className="size-4" />
               </button>
             </div>
+            <ScoreStages
+              slug="dot-fishing"
+              targets={FISHING_STAGE_SPECIES}
+              score={Object.keys(gameState.encyclopedia).length}
+              locale={locale}
+              format={(n) => `${n}${({ ko: "종", ja: "種", zh: "种" } as Record<string, string>)[locale] ?? ""}`}
+            />
 
             <div className="flex-1 overflow-y-auto py-3 space-y-4">
               {(["shallow", "coral", "deep", "abyss"] as FishingZone[]).map((zoneKey) => {

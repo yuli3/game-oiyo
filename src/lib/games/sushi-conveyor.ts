@@ -87,6 +87,17 @@ export interface SushiConveyorState {
   activeLog: string;
   activeDialogueId?: string;
   status: "playing" | "fever" | "day_cleared" | "bankrupt";
+  /** Service day, 1..SUSHI_DAYS. Later days ask for more plates and give customers less patience. */
+  day: number;
+}
+
+/** Days in one run (stage range 10-50, 2026-11-21). */
+export const SUSHI_DAYS = 10;
+
+export function sushiDayGoal(day: number): { served: number; cash: number; patience: number } {
+  const d = Math.min(Math.max(Math.floor(day), 1), SUSHI_DAYS);
+  // Day 2 is the old single-day goal (25 plates, ¥3000).
+  return { served: 15 + 5 * d, cash: 1000 + 1000 * d, patience: 1 - 0.04 * (d - 1) };
 }
 
 // Fixed 8-point oval counter loop
@@ -144,7 +155,11 @@ export function createInitialSeats(): CustomerSeat[] {
   });
 }
 
-export function initializeSushiConveyor(metaModifiers?: SushiConveyorState['metaModifiers']): SushiConveyorState {
+export function initializeSushiConveyor(
+  metaModifiers?: SushiConveyorState['metaModifiers'],
+  day = 1,
+  upgrades?: ConveyorKitchenUpgrades,
+): SushiConveyorState {
   // Reset plate pool for fresh game
   platePool.forEachActive((p) => {
     p.active = false;
@@ -178,7 +193,7 @@ export function initializeSushiConveyor(metaModifiers?: SushiConveyorState['meta
     feverTimeSec: 0,
     wasabiEarned: 0,
 
-    upgrades: {
+    upgrades: upgrades ? { ...upgrades } : {
       beltSpeedLevel: 1,
       plateValueLevel: 1,
       autoPrepLevel: 0,
@@ -195,10 +210,11 @@ export function initializeSushiConveyor(metaModifiers?: SushiConveyorState['meta
     activeLog: "Welcome to Ginza Conveyor Sushi! Prepare fresh nigiri on the spline belt.",
     activeDialogueId: "welcome_ginza",
     status: "playing",
+    day: Math.min(Math.max(Math.floor(day), 1), SUSHI_DAYS),
   };
 }
 
-export function spawnCustomerInEmptySeat(seats: CustomerSeat[], goldenRate = 0): boolean {
+export function spawnCustomerInEmptySeat(seats: CustomerSeat[], goldenRate = 0, patienceScale = 1): boolean {
   const emptySeats = seats.filter((s) => !s.occupied);
   if (emptySeats.length === 0) return false;
 
@@ -228,7 +244,7 @@ export function spawnCustomerInEmptySeat(seats: CustomerSeat[], goldenRate = 0):
   targetSeat.occupied = true;
   targetSeat.wantedSushi = wanted;
   targetSeat.customerType = custType;
-  targetSeat.patienceTimerSec = custType === "sumo" ? 30 : custType === "inspector" ? 18 : 24;
+  targetSeat.patienceTimerSec = Math.round((custType === "sumo" ? 30 : custType === "inspector" ? 18 : 24) * patienceScale * 10) / 10;
   targetSeat.maxPatienceSec = targetSeat.patienceTimerSec;
   targetSeat.platesEaten = 0;
   targetSeat.targetPlates = custType === "sumo" ? 5 : custType === "inspector" ? 1 : 2 + Math.floor(Math.random() * 2);
@@ -341,7 +357,7 @@ export function stepSushiConveyor(
   // 1. Customer Spawner
   nextState.customerSpawnCooldown -= dt;
   if (nextState.customerSpawnCooldown <= 0) {
-    spawnCustomerInEmptySeat(nextState.seats, nextState.metaModifiers?.goldenRate ?? 0);
+    spawnCustomerInEmptySeat(nextState.seats, nextState.metaModifiers?.goldenRate ?? 0, sushiDayGoal(nextState.day ?? 1).patience);
     nextState.customerSpawnCooldown = 3.5 + Math.random() * 3.5;
   }
 
@@ -498,7 +514,7 @@ export function stepSushiConveyor(
   if (nextState.cash < 50 && nextState.activePlates.length === 0 && nextState.reputation <= 10) {
     nextState.status = "bankrupt";
     nextState.activeLog = "The restaurant ran out of capital and reputation. Bankrupt!";
-  } else if (nextState.totalServed >= 25 && nextState.cash >= 3000) {
+  } else if (nextState.totalServed >= sushiDayGoal(nextState.day ?? 1).served && nextState.cash >= sushiDayGoal(nextState.day ?? 1).cash) {
     nextState.status = "day_cleared";
     nextState.activeLog = "Day Service Cleared! Ginza Michelin Star rating achieved!";
   }

@@ -1122,3 +1122,6 @@ export function updateNeonSurvivor(
     recentSupplyJackpot,
   };
 }
+
+/** Ten survival stages in seconds (stage range 10-50). Bosses arrive at 1, 3 and 5 minutes; the last stages ask for 7, 10 and 15. */
+export const SURVIVOR_STAGE_SECONDS = [30, 60, 90, 120, 180, 240, 300, 420, 600, 900] as const;

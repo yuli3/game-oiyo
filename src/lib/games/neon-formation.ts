@@ -78,3 +78,6 @@ export function clampShipX(x: number): number {
   return Math.max(-7.2, Math.min(7.2, x));
 }
 
+
+/** Ten stages (stage range 10-50): stage N clears the first time a run reaches wave N + 1. Difficulty tops out near wave 11. */
+export const NEON_STAGE_WAVES = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const;

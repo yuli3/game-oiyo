@@ -101,3 +101,13 @@ describe('Shinobi Shadow Infiltration Engine (#155)', () => {
     expect(audit.sampleReplayToken?.startsWith('v1.')).toBe(true);
   });
 });
+
+describe("ten missions", () => {
+  it("lets the scripted sneak path clear every mission", async () => {
+    const { runShadowStealthBalanceAudit, SHADOW_MISSIONS } = await import("./shadow-stealth");
+    expect(SHADOW_MISSIONS).toBe(10);
+    for (let m = 1; m <= SHADOW_MISSIONS; m += 1) {
+      expect(runShadowStealthBalanceAudit(3, m).clearRate, `mission ${m}`).toBeGreaterThanOrEqual(0.8);
+    }
+  });
+});

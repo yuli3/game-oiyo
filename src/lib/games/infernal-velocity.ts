@@ -110,3 +110,6 @@ export function splashDamage(baseDamage: number, distance: number, radius: numbe
   if (radius <= 0 || distance >= radius) return 0;
   return Math.round(Math.max(0, baseDamage) * (1 - Math.max(0, distance) / radius));
 }
+
+/** Ten stages (stage range 10-50): stage N clears the first time a run reaches wave N + 1. Difficulty tops out near wave 11. */
+export const INFERNAL_STAGE_WAVES = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const;
