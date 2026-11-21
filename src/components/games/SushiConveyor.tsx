@@ -25,6 +25,9 @@ import {
 } from "../../lib/games/sushi-conveyor-meta";
 import { nativeHaptics } from "../../lib/haptics/native-bridge";
 import { useAudioContext } from "../../lib/games/use-audio-context";
+import { useGameText } from "../../lib/games/game-text";
+import { SUSHI_CONVEYOR_TEXT } from "../../lib/games/text/sushi-conveyor";
+import type { Locale } from "../../lib/i18n";
 import { GameStatTile } from "../ui/game/GameStatTile";
 
 import UnityEditionLabel from "../ui/game/UnityEditionLabel";
@@ -48,6 +51,8 @@ function TiltSushiButton({
 }
 
 export function SushiConveyor() {
+  const { t, locale: pageLocale } = useGameText(SUSHI_CONVEYOR_TEXT);
+  const lc = pageLocale as Locale;
   const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const [metaState, setMetaState] = useState<SushiPlayerMetaState>(() => loadSushiMetaState());
   const [quests, setQuests] = useState<SushiQuest[]>(() => [...INITIAL_SUSHI_QUESTS]);
@@ -506,7 +511,7 @@ export function SushiConveyor() {
             className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary/20 text-primary border border-primary/40 hover:bg-primary/30 transition-colors"
           >
             <Award className="w-3.5 h-3.5" />
-            <span>지령 ({quests.filter((q) => q.completed && !q.claimed).length})</span>
+            <span>{t("지령 ({0})", quests.filter((q) => q.completed && !q.claimed).length)}</span>
           </button>
 
           <button
@@ -515,7 +520,7 @@ export function SushiConveyor() {
             className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-chart-4/20 text-chart-4 border border-chart-4/40 hover:bg-chart-4/30 transition-colors"
           >
             <Wrench className="w-3.5 h-3.5" />
-            <span>설비연구 ({metaState.wasabiCores} 🍵)</span>
+            <span>{t("설비연구 ({0} 🍵)", metaState.wasabiCores)}</span>
           </button>
 
           <button
@@ -530,18 +535,18 @@ export function SushiConveyor() {
 
       {/* Story & Lore Transmission HUD */}
       <div className="w-full px-4 py-1.5 bg-muted/20 border-b border-border/80 flex items-center gap-2 text-xs">
-        <span className="font-bold text-primary whitespace-nowrap">[{currentDialogue.sender.ko}]</span>
-        <span className="text-foreground/90 truncate">{currentDialogue.message.ko}</span>
+        <span className="font-bold text-primary whitespace-nowrap">[{currentDialogue.sender[lc]}]</span>
+        <span className="text-foreground/90 truncate">{currentDialogue.message[lc]}</span>
       </div>
 
       {/* Stats Bar */}
       <div className="w-full grid grid-cols-4 gap-2 px-4 py-2 bg-muted/10 border-b border-border/40 text-center">
-        <GameStatTile label="자금" value={`¥${gameState.cash}`} icon="💰" />
-        <GameStatTile label="명성치" value={`${gameState.reputation}%`} icon="⭐" />
-        <GameStatTile label="서빙 완료" value={`${gameState.totalServed}접시`} icon="🍣" />
+        <GameStatTile label={t("자금")} value={`¥${gameState.cash}`} icon="💰" />
+        <GameStatTile label={t("명성치")} value={`${gameState.reputation}%`} icon="⭐" />
+        <GameStatTile label={t("서빙 완료")} value={t("{0}접시", gameState.totalServed)} icon="🍣" />
         <GameStatTile
-          label="상태"
-          value={gameState.status === "fever" ? `🔥 피버 (${gameState.feverTimeSec.toFixed(0)}s)` : `콤보 x${gameState.comboCount}`}
+          label={t("상태")}
+          value={gameState.status === "fever" ? t("🔥 피버 ({0}s)", gameState.feverTimeSec.toFixed(0)) : t("콤보 x{0}", gameState.comboCount)}
           icon="⚡"
         />
       </div>
@@ -550,19 +555,19 @@ export function SushiConveyor() {
       <div className="relative w-full aspect-video max-h-120 bg-background flex items-center justify-center">
         <canvas ref={canvasRef} width={720} height={480} className="w-full h-full object-contain" />
         <div className="absolute left-2 top-2 rounded-lg border border-border bg-background/85 px-2 py-1 text-xs font-bold tabular-nums text-foreground">
-          {gameState.day}일차 / {SUSHI_DAYS} · 목표 {dayGoal.served}접시 · ¥{dayGoal.cash.toLocaleString()}
+          {t("{0}일차 / {1} · 목표 {2}접시 · ¥{3}", gameState.day, SUSHI_DAYS, dayGoal.served, dayGoal.cash.toLocaleString())}
         </div>
         {(gameState.status === "day_cleared" || gameState.status === "bankrupt") && (
           <div role="status" className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/85 p-4 text-center backdrop-blur-sm">
             <p className="text-xl font-black text-foreground">
               {gameState.status === "bankrupt"
-                ? "자금과 명성이 바닥났어요"
+                ? t("자금과 명성이 바닥났어요")
                 : gameState.day >= SUSHI_DAYS
-                  ? `${SUSHI_DAYS}일 영업을 모두 마쳤어요!`
-                  : `${gameState.day}일차 영업 성공!`}
+                  ? t("{0}일 영업을 모두 마쳤어요!", SUSHI_DAYS)
+                  : t("{0}일차 영업 성공!", gameState.day)}
             </p>
             <p className="text-xs text-muted-foreground">
-              {gameState.totalServed}접시 · ¥{gameState.cash.toLocaleString()}
+              {t("{0}접시", gameState.totalServed)} · ¥{gameState.cash.toLocaleString()}
             </p>
             <button
               type="button"
@@ -576,10 +581,10 @@ export function SushiConveyor() {
               className="min-h-11 rounded-xl bg-primary px-6 text-sm font-bold text-primary-foreground"
             >
               {gameState.status === "bankrupt"
-                ? `${gameState.day}일차 다시 영업`
+                ? t("{0}일차 다시 영업", gameState.day)
                 : gameState.day >= SUSHI_DAYS
-                  ? "1일차부터 다시"
-                  : `${gameState.day + 1}일차 영업 시작`}
+                  ? t("1일차부터 다시")
+                  : t("{0}일차 영업 시작", gameState.day + 1)}
             </button>
           </div>
         )}
@@ -606,7 +611,7 @@ export function SushiConveyor() {
               <span className="text-base">{isGold ? "👑" : idx === 0 ? "🐟" : idx === 1 ? "🍣" : idx === 2 ? "🦐" : idx === 3 ? "🍳" : "🍱"}</span>
               <div className="text-left">
                 <div className="leading-tight">{recipe.name}</div>
-                <div className="text-xs text-muted-foreground">¥{cost} 준비 (단축키 {idx + 1})</div>
+                <div className="text-xs text-muted-foreground">{t("¥{0} 준비 (단축키 {1})", cost, idx + 1)}</div>
               </div>
             </TiltSushiButton>
           );
@@ -620,7 +625,7 @@ export function SushiConveyor() {
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <Award className="w-5 h-5 text-primary" />
-                <h3 className="font-bold text-foreground">긴자 명인 작전 지령</h3>
+                <h3 className="font-bold text-foreground">{t("긴자 명인 작전 지령")}</h3>
               </div>
               <button
                 type="button"
@@ -644,13 +649,13 @@ export function SushiConveyor() {
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-foreground">{q.title.ko}</span>
+                    <span className="text-xs font-bold text-foreground">{q.title[lc]}</span>
                     <span className="text-xs font-semibold text-chart-4">+{q.rewardWasabi} 🍵</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">{q.description.ko}</p>
+                  <p className="text-xs text-muted-foreground">{q.description[lc]}</p>
                   <div className="flex items-center justify-between pt-1">
                     <div className="text-xs text-muted-foreground">
-                      진행도: {q.current} / {q.target}
+                      {t("진행도: {0} / {1}", q.current, q.target)}
                     </div>
                     {q.completed && !q.claimed ? (
                       <button
@@ -658,12 +663,12 @@ export function SushiConveyor() {
                         onClick={() => handleClaimQuest(q.id)}
                         className="px-2.5 py-1 rounded bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-colors"
                       >
-                        보상 수령
+                        {t("보상 수령")}
                       </button>
                     ) : q.claimed ? (
-                      <span className="text-xs text-muted-foreground font-semibold">수령 완료</span>
+                      <span className="text-xs text-muted-foreground font-semibold">{t("수령 완료")}</span>
                     ) : (
-                      <span className="text-xs text-muted-foreground">진행 중</span>
+                      <span className="text-xs text-muted-foreground">{t("진행 중")}</span>
                     )}
                   </div>
                 </div>
@@ -680,10 +685,10 @@ export function SushiConveyor() {
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <Wrench className="w-5 h-5 text-chart-4" />
-                <h3 className="font-bold text-foreground">주방 5대 영구 설비 연구소</h3>
+                <h3 className="font-bold text-foreground">{t("주방 5대 영구 설비 연구소")}</h3>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-chart-4">{metaState.wasabiCores} 🍵 황금 와사비</span>
+                <span className="text-xs font-bold text-chart-4">{t("{0} 🍵 황금 와사비", metaState.wasabiCores)}</span>
                 <button
                   type="button"
                   onClick={() => setShowResearchModal(false)}
@@ -710,12 +715,12 @@ export function SushiConveyor() {
                       <span className="text-2xl">{def.icon}</span>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-foreground">{def.name.ko}</span>
+                          <span className="text-xs font-bold text-foreground">{def.name[lc]}</span>
                           <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-bold">
                             Lv.{currentLvl}/{def.maxLevel}
                           </span>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">{def.desc.ko}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{def.desc[lc]}</p>
                       </div>
                     </div>
 
@@ -725,7 +730,7 @@ export function SushiConveyor() {
                       disabled={isMax || !canAfford}
                       className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {isMax ? "최대 레벨" : `${cost} 🍵 강화`}
+                      {isMax ? t("최대 레벨") : t("{0} 🍵 강화", cost)}
                     </button>
                   </div>
                 );

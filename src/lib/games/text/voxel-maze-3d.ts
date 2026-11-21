@@ -1,0 +1,31 @@
+import type { GameTextTable } from "../game-text";
+
+/** voxel-maze-3d: Korean source → other locales (see game-text.ts). */
+export const VOXEL_MAZE_3D_TEXT: GameTextTable = {
+  "미로 탈출 성공": { en: "Maze escaped", ja: "迷路脱出成功", zh: "成功逃出迷宫", fr: "Labyrinthe réussi", es: "Laberinto superado" },
+  "미로 탐사 기록": { en: "Maze run record", ja: "迷路探索の記録", zh: "迷宫探索记录", fr: "Bilan d'exploration", es: "Registro de exploración" },
+  "{0}개": { en: "{0}", ja: "{0}個", zh: "{0} 个", fr: "{0}", es: "{0}" },
+  "단계 {0} / {1}": { en: "Stage {0} / {1}", ja: "ステージ {0} / {1}", zh: "第 {0} / {1} 关", fr: "Niveau {0} / {1}", es: "Nivel {0} / {1}" },
+  "열쇠:": { en: "Keys:", ja: "鍵:", zh: "钥匙：", fr: "Clés :", es: "Llaves:" },
+  "보석:": { en: "Gems:", ja: "宝石:", zh: "宝石：", fr: "Gemmes :", es: "Gemas:" },
+  "남은 시간": { en: "Time left", ja: "残り時間", zh: "剩余时间", fr: "Temps restant", es: "Tiempo restante" },
+  "{0}초": { en: "{0}s", ja: "{0}秒", zh: "{0} 秒", fr: "{0} s", es: "{0} s" },
+  "점수": { en: "Score", ja: "スコア", zh: "分数", fr: "Score", es: "Puntos" },
+  "위로 이동": { en: "Move up", ja: "上へ移動", zh: "向上移动", fr: "Monter", es: "Mover arriba" },
+  "왼쪽 이동": { en: "Move left", ja: "左へ移動", zh: "向左移动", fr: "Aller à gauche", es: "Mover a la izquierda" },
+  "아래로 이동": { en: "Move down", ja: "下へ移動", zh: "向下移动", fr: "Descendre", es: "Mover abajo" },
+  "오른쪽 이동": { en: "Move right", ja: "右へ移動", zh: "向右移动", fr: "Aller à droite", es: "Mover a la derecha" },
+  "🎉 탈출 성공! LEVEL CLEAR!": { en: "🎉 Escaped! LEVEL CLEAR!", ja: "🎉 脱出成功! LEVEL CLEAR!", zh: "🎉 成功逃脱！LEVEL CLEAR!", fr: "🎉 Évasion réussie ! LEVEL CLEAR !", es: "🎉 ¡Escapaste! LEVEL CLEAR!" },
+  "모든 열쇠를 찾고 차원 전송 포탈에 성공적으로 도달했습니다.": { en: "You found every key and reached the extraction portal.", ja: "すべての鍵を見つけ、転送ポータルに到達しました。", zh: "你找齐了所有钥匙，抵达了传送门。", fr: "Vous avez trouvé toutes les clés et atteint le portail.", es: "Encontraste todas las llaves y llegaste al portal." },
+  "총 점수": { en: "Total score", ja: "合計スコア", zh: "总分", fr: "Score total", es: "Puntuación total" },
+  "수집 보석": { en: "Gems collected", ja: "集めた宝石", zh: "收集宝石", fr: "Gemmes ramassées", es: "Gemas recogidas" },
+  "복사됨!": { en: "Copied!", ja: "コピーしました!", zh: "已复制！", fr: "Copié !", es: "¡Copiado!" },
+  "결과 공유": { en: "Share result", ja: "結果をシェア", zh: "分享结果", fr: "Partager", es: "Compartir resultado" },
+  "다음 스테이지 (NEXT LEVEL)": { en: "Next stage", ja: "次のステージ", zh: "下一关", fr: "Niveau suivant", es: "Siguiente nivel" },
+  "시간 초과 — 탐사 실패": { en: "Time's up — run failed", ja: "時間切れ — 探索失敗", zh: "时间到 — 探索失败", fr: "Temps écoulé — échec", es: "Se acabó el tiempo — fallaste" },
+  "센티널 발각 — 탈출 실패": { en: "Spotted by a sentinel — escape failed", ja: "センチネルに発見 — 脱出失敗", zh: "被哨兵发现 — 逃脱失败", fr: "Repéré par une sentinelle — échec", es: "Te vio un centinela — fallaste" },
+  "제한 시간이 모두 소진되어 미로 방화벽이 차단되었습니다.": { en: "The timer ran out and the maze firewall sealed the exits.", ja: "制限時間が尽き、迷路のファイアウォールが閉じました。", zh: "时间耗尽，迷宫防火墙封锁了出口。", fr: "Le temps est écoulé et le pare-feu a fermé les sorties.", es: "Se agotó el tiempo y el cortafuegos cerró las salidas." },
+  "순찰 중이던 센티널 드론에게 감지되어 체포되었습니다.": { en: "A patrolling sentinel drone spotted and caught you.", ja: "巡回中のセンチネルドローンに見つかり捕まりました。", zh: "你被巡逻的哨兵无人机发现并抓获。", fr: "Un drone sentinelle en patrouille vous a repéré.", es: "Un dron centinela en patrulla te detectó y te atrapó." },
+  "최종 점수": { en: "Final score", ja: "最終スコア", zh: "最终得分", fr: "Score final", es: "Puntuación final" },
+  "다시 시도 (RETRY)": { en: "Retry", ja: "リトライ", zh: "重试", fr: "Réessayer", es: "Reintentar" },
+};

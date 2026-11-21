@@ -18,8 +18,11 @@ import {
   movePlayer,
   updateVoxelMaze,
 } from '../../lib/games/voxel-maze';
+import { useGameText } from '../../lib/games/game-text';
+import { VOXEL_MAZE_3D_TEXT } from '../../lib/games/text/voxel-maze-3d';
 
 export default function VoxelMaze3D() {
+  const { t, locale } = useGameText(VOXEL_MAZE_3D_TEXT);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [gameState, setGameState] = useState<VoxelMazeState>(createInitialVoxelMazeState);
   const [shareCardCopied, setShareCardCopied] = useState(false);
@@ -30,12 +33,12 @@ export default function VoxelMaze3D() {
     const s = stateRef.current;
     const canvas = createShareCardCanvas({
       title: "3D Voxel Maze",
-      subtitle: s.levelCleared ? "미로 탈출 성공" : "미로 탐사 기록",
+      subtitle: s.levelCleared ? t("미로 탈출 성공") : t("미로 탐사 기록"),
       score: `${s.score.toLocaleString()} PTS`,
       slug: "voxel-maze-3d",
       customStats: [
-        { label: "GEMS", value: `${s.gemsCollected}개` },
-        { label: "KEYS", value: `${s.keysCollected}/${s.keysRequired}개` },
+        { label: "GEMS", value: t("{0}개", s.gemsCollected) },
+        { label: "KEYS", value: t("{0}개", `${s.keysCollected}/${s.keysRequired}`) },
         { label: "TIME LEFT", value: `${Math.round(s.timeLeft)}s` },
       ],
     });
@@ -46,7 +49,7 @@ export default function VoxelMaze3D() {
     } else {
       downloadShareCard(canvas, `voxel-maze-${s.score}pts.png`);
     }
-  }, []);
+  }, [t]);
 
   const [muted, setMuted] = useState(() => {
     try {
@@ -319,18 +322,18 @@ export default function VoxelMaze3D() {
         {/* Keys & Objectives */}
         <div className="flex gap-2 rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2.5 shadow-xs">
           <div className="flex items-center text-xs font-black text-primary tabular-nums">
-            단계 {gameState.level} / {ENDLESS_STAGE_CAP}
+            {t("단계 {0} / {1}", gameState.level, ENDLESS_STAGE_CAP)}
           </div>
           <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
             <img src={VOXEL_MAZE_3D_UI_SPRITES.key} alt="" className="size-4 object-contain" />
-            <span>열쇠:</span>
+            <span>{t("열쇠:")}</span>
             <span className={gameState.isGateOpen ? 'text-primary' : 'text-foreground'}>
               {gameState.keysCollected} / {gameState.keysRequired}
             </span>
           </div>
           <div className="border-l border-border pl-2 flex items-center gap-1 text-xs text-muted-foreground">
             <img src={VOXEL_MAZE_3D_UI_SPRITES.compass} alt="" className="size-4 object-contain" />
-            <span>보석:</span>
+            <span>{t("보석:")}</span>
             <span className="font-bold text-foreground">{gameState.gemsCollected}</span>
           </div>
         </div>
@@ -341,14 +344,14 @@ export default function VoxelMaze3D() {
             <div className="text-right">
               <div className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                 <img src={VOXEL_MAZE_3D_UI_SPRITES.torch} alt="" className="size-3.5 object-contain" />
-                남은 시간
+                {t("남은 시간")}
               </div>
               <div className={`text-base font-black font-mono ${gameState.timeLeft <= 15 ? 'text-destructive animate-pulse' : 'text-foreground'}`}>
-                {Math.ceil(gameState.timeLeft)}초
+                {t("{0}초", Math.ceil(gameState.timeLeft))}
               </div>
             </div>
             <div className="border-l border-border pl-3 text-right">
-              <div className="text-xs text-muted-foreground">점수</div>
+              <div className="text-xs text-muted-foreground">{t("점수")}</div>
               <div className="text-base font-black text-primary font-mono">
                 {gameState.score.toLocaleString()}
               </div>
@@ -388,7 +391,7 @@ export default function VoxelMaze3D() {
             data-game-control
             onPointerDown={(e) => { e.preventDefault(); doMove('up'); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-md active:scale-95 transition-transform"
-            aria-label="위로 이동"
+            aria-label={t("위로 이동")}
           >
             ▲
           </button>
@@ -398,7 +401,7 @@ export default function VoxelMaze3D() {
             data-game-control
             onPointerDown={(e) => { e.preventDefault(); doMove('left'); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-md active:scale-95 transition-transform"
-            aria-label="왼쪽 이동"
+            aria-label={t("왼쪽 이동")}
           >
             ◀
           </button>
@@ -407,7 +410,7 @@ export default function VoxelMaze3D() {
             data-game-control
             onPointerDown={(e) => { e.preventDefault(); doMove('down'); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-md active:scale-95 transition-transform"
-            aria-label="아래로 이동"
+            aria-label={t("아래로 이동")}
           >
             ▼
           </button>
@@ -416,7 +419,7 @@ export default function VoxelMaze3D() {
             data-game-control
             onPointerDown={(e) => { e.preventDefault(); doMove('right'); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-md active:scale-95 transition-transform"
-            aria-label="오른쪽 이동"
+            aria-label={t("오른쪽 이동")}
           >
             ▶
           </button>
@@ -429,20 +432,20 @@ export default function VoxelMaze3D() {
           <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 shadow-2xl text-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
             <img src={VOXEL_MAZE_3D_UI_SPRITES.trophy} alt="" className="mx-auto size-12 object-contain drop-shadow-md" />
             <div className="text-2xl sm:text-3xl font-black tracking-tight text-primary">
-              🎉 탈출 성공! LEVEL CLEAR!
+              {t("🎉 탈출 성공! LEVEL CLEAR!")}
             </div>
             <p className="text-xs text-muted-foreground">
-              모든 열쇠를 찾고 차원 전송 포탈에 성공적으로 도달했습니다.
+              {t("모든 열쇠를 찾고 차원 전송 포탈에 성공적으로 도달했습니다.")}
             </p>
 
             <div className="grid grid-cols-2 gap-3 py-2">
               <div className="rounded-xl border border-border bg-muted/40 p-3">
-                <span className="text-xs text-muted-foreground block mb-1">총 점수</span>
+                <span className="text-xs text-muted-foreground block mb-1">{t("총 점수")}</span>
                 <span className="text-lg font-black text-foreground font-mono">{gameState.score.toLocaleString()}</span>
               </div>
               <div className="rounded-xl border border-border bg-muted/40 p-3">
-                <span className="text-xs text-muted-foreground block mb-1">수집 보석</span>
-                <span className="text-lg font-black text-primary font-mono">{gameState.gemsCollected}개</span>
+                <span className="text-xs text-muted-foreground block mb-1">{t("수집 보석")}</span>
+                <span className="text-lg font-black text-primary font-mono">{t("{0}개", gameState.gemsCollected)}</span>
               </div>
             </div>
 
@@ -453,14 +456,14 @@ export default function VoxelMaze3D() {
                 className="flex-1 py-3.5 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5"
               >
                 {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
-                {shareCardCopied ? "복사됨!" : "결과 공유"}
+                {shareCardCopied ? t("복사됨!") : t("결과 공유")}
               </button>
               <button
                 type="button"
                 onClick={handleNextLevel}
                 className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
               >
-                {isFinalStage(gameState.level) ? finaleLabel("ko") : "다음 스테이지 (NEXT LEVEL)"}
+                {isFinalStage(gameState.level) ? finaleLabel(locale) : t("다음 스테이지 (NEXT LEVEL)")}
               </button>
             </div>
           </div>
@@ -472,16 +475,16 @@ export default function VoxelMaze3D() {
         <div className="absolute inset-0 bg-background/85 backdrop-blur-md flex items-center justify-center p-6 z-10">
           <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 shadow-2xl text-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
             <div className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
-              {gameState.gameOverReason === 'timeout' ? '시간 초과 — 탐사 실패' : '센티널 발각 — 탈출 실패'}
+              {gameState.gameOverReason === 'timeout' ? t('시간 초과 — 탐사 실패') : t('센티널 발각 — 탈출 실패')}
             </div>
             <p className="text-xs text-muted-foreground">
               {gameState.gameOverReason === 'timeout'
-                ? '제한 시간이 모두 소진되어 미로 방화벽이 차단되었습니다.'
-                : '순찰 중이던 센티널 드론에게 감지되어 체포되었습니다.'}
+                ? t('제한 시간이 모두 소진되어 미로 방화벽이 차단되었습니다.')
+                : t('순찰 중이던 센티널 드론에게 감지되어 체포되었습니다.')}
             </p>
 
             <div className="rounded-xl border border-border bg-muted/40 p-3">
-              <span className="text-xs text-muted-foreground block mb-1">최종 점수</span>
+              <span className="text-xs text-muted-foreground block mb-1">{t("최종 점수")}</span>
               <span className="text-xl font-black text-foreground font-mono">{gameState.score.toLocaleString()}</span>
             </div>
 
@@ -492,14 +495,14 @@ export default function VoxelMaze3D() {
                 className="flex-1 py-3.5 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5"
               >
                 {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
-                {shareCardCopied ? "복사됨!" : "결과 공유"}
+                {shareCardCopied ? t("복사됨!") : t("결과 공유")}
               </button>
               <button
                 type="button"
                 onClick={handleRestart}
                 className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
               >
-                다시 시도 (RETRY)
+                {t("다시 시도 (RETRY)")}
               </button>
             </div>
           </div>

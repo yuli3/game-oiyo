@@ -10,6 +10,8 @@ import { useAudioContext } from '../../lib/games/use-audio-context';
 import { createInputGenerosity } from '../../lib/games/input-generosity';
 import { playProceduralSfx } from '../../lib/games/audio-mixer';
 import { celebrate } from '../../lib/games/celebration';
+import { useGameText } from '../../lib/games/game-text';
+import { DUNGEON_CRAWLER_3D_TEXT } from '../../lib/games/text/dungeon-crawler-3d';
 
 function TiltDungeonButton({
   children,
@@ -69,6 +71,7 @@ function getPercentageWidthClass(pct: number): string {
 }
 
 export default function DungeonCrawler3D() {
+  const { t, tm, locale } = useGameText(DUNGEON_CRAWLER_3D_TEXT);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [gameState, setGameState] = useState<DungeonCrawlerState>(() => createDungeonFloor(1));
   const [muted, setMuted] = useState(() => {
@@ -248,12 +251,12 @@ export default function DungeonCrawler3D() {
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none gap-2">
         {/* Floor and Stats */}
         <div className="rounded-xl border border-border bg-background/85 backdrop-blur-md px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm">
-          <div className="text-xs text-muted-foreground font-medium">던전 위치</div>
+          <div className="text-xs text-muted-foreground font-medium">{t("던전 위치")}</div>
           <div className="text-base sm:text-xl font-black text-foreground">
-            B{gameState.floor}F <span className="text-xs font-semibold text-primary">지하 {gameState.floor}층 / {ENDLESS_STAGE_CAP}</span>
+            B{gameState.floor}F <span className="text-xs font-semibold text-primary">{t("지하 {0}층 / {1}", gameState.floor, ENDLESS_STAGE_CAP)}</span>
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">
-            처치: <span className="font-bold text-foreground">{gameState.kills} 마리</span>
+            {t("처치:")} <span className="font-bold text-foreground">{t("{0} 마리", gameState.kills)}</span>
           </div>
         </div>
 
@@ -271,8 +274,8 @@ export default function DungeonCrawler3D() {
             />
           </div>
           <div className="flex justify-between text-xs pt-0.5 border-t border-border/50">
-            <span className="text-muted-foreground">공격력: <strong className="text-foreground">{gameState.attackPower}</strong></span>
-            <span className="text-muted-foreground">방어력: <strong className="text-foreground">{gameState.defense}</strong></span>
+            <span className="text-muted-foreground">{t("공격력:")} <strong className="text-foreground">{gameState.attackPower}</strong></span>
+            <span className="text-muted-foreground">{t("방어력:")} <strong className="text-foreground">{gameState.defense}</strong></span>
             <span className="text-warning font-bold">🪙 {gameState.gold}</span>
           </div>
         </div>
@@ -285,11 +288,11 @@ export default function DungeonCrawler3D() {
             onClick={() => setGameState((s) => useDungeonPotion(s))}
             disabled={gameState.potions <= 0 || gameState.hp >= gameState.maxHp}
             className="rounded-xl border border-border bg-background/90 backdrop-blur-md px-2.5 sm:px-3 py-2 shadow-xs hover:bg-muted active:scale-95 transition-all text-center disabled:opacity-50"
-            aria-label="체력 물약 사용"
+            aria-label={t("체력 물약 사용")}
           >
-            <div className="text-xs text-muted-foreground font-medium">물약 (P)</div>
+            <div className="text-xs text-muted-foreground font-medium">{t("물약 (P)")}</div>
             <div className="text-xs sm:text-sm font-black text-success">
-              🧪 {gameState.potions}개
+              🧪 {t("{0}개", gameState.potions)}
             </div>
           </button>
           <button
@@ -320,7 +323,7 @@ export default function DungeonCrawler3D() {
       {/* Middle Action Log Banner */}
       <div className="absolute top-24 left-4 right-4 flex justify-center pointer-events-none">
         <div className="rounded-xl border border-border bg-background/90 backdrop-blur-md px-4 py-2 text-xs font-semibold text-foreground shadow-md max-w-md text-center">
-          {gameState.message}
+          {tm(gameState.message)}
         </div>
       </div>
 
@@ -332,7 +335,7 @@ export default function DungeonCrawler3D() {
             handleMove(0, -1);
           }}
           className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg"
-          aria-label="북쪽 이동"
+          aria-label={t("북쪽 이동")}
         >
           ▲
         </TiltDungeonButton>
@@ -343,7 +346,7 @@ export default function DungeonCrawler3D() {
               handleMove(-1, 0);
             }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg"
-            aria-label="서쪽 이동"
+            aria-label={t("서쪽 이동")}
           >
             ◀
           </TiltDungeonButton>
@@ -353,7 +356,7 @@ export default function DungeonCrawler3D() {
               handleMove(0, 1);
             }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg"
-            aria-label="남쪽 이동"
+            aria-label={t("남쪽 이동")}
           >
             ▼
           </TiltDungeonButton>
@@ -363,7 +366,7 @@ export default function DungeonCrawler3D() {
               handleMove(1, 0);
             }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg"
-            aria-label="동쪽 이동"
+            aria-label={t("동쪽 이동")}
           >
             ▶
           </TiltDungeonButton>
@@ -378,17 +381,17 @@ export default function DungeonCrawler3D() {
               FLOOR CLEARED!
             </div>
             <p className="text-sm text-muted-foreground">
-              지하 {gameState.floor}층 출구 사다리를 발견했습니다. 장비를 점검하고 다음 층으로 내려가세요.
+              {t("지하 {0}층 출구 사다리를 발견했습니다. 장비를 점검하고 다음 층으로 내려가세요.", gameState.floor)}
             </p>
 
             <div className="grid grid-cols-2 gap-2 py-2 text-left">
               <div className="rounded-xl border border-border bg-muted/40 p-3">
-                <span className="text-xs text-muted-foreground block mb-0.5">누적 골드</span>
+                <span className="text-xs text-muted-foreground block mb-0.5">{t("누적 골드")}</span>
                 <span className="text-lg font-black text-warning">🪙 {gameState.gold}</span>
               </div>
               <div className="rounded-xl border border-border bg-muted/40 p-3">
-                <span className="text-xs text-muted-foreground block mb-0.5">처치한 몬스터</span>
-                <span className="text-lg font-black text-foreground">{gameState.kills} 마리</span>
+                <span className="text-xs text-muted-foreground block mb-0.5">{t("처치한 몬스터")}</span>
+                <span className="text-lg font-black text-foreground">{t("{0} 마리", gameState.kills)}</span>
               </div>
             </div>
 
@@ -397,15 +400,15 @@ export default function DungeonCrawler3D() {
                 onClick={handleNextFloor}
                 className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
               >
-                {isFinalStage(gameState.floor) ? finaleLabel("ko") : `지하 ${gameState.floor + 1}층으로 내려가기 (NEXT FLOOR)`}
+                {isFinalStage(gameState.floor) ? finaleLabel(locale) : t("지하 {0}층으로 내려가기 (NEXT FLOOR)", gameState.floor + 1)}
               </TiltDungeonButton>
               <TiltDungeonButton
                 onClick={handleShareCard}
                 className="w-full py-2.5 rounded-xl border border-primary/50 bg-primary/20 text-primary font-bold text-xs shadow-xs hover:bg-primary/30 transition-colors flex items-center justify-center gap-1.5"
-                aria-label={shareCardCopied ? "복사됨!" : "결과 카드 공유"}
+                aria-label={shareCardCopied ? t("복사됨!") : t("결과 카드 공유")}
               >
                 {shareCardCopied ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
-                <span>{shareCardCopied ? "복사 완료" : "탐험 결과 카드 공유"}</span>
+                <span>{shareCardCopied ? t("복사 완료") : t("탐험 결과 카드 공유")}</span>
               </TiltDungeonButton>
             </div>
           </div>
@@ -420,20 +423,20 @@ export default function DungeonCrawler3D() {
               YOU DIED
             </div>
             <p className="text-sm text-muted-foreground">
-              던전의 몬스터에게 쓰러졌습니다.
+              {t("던전의 몬스터에게 쓰러졌습니다.")}
             </p>
 
             <div className="grid grid-cols-3 gap-2 py-2">
               <div className="rounded-xl border border-border bg-muted/40 p-3">
-                <span className="text-xs text-muted-foreground block mb-1">도달 층수</span>
+                <span className="text-xs text-muted-foreground block mb-1">{t("도달 층수")}</span>
                 <span className="text-lg font-black text-foreground">B{gameState.floor}F</span>
               </div>
               <div className="rounded-xl border border-border bg-muted/40 p-3">
-                <span className="text-xs text-muted-foreground block mb-1">처치 수</span>
+                <span className="text-xs text-muted-foreground block mb-1">{t("처치 수")}</span>
                 <span className="text-lg font-black text-foreground">{gameState.kills}</span>
               </div>
               <div className="rounded-xl border border-border bg-muted/40 p-3">
-                <span className="text-xs text-muted-foreground block mb-1">획득 골드</span>
+                <span className="text-xs text-muted-foreground block mb-1">{t("획득 골드")}</span>
                 <span className="text-lg font-black text-warning">🪙 {gameState.gold}</span>
               </div>
             </div>
@@ -443,15 +446,15 @@ export default function DungeonCrawler3D() {
                 onClick={handleRestart}
                 className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
               >
-                처음부터 다시 도전하기 (RETRY)
+                {t("처음부터 다시 도전하기 (RETRY)")}
               </TiltDungeonButton>
               <TiltDungeonButton
                 onClick={handleShareCard}
                 className="w-full py-2.5 rounded-xl border border-primary/50 bg-primary/20 text-primary font-bold text-xs shadow-xs hover:bg-primary/30 transition-colors flex items-center justify-center gap-1.5"
-                aria-label={shareCardCopied ? "복사됨!" : "결과 카드 공유"}
+                aria-label={shareCardCopied ? t("복사됨!") : t("결과 카드 공유")}
               >
                 {shareCardCopied ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
-                <span>{shareCardCopied ? "복사 완료" : "탐험 기록 카드 공유"}</span>
+                <span>{shareCardCopied ? t("복사 완료") : t("탐험 결과 카드 공유")}</span>
               </TiltDungeonButton>
             </div>
           </div>
