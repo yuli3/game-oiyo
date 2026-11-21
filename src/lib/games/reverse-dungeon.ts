@@ -1,7 +1,7 @@
 /**
  * 의도 (2026-10-15 세운): 플레이어는 걷지 않고 던전을 90도씩 돌려,
  * 길이 하나일 때만 스스로 걷는 모험가를 출구로 보낸다.
- * 칸은 손작성 네 판에서 시드가 고른다. 같은 시드는 같은 판이다.
+ * 칸은 손작성 열 판에서 시드가 고른다. 같은 시드는 같은 판이다.
  * 매 프레임 난수로 길을 만들지 않는다. Math.random 을 넣지 않는다.
  *
  * 모험가는 회전과 함께 이동하지 않는다. 방·구덩이·출구 아치가 돌고,
@@ -107,8 +107,76 @@ export const PUZZLES: readonly PuzzleDef[] = [
       { axis: "y", layer: 0, turn: 1 },
       "step",
     ],
+  },  // Stages 5-10 (stage range 2026-11-21): each solution is the one shortest line, checked by a search in the tests.
+  {
+    id: "north-arch",
+    rooms: [XP | YP, XP | YP, 0, XP | YP, XP | YP, XP, XP | YP, 0],
+    tags: [empty, "exit", empty, empty, "trap", empty, empty, empty],
+    solution: [
+      { axis: "z", layer: 0, turn: 1 },
+      { axis: "x", layer: 0, turn: -1 },
+      { axis: "z", layer: 0, turn: 1 },
+      "step",
+    ],
+  },
+  {
+    id: "quiet-stair",
+    rooms: [XP, 0, YP, ZP, XP, 0, YP, XP],
+    tags: [empty, empty, empty, empty, "exit", empty, empty, empty],
+    solution: [
+      { axis: "y", layer: 0, turn: 1 },
+      { axis: "z", layer: 0, turn: -1 },
+      { axis: "y", layer: 0, turn: 1 },
+      "step",
+    ],
+  },
+  {
+    id: "upper-ring",
+    rooms: [ZP, 0, YP | ZP, XP | ZP, YP, 0, ZP, 0],
+    tags: [empty, empty, "exit", "trap", empty, empty, empty, empty],
+    solution: [
+      { axis: "y", layer: 1, turn: -1 },
+      { axis: "z", layer: 0, turn: 1 },
+      { axis: "y", layer: 0, turn: -1 },
+      "step",
+    ],
+  },
+  {
+    id: "far-wheel",
+    rooms: [XP, XP | ZP, 0, 0, XP, 0, XP | YP, ZP],
+    tags: [empty, "exit", empty, empty, empty, empty, "trap", empty],
+    solution: [
+      { axis: "x", layer: 1, turn: 1 },
+      { axis: "z", layer: 0, turn: -1 },
+      { axis: "x", layer: 0, turn: 1 },
+      "step",
+    ],
+  },
+  {
+    id: "roof-turn",
+    rooms: [ZP, 0, XM | ZP, XP | YP, YP, XP | ZP, 0, XP],
+    tags: [empty, empty, empty, empty, "exit", empty, empty, empty],
+    solution: [
+      { axis: "z", layer: 1, turn: 1 },
+      { axis: "y", layer: 0, turn: -1 },
+      { axis: "z", layer: 0, turn: 1 },
+      "step",
+    ],
+  },
+  {
+    id: "pit-corner",
+    rooms: [XP, ZP, YP, 0, XP, XP | YP, XP | YP, YP],
+    tags: [empty, empty, empty, empty, "exit", empty, empty, "trap"],
+    solution: [
+      { axis: "z", layer: 1, turn: -1 },
+      { axis: "x", layer: 0, turn: 1 },
+      { axis: "z", layer: 0, turn: -1 },
+      "step",
+    ],
   },
 ];
+
+export const PUZZLE_COUNT = PUZZLES.length;
 
 function normalize(x: number, y: number, z: number): [number, number, number] {
   const length = Math.hypot(x, y, z);
@@ -250,6 +318,12 @@ function makeState(puzzle: PuzzleDef, hero: readonly [number, number, number] = 
     status: "play",
     loseReason: null,
   };
+}
+
+/** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
+export function seedForPuzzle(index: number): number {
+  const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
 export function createReverseDungeon(seed = 0): DungeonState {

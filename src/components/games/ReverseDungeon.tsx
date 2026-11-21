@@ -13,7 +13,12 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
+import StageBar from "./StageBar";
+import { loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
 import {
+  PUZZLE_COUNT,
+  puzzleIndexForSeed,
+  seedForPuzzle,
   STEP_CAP,
   createReverseDungeon,
   forwardDir,
@@ -416,6 +421,10 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
   const [seed, setSeed] = useState(0);
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<DungeonState>(opening.current);
+  const [cleared, setCleared] = useState<number[]>([]);
+  useEffect(() => {
+    if (state.status === "win") setCleared(markStageCleared("reverse-dungeon", puzzleIndexForSeed(seed), PUZZLE_COUNT));
+  }, [state.status, seed]);
   const [board, setBoard] = useState<DungeonState>(opening.current);
   const [selected, setSelected] = useState<{ axis: Axis; layer: 0 | 1 }>({ axis: "z", layer: 0 });
   const [spin, setSpin] = useState<DungeonSpin | null>(null);
@@ -483,7 +492,9 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
   }, []);
 
   useEffect(() => {
-    const fromUrl = readSeed();
+    const done = loadClearedStages("reverse-dungeon", PUZZLE_COUNT);
+    setCleared(done);
+    const fromUrl = readSeed() || seedForPuzzle(nextOpenStage(done, PUZZLE_COUNT));
     if (fromUrl === 0) return;
     const next = createReverseDungeon(fromUrl);
     setSeed(fromUrl);
@@ -717,6 +728,13 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
           </button>
         </div>
       </header>
+      <StageBar
+        count={PUZZLE_COUNT}
+        current={puzzleIndexForSeed(seed)}
+        cleared={cleared}
+        locale={locale}
+        onSelect={(i) => load(seedForPuzzle(i))}
+      />
       <div className="grid grid-cols-3 gap-2 text-center text-sm">
         <div className="rounded-xl bg-muted p-2 flex flex-col items-center">
           <div className="inline-flex items-center gap-1.5">
