@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import {
   Volume2,
   VolumeX,
@@ -188,6 +189,7 @@ export default function DotMiner({ locale = "en" }: { locale?: string }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [gameState, setGameState] = useState<MinerState>(() => createMinerGame(Date.now()));
+  useRunRecord("dot-miner", gameState.status === "gameover" || gameState.status === "victory", gameState.cash);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {

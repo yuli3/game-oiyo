@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import {
   type BlockColor,
   type BlockBlastGameState,
@@ -86,6 +87,7 @@ function TiltHandShapeButton({
 
 export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
   const [game, setGame] = useState<BlockBlastGameState>(() => createInitialBlockBlastGame());
+  useRunRecord("grid-clear", game.status === "game_over", game.score);
   const [selectedHandIdx, setSelectedHandIdx] = useState<number | null>(null);
   const [hoverCoord, setHoverCoord] = useState<{ r: number; c: number } | null>(null);
   const { addTrauma, shakeCssVars } = useGameJuicePro();

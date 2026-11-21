@@ -1,4 +1,5 @@
 import { useGameText } from "../../lib/games/game-text";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import { FRUIT_MERGE_TEXT } from "../../lib/games/text/fruit-merge-drop";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -294,6 +295,7 @@ export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
 
   // 2. 초기 게임 상태
   const [state, setState] = useState<SuikaState>(() => createInitialSuikaState(0, modifiers));
+  useRunRecord("fruit-merge-drop", state.status === 'gameover', state.score);
   const stateRef = useRef<SuikaState>(state);
   stateRef.current = state;
 
