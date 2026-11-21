@@ -100,15 +100,55 @@ public sealed class CozyGliderPlayer : MonoBehaviour
         return m;
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/CG/Art) ----
+    static Texture2D ArtTex(string name, bool repeat = false)
+    {
+        var t = Resources.Load<Texture2D>("CG/Art/" + name);
+        if (t != null) t.wrapMode = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+        return t;
+    }
+
+    static Material LitArt(string tex, float tileX = 1f, float tileY = 1f)
+    {
+        var m = MakeMat(Color.white);
+        m.mainTexture = ArtTex(tex, tileX != 1f || tileY != 1f);
+        m.mainTextureScale = new Vector2(tileX, tileY);
+        if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.1f);
+        return m;
+    }
+
+    static Material CutoutArt(string tex)
+    {
+        var sh = Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        m.mainTexture = ArtTex(tex);
+        m.color = Color.white;
+        return m;
+    }
+
+    static GameObject ArtQuad(string name, Material mat)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        go.GetComponent<Renderer>().material = mat;
+        return go;
+    }
+
+    Material _pineMat;
+
     void CreateMaterials()
     {
-        _gliderMat = MakeMat(new Color(0.92f, 0.44f, 0.22f)); // Cozy Orange
-        _wingMat = MakeMat(new Color(0.98f, 0.94f, 0.85f));   // Canvas White
-        _ringMat = MakeMat(new Color(0.95f, 0.78f, 0.20f));   // Golden Ring
-        _ringDoneMat = MakeMat(new Color(0.35f, 0.82f, 0.42f));
-        _thermalMat = MakeMat(new Color(0.40f, 0.75f, 0.95f)); // Sky Blue Thermal
-        _landMat = MakeMat(new Color(0.25f, 0.72f, 0.38f));   // Emerald Pad
-        _islandMat = MakeMat(new Color(0.32f, 0.52f, 0.35f));  // Pine Green
+        _gliderMat = LitArt("body");
+        _wingMat = LitArt("wing");
+        _ringMat = CutoutArt("hoop");
+        _ringDoneMat = CutoutArt("hoop_done");
+        _thermalMat = new Material(Shader.Find("Sprites/Default")); // soft see-through updraft
+        _thermalMat.mainTexture = ArtTex("thermal", true);
+        _thermalMat.mainTextureScale = new Vector2(3f, 2f);
+        _landMat = LitArt("pad");
+        _islandMat = LitArt("island", 3f, 1f);
+        _pineMat = CutoutArt("pine");
     }
 
     void SetupCameraAndLight()
@@ -126,6 +166,15 @@ public sealed class CozyGliderPlayer : MonoBehaviour
         l.intensity = 1.35f;
         l.color = new Color(1.0f, 0.96f, 0.88f);
         sunGo.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+
+        // Painted sky that travels with the camera, far behind everything
+        _cam.farClipPlane = 1200f;
+        var skyMat = CutoutArt("sky");
+        skyMat.renderQueue = 1000;
+        var sky = ArtQuad("Sky", skyMat);
+        sky.transform.SetParent(_cam.transform, false);
+        sky.transform.localPosition = new Vector3(0f, 0f, 1000f);
+        sky.transform.localScale = new Vector3(2000f, 1125f, 1f);
     }
 
     void BuildGliderModel()
@@ -158,6 +207,14 @@ public sealed class CozyGliderPlayer : MonoBehaviour
 
     void BuildSceneryIslands()
     {
+        // Calm sea far below the course (purely scenic)
+        var seaMat = LitArt("sea", 60f, 60f);
+        var seaGo = ArtQuad("Sea", seaMat);
+        seaGo.transform.position = new Vector3(0f, -3f, 250f);
+        seaGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        seaGo.transform.localScale = new Vector3(1400f, 1400f, 1f);
+        _scenery.Add(seaGo);
+
         // Floating archipelago / mountain peaks below
         float[] xs = { -40f, 30f, -60f, 50f, 0f, -20f, 45f };
         float[] zs = { 30f, 70f, 120f, 160f, 210f, 280f, 340f };
@@ -168,6 +225,23 @@ public sealed class CozyGliderPlayer : MonoBehaviour
             island.transform.localScale = new Vector3(35f + (i % 3) * 15f, 15f, 35f + (i % 3) * 15f);
             island.GetComponent<Renderer>().material = _islandMat;
             _scenery.Add(island);
+
+            // a few pines on top: two crossed quads each, so they read from any angle
+            float r = island.transform.localScale.x * 0.5f;
+            for (int k = 0; k < 5; k++)
+            {
+                float a = (k * 2.4f + i) % 6.283f;
+                float rr = r * (0.25f + 0.13f * k);
+                var basePos = new Vector3(xs[i] + Mathf.Cos(a) * rr, 3f + 4f, zs[i] + Mathf.Sin(a) * rr);
+                for (int c = 0; c < 2; c++)
+                {
+                    var tree = ArtQuad("Pine", _pineMat);
+                    tree.transform.position = basePos;
+                    tree.transform.rotation = Quaternion.Euler(0f, a * Mathf.Rad2Deg + c * 90f, 0f);
+                    tree.transform.localScale = new Vector3(4f, 8f, 1f);
+                    _scenery.Add(tree);
+                }
+            }
         }
     }
 
@@ -211,12 +285,9 @@ public sealed class CozyGliderPlayer : MonoBehaviour
             float elev = Mathf.Cos(i * 0.9f) * 6f;
             cur = new Vector3(sweep, Mathf.Clamp(cur.y + elev, 10f, 48f), cur.z + forwardStep);
 
-            var ringGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            ringGo.name = $"Ring_{i + 1}";
+            var ringGo = ArtQuad($"Ring_{i + 1}", _ringMat);
             ringGo.transform.position = cur;
-            ringGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-            ringGo.transform.localScale = new Vector3(4.8f, 0.25f, 4.8f);
-            ringGo.GetComponent<Renderer>().material = _ringMat;
+            ringGo.transform.localScale = new Vector3(5.6f, 5.6f, 1f);
 
             _rings.Add(new RingItem { Pos = cur, Collected = false, Go = ringGo });
 
@@ -228,6 +299,7 @@ public sealed class CozyGliderPlayer : MonoBehaviour
                 thGo.name = $"Thermal_{i}";
                 thGo.transform.position = new Vector3(thPos.x, 15f, thPos.z);
                 thGo.transform.localScale = new Vector3(7.5f, 15f, 7.5f);
+                Destroy(thGo.GetComponent<Collider>());
                 thGo.GetComponent<Renderer>().material = _thermalMat;
                 _thermals.Add(new ThermalZone { Center = thGo.transform.position, Radius = 6.5f, Go = thGo });
             }

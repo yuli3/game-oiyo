@@ -99,6 +99,53 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
         return m;
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/DT/Art) ----
+    readonly List<Material> _figureMats = new List<Material>();
+    readonly Dictionary<string, Material> _spriteMats = new Dictionary<string, Material>();
+
+    static Texture2D ArtTex(string name, bool repeat = false)
+    {
+        var t = Resources.Load<Texture2D>("DT/Art/" + name);
+        if (t != null) t.wrapMode = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+        return t;
+    }
+
+    static Material LitArt(string tex, float tileX, float tileY)
+    {
+        var m = MakeMat(Color.white);
+        m.mainTexture = ArtTex(tex, true);
+        m.mainTextureScale = new Vector2(tileX, tileY);
+        if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.15f);
+        return m;
+    }
+
+    // Unlit cut-out figure; its tint follows the torch so figures dim with the light.
+    Material SpriteMat(string tex, bool followsTorch = true)
+    {
+        if (!_spriteMats.TryGetValue(tex, out var m))
+        {
+            var sh = Shader.Find("OIYO/UnlitCutout");
+            m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+            m.mainTexture = ArtTex(tex);
+            m.color = Color.white;
+            _spriteMats[tex] = m;
+            if (followsTorch) _figureMats.Add(m);
+        }
+        return m;
+    }
+
+    GameObject Figure(string name, Transform parent, string tex, float w, float h, float y)
+    {
+        var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        q.name = name;
+        Destroy(q.GetComponent<Collider>());
+        q.transform.SetParent(parent, false);
+        q.transform.localPosition = new Vector3(0f, y, -0.2f);
+        q.transform.localScale = new Vector3(w, h, 1f);
+        q.GetComponent<Renderer>().material = SpriteMat(tex);
+        return q;
+    }
+
     void CreateMaterials()
     {
         _stoneMat = MakeMat(new Color(0.20f, 0.21f, 0.24f));
@@ -142,12 +189,12 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
         var floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
         floor.transform.position = new Vector3(45f, -0.5f, 0f);
         floor.transform.localScale = new Vector3(130f, 1f, 6f);
-        floor.GetComponent<Renderer>().material = _stoneMat;
+        floor.GetComponent<Renderer>().material = LitArt("floor", 43f, 2f);
 
         var backWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
         backWall.transform.position = new Vector3(45f, 3.2f, 2.8f);
         backWall.transform.localScale = new Vector3(130f, 7.5f, 0.6f);
-        backWall.GetComponent<Renderer>().material = _darkStoneMat;
+        backWall.GetComponent<Renderer>().material = LitArt("wall", 52f, 3f);
 
         // Crypt pillars and wall torches every 7 units
         for (int i = -1; i <= 15; i++)
@@ -156,12 +203,13 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
             var pillar = GameObject.CreatePrimitive(PrimitiveType.Cube);
             pillar.transform.position = new Vector3(px, 3.0f, 2.3f);
             pillar.transform.localScale = new Vector3(0.9f, 6.5f, 0.8f);
-            pillar.GetComponent<Renderer>().material = _stoneMat;
+            pillar.GetComponent<Renderer>().material = LitArt("pillar", 1f, 2f);
 
-            var sconce = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            sconce.transform.position = new Vector3(px, 3.3f, 1.8f);
-            sconce.transform.localScale = Vector3.one * 0.32f;
-            sconce.GetComponent<Renderer>().material = _flameMat;
+            var sconce = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            Destroy(sconce.GetComponent<Collider>());
+            sconce.transform.position = new Vector3(px, 3.4f, 1.8f);
+            sconce.transform.localScale = new Vector3(0.7f, 1.05f, 1f);
+            sconce.GetComponent<Renderer>().material = SpriteMat("sconce", false);
         }
     }
 
@@ -185,40 +233,30 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
         _victory = false;
         _gameOver = false;
 
-        // 4 Heroes: Vestal (Rank 4, left), Plague (Rank 3), Highwayman (Rank 2), Crusader (Rank 1, right)
+        // 4 Heroes: Chaplain (Rank 4, left), Alchemist (Rank 3), Duelist (Rank 2), Warden (Rank 1, right)
         Color[] heroColors =
         {
-            new Color(0.86f, 0.72f, 0.24f), // Crusader front
-            new Color(0.45f, 0.48f, 0.65f), // Highwayman
-            new Color(0.22f, 0.68f, 0.46f), // Plague Doctor
-            new Color(0.88f, 0.42f, 0.56f)  // Vestal back
+            new Color(0.86f, 0.72f, 0.24f), // Warden front
+            new Color(0.45f, 0.48f, 0.65f), // Duelist
+            new Color(0.22f, 0.68f, 0.46f), // Alchemist
+            new Color(0.88f, 0.42f, 0.56f)  // Chaplain back
         };
-        string[] names = { "Crusader", "Highwayman", "Plague Doc", "Vestal" };
+        string[] names = { "Warden", "Duelist", "Alchemist", "Chaplain" };
         string[] roles = { "Smite", "Pistol", "Blight", "Heal" };
         int[] maxHps = { 34, 26, 22, 24 };
 
         for (int i = 0; i < 4; i++)
         {
             var root = new GameObject(names[i]);
-            var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            body.transform.SetParent(root.transform, false);
-            body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-            body.transform.localScale = new Vector3(0.85f, 1.6f, 0.7f);
-            body.GetComponent<Renderer>().material = MakeMat(heroColors[i]);
-
-            var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            head.transform.SetParent(root.transform, false);
-            head.transform.localPosition = new Vector3(0f, 1.95f, 0f);
-            head.transform.localScale = Vector3.one * 0.55f;
-            head.GetComponent<Renderer>().material = _boneMat;
+            string[] heroArt = { "hero_warden", "hero_duelist", "hero_alchemist", "hero_chaplain" };
+            Figure("Body", root.transform, heroArt[i], 1.5f, 2.25f, 1.12f);
 
             if (i == 0)
             {
-                var flame = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                flame.transform.SetParent(root.transform, false);
-                flame.transform.localPosition = new Vector3(0.55f, 1.65f, 0f);
-                flame.transform.localScale = Vector3.one * 0.38f;
-                flame.GetComponent<Renderer>().material = _flameMat;
+                // the party torch, held high by the front rank
+                var flame = Figure("TorchFlame", root.transform, "flame", 1f, 1f, 2.1f);
+                flame.GetComponent<Renderer>().material = SpriteMat("flame", false);
+                flame.transform.localPosition = new Vector3(0.62f, 2.1f, -0.25f);
                 _partyTorchFlame = flame.transform;
             }
 
@@ -236,10 +274,11 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
         float[] chestXs = { 8f, 20f, 34f, 48f, 62f };
         for (int i = 0; i < chestXs.Length; i++)
         {
-            var chest = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            chest.transform.position = new Vector3(chestXs[i], 0.45f, 0.8f);
-            chest.transform.localScale = new Vector3(1.1f, 0.8f, 0.85f);
-            chest.GetComponent<Renderer>().material = _goldMat;
+            var chest = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            Destroy(chest.GetComponent<Collider>());
+            chest.transform.position = new Vector3(chestXs[i], 0.55f, 0.8f);
+            chest.transform.localScale = new Vector3(1.45f, 1.1f, 1f);
+            chest.GetComponent<Renderer>().material = SpriteMat("chest");
             _curios.Add(new Curio { X = chestXs[i], Go = chest });
         }
 
@@ -262,11 +301,9 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
             float ex = _partyX + 5.2f + i * 1.85f;
             root.transform.position = new Vector3(ex, 0f, 0f);
 
-            var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            body.transform.SetParent(root.transform, false);
-            body.transform.localPosition = new Vector3(0f, makeBoss ? 1.25f : 0.9f, 0f);
-            body.transform.localScale = makeBoss ? new Vector3(1.25f, 2.3f, 0.95f) : new Vector3(0.8f, 1.55f, 0.7f);
-            body.GetComponent<Renderer>().material = makeBoss ? _bossMat : _boneMat;
+            string foeArt = makeBoss ? "foe_lord" : (i % 2 == 0 ? "foe_bones" : "foe_cultist");
+            if (makeBoss) Figure("Body", root.transform, foeArt, 2.2f, 3.3f, 1.65f);
+            else Figure("Body", root.transform, foeArt, 1.45f, 2.18f, 1.09f);
 
             _enemies.Add(new Enemy
             {
@@ -364,7 +401,7 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
                 if (!_curios[i].Opened && Mathf.Abs(_curios[i].X - _partyX) < 3.2f)
                 {
                     _curios[i].Opened = true;
-                    _curios[i].Go.transform.localScale = new Vector3(1.1f, 0.35f, 0.85f);
+                    _curios[i].Go.GetComponent<Renderer>().material = SpriteMat("chest_open");
                     _gold += 120;
                     _torchesLeft++;
                     SpawnBurst(_curios[i].X, 0.8f, _goldMat, 12);
@@ -616,9 +653,13 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
         _torchLight.transform.position = new Vector3(_partyX + 0.6f, 2.4f, -1.2f);
         _torchLight.range = Mathf.Lerp(6f, 22f, tRatio) * flicker;
         _torchLight.intensity = Mathf.Lerp(1.8f, 8.5f, tRatio) * flicker;
+        // painted figures dim and warm with the torch (unlit art would ignore the dark)
+        var figTint = Color.Lerp(new Color(0.42f, 0.4f, 0.5f), new Color(1f, 0.95f, 0.88f), tRatio);
+        for (int i = 0; i < _figureMats.Count; i++) _figureMats[i].color = figTint;
+
         if (_partyTorchFlame != null)
         {
-            _partyTorchFlame.localScale = Vector3.one * Mathf.Lerp(0.15f, 0.45f, tRatio) * flicker;
+            _partyTorchFlame.localScale = Vector3.one * Mathf.Lerp(0.35f, 0.95f, tRatio) * flicker;
         }
     }
 

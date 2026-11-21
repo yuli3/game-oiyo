@@ -342,23 +342,23 @@ public class CrossyRoadPlayer : MonoBehaviour
         Shader lit = Shader.Find("Universal Render Pipeline/Lit");
         if (lit == null) lit = Shader.Find("Standard");
 
-        grassMat = new Material(OiyoShaders.Safe(lit));
-        grassMat.color = new Color(0.32f, 0.72f, 0.28f);
-
-        roadMat = new Material(OiyoShaders.Safe(lit));
-        roadMat.color = new Color(0.22f, 0.24f, 0.28f);
-
-        railMat = new Material(OiyoShaders.Safe(lit));
-        railMat.color = new Color(0.42f, 0.32f, 0.24f);
-
-        riverMat = new Material(OiyoShaders.Safe(lit));
-        riverMat.color = new Color(0.18f, 0.52f, 0.88f, 0.9f);
+        // lane strips are 18.3 x 1.4: repeat the square textures along the strip
+        grassMat = LitArt(lit, "grass", 13f, 1f);
+        roadMat = LitArt(lit, "road", 13f, 1f);
+        railMat = LitArt(lit, "rail", 13f, 1f);
+        riverMat = LitArt(lit, "river", 9f, 1f);
+        paintMat = LitArt(lit, "paint");
+        cabinMat = LitArt(lit, "cabin");
+        cargoMat = LitArt(lit, "cargo");
+        treeSpriteMat = SpriteArt("tree");
+        coinSpriteMat = SpriteArt("coin");
+        heroMat = SpriteArt("hero");
+        hawkMat = SpriteArt("hawk");
 
         treeMat = new Material(OiyoShaders.Safe(lit));
         treeMat.color = new Color(0.18f, 0.55f, 0.22f);
 
-        woodMat = new Material(OiyoShaders.Safe(lit));
-        woodMat.color = new Color(0.55f, 0.35f, 0.18f);
+        woodMat = LitArt(lit, "log", 3f, 1f);
 
         chickenMat = new Material(OiyoShaders.Safe(lit));
         chickenMat.color = new Color(0.98f, 0.98f, 0.98f);
@@ -372,8 +372,55 @@ public class CrossyRoadPlayer : MonoBehaviour
         coinMat = new Material(OiyoShaders.Safe(lit));
         coinMat.color = new Color(1.0f, 0.85f, 0.10f);
 
-        trainMat = new Material(OiyoShaders.Safe(lit));
-        trainMat.color = new Color(0.92f, 0.25f, 0.25f);
+        trainMat = LitArt(lit, "train", 4f, 1f);
+    }
+
+    // ---- Painted art (scripts/make_art.py -> Resources/CR/Art) ----
+    private Material paintMat, cabinMat, cargoMat, treeSpriteMat, coinSpriteMat, heroMat, hawkMat;
+
+    private static Texture2D ArtTex(string name, bool repeat = false)
+    {
+        var t = Resources.Load<Texture2D>("CR/Art/" + name);
+        if (t != null) t.wrapMode = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+        return t;
+    }
+
+    private static Material LitArt(Shader lit, string tex, float tileX = 1f, float tileY = 1f)
+    {
+        var m = new Material(OiyoShaders.Safe(lit));
+        m.mainTexture = ArtTex(tex, tileX != 1f || tileY != 1f);
+        m.mainTextureScale = new Vector2(tileX, tileY);
+        m.color = Color.white;
+        if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.12f);
+        return m;
+    }
+
+    private static Material SpriteArt(string tex)
+    {
+        var sh = Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        m.mainTexture = ArtTex(tex);
+        m.color = Color.white;
+        return m;
+    }
+
+    // Upright painted card turned to face the isometric camera.
+    private GameObject Card(string name, Material mat, float w, float h)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        go.GetComponent<Renderer>().material = mat;
+        go.transform.rotation = mainCam != null ? mainCam.transform.rotation : Quaternion.Euler(48f, 45f, 0f);
+        go.transform.localScale = new Vector3(w, h, 1f);
+        return go;
+    }
+
+    private void LateUpdate()
+    {
+        // the hero stays a camera-facing sprite while its root turns to face the hop direction
+        if (chickenBodyGo != null && mainCam != null) chickenBodyGo.transform.rotation = mainCam.transform.rotation;
+        if (eagleGo != null && mainCam != null) eagleGo.transform.rotation = mainCam.transform.rotation;
     }
 
     private void BuildChickenModel()
@@ -381,29 +428,10 @@ public class CrossyRoadPlayer : MonoBehaviour
         var chickenRoot = new GameObject("PlayerChicken");
         chickenRoot.transform.position = Vector3.zero;
 
-        // Body Cube
-        chickenBodyGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        chickenBodyGo.name = "Body";
-        chickenBodyGo.transform.SetParent(chickenRoot.transform);
-        chickenBodyGo.transform.localPosition = new Vector3(0f, 0.45f, 0f);
-        chickenBodyGo.transform.localScale = new Vector3(0.7f, 0.8f, 0.7f);
-        chickenBodyGo.GetComponent<Renderer>().material = chickenMat;
-
-        // Red Crest
-        chickenCrestGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        chickenCrestGo.name = "Crest";
-        chickenCrestGo.transform.SetParent(chickenRoot.transform);
-        chickenCrestGo.transform.localPosition = new Vector3(0f, 0.92f, 0.05f);
-        chickenCrestGo.transform.localScale = new Vector3(0.2f, 0.25f, 0.4f);
-        chickenCrestGo.GetComponent<Renderer>().material = crestMat;
-
-        // Yellow Beak
-        chickenBeakGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        chickenBeakGo.name = "Beak";
-        chickenBeakGo.transform.SetParent(chickenRoot.transform);
-        chickenBeakGo.transform.localPosition = new Vector3(0f, 0.52f, 0.42f);
-        chickenBeakGo.transform.localScale = new Vector3(0.25f, 0.18f, 0.25f);
-        chickenBeakGo.GetComponent<Renderer>().material = beakMat;
+        // Hero: a round songbird sprite (kept facing the camera in LateUpdate)
+        chickenBodyGo = Card("Body", heroMat, 1.05f, 1.05f);
+        chickenBodyGo.transform.SetParent(chickenRoot.transform, true);
+        chickenBodyGo.transform.localPosition = new Vector3(0f, 0.55f, 0f);
 
         chickenRoot.transform.position = new Vector3(0f, 0f, 0f);
     }
@@ -565,11 +593,8 @@ public class CrossyRoadPlayer : MonoBehaviour
                 {
                     lane.treeCols.Add(col);
 
-                    var treeGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                    treeGo.name = "Tree";
-                    treeGo.transform.position = new Vector3(col * ColPitch, 0.7f, lane.worldZ);
-                    treeGo.transform.localScale = new Vector3(0.75f, 1.4f, 0.75f);
-                    treeGo.GetComponent<Renderer>().material = treeMat;
+                    var treeGo = Card("Tree", treeSpriteMat, 1.35f, 1.8f);
+                    treeGo.transform.position = new Vector3(col * ColPitch, 0.85f, lane.worldZ);
                     lane.treeGos.Add(treeGo);
                 }
             }
@@ -592,8 +617,33 @@ public class CrossyRoadPlayer : MonoBehaviour
                 vGo.name = "Vehicle";
                 vGo.transform.position = new Vector3(veh.x, 0.45f, lane.worldZ);
                 vGo.transform.localScale = new Vector3(veh.width, 0.8f, 1.0f);
-                vGo.GetComponent<Renderer>().material = new Material(OiyoShaders.Safe(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard")));
-                vGo.GetComponent<Renderer>().material.color = veh.color;
+                var bodyMat = new Material(paintMat);
+                bodyMat.color = veh.color;
+                vGo.GetComponent<Renderer>().material = bodyMat;
+                // cabin (sedan) or cab + cargo box (truck), at the front for the lane direction
+                bool truck = veh.width > 2.5f;
+                var cab = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                cab.name = "Cabin";
+                Destroy(cab.GetComponent<Collider>());
+                cab.transform.SetParent(vGo.transform, false);
+                cab.GetComponent<Renderer>().material = cabinMat;
+                if (truck)
+                {
+                    cab.transform.localPosition = new Vector3(0.36f * lane.direction, 0.55f, 0f);
+                    cab.transform.localScale = new Vector3(0.26f, 0.45f, 0.86f);
+                    var box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    box.name = "Cargo";
+                    Destroy(box.GetComponent<Collider>());
+                    box.transform.SetParent(vGo.transform, false);
+                    box.transform.localPosition = new Vector3(-0.14f * lane.direction, 0.75f, 0f);
+                    box.transform.localScale = new Vector3(0.7f, 0.9f, 0.95f);
+                    box.GetComponent<Renderer>().material = cargoMat;
+                }
+                else
+                {
+                    cab.transform.localPosition = new Vector3(-0.05f * lane.direction, 0.6f, 0f);
+                    cab.transform.localScale = new Vector3(0.55f, 0.45f, 0.84f);
+                }
                 veh.go = vGo;
 
                 lane.vehicles.Add(veh);
@@ -643,12 +693,8 @@ public class CrossyRoadPlayer : MonoBehaviour
             var coin = new CoinItem();
             coin.x = UnityEngine.Random.Range(-4, 5) * ColPitch;
 
-            var cGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            cGo.name = "Coin";
-            cGo.transform.position = new Vector3(coin.x, 0.5f, lane.worldZ);
-            cGo.transform.localScale = new Vector3(0.45f, 0.08f, 0.45f);
-            cGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-            cGo.GetComponent<Renderer>().material = coinMat;
+            var cGo = Card("Coin", coinSpriteMat, 0.6f, 0.6f);
+            cGo.transform.position = new Vector3(coin.x, 0.55f, lane.worldZ);
             coin.go = cGo;
 
             lane.coin = coin;
@@ -948,13 +994,9 @@ public class CrossyRoadPlayer : MonoBehaviour
             eagleActive = true;
             PlayTone(880f, 0.45f, "sawtooth");
 
-            eagleGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            eagleGo.name = "Eagle";
             eaglePos = currentPos + new Vector3(-8f, 12f, -8f);
+            eagleGo = Card("Hawk", hawkMat, 3.2f, 1.6f);
             eagleGo.transform.position = eaglePos;
-            eagleGo.transform.localScale = new Vector3(2.2f, 0.5f, 1.4f);
-            eagleGo.GetComponent<Renderer>().material = new Material(OiyoShaders.Safe(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard")));
-            eagleGo.GetComponent<Renderer>().material.color = new Color(0.2f, 0.15f, 0.1f);
         }
 
         if (eagleActive && eagleGo != null)

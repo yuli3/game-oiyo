@@ -1215,6 +1215,7 @@ namespace FireflyKeeper
                 if (bestTime[stageIndex] <= 0f || elapsed < bestTime[stageIndex]) bestTime[stageIndex] = elapsed;
                 WriteSave();
             }
+            ReportResult(cleared, stars);
             ShowPhase(Phase.Result);
             resultTitle.text = cleared ? L("clear") : L(failKey ?? "fail_heart");
             bool[] got = { cleared, cleared && noHit, cleared && elapsed <= def.par };
@@ -1230,6 +1231,21 @@ namespace FireflyKeeper
             resultTime.text = t;
             nextButton.SetActive(true);
             nextLabel.text = cleared ? (stageIndex + 1 < FkStages.Count ? L("next") : L("ending_title")) : L("retry");
+        }
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+        [System.Runtime.InteropServices.DllImport("__Internal")]
+        static extern void OiyoPostResult(string slug, string outcome, int score);
+#endif
+
+        // Run result for the embedding OIYO page (Plugins/WebGL/OiyoResult.jslib).
+        // score = stars earned on this run (0-3; 0 on a loss).
+        void ReportResult(bool won, int stars)
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            try { OiyoPostResult("firefly-keeper", won ? "win" : "loss", won ? stars : 0); }
+            catch (Exception) { }
+#endif
         }
 
         // =====================================================================
