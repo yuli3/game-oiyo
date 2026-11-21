@@ -5,7 +5,9 @@ import {
   loadGameSave,
   saveGameSave,
   clearGameSave,
+  recordSlugForHighScore,
 } from './game-save';
+import { getBest, getRecentRecords } from './records';
 
 describe('game-save', () => {
   let memoryStorage: Map<string, string>;
@@ -55,6 +57,21 @@ describe('game-save', () => {
       expect(res3.isNewBest).toBe(true);
       expect(res3.bestScore).toBe(200);
       expect(loadHighScore('test-game')).toBe(200);
+    });
+  });
+
+  describe('shared records mirror', () => {
+    it('mirrors a new best under the page slug without logging a play', () => {
+      saveHighScore('mini-metro', 40);
+      saveHighScore('mini-metro', 30);
+      expect(getBest('subway-sketch')).toMatchObject({ value: 40, unit: 'score' });
+      expect(getBest('mini-metro')).toBeNull();
+      expect(getRecentRecords()).toHaveLength(0);
+    });
+
+    it('maps ids without a public page to null', () => {
+      expect(recordSlugForHighScore('chess-table')).toBeNull();
+      expect(recordSlugForHighScore('blind-pilot')).toBe('blind-pilot');
     });
   });
 
