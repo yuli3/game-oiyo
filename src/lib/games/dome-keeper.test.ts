@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MAX_WAVES,
+  createInitialDomeKeeperState as createForStages,
+  startAlienWaveDefense as startWaveForStages,
+  waveStrength,
   applyRelicOverdrivePreset,
   createInitialDomeKeeperState,
   drillMineCell,
@@ -40,7 +44,7 @@ describe('Dome Keeper Drill Defense (#146 dome-keeper)', () => {
     state = fireDomeLaserAtInvader(state, firstId);
     expect(state.turretAngleDeg).toBe(35);
 
-    // Load Relic Overdrive Preset on Wave 3 and extract the Relic Core at (4,3)
+    // Load Relic Overdrive Preset on the final wave and extract the Relic Core at (4,3)
     let preset = applyRelicOverdrivePreset(state);
     preset = drillMineCell(preset, 4, 3);
     expect(preset.relicExtracted).toBe(true);
@@ -63,5 +67,18 @@ describe('Dome Keeper Drill Defense (#146 dome-keeper)', () => {
     if (swarmer) {
       expect(['approach', 'charge']).toContain(swarmer.aiState);
     }
+  });
+});
+
+describe('ten-wave run', () => {
+  it('runs 10 waves with stronger invaders each wave and a boss only at the end', () => {
+    expect(MAX_WAVES).toBe(10);
+    expect(createForStages().maxWaves).toBe(10);
+    expect(waveStrength(1)).toBe(1);
+    expect(waveStrength(MAX_WAVES)).toBe(4);
+    const hpAt = (wave: number) => startWaveForStages({ ...createForStages(), wave }).invaders.reduce((sum, inv) => sum + inv.hp, 0);
+    expect(hpAt(5)).toBeGreaterThan(hpAt(4));
+    expect(startWaveForStages({ ...createForStages(), wave: 9 }).invaders.some((inv) => inv.isBoss)).toBe(false);
+    expect(startWaveForStages({ ...createForStages(), wave: 10 }).invaders.some((inv) => inv.isBoss)).toBe(true);
   });
 });

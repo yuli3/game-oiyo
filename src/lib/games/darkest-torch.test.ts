@@ -30,10 +30,10 @@ describe("darkest-torch engine", () => {
     expect(state.zoomCurveScale).toBeGreaterThan(1.0);
   });
 
-  it("clears all 3 dungeon rooms and defeats the Necromancer Lord boss", () => {
+  it("clears all 10 dungeon rooms and defeats the Necromancer Lord boss", () => {
     let state = createInitialDarkestTorchState(303);
 
-    for (let i = 0; i < 24 && state.status === "playing"; i += 1) {
+    for (let i = 0; i < 200 && state.status === "playing"; i += 1) {
       if (state.heroes.some((h) => h.hp < 24)) {
         state = executeHeroSkill(state, "divine-comfort");
       } else if (state.torch < 40 && state.torchesInPack > 0) {
@@ -44,6 +44,7 @@ describe("darkest-torch engine", () => {
     }
 
     expect(state.status).toBe("won");
+    expect(state.room).toBe(10);
     expect(state.enemies.length).toBe(0);
   });
 });

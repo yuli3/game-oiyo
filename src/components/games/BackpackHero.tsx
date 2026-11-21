@@ -705,8 +705,8 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
               </h2>
               <p className="text-xs text-muted-foreground">
                 {locale === 'ko'
-                  ? '배낭의 시너지를 극대화하여 지하 5층 리치를 격파했습니다.'
-                  : 'You defeated the Dungeon Lich and conquered all 5 floors.'}
+                  ? `배낭의 시너지를 극대화하여 지하 ${engineState.maxFloor}층 리치를 격파했습니다.`
+                  : `You defeated the Dungeon Lich and conquered all ${engineState.maxFloor} floors.`}
               </p>
             </div>
             <div className="bg-muted/40 p-3 rounded-lg text-xs font-mono">

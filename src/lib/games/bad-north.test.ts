@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { BadNorthEngine } from "./bad-north";
+import { BadNorthEngine, MAX_WAVE, shipsForWave } from "./bad-north";
 
 describe("BadNorthEngine", () => {
   let engine: BadNorthEngine;
@@ -91,5 +91,16 @@ describe("BadNorthEngine", () => {
 
     engine.update(0.1);
     expect(engine.getState().gameStatus).toBe("defeat");
+  });
+});
+
+describe("ten-wave island", () => {
+  it("has 10 waves that grow from 3 to 7 ships", () => {
+    expect(MAX_WAVE).toBe(10);
+    expect(new BadNorthEngine(10, 10).getState().maxWave).toBe(10);
+    const ships = Array.from({ length: MAX_WAVE }, (_, i) => shipsForWave(i + 1));
+    expect(ships[0]).toBe(3);
+    expect(ships[MAX_WAVE - 1]).toBe(7);
+    for (let i = 1; i < ships.length; i++) expect(ships[i]).toBeGreaterThanOrEqual(ships[i - 1]);
   });
 });
