@@ -28,7 +28,7 @@ export interface SpatialLevel {
   spread: number;
 }
 
-/** Difficulty is data so it can be tuned and tested without touching the scene. */
+/** Difficulty is data so it can be tuned and tested without touching the scene. Ten levels (stage range 10-50). */
 export const SPATIAL_MEMORY_CURVE: readonly SpatialLevel[] = [
   { markers: 6, sequence: 3, showMs: 700, spread: 0.45 },
   { markers: 8, sequence: 4, showMs: 640, spread: 0.6 },
@@ -36,6 +36,10 @@ export const SPATIAL_MEMORY_CURVE: readonly SpatialLevel[] = [
   { markers: 12, sequence: 6, showMs: 520, spread: 0.9 },
   { markers: 14, sequence: 7, showMs: 460, spread: 1 },
   { markers: 16, sequence: 8, showMs: 400, spread: 1 },
+  { markers: 18, sequence: 9, showMs: 360, spread: 1 },
+  { markers: 18, sequence: 10, showMs: 330, spread: 1 },
+  { markers: 20, sequence: 11, showMs: 300, spread: 1 },
+  { markers: 20, sequence: 12, showMs: 280, spread: 1 },
 ] as const;
 
 export const MAX_SPATIAL_LEVEL = SPATIAL_MEMORY_CURVE.length;

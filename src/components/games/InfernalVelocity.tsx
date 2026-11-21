@@ -1,3 +1,5 @@
+import ScoreStages from "./ScoreStages";
+import { INFERNAL_STAGE_WAVES } from "../../lib/games/infernal-velocity";
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { Crosshair, Flame, Gauge, Headphones, Maximize2, Minimize2, Skull, Zap, Share2, Check } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
@@ -234,6 +236,7 @@ export default function InfernalVelocity({ locale }: { locale: Locale }) {
             <span className="border border-white/10 bg-white/5 px-4 py-3 font-mono text-xs">{t.best}: <strong>{best.toLocaleString()}</strong></span>
           </div>
           {!available && <p role="alert" className="mt-4 text-sm font-bold text-orange-300">{t.unavailable}</p>}
+          <ScoreStages slug="infernal-velocity" targets={INFERNAL_STAGE_WAVES} score={result?.wave ?? 0} locale={locale} unit={t.wave} />
           {result && (
             <>
               <div className="mt-6 flex justify-center">

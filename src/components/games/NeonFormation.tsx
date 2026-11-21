@@ -1,3 +1,5 @@
+import ScoreStages from "./ScoreStages";
+import { NEON_STAGE_WAVES } from "../../lib/games/neon-formation";
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { Crosshair, Gamepad2, Orbit, Radio, ShieldCheck, Sparkles, Maximize2, Minimize2, Share2, Check } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
@@ -213,6 +215,7 @@ export default function NeonFormation({ locale }: { locale: Locale }) {
             </span>
           </div>
           {!available && <p role="alert" className="mt-4 text-sm font-bold text-destructive">{t.unavailable}</p>}
+          <ScoreStages slug="neon-formation" targets={NEON_STAGE_WAVES} score={result?.wave ?? 0} locale={locale} unit={t.wave} />
           {result && (
             <div className="mt-7 rounded-2xl border border-border bg-card/60 p-4">
               <div className="mb-3 flex items-center justify-center gap-2">

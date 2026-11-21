@@ -19,13 +19,17 @@ interface Props {
   locale: string;
   /** When false the bar still shows, but this run's score does not clear stages (e.g. a separate rule mode). */
   track?: boolean;
+  /** Word shown before the goal number when targets are not points, e.g. "웨이브". */
+  unit?: string;
+  /** Formats a target or score for display (e.g. seconds as m:ss). */
+  format?: (value: number) => string;
 }
 
 /**
  * Score-milestone stages for score-attack games: stage N clears the first time a run reaches targets[N].
  * Progress is kept per game in the same store as hand-made puzzle stages.
  */
-export default function ScoreStages({ slug, targets, score, locale, track = true }: Props) {
+export default function ScoreStages({ slug, targets, score, locale, track = true, unit, format = (n: number) => n.toLocaleString() }: Props) {
   const count = targets.length;
   const [cleared, setCleared] = useState<number[]>([]);
   const [goal, setGoal] = useState(0);
@@ -39,9 +43,10 @@ export default function ScoreStages({ slug, targets, score, locale, track = true
     const reached = targets.reduce((n, target, i) => (score >= target ? i + 1 : n), 0);
     const fresh = Array.from({ length: reached }, (_, i) => i).filter((i) => !cleared.includes(i));
     if (fresh.length === 0) return;
-    let list = cleared;
-    for (const i of fresh) list = markStageCleared(slug, i, count);
-    setCleared(list);
+    const merged = new Set(cleared);
+    for (const i of fresh) for (const n of markStageCleared(slug, i, count)) merged.add(n);
+    for (const i of fresh) merged.add(i);
+    setCleared([...merged].sort((x, y) => x - y));
     if (goal < reached) setGoal(Math.min(reached, count - 1));
   }, [score, track, targets, cleared, slug, count, goal]);
   const target = targets[goal] ?? 0;
@@ -50,8 +55,8 @@ export default function ScoreStages({ slug, targets, score, locale, track = true
     <div className="mt-3 mb-1 space-y-1.5 px-1" data-score-stages>
       <StageBar count={count} current={goal} cleared={cleared} locale={locale} onSelect={setGoal} />
       <div className="flex items-center justify-between text-xs font-bold text-muted-foreground tabular-nums">
-        <span>{GOAL_LABEL[locale] ?? GOAL_LABEL.en} {target.toLocaleString()}</span>
-        <span>{Math.min(score, target).toLocaleString()} / {target.toLocaleString()}</span>
+        <span>{GOAL_LABEL[locale] ?? GOAL_LABEL.en} {unit ? `${unit} ` : ""}{format(target)}</span>
+        <span>{format(Math.min(score, target))} / {format(target)}</span>
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full border border-border/40 bg-muted">
         <div className="h-full w-(--stage-pct) bg-primary transition-all duration-300" style={{ "--stage-pct": `${pct}%` } as CSSProperties} />

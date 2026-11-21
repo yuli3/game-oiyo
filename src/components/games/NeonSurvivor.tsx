@@ -1,3 +1,5 @@
+import ScoreStages from "./ScoreStages";
+import { SURVIVOR_STAGE_SECONDS } from "../../lib/games/neon-survivor";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Check, Sparkles, Shield, Zap, Target, Rocket, Pause, Play } from 'lucide-react';
 import { celebrate } from "../../lib/games/celebration";
@@ -1639,6 +1641,15 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
                 </span>
               </div>
             </div>
+
+            <ScoreStages
+              slug="neon-survivor"
+              targets={SURVIVOR_STAGE_SECONDS}
+              score={Math.floor(gameState.survivalTime)}
+              locale={locale}
+              unit={t.time}
+              format={formatTime}
+            />
 
             {/* Neon Crystal Reward Banner */}
             <div className="p-3 rounded-xl border border-chart-4/50 bg-chart-4/10 flex items-center justify-between text-left">

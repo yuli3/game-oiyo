@@ -873,3 +873,6 @@ export function runDotFishingMonteCarloAudit(
   };
 }
 
+
+/** Ten collection stages (stage range 10-50): stage N clears when the encyclopedia holds 3N species. */
+export const FISHING_STAGE_SPECIES = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30] as const;

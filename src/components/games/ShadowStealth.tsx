@@ -1,6 +1,10 @@
+import StageBar from './StageBar';
+import { loadClearedStages, markStageCleared, nextOpenStage } from '@/lib/games/stage-progress';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   createShadowStealthGame,
+  createShadowStealthMission,
+  SHADOW_MISSIONS,
   stepShadowStealth,
   ARENA_WIDTH,
   ARENA_HEIGHT,
@@ -34,6 +38,23 @@ export default function ShadowStealth() {
   const [gameState, setGameState] = useState<ShadowStealthGameState>(() =>
     createShadowStealthGame(20261031)
   );
+  // Ten missions (stage range 10-50): mirrored fortress layouts with sharper guards each mission.
+  const [mission, setMission] = useState(1);
+  const [clearedMissions, setClearedMissions] = useState<number[]>([]);
+  useEffect(() => {
+    const cleared = loadClearedStages('shadow-stealth', SHADOW_MISSIONS);
+    setClearedMissions(cleared);
+    const open = nextOpenStage(cleared, SHADOW_MISSIONS) + 1;
+    if (open !== 1) {
+      const fresh = createShadowStealthMission(open, 20261031);
+      stateRef.current = fresh;
+      setGameState(fresh);
+      setMission(open);
+    }
+  }, []);
+  useEffect(() => {
+    if (gameState.isVictory) setClearedMissions(markStageCleared('shadow-stealth', mission - 1, SHADOW_MISSIONS));
+  }, [gameState.isVictory, mission]);
   const [highScore, setHighScore] = useState(() => loadHighScore('shadow-stealth', 0));
 
   useEffect(() => {
@@ -424,12 +445,14 @@ export default function ShadowStealth() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleRestart = () => {
+  const startMission = (next: number) => {
     MobileHapticsPro.selection();
-    const fresh = createShadowStealthGame(Date.now());
+    const fresh = createShadowStealthMission(next, Date.now());
     stateRef.current = fresh;
     setGameState(fresh);
+    setMission(next);
   };
+  const handleRestart = () => startMission(mission);
 
   const handleShareCard = useCallback(async () => {
     MobileHapticsPro.selection();
@@ -504,6 +527,14 @@ export default function ShadowStealth() {
         </div>
       </div>
 
+      <StageBar
+        count={SHADOW_MISSIONS}
+        current={mission - 1}
+        cleared={clearedMissions}
+        locale="en"
+        onSelect={(i) => startMission(i + 1)}
+      />
+
       {/* Main Tactical Canvas */}
       <Card className="overflow-hidden w-full">
         <div className="relative aspect-video w-full bg-background flex items-center justify-center">
@@ -541,6 +572,11 @@ export default function ShadowStealth() {
                 <Button variant="secondary" size="sm" onClick={handleShareReplay}>
                   {copied ? 'Replay Copied!' : 'Copy Ghost Token'}
                 </Button>
+                {mission < SHADOW_MISSIONS && (
+                  <Button size="sm" onClick={() => startMission(mission + 1)}>
+                    Next Mission ({mission + 1}/{SHADOW_MISSIONS})
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={handleRestart}>
                   Play Again
                 </Button>
