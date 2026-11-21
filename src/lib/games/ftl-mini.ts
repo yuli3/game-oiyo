@@ -94,6 +94,9 @@ export interface Starship {
   crew: CrewMember[];
 }
 
+/** A run is fifteen sectors; beating the enemy in the last one wins it. */
+export const STAR_SKIFF_MAX_SECTOR = 15;
+
 export class FTLEngine {
   public player: Starship;
   public enemy: Starship;
@@ -511,8 +514,19 @@ export class FTLEngine {
     }
   }
 
+  /** True while the next enemy is on its way, so one wreck is only counted once. */
+  private advancingSector = false;
+
   public onEnemyDefeated(): void {
+    if (this.advancingSector || this.gameOver) return;
     this.enemyKills++;
+    if (this.sector >= STAR_SKIFF_MAX_SECTOR) {
+      // Final sector cleared: the run is won (stage range 10-50, 2026-11-21).
+      this.gameOver = true;
+      this.victory = true;
+      this.addFloatingText('ALL SECTORS CLEARED', 75, 45, '#fbbf24');
+      return;
+    }
     const scrapEarned = Math.round(15 + this.sector * 8 + Math.random() * 10);
     const missilesEarned = Math.floor(Math.random() * 3) + 1;
     this.scrap += scrapEarned;
@@ -521,7 +535,9 @@ export class FTLEngine {
     this.addFloatingText(`Victory! +${scrapEarned} Scrap, +${missilesEarned} Missiles`, 75, 45, '#fbbf24');
 
     // Spawn next enemy after delay
+    this.advancingSector = true;
     setTimeout(() => {
+      this.advancingSector = false;
       if (!this.gameOver) {
         this.sector++;
         this.enemy = this.createEnemyShip(this.sector);
@@ -531,6 +547,7 @@ export class FTLEngine {
 
   public jumpSector(): boolean {
     if (this.player.ftlCharge < 1.0) return false;
+    if (this.sector >= STAR_SKIFF_MAX_SECTOR) return false;
     this.player.ftlCharge = 0;
     this.sector++;
     this.enemy = this.createEnemyShip(this.sector);

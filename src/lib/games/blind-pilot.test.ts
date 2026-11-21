@@ -4,8 +4,11 @@ import { describe, expect, it } from "vitest";
 import {
   ACTIONS,
   CAMERA_POSES,
+  PUZZLE_COUNT,
   STEP_CAP,
   createPilot,
+  puzzleIndexForSeed,
+  seedForPuzzle,
   makePilot,
   mixSeed,
   needle,
@@ -26,6 +29,12 @@ const SOLUTIONS: Record<string, readonly Action[]> = {
   "wing-low": ["bank+", "pitch-", "land"],
   "thrust-pitch": ["power+", "land"],
   "night-turn": ["bank-", "power-", "land"],
+  crosswind: ["bank+", "power-", "land"],
+  "go-around": ["bank-", "power+", "land"],
+  "sink-rate": ["bank+", "pitch+", "land"],
+  overspeed: ["power+", "pitch-", "land"],
+  icing: ["bank+", "power+", "pitch-", "land"],
+  "last-light": ["bank-", "power+", "pitch-", "land"],
 };
 
 function replay(id: string, actions: readonly Action[]): PilotState {
@@ -33,7 +42,7 @@ function replay(id: string, actions: readonly Action[]): PilotState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 80; seed += 1) {
+  for (let seed = 0; seed < 400; seed += 1) {
     if (createPilot(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -190,9 +199,14 @@ describe("blind pilot", () => {
     expect(resign(won)).toBe(won);
   });
 
+  it("ships ten stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(10);
+    for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
+  });
+
   it("rebuilds the same approach from the same seed", () => {
     const seen = new Set<string>();
-    for (let seed = 0; seed < 40; seed += 1) {
+    for (let seed = 0; seed < 200; seed += 1) {
       const flight = createPilot(seed);
       expect(createPilot(seed)).toEqual(flight);
       expect(mixSeed(seed)).toBe(mixSeed(seed));
