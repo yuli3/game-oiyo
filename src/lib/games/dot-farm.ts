@@ -602,3 +602,6 @@ export function runDotFarmMonteCarloAudit(
   };
 }
 
+
+/** Ten gold stages (stage range 10-50): stage N clears the first time the purse holds FARM_STAGE_GOLD[N]. Top crop sells for 1,500. */
+export const FARM_STAGE_GOLD = [300, 600, 1000, 1600, 2500, 4000, 6500, 10000, 16000, 25000] as const;

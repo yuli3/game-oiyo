@@ -1,6 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import GorogoaFrame from "../../components/games/GorogoaFrame";
+import FrameWeaver from "../../components/games/FrameWeaver";
 import { locales } from "../../lib/i18n";
 import type { Locale } from "../../lib/i18n";
 import GameGuide from "../../components/GameGuide.astro";
@@ -49,7 +49,7 @@ const m = meta[locale] ?? meta.en;
 
 <BaseLayout title={m.title} description={m.description} heading={m.title}>
   <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
-    <GorogoaFrame client:load locale={locale} />
+    <FrameWeaver client:load locale={locale} />
     <div class="mx-auto max-w-3xl px-4 mt-8">
       <GameGuide slug="frame-weaver" locale={locale} name={m.title.split(" — ")[0]} />
     </div>
