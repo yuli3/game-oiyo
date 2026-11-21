@@ -22,16 +22,17 @@ export interface FruitTierDef {
   rimColor: string;
 }
 
+// Tier chain changed 2026-11-21 so the ladder is our own, not another game's fruit order.
 export const FRUIT_TIERS: FruitTierDef[] = [
-  { tier: 0, nameKey: 'cherry', emoji: '🍒', radius: 16, score: 2, color: '#f43f5e', rimColor: '#be123c' },
-  { tier: 1, nameKey: 'strawberry', emoji: '🍓', radius: 22, score: 4, color: '#fb7185', rimColor: '#e11d48' },
-  { tier: 2, nameKey: 'grape', emoji: '🍇', radius: 28, score: 8, color: '#a855f7', rimColor: '#7e22ce' },
-  { tier: 3, nameKey: 'dekopon', emoji: '🍊', radius: 34, score: 16, color: '#fb923c', rimColor: '#ea580c' },
-  { tier: 4, nameKey: 'persimmon', emoji: '🍅', radius: 41, score: 32, color: '#f97316', rimColor: '#c2410c' },
+  { tier: 0, nameKey: 'blueberry', emoji: '🫐', radius: 16, score: 2, color: '#6366f1', rimColor: '#4338ca' },
+  { tier: 1, nameKey: 'cherry', emoji: '🍒', radius: 22, score: 4, color: '#f43f5e', rimColor: '#be123c' },
+  { tier: 2, nameKey: 'lemon', emoji: '🍋', radius: 28, score: 8, color: '#facc15', rimColor: '#ca8a04' },
+  { tier: 3, nameKey: 'kiwi', emoji: '🥝', radius: 34, score: 16, color: '#84cc16', rimColor: '#4d7c0f' },
+  { tier: 4, nameKey: 'orange', emoji: '🍊', radius: 41, score: 32, color: '#fb923c', rimColor: '#ea580c' },
   { tier: 5, nameKey: 'apple', emoji: '🍎', radius: 49, score: 64, color: '#ef4444', rimColor: '#b91c1c' },
-  { tier: 6, nameKey: 'pear', emoji: '🍐', radius: 57, score: 128, color: '#a3e635', rimColor: '#65a30d' },
-  { tier: 7, nameKey: 'peach', emoji: '🍑', radius: 66, score: 256, color: '#f472b6', rimColor: '#db2777' },
-  { tier: 8, nameKey: 'pineapple', emoji: '🍍', radius: 76, score: 512, color: '#facc15', rimColor: '#ca8a04' },
+  { tier: 6, nameKey: 'mango', emoji: '🥭', radius: 57, score: 128, color: '#f59e0b', rimColor: '#b45309' },
+  { tier: 7, nameKey: 'coconut', emoji: '🥥', radius: 66, score: 256, color: '#a16207', rimColor: '#713f12' },
+  { tier: 8, nameKey: 'melon', emoji: '🍈', radius: 76, score: 512, color: '#bef264', rimColor: '#65a30d' },
   { tier: 9, nameKey: 'watermelon', emoji: '🍉', radius: 90, score: 1024, color: '#22c55e', rimColor: '#15803d' },
 ];
 
