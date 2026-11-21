@@ -12,7 +12,7 @@
         "http://localhost:8080/ko/game-2048/",
         "http://localhost:8080/ko/solitaire/"
       ],
-      "numberOfRuns": 1,
+      "numberOfRuns": 3,
       "settings": { "preset": "desktop" }
     },
     "assert": {
