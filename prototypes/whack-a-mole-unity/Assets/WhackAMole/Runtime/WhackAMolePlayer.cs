@@ -152,7 +152,6 @@ public class WhackAMolePlayer : MonoBehaviour
     private void Awake()
     {
         switch (OiyoLang.Pick("ko", "en", "ja", "es")) { case "en": currentLang = Language.EN; break; case "ja": currentLang = Language.JA; break; case "es": currentLang = Language.ES; break; default: currentLang = Language.KO; break; }
-        InitLocalization();
         InitStages();
         SetupCameraAndLighting();
         CreateMaterials();
@@ -162,13 +161,6 @@ public class WhackAMolePlayer : MonoBehaviour
         LoadStage(0);
     }
 
-    private void InitLocalization()
-    {
-        if (Application.systemLanguage == SystemLanguage.Korean) currentLang = Language.KO;
-        else if (Application.systemLanguage == SystemLanguage.Japanese) currentLang = Language.JA;
-        else if (Application.systemLanguage == SystemLanguage.Spanish) currentLang = Language.ES;
-        else currentLang = Language.EN;
-    }
 
     private void InitStages()
     {
@@ -996,7 +988,8 @@ public class WhackAMolePlayer : MonoBehaviour
 
         // Score
         string scoreLabel = currentLang == Language.KO ? "점수" : currentLang == Language.JA ? "スコア" : currentLang == Language.ES ? "Puntos" : "Score";
-        GUILayout.Label(string.Format("🔨 {0}: <b><color=#ffd700>{1}</color></b> (목표: {2})", scoreLabel, score, def.targetScore), GUILayout.Width(240));
+        string goalLabel = currentLang == Language.KO ? "목표" : currentLang == Language.JA ? "目標" : currentLang == Language.ES ? "Meta" : "Goal";
+        GUILayout.Label(string.Format("🔨 {0}: <b><color=#ffd700>{1}</color></b> ({2}: {3})", scoreLabel, score, goalLabel, def.targetScore), GUILayout.Width(240));
 
         // Combo & Timer
         if (currentCombo > 1)

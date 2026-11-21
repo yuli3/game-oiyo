@@ -1141,20 +1141,34 @@ public class PaperFlightPlayer : MonoBehaviour
         stallAlertStyle.normal.textColor = new Color(1f, 0.25f, 0.25f);
     }
 
+    // Dark backing panel so the header reads on any background.
+    static Texture2D _hudPanelTex;
+    static void DrawHudPanel(Rect r)
+    {
+        if (_hudPanelTex == null)
+        {
+            _hudPanelTex = new Texture2D(1, 1);
+            _hudPanelTex.SetPixel(0, 0, new Color(0.06f, 0.08f, 0.12f, 0.78f));
+            _hudPanelTex.Apply();
+        }
+        GUI.DrawTexture(r, _hudPanelTex);
+    }
+
     private void OnGUI()
     {
         OiyoUiFont.Apply();
         InitGUIStyles();
 
         // 1. Top Header Bar
+        DrawHudPanel(new Rect(8, 8, 356, 70));
         GUILayout.BeginArea(new Rect(16, 14, Screen.width - 32, 60));
         GUILayout.BeginHorizontal();
 
         // Title & Subtitle
         GUILayout.BeginVertical(GUILayout.Width(340));
-        GUILayout.Label("✈️ " + GetText("title"), headerTitleStyle);
+        GUILayout.Label("✈️ " + GetText("title"), headerTitleStyle, GUILayout.Height(28));
         string modeStr = isEndlessMode ? GetText("endless") : $"{GetText("stage")} {currentStageIndex + 1}: {GetStageName(currentStageIndex)}";
-        GUILayout.Label(modeStr, headerSubStyle);
+        GUILayout.Label(modeStr, headerSubStyle, GUILayout.Height(18));
         GUILayout.EndVertical();
 
         GUILayout.FlexibleSpace();

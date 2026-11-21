@@ -204,7 +204,6 @@ public class BadNorthPlayer : MonoBehaviour
     private void Awake()
     {
         switch (OiyoLang.Pick("ko", "en", "ja", "es")) { case "en": currentLang = Language.EN; break; case "ja": currentLang = Language.JA; break; case "es": currentLang = Language.ES; break; default: currentLang = Language.KO; break; }
-        InitLocalization();
         InitStages();
         SetupCameraAndLighting();
         CreateMaterials();
@@ -212,13 +211,6 @@ public class BadNorthPlayer : MonoBehaviour
         LoadIsland(0);
     }
 
-    private void InitLocalization()
-    {
-        if (Application.systemLanguage == SystemLanguage.Korean) currentLang = Language.KO;
-        else if (Application.systemLanguage == SystemLanguage.Japanese) currentLang = Language.JA;
-        else if (Application.systemLanguage == SystemLanguage.Spanish) currentLang = Language.ES;
-        else currentLang = Language.EN;
-    }
 
     private void InitStages()
     {
@@ -1464,6 +1456,33 @@ public class BadNorthPlayer : MonoBehaviour
         }
     }
 
+    static bool IsNarrow => Screen.width < 720;
+
+    static Texture2D _modalTex;
+    static void DrawModalBack(Rect r)
+    {
+        if (_modalTex == null)
+        {
+            _modalTex = new Texture2D(1, 1);
+            _modalTex.SetPixel(0, 0, new Color(0.05f, 0.07f, 0.11f, 0.86f));
+            _modalTex.Apply();
+        }
+        GUI.DrawTexture(r, _modalTex);
+    }
+
+    static Rect ModalRect(float w, float h)
+    {
+        w = Mathf.Min(w, Screen.width - 24f);
+        h = Mathf.Min(h, Screen.height - 24f);
+        return new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
+    }
+
+    static Rect ModalInner(Rect box)
+    {
+        float pad = box.width < 360f ? 12f : 20f;
+        return new Rect(box.x + pad, box.y + pad, box.width - pad * 2f, box.height - pad * 2f);
+    }
+
     // GUI HUD & Modals
     private void OnGUI()
     {
@@ -1471,24 +1490,37 @@ public class BadNorthPlayer : MonoBehaviour
         GUI.skin.label.fontSize = 15;
         GUI.skin.button.fontSize = 14;
 
-        // Top Navigation Bar
-        GUILayout.BeginArea(new Rect(16, 14, Screen.width - 32, 60));
-        GUILayout.BeginHorizontal();
+        bool narrow = IsNarrow;
+        if (narrow) { GUI.skin.label.fontSize = 13; GUI.skin.button.fontSize = 12; }
 
+        // Top Navigation Bar (two rows on narrow/portrait screens)
+        GUILayout.BeginArea(new Rect(12, 10, Screen.width - 24, narrow ? 84 : 60));
         StageDef def = stages[currentStageIdx];
-        GUILayout.Label(string.Format("<b><color=#00f0ff>{0}</color></b>", def.name.Get(currentLang)), GUILayout.Width(280));
+        if (narrow)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(string.Format("<b><color=#00f0ff>{0}</color></b>", def.name.Get(currentLang)));
+            GUILayout.FlexibleSpace();
+            string mapBtnN = currentLang == Language.KO ? "🗺️ 지도" : currentLang == Language.JA ? "🗺️ マップ" : currentLang == Language.ES ? "🗺️ Mapa" : "🗺️ Map";
+            if (GUILayout.Button(mapBtnN, GUILayout.Width(78), GUILayout.Height(32))) showArchipelagoModal = !showArchipelagoModal;
+            if (GUILayout.Button(currentLang.ToString(), GUILayout.Width(44), GUILayout.Height(32))) currentLang = (Language)(((int)currentLang + 1) % 4);
+            GUILayout.EndHorizontal();
+        }
+        GUILayout.BeginHorizontal();
+        if (!narrow) GUILayout.Label(string.Format("<b><color=#00f0ff>{0}</color></b>", def.name.Get(currentLang)), GUILayout.Width(280));
 
         // Waves & Gold
         string waveTxt = string.Format(currentLang == Language.KO ? "🌊 파도: {0}/{1}" : "🌊 Wave: {0}/{1}", currentWave, totalWavesInStage);
-        GUILayout.Label(waveTxt, GUILayout.Width(130));
+        GUILayout.Label(waveTxt, GUILayout.Width(narrow ? 110 : 130));
 
         string goldTxt = string.Format("💰 {0}G", coinsEarned);
-        GUILayout.Label(string.Format("<b><color=#ffd700>{0}</color></b>", goldTxt), GUILayout.Width(100));
+        GUILayout.Label(string.Format("<b><color=#ffd700>{0}</color></b>", goldTxt), GUILayout.Width(narrow ? 80 : 100));
 
         string slainTxt = string.Format("⚔️ {0}", raidersSlain);
-        GUILayout.Label(slainTxt, GUILayout.Width(100));
+        GUILayout.Label(slainTxt, GUILayout.Width(narrow ? 70 : 100));
 
         GUILayout.FlexibleSpace();
+        if (!narrow) {
 
         // Archipelago Modal Button
         string mapBtn = currentLang == Language.KO ? "🗺️ 군도 지도" : currentLang == Language.JA ? "🗺️ 群島マップ" : currentLang == Language.ES ? "🗺️ Archipiélago" : "🗺️ Archipelago";
@@ -1503,12 +1535,15 @@ public class BadNorthPlayer : MonoBehaviour
         {
             currentLang = (Language)(((int)currentLang + 1) % 4);
         }
+        }
 
         GUILayout.EndHorizontal();
         GUILayout.EndArea();
 
         // Bottom Squad Control Panel
-        GUILayout.BeginArea(new Rect(16, Screen.height - 75, Screen.width - 32, 65));
+        float retryW = narrow ? 64f : 95f;
+        float squadW = Mathf.Min(140f, (Screen.width - 24f - retryW - 16f) / Mathf.Max(1, playerSquads.Count) - 4f);
+        GUILayout.BeginArea(new Rect(12, Screen.height - 75, Screen.width - 24, 65));
         GUILayout.BeginHorizontal();
 
         for (int i = 0; i < playerSquads.Count; i++)
@@ -1524,7 +1559,7 @@ public class BadNorthPlayer : MonoBehaviour
             string btnLabel = string.Format("[{0}] {1}\n({2}/9) {3}", i + 1, squadName, alive, (sq.type == SquadType.Pikemen && sq.isBraced ? "🛡️" : ""));
 
             GUI.color = isSel ? Color.cyan : (alive > 0 ? Color.white : Color.gray);
-            if (GUILayout.Button(btnLabel, GUILayout.Width(140), GUILayout.Height(55)))
+            if (GUILayout.Button(btnLabel, GUILayout.Width(squadW), GUILayout.Height(55)))
             {
                 SelectSquad(i);
             }
@@ -1535,7 +1570,7 @@ public class BadNorthPlayer : MonoBehaviour
 
         // Retry Button
         string retryText = currentLang == Language.KO ? "다시하기" : currentLang == Language.JA ? "リトライ" : currentLang == Language.ES ? "Reintentar" : "Retry";
-        if (GUILayout.Button(retryText, GUILayout.Width(95), GUILayout.Height(50)))
+        if (GUILayout.Button(retryText, GUILayout.Width(retryW), GUILayout.Height(50)))
         {
             LoadIsland(currentStageIdx);
         }
@@ -1543,20 +1578,44 @@ public class BadNorthPlayer : MonoBehaviour
         GUILayout.EndHorizontal();
         GUILayout.EndArea();
 
-        // Floating In-Game Text
-        foreach (var fb in combatTexts)
+        // Floating In-Game Text: hidden behind modals, kept between the top and bottom bars,
+        // and stacked upward so two messages never sit on top of each other.
+        bool modalOpen = showArchipelagoModal || state == GameState.Victory || state == GameState.Defeat;
+        if (!modalOpen && combatTexts.Count > 0)
         {
-            Vector3 sPos = mainCam.WorldToScreenPoint(fb.pos);
-            if (sPos.z > 0f)
+            float topSafe = narrow ? 100f : 64f;
+            float bottomSafe = Screen.height - 84f;
+            float textW = Mathf.Min(280f, Screen.width - 24f);
+            float textH = narrow ? 24f : 28f;
+            var placed = new List<Rect>();
+            int oldSize = GUI.skin.label.fontSize;
+            GUI.skin.label.alignment = TextAnchor.MiddleCenter;
+            GUI.skin.label.fontSize = narrow ? 14 : 18;
+            for (int i = combatTexts.Count - 1; i >= 0; i--)
             {
-                Rect r = new Rect(sPos.x - 140, Screen.height - sPos.y - 25, 280, 45);
+                var fb = combatTexts[i];
+                Vector3 sPos = mainCam.WorldToScreenPoint(fb.pos);
+                if (sPos.z <= 0f) continue;
+                float x = Mathf.Clamp(sPos.x - textW * 0.5f, 12f, Screen.width - 12f - textW);
+                float y = Mathf.Clamp(Screen.height - sPos.y - textH * 0.5f, topSafe, bottomSafe - textH);
+                Rect r = new Rect(x, y, textW, textH);
+                int guard = 0;
+                while (placed.Exists(o => o.Overlaps(r)) && guard++ < 12)
+                {
+                    r.y -= textH;
+                    if (r.y < topSafe) { r.y = topSafe; break; }
+                }
+                if (placed.Exists(o => o.Overlaps(r))) continue; // no room left: skip this one
+                placed.Add(r);
+                string label = string.Format("<b>{0}</b>", fb.text);
+                GUI.color = new Color(0f, 0f, 0f, 0.85f);
+                GUI.Label(new Rect(r.x + 1.5f, r.y + 1.5f, r.width, r.height), label);
                 GUI.color = fb.color;
-                GUI.skin.label.alignment = TextAnchor.MiddleCenter;
-                GUI.skin.label.fontSize = 18;
-                GUI.Label(r, string.Format("<b>{0}</b>", fb.text));
-                GUI.skin.label.alignment = TextAnchor.UpperLeft;
-                GUI.color = Color.white;
+                GUI.Label(r, label);
             }
+            GUI.color = Color.white;
+            GUI.skin.label.alignment = TextAnchor.UpperLeft;
+            GUI.skin.label.fontSize = oldSize;
         }
 
         // Archipelago Modal
@@ -1580,8 +1639,10 @@ public class BadNorthPlayer : MonoBehaviour
 
     private void RenderArchipelagoModal()
     {
-        GUI.Box(new Rect(Screen.width * 0.5f - 240, Screen.height * 0.5f - 230, 480, 460), "");
-        GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 220, Screen.height * 0.5f - 210, 440, 420));
+        Rect box = ModalRect(480, 460);
+        DrawModalBack(box);
+        GUI.Box(box, "");
+        GUILayout.BeginArea(ModalInner(box));
 
         string mapHeader = currentLang == Language.KO ? "<b><color=#00f0ff>군도 지도 - 12개 섬 선택</color></b>" : "<b><color=#00f0ff>Archipelago - Select Island (12 Stages)</color></b>";
         GUILayout.Label(mapHeader, GUILayout.Height(30));
@@ -1613,8 +1674,10 @@ public class BadNorthPlayer : MonoBehaviour
 
     private void RenderVictoryModal()
     {
-        GUI.Box(new Rect(Screen.width * 0.5f - 190, Screen.height * 0.5f - 140, 380, 280), "");
-        GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 170, Screen.height * 0.5f - 120, 340, 240));
+        Rect box = ModalRect(380, 280);
+        DrawModalBack(box);
+        GUI.Box(box, "");
+        GUILayout.BeginArea(ModalInner(box));
 
         GUILayout.Label("<b><color=#22c55e>★ ISLAND DEFENDED! ★</color></b>", GUILayout.Height(32));
         GUILayout.Label(string.Format("Slain: <b><color=#ef4444>{0}</color></b>", raidersSlain));
@@ -1647,8 +1710,10 @@ public class BadNorthPlayer : MonoBehaviour
 
     private void RenderDefeatModal()
     {
-        GUI.Box(new Rect(Screen.width * 0.5f - 180, Screen.height * 0.5f - 130, 360, 260), "");
-        GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 160, Screen.height * 0.5f - 110, 320, 220));
+        Rect box = ModalRect(360, 260);
+        DrawModalBack(box);
+        GUI.Box(box, "");
+        GUILayout.BeginArea(ModalInner(box));
 
         GUILayout.Label("<b><color=#ef4444>ISLAND FALLEN</color></b>", GUILayout.Height(32));
         GUILayout.Label(currentLang == Language.KO ? "마을이 약탈당하고 방어선이 무너졌습니다." : "The village was raided and the defense collapsed.");

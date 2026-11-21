@@ -160,7 +160,6 @@ public class CrossyRoadPlayer : MonoBehaviour
     private void Awake()
     {
         switch (OiyoLang.Pick("ko", "en", "ja", "es")) { case "en": currentLang = Language.EN; break; case "ja": currentLang = Language.JA; break; case "es": currentLang = Language.ES; break; default: currentLang = Language.KO; break; }
-        InitLocalization();
         InitStages();
         SetupCameraAndLighting();
         CreateMaterials();
@@ -169,13 +168,6 @@ public class CrossyRoadPlayer : MonoBehaviour
         LoadStage(0);
     }
 
-    private void InitLocalization()
-    {
-        if (Application.systemLanguage == SystemLanguage.Korean) currentLang = Language.KO;
-        else if (Application.systemLanguage == SystemLanguage.Japanese) currentLang = Language.JA;
-        else if (Application.systemLanguage == SystemLanguage.Spanish) currentLang = Language.ES;
-        else currentLang = Language.EN;
-    }
 
     private void InitStages()
     {
@@ -1030,6 +1022,20 @@ public class CrossyRoadPlayer : MonoBehaviour
         }
     }
 
+
+    // Dark backing panel so the header reads on any background.
+    static Texture2D _hudPanelTex;
+    static void DrawHudPanel(Rect r)
+    {
+        if (_hudPanelTex == null)
+        {
+            _hudPanelTex = new Texture2D(1, 1);
+            _hudPanelTex.SetPixel(0, 0, new Color(0.06f, 0.08f, 0.12f, 0.78f));
+            _hudPanelTex.Apply();
+        }
+        GUI.DrawTexture(r, _hudPanelTex);
+    }
+
     // GUI HUD & Modals
     private void OnGUI()
     {
@@ -1038,6 +1044,7 @@ public class CrossyRoadPlayer : MonoBehaviour
         GUI.skin.button.fontSize = 14;
 
         // Top Navigation Bar
+        DrawHudPanel(new Rect(8, 8, Screen.width - 16, 46));
         GUILayout.BeginArea(new Rect(16, 14, Screen.width - 32, 60));
         GUILayout.BeginHorizontal();
 
@@ -1047,7 +1054,8 @@ public class CrossyRoadPlayer : MonoBehaviour
 
         // Score (Meters)
         string scoreLabel = currentLang == Language.KO ? "거리" : currentLang == Language.JA ? "距離" : currentLang == Language.ES ? "Distancia" : "Dist";
-        GUILayout.Label(string.Format("🚶 {0}: <b><color=#ffd700>{1}m</color></b> (최고: {2}m)", scoreLabel, score, bestScore), GUILayout.Width(220));
+        string bestLabel = currentLang == Language.KO ? "최고" : currentLang == Language.JA ? "最高" : currentLang == Language.ES ? "Récord" : "Best";
+        GUILayout.Label(string.Format("🚶 {0}: <b><color=#ffd700>{1}m</color></b> ({2}: {3}m)", scoreLabel, score, bestLabel, bestScore), GUILayout.Width(220));
 
         // Coins
         GUILayout.Label(string.Format("🪙 {0}", coinsCollected), GUILayout.Width(80));
