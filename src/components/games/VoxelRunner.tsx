@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRunRecord } from '../../lib/games/use-run-record';
 import { ArcadeTouchControls } from '../ui/game/ArcadeTouchControls';
 import {
   useGhostTimeAttackPro,
@@ -59,6 +60,7 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
   const [distance, setDistance] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [shareCardCopied, setShareCardCopied] = useState(false);
+  useRunRecord("voxel-runner-3d", status === 'gameover', score);
 
   const {
     liveDelta,

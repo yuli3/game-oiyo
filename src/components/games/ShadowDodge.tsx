@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import {
   ARENA_HEIGHT,
   ARENA_WIDTH,
@@ -177,6 +178,7 @@ export function ShadowDodge({ locale = "ko" }: ShadowDodgeProps) {
   });
 
   const [shakeClass, setShakeClass] = useState("");
+  useRunRecord("shadow-dodge", gameState.status === "gameover", gameState.score);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const stateRef = useRef<ShadowDodgeState>(gameState);
   stateRef.current = gameState;
