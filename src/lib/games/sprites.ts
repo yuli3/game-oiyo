@@ -1771,3 +1771,11 @@ export const HANYANG_TIMESLIP_SPRITES = {
   sheet: "/assets/sprites/hanyang-timeslip/sheet.webp",
   keyart: "/games/hanyang-timeslip-keyart.webp",
 } as const;
+
+export const ALLEY_APPRAISER_SPRITES = {
+  customers: [0, 1, 2, 3, 4, 5].map((i) => `/assets/sprites/alley-appraiser/customer-${i}.webp`),
+  loupe: "/assets/sprites/alley-appraiser/loupe.webp",
+  uvLamp: "/assets/sprites/alley-appraiser/uv-lamp.webp",
+  coin: "/assets/sprites/alley-appraiser/coin.webp",
+  catalogue: "/assets/sprites/alley-appraiser/catalogue.webp",
+} as const;

@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AlleyAppraiser from "../../components/games/AlleyAppraiser";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "골목 감정소 — 진품과 가품을 가리는 무료 골동품 감정 가게 게임",
+    description: "손님이 가져온 도자기·동전·회중시계를 도감 진품과 비교해 가품을 찾아내세요. 돋보기와 자외선 등, 흥정, 30일 장사. 설치 없이 브라우저에서 바로.",
+  },
+  en: {
+    title: "Alley Appraiser — Free antique appraisal shop game: spot the fakes",
+    description: "Compare customers' vases, coins and pocket watches with the catalogue originals to catch fakes. Loupe, UV lamp, haggling and 30 shop days, free in your browser.",
+  },
+  ja: {
+    title: "路地裏鑑定所 — 本物と偽物を見抜く無料の骨董鑑定ショップゲーム",
+    description: "客が持ち込む磁器・古銭・懐中時計を図鑑の本物と比べて偽物を見抜こう。ルーペと紫外線ランプ、値切り、30日の商い。ブラウザですぐ遊べます。",
+  },
+  zh: {
+    title: "胡同鉴定铺 — 辨别真品与赝品的免费古董鉴定小店游戏",
+    description: "把顾客带来的瓷瓶、古钱币、怀表和图鉴真品对比，揪出赝品。放大镜、紫外灯、讲价与30天经营，浏览器即玩。",
+  },
+  fr: {
+    title: "L'Expert de la ruelle — Jeu gratuit de boutique d'antiquités : repérez les faux",
+    description: "Comparez vases, pièces et montres des clients aux originaux du catalogue pour démasquer les faux. Loupe, lampe UV, marchandage et 30 jours de boutique, dans le navigateur.",
+  },
+  es: {
+    title: "El Tasador del Callejón — Juego gratis de tienda de antigüedades: detecta falsificaciones",
+    description: "Compara jarrones, monedas y relojes de los clientes con los originales del catálogo para pillar falsificaciones. Lupa, lámpara UV, regateo y 30 días de tienda, en el navegador.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["alley-appraiser"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <AlleyAppraiser client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="alley-appraiser" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
