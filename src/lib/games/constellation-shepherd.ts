@@ -2,7 +2,7 @@
  * 의도 (2026-10-15 세운): 별자리 목동은 빈 하늘로는 걷고, 줄이 별에 닿으면 가벼운 쪽이 움직인다.
  * 가벼운 별은 목동 쪽으로 한 칸 오고, 무거운 별은 목동을 한 칸 끌어당긴다.
  * 이미 깔린 끈과 가운데서 엇갈리는 당김은 일어나지 않는다.
- * 승리는 별이 제 자리로 들어오는 걸음이다. 네 판은 손으로 맞추고 시드가 그중 하나를 고른다.
+ * 승리는 별이 제 자리로 들어오는 걸음이다. 열 판은 손으로 맞추고 시드가 그중 하나를 고른다.
  * 매 프레임 난수로 길을 만들지 않는다. Math.random 을 넣지 않는다.
  *
  * 칸 0..8 은 3×3 이다. 0 이 왼쪽 위, 1 이 그 오른쪽, 3 이 그 아래.
@@ -68,6 +68,8 @@ interface PuzzleDef {
  * snag: seat the light star across the middle before the heavy rope is laid. The other order crosses.
  * hook: walk to the light star, then nudge the heavy star down and give the freed peg to the light star.
  * long-night: seat the light star first, then walk around and nudge the heavy star up into the corner.
+ * Stages 5-10 (stage range 2026-11-21) each keep one shortest walk, checked by a search in the tests:
+ * low-star, east-gate, plough, anchor, deep-well, midnight. The last two need all eight steps.
  */
 const PUZZLES: readonly PuzzleDef[] = [
   {
@@ -106,7 +108,63 @@ const PUZZLES: readonly PuzzleDef[] = [
     ],
     figure: [0, 1, 2, 5],
   },
+  {
+    id: "low-star",
+    shepherd: 2,
+    stars: [
+      { mass: 1, at: 0, goal: 1 },
+      { mass: 3, at: 7, goal: 8 },
+    ],
+    figure: [1, 2, 5, 8],
+  },
+  {
+    id: "east-gate",
+    shepherd: 4,
+    stars: [
+      { mass: 1, at: 0, goal: 3 },
+      { mass: 3, at: 5, goal: 8 },
+    ],
+    figure: [3, 6, 7, 8],
+  },
+  {
+    id: "plough",
+    shepherd: 7,
+    stars: [
+      { mass: 1, at: 1, goal: 4 },
+      { mass: 3, at: 5, goal: 8 },
+    ],
+    figure: [1, 4, 5, 8],
+  },
+  {
+    id: "anchor",
+    shepherd: 0,
+    stars: [
+      { mass: 1, at: 7, goal: 4 },
+      { mass: 3, at: 4, goal: 6 },
+    ],
+    figure: [3, 4, 6, 7],
+  },
+  {
+    id: "deep-well",
+    shepherd: 8,
+    stars: [
+      { mass: 1, at: 3, goal: 4 },
+      { mass: 3, at: 7, goal: 8 },
+    ],
+    figure: [0, 4, 8],
+  },
+  {
+    id: "midnight",
+    shepherd: 6,
+    stars: [
+      { mass: 1, at: 2, goal: 5 },
+      { mass: 3, at: 4, goal: 2 },
+    ],
+    figure: [1, 2, 5, 8],
+  },
 ];
+
+export const PUZZLE_COUNT = PUZZLES.length;
 
 const DELTA: Record<Dir, readonly [number, number]> = {
   left: [-1, 0],
@@ -277,6 +335,12 @@ function makeState(puzzle: PuzzleDef, steps = 0): SkyState {
     loseReason: null,
     lastDir: null,
   };
+}
+
+/** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
+export function seedForPuzzle(index: number): number {
+  const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
 export function createConstellation(seed = 0): SkyState {
