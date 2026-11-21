@@ -2,6 +2,9 @@ import { readFileSync } from "node:fs";
 import { PerspectiveCamera, Vector3 } from "three";
 import { describe, expect, it } from "vitest";
 import {
+  PUZZLE_COUNT,
+  puzzleIndexForSeed,
+  seedForPuzzle,
   ACTIONS,
   CAMERA_POSES,
   STEP_CAP,
@@ -23,6 +26,12 @@ const SOLUTIONS: Record<string, readonly Action[]> = {
   washout: ["dim", "shutter"],
   "step-then-ease": ["bright", "dim", "shutter"],
   "long-swim": ["bright", "bright", "shutter"],
+  "close-call": ["dim", "bright", "shutter"],
+  flare: ["dim", "dim", "shutter"],
+  "hot-start": ["dim", "bright", "shutter"],
+  "full-beam": ["dim", "bright", "shutter"],
+  ember: ["dim", "dim", "shutter"],
+  "slow-blink": ["dim", "dim", "bright", "shutter"],
 };
 
 function replay(id: string, actions: readonly Action[]): ShotState {
@@ -30,7 +39,7 @@ function replay(id: string, actions: readonly Action[]): ShotState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 80; seed += 1) {
+  for (let seed = 0; seed < 400; seed += 1) {
     if (createShot(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -96,6 +105,11 @@ describe("deep photographer", () => {
       const toTrench = trench.clone().sub(camera.position).normalize();
       expect(dir.dot(toTrench)).toBeGreaterThan(0.9);
     }
+  });
+
+  it("ships ten stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(10);
+    for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
   });
 
   it("keeps one hand-checked shortest exposure for each scene", () => {
@@ -165,7 +179,7 @@ describe("deep photographer", () => {
 
   it("rebuilds the same scene from the same seed", () => {
     const seen = new Set<string>();
-    for (let seed = 0; seed < 40; seed += 1) {
+    for (let seed = 0; seed < 200; seed += 1) {
       const shot = createShot(seed);
       expect(createShot(seed)).toEqual(shot);
       expect(mixSeed(seed)).toBe(mixSeed(seed));

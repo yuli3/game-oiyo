@@ -2,6 +2,9 @@ import { readFileSync } from "node:fs";
 import { PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { describe, expect, it } from "vitest";
 import {
+  PUZZLE_COUNT,
+  puzzleIndexForSeed,
+  seedForPuzzle,
   ACTS,
   CAMERA_POSES,
   HALL,
@@ -28,7 +31,12 @@ const SOLUTIONS: Record<string, readonly Act[]> = {
   "still-plinth": ["H", "E", "H", "E"],
   "under-cone": ["E", "H", "E"],
   "long-hall": ["E", "E", "H", "E"],
-  "west-mark": ["W", "H", "W"],
+  "west-mark": ["W", "H", "W"],  "east-wing": ["H", "H", "E", "H", "E"],
+  "split-beat": ["W", "H", "W", "H", "W"],
+  "long-gallery": ["E", "H", "E", "H", "H", "E"],
+  "far-door": ["H", "E", "H", "H", "E", "E"],
+  "patient-bust": ["H", "H", "W", "H", "H", "W", "W"],
+  "last-round": ["H", "H", "E", "H", "H", "E", "E"],
 };
 
 function replay(id: string, actions: readonly Act[]): NightState {
@@ -36,7 +44,7 @@ function replay(id: string, actions: readonly Act[]): NightState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 80; seed += 1) {
+  for (let seed = 0; seed < 400; seed += 1) {
     if (createNight(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -142,6 +150,11 @@ describe("museum night", () => {
     expect(gazeVector(lensAt(2), focusAt(2))[1]).toBeLessThan(-0.9);
   });
 
+  it("ships ten stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(10);
+    for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
+  });
+
   it("keeps one hand-checked shortest night for each hall", () => {
     for (const [id, solution] of Object.entries(SOLUTIONS)) {
       const start = createNight(seedFor(id));
@@ -212,7 +225,7 @@ describe("museum night", () => {
 
   it("rebuilds the same night from the same seed", () => {
     const seen = new Set<string>();
-    for (let seed = 0; seed < 40; seed += 1) {
+    for (let seed = 0; seed < 200; seed += 1) {
       const night = createNight(seed);
       expect(createNight(seed)).toEqual(night);
       expect(mixSeed(seed)).toBe(mixSeed(seed));

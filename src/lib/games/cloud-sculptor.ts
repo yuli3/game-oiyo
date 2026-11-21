@@ -3,7 +3,7 @@
  * 가운데 돌은 바람이 지나지 못한다. 바람을 한 방향으로 깎으면 구름은 그쪽으로 한 칸 밀리고,
  * 돌에 닿거나 판 밖으로 나간 덩이는 흩어진다. 남은 덩이가 목표 칸과 같으면 그 카드가 남는다.
  * 처음 구름은 목표보다 항상 커서, 전부 보존하는 수는 없다.
- * 네 하늘은 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 구름을 옮기지 않는다.
+ * 열 하늘은 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 구름을 옮기지 않는다.
  * 카드는 이 방문의 화면만 남기고 기기에는 저장하지 않는다.
  *
  * 카메라 0 은 월드 +z 다. 그래서 화면 오른쪽이 월드 +x(동쪽), 화면 위가 월드 +y(북쪽)이다.
@@ -53,13 +53,28 @@ interface PuzzleDef {
  * cross-cut: south drops the pair, then east sends the upper puff into the stone.
  * high-blow: west splits the pair, then two north winds carry the survivor up after the other blows off.
  * shed-east: the first east wind sheds the corner, then the remaining puff walks to the mark.
+ * Stages 5-10 (stage range 2026-11-21) each keep one shortest carving, checked by a search in the tests.
+ * low-shelf: east sheds the bottom row down to one puff, and two north winds lift it to the corner.
+ * side-wall: the stone eats the west puff, then the survivor climbs the east edge.
+ * split-gust: west sheds the corner pair, then east brings two puffs back to the middle column.
+ * twin-peaks: south pins the right column, then two north winds leave only the top corners.
+ * long-shear: two south winds walk the pair down, then two north winds bring the pair back up.
+ * full-rim: two north winds shed the middle row, then two south winds set the bottom corners.
  */
 const PUZZLES: readonly PuzzleDef[] = [
   { id: "lee-side", cells: [0, 1], target: [5] },
   { id: "cross-cut", cells: [0, 3], target: [7] },
   { id: "high-blow", cells: [1, 7], target: [0] },
   { id: "shed-east", cells: [0, 2], target: [3] },
+  { id: "low-shelf", cells: [6, 7, 8], target: [2] },
+  { id: "side-wall", cells: [3, 5, 6], target: [5] },
+  { id: "split-gust", cells: [2, 5, 7, 8], target: [1, 7] },
+  { id: "twin-peaks", cells: [3, 5, 7, 8], target: [0, 2] },
+  { id: "long-shear", cells: [0, 2, 5], target: [0, 2] },
+  { id: "full-rim", cells: [5, 6, 7, 8], target: [6, 8] },
 ];
+
+export const PUZZLE_COUNT = PUZZLES.length;
 
 function normalize(x: number, y: number, z: number): [number, number, number] {
   const length = Math.hypot(x, y, z) || 1;
@@ -174,6 +189,12 @@ function makeState(puzzle: PuzzleDef, cells: readonly number[], steps = 0): Clou
     loseReason: null,
     lastAction: null,
   };
+}
+
+/** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
+export function seedForPuzzle(index: number): number {
+  const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
 export function createCloud(seed = 0): CloudState {

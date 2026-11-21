@@ -107,7 +107,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "chaos-clown",
     slug: "chaos-clown",
-    name: { ko: "카오스 피에로", en: "Chaos Clown", ja: "カオスクラウン", zh: "混沌小丑", fr: "Clown du Chaos", es: "Payaso del Caos" },
+    name: { ko: "거리 저글러", en: "Street Juggler", ja: "大道芸人", zh: "街头杂耍", fr: "Jongleur de rue", es: "Malabarista" },
     description: { ko: "득점 카드 1장당 +20 칩", en: "+20 Chips for each scored card", ja: "得点カード1枚につき+20チップ", zh: "每张计分牌+20筹码", fr: "+20 jetons par carte scorée", es: "+20 fichas por carta puntuada" },
     cost: 4,
     rarity: "common",
@@ -115,7 +115,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "greedy-joker",
     slug: "greedy-joker",
-    name: { ko: "욕심쟁이 조커", en: "Greedy Joker", ja: "強欲のジョーカー", zh: "贪婪小丑", fr: "Joker Cupide", es: "Comodín Codicioso" },
+    name: { ko: "다이아 등불", en: "Diamond Lantern", ja: "ダイヤの灯", zh: "方块灯笼", fr: "Lanterne carreau", es: "Farol de diamantes" },
     description: { ko: "다이아몬드(♦) 카드 득점 시 +3 배율", en: "Played ♦ cards give +3 Mult when scored", ja: "ダイヤ(♦)得点で+3倍率", zh: "打出♦牌计分时+3倍数", fr: "Les cartes ♦ jouées donnent +3 Mult", es: "Las cartas ♦ dan +3 Mult al puntuar" },
     cost: 4,
     rarity: "common",
@@ -123,7 +123,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "lusty-joker",
     slug: "lusty-joker",
-    name: { ko: "정열의 조커", en: "Lusty Joker", ja: "情熱のジョーカー", zh: "热忱小丑", fr: "Joker Passionné", es: "Comodín Apasionado" },
+    name: { ko: "하트 등불", en: "Heart Lantern", ja: "ハートの灯", zh: "红桃灯笼", fr: "Lanterne cœur", es: "Farol de corazones" },
     description: { ko: "하트(♥) 카드 득점 시 +3 배율", en: "Played ♥ cards give +3 Mult when scored", ja: "ハート(♥)得点で+3倍率", zh: "打出♥牌计分时+3倍数", fr: "Les cartes ♥ jouées donnent +3 Mult", es: "Las cartas ♥ dan +3 Mult al puntuar" },
     cost: 4,
     rarity: "common",
@@ -131,7 +131,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "wrathful-joker",
     slug: "wrathful-joker",
-    name: { ko: "분노의 조커", en: "Wrathful Joker", ja: "憤怒のジョーカー", zh: "暴怒小丑", fr: "Joker Furieux", es: "Comodín Furioso" },
+    name: { ko: "스페이드 등불", en: "Spade Lantern", ja: "スペードの灯", zh: "黑桃灯笼", fr: "Lanterne pique", es: "Farol de picas" },
     description: { ko: "스페이드(♠) 카드 득점 시 +3 배율", en: "Played ♠ cards give +3 Mult when scored", ja: "スペード(♠)得点で+3倍率", zh: "打出♠牌计分时+3倍数", fr: "Les cartes ♠ jouées donnent +3 Mult", es: "Las cartas ♠ dan +3 Mult al puntuar" },
     cost: 4,
     rarity: "common",
@@ -139,7 +139,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "glutinous-joker",
     slug: "glutinous-joker",
-    name: { ko: "탐식의 조커", en: "Glutinous Joker", ja: "暴食のジョーカー", zh: "暴食小丑", fr: "Joker Glouton", es: "Comodín Glotón" },
+    name: { ko: "클로버 등불", en: "Clover Lantern", ja: "クラブの灯", zh: "梅花灯笼", fr: "Lanterne trèfle", es: "Farol de tréboles" },
     description: { ko: "클로버(♣) 카드 득점 시 +3 배율", en: "Played ♣ cards give +3 Mult when scored", ja: "クラブ(♣)得点で+3倍率", zh: "打出♣牌计分时+3倍数", fr: "Les cartes ♣ jouées donnent +3 Mult", es: "Las cartes ♣ dan +3 Mult al puntuar" },
     cost: 4,
     rarity: "common",
@@ -147,7 +147,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "half-joker",
     slug: "half-joker",
-    name: { ko: "반쪽 조커", en: "Half Joker", ja: "半分ジョーカー", zh: "半截小丑", fr: "Demi-Joker", es: "Medio Comodín" },
+    name: { ko: "가벼운 손", en: "Light Hand", ja: "軽い手", zh: "轻手", fr: "Main légère", es: "Mano ligera" },
     description: { ko: "낸 카드가 3장 이하이면 +20 배율", en: "+20 Mult if played hand contains 3 or fewer cards", ja: "出したカードが3枚以下なら+20倍率", zh: "若出牌不多于3张，则+20倍数", fr: "+20 Mult si 3 cartes ou moins jouées", es: "+20 Mult si se juegan 3 cartas o menos" },
     cost: 5,
     rarity: "common",
@@ -155,7 +155,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "banner",
     slug: "banner",
-    name: { ko: "깃발", en: "Banner", ja: "バナー", zh: "旗帜", fr: "Bannière", es: "Estandarte" },
+    name: { ko: "여분 리본", en: "Spare Ribbon", ja: "予備のリボン", zh: "备用缎带", fr: "Ruban de réserve", es: "Cinta de reserva" },
     description: { ko: "남은 버리기(Discard) 1회당 +40 칩", en: "+40 Chips for each remaining discard", ja: "残りの捨て札1回につき+40チップ", zh: "剩余弃牌次数每有1次+40筹码", fr: "+40 jetons par défausse restante", es: "+40 fichas por descarte restante" },
     cost: 5,
     rarity: "common",
@@ -163,7 +163,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "mystic-summit",
     slug: "mystic-summit",
-    name: { ko: "신비한 정상", en: "Mystic Summit", ja: "神秘の頂", zh: "神秘之巅", fr: "Sommet Mystique", es: "Cima Mística" },
+    name: { ko: "빈 주머니", en: "Empty Pocket", ja: "空のポケット", zh: "空口袋", fr: "Poche vide", es: "Bolsillo vacío" },
     description: { ko: "남은 버리기가 0회일 때 +15 배율", en: "+15 Mult when 0 discards remaining", ja: "残りの捨て札が0のとき+15倍率", zh: "弃牌次数为0时+15倍数", fr: "+15 Mult lorsqu'il reste 0 défausse", es: "+15 Mult con 0 descartes restantes" },
     cost: 5,
     rarity: "common",
@@ -171,7 +171,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "scary-face",
     slug: "scary-face",
-    name: { ko: "무서운 얼굴", en: "Scary Face", ja: "怖い顔", zh: "可怕面孔", fr: "Visage Effrayant", es: "Cara Aterradora" },
+    name: { ko: "궁정 가면", en: "Court Mask", ja: "宮廷の仮面", zh: "宫廷面具", fr: "Masque de cour", es: "Máscara cortesana" },
     description: { ko: "얼굴 카드(J, Q, K) 득점 시 +30 칩", en: "Played face cards (J, Q, K) give +30 Chips when scored", ja: "絵札(J, Q, K)得点で+30チップ", zh: "打出人头牌(J, Q, K)计分时+30筹码", fr: "Les têtes (J, Q, K) donnent +30 jetons", es: "Las figuras (J, Q, K) dan +30 fichas" },
     cost: 4,
     rarity: "common",
@@ -179,7 +179,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "scholar",
     slug: "scholar",
-    name: { ko: "학자", en: "Scholar", ja: "学者", zh: "学者", fr: "Érudit", es: "Erudito" },
+    name: { ko: "에이스 수집가", en: "Ace Collector", ja: "エース収集家", zh: "王牌收藏家", fr: "Collectionneur d'as", es: "Coleccionista de ases" },
     description: { ko: "에이스(A) 득점 시 +20 칩 및 +4 배율", en: "Played Aces give +20 Chips and +4 Mult when scored", ja: "エース(A)得点で+20チップ＆+4倍率", zh: "打出A牌计分时+20筹码与+4倍数", fr: "Les As joués donnent +20 jetons et +4 Mult", es: "Los Ases jugados dan +20 fichas y +4 Mult" },
     cost: 5,
     rarity: "common",
@@ -187,7 +187,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "droll-joker",
     slug: "droll-joker",
-    name: { ko: "익살꾼 조커", en: "Droll Joker", ja: "ひょうきんジョーカー", zh: "滑稽小丑", fr: "Joker Drôle", es: "Comodín Gracioso" },
+    name: { ko: "무늬 부채", en: "Suit Fan", ja: "同色の扇", zh: "同花折扇", fr: "Éventail assorti", es: "Abanico a juego" },
     description: { ko: "플러시(Flush)를 낼 때 +10 배율", en: "+10 Mult if played hand is a Flush", ja: "フラッシュで+10倍率", zh: "若出牌为同花，则+10倍数", fr: "+10 Mult si la main est une Couleur", es: "+10 Mult si la mano es Color" },
     cost: 4,
     rarity: "common",
@@ -195,7 +195,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "crazy-joker",
     slug: "crazy-joker",
-    name: { ko: "광기의 조커", en: "Crazy Joker", ja: "狂気ジョーカー", zh: "疯狂小丑", fr: "Joker Fou", es: "Comodín Loco" },
+    name: { ko: "계단 질주", en: "Stair Runner", ja: "階段ランナー", zh: "阶梯跑者", fr: "Coureur d'escalier", es: "Corredor de escaleras" },
     description: { ko: "스트레이트(Straight)를 낼 때 +12 배율", en: "+12 Mult if played hand is a Straight", ja: "ストレートで+12倍率", zh: "若出牌为顺子，则+12倍数", fr: "+12 Mult si la main est une Quinte", es: "+12 Mult si la mano es Escalera" },
     cost: 4,
     rarity: "common",
@@ -203,7 +203,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "the-duo",
     slug: "the-duo",
-    name: { ko: "더 듀오", en: "The Duo", ja: "ザ・デュオ", zh: "双重奏", fr: "Le Duo", es: "El Dúo" },
+    name: { ko: "쌍둥이 종", en: "Twin Bells", ja: "双子の鐘", zh: "双子铃", fr: "Cloches jumelles", es: "Campanas gemelas" },
     description: { ko: "원페어를 낼 때 ×2 배율", en: "×2 Mult if played hand contains a Pair", ja: "ワンペアで×2倍率", zh: "若出牌包含对子，则×2倍数", fr: "×2 Mult si la main contient une Paire", es: "×2 Mult si la mano contiene Pareja" },
     cost: 7,
     rarity: "uncommon",
@@ -211,7 +211,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "the-trio",
     slug: "the-trio",
-    name: { ko: "더 트리오", en: "The Trio", ja: "ザ・トリオ", zh: "三重奏", fr: "Le Trio", es: "El Trío" },
+    name: { ko: "세 촛불", en: "Three Candles", ja: "三本の蝋燭", zh: "三支蜡烛", fr: "Trois bougies", es: "Tres velas" },
     description: { ko: "트리플을 낼 때 ×3 배율", en: "×3 Mult if played hand contains Three of a Kind", ja: "スリーカードで×3倍率", zh: "若出牌包含三条，则×3倍数", fr: "×3 Mult si la main contient un Brelan", es: "×3 Mult si la mano contiene Trío" },
     cost: 8,
     rarity: "rare",
@@ -219,7 +219,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "cavendish",
     slug: "cavendish",
-    name: { ko: "캐번디시", en: "Cavendish", ja: "キャベンディッシュ", zh: "香蕉", fr: "Cavendish", es: "Cavendish" },
+    name: { ko: "유리 혜성", en: "Glass Comet", ja: "ガラスの彗星", zh: "玻璃彗星", fr: "Comète de verre", es: "Cometa de cristal" },
     description: { ko: "×3 배율 (라운드 종료 시 1/100 확률로 파괴)", en: "×3 Mult (1 in 100 chance to go extinct each round)", ja: "×3倍率 (ラウンド終了時1/100で消滅)", zh: "×3倍数 (每轮结束时有1/100概率损毁)", fr: "×3 Mult (1 chance sur 100 d'extinction)", es: "×3 Mult (1 de cada 100 de extinguirse)" },
     cost: 6,
     rarity: "uncommon",
@@ -227,7 +227,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "card-sharp",
     slug: "card-sharp",
-    name: { ko: "카드 타짜", en: "Card Sharp", ja: "カードシャープ", zh: "老千小丑", fr: "Expert des Cartes", es: "Tahúr" },
+    name: { ko: "앙코르 티켓", en: "Encore Ticket", ja: "アンコール券", zh: "返场门票", fr: "Ticket de rappel", es: "Entrada de bis" },
     description: { ko: "이번 라운드에서 이미 낸 족보를 다시 내면 ×3 배율", en: "×3 Mult if played poker hand has already been played this round", ja: "同ラウンドで既に出した役なら×3倍率", zh: "若打出的牌型本轮已出过，则×3倍数", fr: "×3 Mult si la main a déjà été jouée ce tour", es: "×3 Mult si la mano ya se jugó este turno" },
     cost: 6,
     rarity: "uncommon",
@@ -235,7 +235,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "bull",
     slug: "bull",
-    name: { ko: "황소", en: "Bull", ja: "ブル", zh: "公牛", fr: "Taureau", es: "Toro" },
+    name: { ko: "동전 지갑", en: "Coin Purse", ja: "小銭入れ", zh: "零钱袋", fr: "Bourse", es: "Monedero" },
     description: { ko: "보유 골드 $1당 +2 칩", en: "+2 Chips for each $1 you have", ja: "所持金$1につき+2チップ", zh: "每拥有$1获得+2筹码", fr: "+2 jetons par $1 possédé", es: "+2 fichas por cada $1 poseído" },
     cost: 5,
     rarity: "uncommon",
@@ -243,7 +243,7 @@ export const JOKER_CATALOG: SurgeJoker[] = [
   {
     id: "blueprint",
     slug: "blueprint",
-    name: { ko: "청사진", en: "Blueprint", ja: "設計図", zh: "蓝图", fr: "Plan", es: "Plano" },
+    name: { ko: "거울 쌍둥이", en: "Mirror Twin", ja: "鏡の双子", zh: "镜像双生", fr: "Jumeau miroir", es: "Gemelo espejo" },
     description: { ko: "오른쪽에 있는 조커의 능력을 복사", en: "Copies ability of Joker to the right", ja: "右隣のジョーカーの能力をコピー", zh: "复制右侧小丑的技能", fr: "Copie la capacité du Joker à sa droite", es: "Copia la habilidad del Comodín a la derecha" },
     cost: 10,
     rarity: "rare",
@@ -263,48 +263,48 @@ export interface BossBlind {
 export const BOSS_BLINDS: BossBlind[] = [
   {
     id: "the-hook",
-    name: { ko: "갈고리 (The Hook)", en: "The Hook", ja: "フック", zh: "铁钩", fr: "Le Crochet", es: "El Garfio" },
+    name: { ko: "소매치기", en: "Pickpocket", ja: "スリ", zh: "扒手", fr: "Pickpocket", es: "Carterista" },
     description: { ko: "핸드를 낼 때 손패 무작위 2장 강제 버림", en: "Discards 2 random cards per hand played", ja: "役を出す度、手札からランダム2枚破棄", zh: "每次出牌随机弃掉手牌2张", fr: "Défausse 2 cartes au hasard par main", es: "Descarta 2 cartas al azar por mano" },
   },
   {
     id: "the-wall",
-    name: { ko: "통곡의 벽 (The Wall)", en: "The Wall", ja: "壁", zh: "城墙", fr: "Le Mur", es: "La Muralla" },
+    name: { ko: "만조", en: "High Tide", ja: "満潮", zh: "涨潮", fr: "Marée haute", es: "Marea alta" },
     description: { ko: "목표 점수가 2배로 증가합니다", en: "Extra large blind (2× target score)", ja: "目標スコアが2倍", zh: "超大目标分（2倍目标）", fr: "Objectif doublé (2× le score)", es: "Objetivo duplicado (2× puntuación)" },
     scoreMultiplier: 2.0,
   },
   {
     id: "the-goad",
-    name: { ko: "채찍 (The Goad)", en: "The Goad", ja: "突き棒", zh: "刺棒", fr: "L'Aiguillon", es: "La Pica" },
+    name: { ko: "스페이드 서리", en: "Spade Frost", ja: "スペードの霜", zh: "黑桃寒霜", fr: "Givre de pique", es: "Escarcha de picas" },
     description: { ko: "모든 스페이드(♠) 카드가 디버프됩니다", en: "All Spades cards are debuffed", ja: "スペード(♠)が全て無効化", zh: "所有黑桃(♠)牌失效", fr: "Toutes les cartes ♠ sont affaiblies", es: "Todas las cartas de ♠ anuladas" },
     suitDebuff: "spades",
   },
   {
     id: "the-club",
-    name: { ko: "곤봉 (The Club)", en: "The Club", ja: "棍棒", zh: "大棒", fr: "La Massue", es: "El Garrote" },
+    name: { ko: "클로버 서리", en: "Clover Frost", ja: "クラブの霜", zh: "梅花寒霜", fr: "Givre de trèfle", es: "Escarcha de tréboles" },
     description: { ko: "모든 클로버(♣) 카드가 디버프됩니다", en: "All Clubs cards are debuffed", ja: "クラブ(♣)が全て無効化", zh: "所有梅花(♣)牌失效", fr: "Toutes les cartes ♣ sont affaiblies", es: "Todas las cartas de ♣ anuladas" },
     suitDebuff: "clubs",
   },
   {
     id: "the-window",
-    name: { ko: "유리창 (The Window)", en: "The Window", ja: "窓", zh: "窗户", fr: "La Fenêtre", es: "La Ventana" },
+    name: { ko: "다이아 서리", en: "Diamond Frost", ja: "ダイヤの霜", zh: "方块寒霜", fr: "Givre de carreau", es: "Escarcha de diamantes" },
     description: { ko: "모든 다이아몬드(♦) 카드가 디버프됩니다", en: "All Diamonds cards are debuffed", ja: "ダイヤ(♦)が全て無効化", zh: "所有方块(♦)牌失效", fr: "Toutes les cartes ♦ sont affaiblies", es: "Todas las cartes de ♦ anuladas" },
     suitDebuff: "diamonds",
   },
   {
     id: "the-heart",
-    name: { ko: "심장 (The Heart)", en: "The Heart", ja: "心臓", zh: "红心", fr: "Le Cœur", es: "El Corazón" },
+    name: { ko: "하트 서리", en: "Heart Frost", ja: "ハートの霜", zh: "红桃寒霜", fr: "Givre de cœur", es: "Escarcha de corazones" },
     description: { ko: "모든 하트(♥) 카드가 디버프됩니다", en: "All Hearts cards are debuffed", ja: "ハート(♥)が全て無効化", zh: "所有红桃(♥)牌失效", fr: "Toutes les cartes ♥ sont affaiblies", es: "Todas las cartas de ♥ anuladas" },
     suitDebuff: "hearts",
   },
   {
     id: "the-needle",
-    name: { ko: "바늘 (The Needle)", en: "The Needle", ja: "針", zh: "飞针", fr: "L'Aiguille", es: "La Aguja" },
+    name: { ko: "마지막 기회", en: "Last Call", ja: "ラストコール", zh: "最后一手", fr: "Dernier appel", es: "Última llamada" },
     description: { ko: "단 1번의 핸드만 플레이할 수 있습니다!", en: "Play only 1 hand this round", ja: "1回しか手札を出せません", zh: "本轮仅可出牌1次", fr: "Ne jouez qu'une seule main ce tour", es: "Juega solo 1 mano esta ronda" },
     handsModifier: -3,
   },
   {
     id: "the-water",
-    name: { ko: "급류 (The Water)", en: "The Water", ja: "大水", zh: "暗流", fr: "L'Eau", es: "El Agua" },
+    name: { ko: "마른 우물", en: "Dry Well", ja: "涸れ井戸", zh: "枯井", fr: "Puits sec", es: "Pozo seco" },
     description: { ko: "버리기(Discard) 횟수가 0으로 시작합니다", en: "Start with 0 discards", ja: "捨て札0回でスタート", zh: "弃牌次数为0开局", fr: "Commencez avec 0 défausse", es: "Empieza con 0 descartes" },
     discardsModifier: -3,
   },

@@ -2,6 +2,9 @@ import { readFileSync } from "node:fs";
 import { PerspectiveCamera, Vector3 } from "three";
 import { describe, expect, it } from "vitest";
 import {
+  PUZZLE_COUNT,
+  puzzleIndexForSeed,
+  seedForPuzzle,
   ACTS,
   CAMERA_POSES,
   EMPTY,
@@ -28,7 +31,12 @@ const SOLUTIONS: Record<string, readonly Act[]> = {
   "first-thaw": ["M", "Q", "D"],
   "twin-ice": ["M", "M", "Q", "D"],
   "shore-water": ["M", "D", "Q", "Q"],
-  "long-clause": ["Q", "D", "M", "Q", "D"],
+  "long-clause": ["Q", "D", "M", "Q", "D"],  "melt-run": ["D", "M", "Q", "D"],
+  "half-thaw": ["Q", "D", "M", "Q"],
+  "ice-tail": ["M", "M", "Q", "D"],
+  "pool-keep": ["M", "M", "Q", "Q"],
+  "west-ice": ["D", "M", "Q", "D"],
+  "open-door": ["M", "M", "Q", "D"],
 };
 
 function replay(id: string, actions: readonly Act[]): RoomState {
@@ -36,7 +44,7 @@ function replay(id: string, actions: readonly Act[]): RoomState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 80; seed += 1) {
+  for (let seed = 0; seed < 400; seed += 1) {
     if (createRoom(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -130,6 +138,11 @@ describe("sentence dungeon", () => {
     const east = new Vector3(cellX(LEN - 1), 0, 0);
     const west = new Vector3(cellX(0), 0, 0);
     expect(east.dot(right)).toBeGreaterThan(west.dot(right));
+  });
+
+  it("ships ten stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(10);
+    for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
   });
 
   it("keeps one hand-checked sentence for each room", () => {
@@ -244,7 +257,7 @@ describe("sentence dungeon", () => {
 
   it("rebuilds the same room from the same seed", () => {
     const seen = new Set<string>();
-    for (let seed = 0; seed < 80; seed += 1) {
+    for (let seed = 0; seed < 400; seed += 1) {
       const room = createRoom(seed);
       expect(createRoom(seed)).toEqual(room);
       expect(mixSeed(seed)).toBe(mixSeed(seed));

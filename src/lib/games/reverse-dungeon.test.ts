@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   KEY_LIGHT,
   PUZZLES,
+  PUZZLE_COUNT,
   STEP_CAP,
+  applyMove,
   cellCenter,
   createReverseDungeon,
   doorWorldOffset,
@@ -22,7 +24,10 @@ import {
   resign,
   rotateCell,
   rotateSlice,
+  seedForPuzzle,
   stepAdventurer,
+  type DungeonState,
+  type Move,
 } from "./reverse-dungeon";
 
 describe("reverse dungeon", () => {
@@ -62,7 +67,7 @@ describe("reverse dungeon", () => {
     expect(fingerprint(createReverseDungeon(7))).toBe(fingerprint(createReverseDungeon(7)));
     expect(mixSeed(3)).toBe(mixSeed(3));
     const seen = new Set<number>();
-    for (let seed = 0; seed < 48; seed += 1) seen.add(puzzleIndexForSeed(seed));
+    for (let seed = 0; seed < 200; seed += 1) seen.add(puzzleIndexForSeed(seed));
     expect(seen.size).toBe(PUZZLES.length);
     expect(nextSeed(4)).toBe(nextSeed(4));
     expect(puzzleIndexForSeed(nextSeed(4))).toBeGreaterThanOrEqual(0);
@@ -80,7 +85,18 @@ describe("reverse dungeon", () => {
   });
 
   it("replays each hand-checked solution to the exit, and stepping alone does not win", () => {
-    expect(PUZZLES.map((puzzle) => puzzle.id)).toEqual(["chimney", "pit-step", "side-door", "twist"]);
+    expect(PUZZLES.map((puzzle) => puzzle.id)).toEqual([
+      "chimney",
+      "pit-step",
+      "side-door",
+      "twist",
+      "north-arch",
+      "quiet-stair",
+      "upper-ring",
+      "far-wheel",
+      "roof-turn",
+      "pit-corner",
+    ]);
     for (let index = 0; index < PUZZLES.length; index += 1) {
       const solved = replayPuzzle(index);
       expect(solved.status, PUZZLES[index].id).toBe("win");
@@ -89,6 +105,50 @@ describe("reverse dungeon", () => {
       let stepped = replayPuzzle(index, []);
       for (let i = 0; i < 8; i += 1) stepped = stepAdventurer(stepped);
       expect(stepped.status, PUZZLES[index].id).not.toBe("win");
+    }
+  });
+
+  it("ships ten stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(10);
+    for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
+  });
+
+  it("keeps the stage 5-10 solutions as the one shortest line", () => {
+    const moves: Move[] = ["step"];
+    for (const axis of ["x", "y", "z"] as const) for (const layer of [0, 1] as const) for (const turn of [1, -1] as const) moves.push({ axis, layer, turn });
+    const key = (state: DungeonState) => fingerprint({ ...state, steps: 0 });
+    for (let index = 4; index < PUZZLES.length; index += 1) {
+      const solution = PUZZLES[index].solution;
+      let layer = new Map<string, { state: DungeonState; count: number }>();
+      const start = replayPuzzle(index, []);
+      layer.set(key(start), { state: start, count: 1 });
+      const seen = new Set(layer.keys());
+      let wins = 0;
+      let depth = 0;
+      while (wins === 0 && depth < solution.length) {
+        depth += 1;
+        const next = new Map<string, { state: DungeonState; count: number }>();
+        for (const { state, count } of layer.values()) {
+          for (const move of moves) {
+            const after = applyMove(state, move);
+            if (after === state) continue;
+            if (after.status === "win") {
+              wins += count;
+              continue;
+            }
+            if (after.status !== "play") continue;
+            const k = key(after);
+            if (seen.has(k)) continue;
+            const found = next.get(k);
+            if (found) found.count += count;
+            else next.set(k, { state: after, count });
+          }
+        }
+        for (const k of next.keys()) seen.add(k);
+        layer = next;
+      }
+      expect(depth, PUZZLES[index].id).toBe(solution.length);
+      expect(wins, PUZZLES[index].id).toBe(1);
     }
   });
 

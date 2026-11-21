@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  PUZZLE_COUNT,
+  puzzleIndexForSeed,
+  seedForPuzzle,
   CAMERA_POSES,
   DIRS,
   STEP_CAP,
@@ -25,6 +28,12 @@ const SOLUTIONS: Record<string, readonly Dir[]> = {
   snag: ["down", "right", "down", "right"],
   hook: ["left", "down", "right", "down", "left"],
   "long-night": ["right", "down", "right", "down", "right", "up"],
+  "low-star": ["left", "down", "left", "left", "down", "right"],
+  "east-gate": ["up", "right", "down", "left", "left", "up"],
+  plough: ["up", "left", "up", "up", "right", "right", "down"],
+  anchor: ["right", "right", "down", "left", "down", "left", "down"],
+  "deep-well": ["up", "left", "up", "left", "left", "down", "down", "right"],
+  midnight: ["right", "right", "up", "left", "up", "left", "up", "right"],
 };
 
 function replay(id: string, dirs: readonly Dir[]): SkyState {
@@ -33,7 +42,7 @@ function replay(id: string, dirs: readonly Dir[]): SkyState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 80; seed += 1) {
+  for (let seed = 0; seed < 400; seed += 1) {
     if (createConstellation(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -109,6 +118,11 @@ describe("constellation shepherd", () => {
   it("treats only a middle-row rope and a middle-column rope as a snag", () => {
     expect(ropesCross(ropeBetween(3, 5), ropeBetween(1, 7))).toBe(true);
     expect(ropesCross(ropeBetween(0, 2), ropeBetween(0, 6))).toBe(false);
+  });
+
+  it("ships ten stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(10);
+    for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
   });
 
   it("keeps one hand-checked shortest walk for each sky", () => {
@@ -190,7 +204,7 @@ describe("constellation shepherd", () => {
 
   it("rebuilds the same sky from the same seed", () => {
     const seen = new Set<string>();
-    for (let seed = 0; seed < 40; seed += 1) {
+    for (let seed = 0; seed < 200; seed += 1) {
       const sky = createConstellation(seed);
       expect(createConstellation(seed)).toEqual(sky);
       expect(mixSeed(seed)).toBe(mixSeed(seed));

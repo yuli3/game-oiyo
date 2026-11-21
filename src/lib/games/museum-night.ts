@@ -3,7 +3,7 @@
  * 빨간 카메라는 이번 밤 내내 한 좌대만 보고, 관람 시선은 걸음마다 다음 박자로 돈다.
  * 지금 서 있는 좌대나 들어가려는 좌대가 보이면 그 걸음은 들킨다. 그대로 서 있으면 안전하고 시선만 한 박자 돌아간다.
  * 출발과 도착이 모두 어두울 때만 옆 전시품과 자리를 바꾼다. 야간 표식 좌대에 서면 그 밤이 끝난다.
- * 네 밤은 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 시선을 옮기지 않는다.
+ * 열 밤은 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 시선을 옮기지 않는다.
  *
  * 카메라 0 은 월드 +z 다. 그래서 화면 오른쪽이 월드 +x(동쪽, 번호가 커지는 쪽)이고 화면 왼쪽이 서쪽이다.
  * still-plinth: 서쪽 문 카메라가 1번 좌대를 계속 보고, 첫 박자에는 관람객이 당신 위에 있다.
@@ -59,8 +59,16 @@ const PUZZLES: readonly NightDef[] = [
   { id: "still-plinth", start: 1, goal: 3, camera: [0], visitors: [[1], [0], [2]] },
   { id: "under-cone", start: 1, goal: 3, camera: [0], visitors: [[0], [2], [1]] },
   { id: "long-hall", start: 1, goal: 4, camera: [0], visitors: [[0], [1], [3]] },
-  { id: "west-mark", start: 3, goal: 1, camera: [4], visitors: [[0], [2], [3]] },
+  { id: "west-mark", start: 3, goal: 1, camera: [4], visitors: [[0], [2], [3]] },  // Stages 5-10 (stage range 2026-11-21): each keeps one shortest night, checked by a search in the tests.
+  { id: "east-wing", start: 2, goal: 4, camera: [1], visitors: [[3], [2], [4]] },
+  { id: "split-beat", start: 4, goal: 1, camera: [0], visitors: [[2], [3], [1]] },
+  { id: "long-gallery", start: 1, goal: 4, camera: [0], visitors: [[3], [2], [1], [3]] },
+  { id: "far-door", start: 0, goal: 3, camera: [4], visitors: [[1], [3], [1]] },
+  { id: "patient-bust", start: 3, goal: 0, camera: [4], visitors: [[2], [3], [4], [2]] },
+  { id: "last-round", start: 0, goal: 3, camera: [4], visitors: [[1], [1], [4]] },
 ];
+
+export const PUZZLE_COUNT = PUZZLES.length;
 
 function normalize(x: number, y: number, z: number): [number, number, number] {
   const length = Math.hypot(x, y, z) || 1;
@@ -203,6 +211,12 @@ function makeState(puzzle: NightDef, at: number, steps: number): NightState {
     loseReason: null,
     lastAction: null,
   };
+}
+
+/** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
+export function seedForPuzzle(index: number): number {
+  const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
 export function createNight(seed = 0): NightState {

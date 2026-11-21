@@ -14,7 +14,12 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
+import StageBar from "./StageBar";
+import { loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
 import {
+  PUZZLE_COUNT,
+  puzzleIndexForSeed,
+  seedForPuzzle,
   ACTS,
   INK,
   ROWS,
@@ -594,9 +599,11 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
   const [highScore, setHighScore] = useState(() => loadHighScore("doodle-line", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<LineState>(opening.current);
+  const [cleared, setCleared] = useState<number[]>([]);
 
   useEffect(() => {
     if (state.status === "win") {
+      setCleared(markStageCleared("doodle-line", puzzleIndexForSeed(seed), PUZZLE_COUNT));
       const score = Math.max(10, 100 - state.steps * 10);
       const { isNewBest, bestScore } = saveHighScore("doodle-line", score);
       if (isNewBest) setHighScore(bestScore);
@@ -604,7 +611,7 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
         window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "doodle-line", score } }));
       }
     }
-  }, [state.status, state.steps]);
+  }, [state.status, state.steps, seed]);
   const [shown, setShown] = useState<LineState>(opening.current);
   const [glide, setGlide] = useState<LineGlide | null>(null);
   const [busy, setBusy] = useState(false);
@@ -655,7 +662,9 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
   }, []);
 
   useEffect(() => {
-    const fromUrl = readSeed();
+    const done = loadClearedStages("doodle-line", PUZZLE_COUNT);
+    setCleared(done);
+    const fromUrl = readSeed() || seedForPuzzle(nextOpenStage(done, PUZZLE_COUNT));
     if (fromUrl === 0) return;
     const next = createLine(fromUrl);
     setSeed(fromUrl);
@@ -827,6 +836,13 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
         <p className="line-clamp-2 text-sm leading-6 text-muted-foreground sm:line-clamp-none">{copy.lead}</p>
         <p className="hidden text-xs leading-5 text-muted-foreground sm:block">{copy.keys}</p>
       </header>
+      <StageBar
+        count={PUZZLE_COUNT}
+        current={puzzleIndexForSeed(seed)}
+        cleared={cleared}
+        locale={locale}
+        onSelect={(i) => load(seedForPuzzle(i))}
+      />
       {/* Ink Steps Progress Bar */}
       <div className="space-y-1">
         <div className="flex justify-between text-xs font-bold text-muted-foreground">

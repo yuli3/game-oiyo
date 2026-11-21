@@ -13,7 +13,12 @@ import {
   downloadShareCard,
 } from "../../lib/games/share-card";
 import type { Locale } from "../../lib/i18n";
+import StageBar from "./StageBar";
+import { loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
 import {
+  PUZZLE_COUNT,
+  puzzleIndexForSeed,
+  seedForPuzzle,
   ACTS,
   LEGS,
   SPORE,
@@ -532,9 +537,11 @@ export default function InkEcology({ locale = "en" }: { locale?: Locale }) {
   const [highScore, setHighScore] = useState(() => loadHighScore("ink-ecology", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<PondState>(opening.current);
+  const [cleared, setCleared] = useState<number[]>([]);
 
   useEffect(() => {
     if (state.status === "win") {
+      setCleared(markStageCleared("ink-ecology", puzzleIndexForSeed(seed), PUZZLE_COUNT));
       const score = Math.max(10, 100 - state.steps * 10);
       const { isNewBest, bestScore } = saveHighScore("ink-ecology", score);
       if (isNewBest) setHighScore(bestScore);
@@ -542,7 +549,7 @@ export default function InkEcology({ locale = "en" }: { locale?: Locale }) {
         window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "ink-ecology", score } }));
       }
     }
-  }, [state.status, state.steps]);
+  }, [state.status, state.steps, seed]);
   const [shown, setShown] = useState<PondState>(opening.current);
   const [glide, setGlide] = useState<PondGlide | null>(null);
   const [busy, setBusy] = useState(false);
@@ -605,7 +612,9 @@ export default function InkEcology({ locale = "en" }: { locale?: Locale }) {
   }, []);
 
   useEffect(() => {
-    const fromUrl = readSeed();
+    const done = loadClearedStages("ink-ecology", PUZZLE_COUNT);
+    setCleared(done);
+    const fromUrl = readSeed() || seedForPuzzle(nextOpenStage(done, PUZZLE_COUNT));
     if (fromUrl === 0) return;
     const next = createPond(fromUrl);
     setSeed(fromUrl);
@@ -772,6 +781,13 @@ export default function InkEcology({ locale = "en" }: { locale?: Locale }) {
         <p className="line-clamp-2 text-sm leading-6 text-muted-foreground sm:line-clamp-none">{copy.lead}</p>
         <p className="hidden text-xs leading-5 text-muted-foreground sm:block">{copy.keys}</p>
       </header>
+      <StageBar
+        count={PUZZLE_COUNT}
+        current={puzzleIndexForSeed(seed)}
+        cleared={cleared}
+        locale={locale}
+        onSelect={(i) => load(seedForPuzzle(i))}
+      />
 
       {/* Progress Bar */}
       <div className="space-y-1 rounded-2xl border border-border/60 bg-muted/20 p-3">

@@ -3,7 +3,7 @@
  * 돌은 중력, 티끌은 작아짐, 시계는 멈춤이다. 그 꿈이 층의 봉인과 같을 때만 더 올라간다.
  * 빈손으로는 문이 열리지 않는다. 아래로 내리는 걸음은 꿈을 바꾸지 않는다.
  * 승리는 꼭대기 층으로 올라서는 걸음이고, 그때 손에 든 물건이 그 봉인과 같아야 한다.
- * 네 층계는 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 층을 만들지 않는다.
+ * 열 층계는 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 층을 만들지 않는다.
  *
  * 층 0 이 로비, 층 3 이 꼭대기다. 층 번호가 커지면 월드 +y 도 커진다.
  * 카메라 0 은 월드 +z 에서 원점을 보므로, 화면 위가 더 높은 층이다.
@@ -84,7 +84,46 @@ const PUZZLES: readonly PuzzleDef[] = [
     slots: ["hour", "stone", null, "mote"],
     seals: ["lobby", "hour", "stone", "mote"],
   },
+  // Stages 5-10 (stage range 2026-11-21): each keeps one shortest ride, checked by a search in the tests.
+  {
+    id: "stone-sleep",
+    hand: null,
+    slots: ["stone", "mote", null, "hour"],
+    seals: ["lobby", "mote", "stone", "stone"],
+  },
+  {
+    id: "loose-hour",
+    hand: null,
+    slots: ["stone", "mote", "hour", null],
+    seals: ["lobby", "mote", "mote", "hour"],
+  },
+  {
+    id: "echo-stone",
+    hand: null,
+    slots: ["stone", "mote", null, "hour"],
+    seals: ["lobby", "stone", "mote", "stone"],
+  },
+  {
+    id: "night-shift",
+    hand: null,
+    slots: ["stone", "mote", "hour", null],
+    seals: ["lobby", "stone", "hour", "mote"],
+  },
+  {
+    id: "mote-loop",
+    hand: null,
+    slots: ["hour", "mote", "stone", null],
+    seals: ["lobby", "hour", "stone", "mote"],
+  },
+  {
+    id: "hour-return",
+    hand: null,
+    slots: ["mote", "hour", null, "stone"],
+    seals: ["lobby", "mote", "hour", "mote"],
+  },
 ];
+
+export const PUZZLE_COUNT = PUZZLES.length;
 
 function normalize(x: number, y: number, z: number): [number, number, number] {
   const length = Math.hypot(x, y, z) || 1;
@@ -177,6 +216,12 @@ function makeState(puzzle: PuzzleDef, steps = 0, floor = 0, hand: Relic | null =
     loseReason: null,
     lastAct: null,
   };
+}
+
+/** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
+export function seedForPuzzle(index: number): number {
+  const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
 export function createDream(seed = 0): DreamState {

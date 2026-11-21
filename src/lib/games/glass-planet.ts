@@ -1,7 +1,7 @@
 /**
  * 의도 (2026-10-15 세운): 유리 행성 겉과 안은 정반대 칸에 묶인다.
  * 한 축을 누르면 두 탐사가가 함께 한 칸 움직이되, 양쪽 이음이 모두 열려 있을 때만 간다.
- * 출구는 걸어 들어간 걸음만 인정한다. 네 판은 손으로 맞추고 시드가 그중 하나를 고른다.
+ * 출구는 걸어 들어간 걸음만 인정한다. 열 판은 손으로 맞추고 시드가 그중 하나를 고른다.
  * 매 프레임 난수로 길을 만들지 않는다. Math.random 을 넣지 않는다.
  *
  * 칸 0..7 은 정육면체 꼭짓점이다. 비트 1·2·4 가 +x·+y·+z.
@@ -89,8 +89,52 @@ const PUZZLES: readonly PuzzleDef[] = [
     inner: [empty, empty, "exit", empty, empty, empty, "void", empty],
     outerEdges: maskExcept([[2, 4]]),
     innerEdges: ALL_EDGES,
+  },  // Stages 5-10 (stage range 2026-11-21): each keeps one shortest walk, checked by a search in the tests.
+  {
+    id: "bent-pole",
+    outer: [empty, empty, "crack", "exit", empty, empty, empty, empty],
+    inner: [empty, empty, empty, empty, "exit", empty, empty, empty],
+    outerEdges: maskExcept([[0, 1], [4, 1]]),
+    innerEdges: maskExcept([[4, 1]]),
+  },
+  {
+    id: "side-step",
+    outer: [empty, empty, empty, "crack", empty, "exit", empty, empty],
+    inner: [empty, empty, "exit", empty, empty, empty, empty, empty],
+    outerEdges: maskExcept([[1, 4], [4, 1]]),
+    innerEdges: maskExcept([[1, 4]]),
+  },
+  {
+    id: "far-shore",
+    outer: [empty, "exit", empty, "crack", empty, empty, empty, empty],
+    inner: [empty, empty, empty, empty, empty, empty, "exit", empty],
+    outerEdges: maskExcept([[0, 1], [4, 1]]),
+    innerEdges: maskExcept([[1, 4]]),
+  },
+  {
+    id: "night-side",
+    outer: [empty, "exit", empty, empty, empty, empty, "crack", empty],
+    inner: [empty, empty, empty, empty, empty, empty, "exit", empty],
+    outerEdges: maskExcept([[0, 1], [1, 4]]),
+    innerEdges: maskExcept([[4, 1]]),
+  },
+  {
+    id: "split-core",
+    outer: [empty, "exit", "crack", empty, empty, empty, empty, empty],
+    inner: [empty, empty, empty, empty, empty, empty, "exit", empty],
+    outerEdges: maskExcept([[0, 1], [1, 4]]),
+    innerEdges: maskExcept([[0, 1]]),
+  },
+  {
+    id: "full-orbit",
+    outer: [empty, "exit", empty, empty, "crack", empty, empty, empty],
+    inner: [empty, empty, empty, empty, empty, empty, "exit", empty],
+    outerEdges: maskExcept([[0, 1], [1, 4]]),
+    innerEdges: maskExcept([[4, 1]]),
   },
 ];
+
+export const PUZZLE_COUNT = PUZZLES.length;
 
 function normalize(x: number, y: number, z: number): [number, number, number] {
   const length = Math.hypot(x, y, z) || 1;
@@ -179,6 +223,12 @@ function makeState(puzzle: PuzzleDef, outer = 0, steps = 0): PlanetState {
     loseReason: null,
     lastBit: null,
   };
+}
+
+/** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
+export function seedForPuzzle(index: number): number {
+  const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
 export function createGlassPlanet(seed = 0): PlanetState {

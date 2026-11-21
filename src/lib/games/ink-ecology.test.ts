@@ -2,6 +2,9 @@ import { readFileSync } from "node:fs";
 import { PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { describe, expect, it } from "vitest";
 import {
+  PUZZLE_COUNT,
+  puzzleIndexForSeed,
+  seedForPuzzle,
   ACTS,
   CAMERA_POSES,
   EMPTY,
@@ -29,7 +32,12 @@ const SOLUTIONS: Record<string, readonly Act[]> = {
   "fed-bridge": ["G", "G", "L"],
   "beside-bridge": ["L", "G", "G"],
   "held-spore": ["L", "G", "L"],
-  "late-legs": ["C", "G", "G", "G", "L", "G"],
+  "late-legs": ["C", "G", "G", "G", "L", "G"],  "twin-legs": ["G", "G", "L", "G", "G"],
+  "spore-gate": ["G", "L", "G", "G", "G", "G"],
+  "cross-pond": ["L", "G", "L", "G", "G", "G"],
+  "stone-step": ["C", "C", "G", "L", "G", "G", "G"],
+  "late-bloom": ["G", "G", "G", "L", "L", "L", "C"],
+  "long-drift": ["C", "G", "G", "G", "L", "G", "G"],
 };
 
 function replay(id: string, actions: readonly Act[]): PondState {
@@ -37,7 +45,7 @@ function replay(id: string, actions: readonly Act[]): PondState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 80; seed += 1) {
+  for (let seed = 0; seed < 400; seed += 1) {
     if (createPond(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -142,6 +150,11 @@ describe("ink ecology", () => {
     expect(tip.distanceTo(focus)).toBeLessThan(base.distanceTo(focus));
   });
 
+  it("ships ten stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(10);
+    for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
+  });
+
   it("keeps one hand-checked shortest season for each pond", () => {
     for (const [id, solution] of Object.entries(SOLUTIONS)) {
       const start = createPond(seedFor(id));
@@ -223,7 +236,7 @@ describe("ink ecology", () => {
 
   it("rebuilds the same pond from the same seed", () => {
     const seen = new Set<string>();
-    for (let seed = 0; seed < 80; seed += 1) {
+    for (let seed = 0; seed < 400; seed += 1) {
       const pond = createPond(seed);
       expect(createPond(seed)).toEqual(pond);
       expect(mixSeed(seed)).toBe(mixSeed(seed));
