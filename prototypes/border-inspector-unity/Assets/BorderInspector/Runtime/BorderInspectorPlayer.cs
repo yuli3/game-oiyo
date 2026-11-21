@@ -43,7 +43,7 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         "Day 3: Official District Seal",
         "Day 4: Entry Permits & Name Match",
         "Day 5: Scale Weight Biometrics",
-        "Day 6: Kolechia Border Embargo",
+        "Day 6: Zelkova Border Embargo",
         "Day 7: Worker Permits Required",
         "Day 8: Vaccine Certificates",
         "Day 9: Smuggler Weight Discrepancy",
@@ -87,6 +87,37 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
     Material _approveMat;
     Material _denyMat;
     Material _visitorMat;
+    readonly Dictionary<Material, Material> _docFaces = new Dictionary<Material, Material>();
+
+    // ---- Painted art (scripts/make_art.py -> Resources/BI/Art) ----
+    static Texture2D ArtTex(string name)
+    {
+        var t = Resources.Load<Texture2D>("BI/Art/" + name);
+        if (t != null) t.wrapMode = TextureWrapMode.Clamp;
+        return t;
+    }
+
+    static Material TexturedLit(string tex)
+    {
+        var m = MakeMat(Color.white);
+        m.mainTexture = ArtTex(tex);
+        if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.12f);
+        return m;
+    }
+
+    // A flat painted face lying on top of a box (child quad facing up).
+    static GameObject TopFace(Transform parent, Material mat, float lift)
+    {
+        var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        q.name = "Face";
+        Destroy(q.GetComponent<Collider>());
+        q.transform.SetParent(parent, false);
+        q.transform.localPosition = new Vector3(0f, lift, 0f);
+        q.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        q.transform.localScale = Vector3.one;
+        q.GetComponent<Renderer>().material = mat;
+        return q;
+    }
 
     void Start()
     {
@@ -115,7 +146,13 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         _ruleMat = MakeMat(new Color(0.82f, 0.72f, 0.46f));
         _approveMat = MakeMat(new Color(0.18f, 0.74f, 0.36f));
         _denyMat = MakeMat(new Color(0.86f, 0.20f, 0.22f));
-        _visitorMat = MakeMat(new Color(0.68f, 0.70f, 0.72f));
+        var cut = Shader.Find("OIYO/UnlitCutout");
+        _visitorMat = new Material(cut != null ? cut : Shader.Find("Sprites/Default"));
+        _visitorMat.mainTexture = ArtTex("visitor0");
+        _docFaces[_passportMat] = TexturedLit("doc_passport");
+        _docFaces[_permitMat] = TexturedLit("doc_permit");
+        _docFaces[_cardMat] = TexturedLit("doc_card");
+        _docFaces[_ruleMat] = TexturedLit("doc_rules");
     }
 
     void SetupCameraAndLight()
@@ -143,16 +180,21 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         desk.transform.position = new Vector3(0f, -0.5f, -0.5f);
         desk.transform.localScale = new Vector3(17f, 1f, 10.5f);
         desk.GetComponent<Renderer>().material = _deskMat;
+        TopFace(desk.transform, TexturedLit("desk_top"), 0.501f);
 
         var backWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
         backWall.transform.position = new Vector3(0f, 1.8f, 4.6f);
         backWall.transform.localScale = new Vector3(17f, 4.2f, 0.4f);
-        backWall.GetComponent<Renderer>().material = _boothWallMat;
+        backWall.GetComponent<Renderer>().material = TexturedLit("wall");
 
-        var visitorGo = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        // Traveller at the window: a painted portrait facing the camera
+        var visitorGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        visitorGo.name = "Traveller";
+        Destroy(visitorGo.GetComponent<Collider>());
         _boothVisitor = visitorGo.transform;
-        _boothVisitor.position = new Vector3(-5.2f, 1.4f, 3.3f);
-        _boothVisitor.localScale = new Vector3(1.1f, 1.1f, 1.1f);
+        _boothVisitor.position = new Vector3(-3.4f, 1.35f, 3.25f);
+        _boothVisitor.rotation = _cam.transform.rotation;
+        _boothVisitor.localScale = new Vector3(2.2f, 2.75f, 1f);
         visitorGo.GetComponent<Renderer>().material = _visitorMat;
 
         // Rubber Stamp Rack on right side of desk
@@ -160,12 +202,14 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         approveBase.transform.position = new Vector3(6.4f, 0.25f, 1.3f);
         approveBase.transform.localScale = new Vector3(1.8f, 0.45f, 1.2f);
         approveBase.GetComponent<Renderer>().material = _approveMat;
+        TopFace(approveBase.transform, TexturedLit("stamp_approve"), 0.502f);
         _approveStampArm = approveBase.transform;
 
         var denyBase = GameObject.CreatePrimitive(PrimitiveType.Cube);
         denyBase.transform.position = new Vector3(6.4f, 0.25f, -0.6f);
         denyBase.transform.localScale = new Vector3(1.8f, 0.45f, 1.2f);
         denyBase.GetComponent<Renderer>().material = _denyMat;
+        TopFace(denyBase.transform, TexturedLit("stamp_deny"), 0.502f);
         _denyStampArm = denyBase.transform;
     }
 
@@ -190,7 +234,7 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         _queue.Clear();
         int count = 4 + (st >= 6 ? 1 : 0) + (st >= 10 ? 1 : 0);
         string[] firstNames = { "Viktor", "Elena", "Marek", "Olga", "Ivan", "Sora", "Dmitri", "Kira" };
-        string[] countries = { "Arstotzka", "Obristan", "Antegria", "Republia", "Kolechia" };
+        string[] countries = { "Velmora", "Oskaria", "Tarnhold", "Merivale", "Zelkova" };
         string[] purposes = { "TRANSIT", "WORK", "VISIT", "DIPLOMAT" };
 
         for (int i = 0; i < count; i++)
@@ -217,13 +261,13 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
                 int rulePick = Random.Range(0, Mathf.Min(st, 11));
                 if (st >= 10 && i == count - 1)
                 {
-                    name = "Jorji Costava";
+                    name = "Oren Vasko";
                     isWanted = true;
                     reason = "Fugitive on Most-Wanted Poster!";
                 }
-                else if (st >= 6 && country == "Kolechia")
+                else if (st >= 6 && country == "Zelkova")
                 {
-                    reason = "Kolechia nationals banned!";
+                    reason = "Zelkova nationals banned!";
                 }
                 else if (rulePick == 1 || st == 2)
                 {
@@ -268,7 +312,7 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
             }
             else
             {
-                if (st >= 6 && country == "Kolechia") country = "Arstotzka";
+                if (st >= 6 && country == "Zelkova") country = "Velmora";
             }
 
             _queue.Add(new ApplicantCase
@@ -310,9 +354,11 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         }
 
         var c = _queue[_caseIdx];
+        // a different traveller steps up for each case
+        _visitorMat.mainTexture = ArtTex("visitor" + (_caseIdx + _stage) % 5);
         // Rulebook Card on Left
         SpawnDoc("RULES (Stage " + _stage + ")",
-            StageRuleSummary(_stage) + ( _stage >= 10 ? "\nWANTED: Jorji Costava" : ""),
+            StageRuleSummary(_stage) + ( _stage >= 10 ? "\nWANTED: Oren Vasko" : ""),
             new Vector3(-5.0f, 0.12f, -1.0f), new Vector2(2.6f, 3.2f), _ruleMat, false);
 
         // Passport in Center
@@ -343,7 +389,7 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         if (st >= 3) sb += "• Valid Seal Required\n";
         if (st >= 4) sb += "• Match Permit Name\n";
         if (st >= 5) sb += "• Match Booth Scale\n";
-        if (st >= 6) sb += "• Deny Kolechia!\n";
+        if (st >= 6) sb += "• Deny Zelkova!\n";
         if (st >= 7) sb += "• Work Needs WorkPass\n";
         if (st >= 8) sb += "• Vaccine Required\n";
         if (st >= 10) sb += "• Arrest Wanted Poster\n";
@@ -357,6 +403,7 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         go.transform.position = pos;
         go.transform.localScale = new Vector3(size.x, 0.08f, size.y);
         go.GetComponent<Renderer>().material = mat;
+        if (_docFaces.TryGetValue(mat, out var face)) TopFace(go.transform, face, 0.51f);
         _docs.Add(new DeskDoc
         {
             Title = title,

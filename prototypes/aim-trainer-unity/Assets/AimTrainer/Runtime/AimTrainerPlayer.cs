@@ -152,22 +152,66 @@ public class AimTrainerPlayer : MonoBehaviour
         audioSource.playOnAwake = false;
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/AT/Art) ----
+    private static readonly Dictionary<string, Texture2D> artTex = new Dictionary<string, Texture2D>();
+
+    private static Texture2D ArtTex(string name)
+    {
+        if (!artTex.TryGetValue(name, out var t))
+        {
+            t = Resources.Load<Texture2D>("AT/Art/" + name);
+            if (t != null) t.wrapMode = TextureWrapMode.Clamp;
+            artTex[name] = t;
+        }
+        return t;
+    }
+
+    // Unlit alpha cut-out (depth-correct in 3D); falls back to Sprites/Default.
+    private static Material ArtMat(string texName)
+    {
+        var sh = Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        m.mainTexture = ArtTex(texName);
+        m.color = Color.white;
+        return m;
+    }
+
+    private static GameObject ArtQuad(string name)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        return go;
+    }
+
+    private static string TargetArt(TargetType type)
+    {
+        switch (type)
+        {
+            case TargetType.Moving: return "target_moving";
+            case TargetType.Parabolic: return "target_clay";
+            case TargetType.Bomb: return "target_bomb";
+            case TargetType.Gold: return "target_gold";
+            case TargetType.BossCore: return "boss";
+            default: return "target_standard";
+        }
+    }
+
     private void CreateArenaVisuals()
     {
         // 3D Shooting Range Backwall with subtle grid
         var backWall = GameObject.CreatePrimitive(PrimitiveType.Quad);
         backWall.name = "RangeBackWall";
         backWall.transform.position = new Vector3(0f, 0.7f, TargetPlaneZ + 0.5f);
-        backWall.transform.localScale = new Vector3(16f, 11f, 1f);
-        var wallMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        wallMat.color = new Color(0.06f, 0.08f, 0.16f);
-        backWall.GetComponent<MeshRenderer>().material = wallMat;
+        backWall.transform.localScale = new Vector3(20.5f, 11.2f, 1f);
+        Destroy(backWall.GetComponent<Collider>());
+        backWall.GetComponent<MeshRenderer>().material = ArtMat("wall");
 
         // Neon Range Boundaries
-        CreateNeonLine(new Vector3(ArenaMinX - 0.2f, 0.7f, TargetPlaneZ), new Vector3(0.12f, 8.5f, 0.12f), new Color(0.2f, 0.6f, 1.0f));
-        CreateNeonLine(new Vector3(ArenaMaxX + 0.2f, 0.7f, TargetPlaneZ), new Vector3(0.12f, 8.5f, 0.12f), new Color(0.2f, 0.6f, 1.0f));
-        CreateNeonLine(new Vector3(0f, ArenaMaxY + 0.2f, TargetPlaneZ), new Vector3(11f, 0.12f, 0.12f), new Color(0.2f, 0.6f, 1.0f));
-        CreateNeonLine(new Vector3(0f, ArenaMinY - 0.2f, TargetPlaneZ), new Vector3(11f, 0.12f, 0.12f), new Color(0.2f, 0.6f, 1.0f));
+        CreateNeonLine(new Vector3(ArenaMinX - 0.2f, 0.7f, TargetPlaneZ), new Vector3(0.12f, 8.5f, 0.12f), new Color(0.78f, 0.6f, 0.32f));
+        CreateNeonLine(new Vector3(ArenaMaxX + 0.2f, 0.7f, TargetPlaneZ), new Vector3(0.12f, 8.5f, 0.12f), new Color(0.78f, 0.6f, 0.32f));
+        CreateNeonLine(new Vector3(0f, ArenaMaxY + 0.2f, TargetPlaneZ), new Vector3(11f, 0.12f, 0.12f), new Color(0.78f, 0.6f, 0.32f));
+        CreateNeonLine(new Vector3(0f, ArenaMinY - 0.2f, TargetPlaneZ), new Vector3(11f, 0.12f, 0.12f), new Color(0.78f, 0.6f, 0.32f));
     }
 
     private void CreateNeonLine(Vector3 pos, Vector3 scale, Color col)
@@ -184,22 +228,15 @@ public class AimTrainerPlayer : MonoBehaviour
     private void CreateCrosshairVisual()
     {
         crosshairGo = new GameObject("CrosshairRoot");
-        // Crosshair Center Dot
-        var dot = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        dot.transform.SetParent(crosshairGo.transform);
-        dot.transform.localScale = Vector3.one * 0.08f;
-        var dotMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        dotMat.color = Color.cyan;
-        dot.GetComponent<MeshRenderer>().material = dotMat;
-
-        // Ring
-        var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        ring.transform.SetParent(crosshairGo.transform);
-        ring.transform.localScale = new Vector3(0.35f, 0.01f, 0.35f);
-        ring.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-        var ringMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        ringMat.color = new Color(0.2f, 0.8f, 1.0f, 0.6f);
-        ring.GetComponent<MeshRenderer>().material = ringMat;
+        // Painted reticle (one camera-facing quad)
+        var ret = ArtQuad("Reticle");
+        ret.transform.SetParent(crosshairGo.transform);
+        ret.transform.localPosition = Vector3.zero;
+        ret.transform.localScale = new Vector3(1.05f, 1.05f, 1f);
+        var retMat = new Material(Shader.Find("Sprites/Default"));
+        retMat.mainTexture = ArtTex("reticle");
+        retMat.renderQueue = 3100; // drawn over the targets
+        ret.GetComponent<MeshRenderer>().material = retMat;
     }
 
     private void InitStages()
@@ -437,13 +474,10 @@ public class AimTrainerPlayer : MonoBehaviour
             spawnTime = Time.time
         };
 
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        go.name = "BossCore";
+        var go = ArtQuad("BossCore");
         go.transform.position = boss.position;
-        go.transform.localScale = Vector3.one * (boss.radius * 2f);
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = boss.baseColor;
-        go.GetComponent<MeshRenderer>().material = mat;
+        go.transform.localScale = new Vector3(boss.radius * 2.2f, boss.radius * 2.2f, 1f);
+        go.GetComponent<MeshRenderer>().material = ArtMat("boss");
         boss.go = go;
 
         targets.Add(boss);
@@ -618,7 +652,12 @@ public class AimTrainerPlayer : MonoBehaviour
             if (t.go != null)
             {
                 var rend = t.go.GetComponent<MeshRenderer>();
-                if (rend != null) rend.material.color = Color.Lerp(Color.white, t.baseColor, (float)t.hp / t.maxHp);
+                if (rend != null)
+                {
+                    // Plating cracks at half health and glows hotter as it weakens
+                    if (t.hp * 2 <= t.maxHp) rend.material.mainTexture = ArtTex("boss_cracked");
+                    rend.material.color = Color.Lerp(new Color(1f, 0.62f, 0.62f), Color.white, (float)t.hp / t.maxHp);
+                }
             }
         }
     }
@@ -676,14 +715,10 @@ public class AimTrainerPlayer : MonoBehaviour
         }
 
         // 3D Visual Mesh
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        go.name = "Target_" + target.type;
+        var go = ArtQuad("Target_" + target.type);
         go.transform.position = target.position;
-        go.transform.localScale = new Vector3(target.radius * 2f, 0.05f, target.radius * 2f);
-        go.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = target.baseColor;
-        go.GetComponent<MeshRenderer>().material = mat;
+        go.transform.localScale = new Vector3(target.radius * 2f, target.radius * 2f, 1f);
+        go.GetComponent<MeshRenderer>().material = ArtMat(TargetArt(target.type));
         target.go = go;
 
         targets.Add(target);
@@ -725,7 +760,17 @@ public class AimTrainerPlayer : MonoBehaviour
             if (t.go != null)
             {
                 t.go.transform.position = t.position;
-                t.go.transform.localScale = new Vector3(t.radius * 2f, 0.05f, t.radius * 2f);
+                if (t.type == TargetType.BossCore)
+                {
+                    t.go.transform.localScale = new Vector3(t.radius * 2.2f, t.radius * 2.2f, 1f);
+                }
+                else
+                {
+                    t.go.transform.localScale = new Vector3(t.radius * 2f, t.radius * 2f, 1f);
+                    // drones bank as they strafe, clay discs tumble in flight
+                    if (t.type == TargetType.Moving) t.go.transform.rotation = Quaternion.Euler(0f, 0f, -t.velocity.x * 4f);
+                    else if (t.type == TargetType.Parabolic) t.go.transform.rotation = Quaternion.Euler(0f, 0f, t.currentLife * 240f);
+                }
             }
 
             // Lifetime expiration
@@ -752,11 +797,12 @@ public class AimTrainerPlayer : MonoBehaviour
                 color = col,
                 life = 0.45f
             };
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var go = ArtQuad("Spark");
             go.transform.position = pos;
-            go.transform.localScale = Vector3.one * UnityEngine.Random.Range(0.08f, 0.16f);
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-            mat.color = col;
+            go.transform.localScale = Vector3.one * UnityEngine.Random.Range(0.25f, 0.45f);
+            var mat = new Material(Shader.Find("Sprites/Default"));
+            mat.mainTexture = ArtTex("spark");
+            mat.color = Color.Lerp(col, Color.white, 0.35f);
             go.GetComponent<MeshRenderer>().material = mat;
             p.go = go;
             particles.Add(p);

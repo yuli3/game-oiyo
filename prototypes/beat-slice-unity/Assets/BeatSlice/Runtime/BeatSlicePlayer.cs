@@ -126,6 +126,7 @@ public class BeatSlicePlayer : MonoBehaviour
     private Material saberLeftMat;
     private Material saberRightMat;
     private Material pillarMat;
+    private float runwayScroll;
 
     // Rhythm sequencing
     private float beatTimer = 0f;
@@ -290,35 +291,46 @@ public class BeatSlicePlayer : MonoBehaviour
         ResetToStage(0);
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/BS/Art) ----
+    private Material hiltMat;
+    private Material backdropMat;
+
+    private static Material ArtMat(string tex, Color tint, float tileY = 1f)
+    {
+        var sh = Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        var t = Resources.Load<Texture2D>("BS/Art/" + tex);
+        if (t != null)
+        {
+            t.wrapMode = tileY != 1f ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+            m.mainTexture = t;
+        }
+        m.mainTextureScale = new Vector2(1f, tileY);
+        m.color = tint;
+        return m;
+    }
+
+    private static Material FlatMat(Color c)
+    {
+        var m = new Material(Shader.Find("Sprites/Default"));
+        m.color = c;
+        return m;
+    }
+
     private void CreateMaterials()
     {
-        var shader = Shader.Find("Mobile/Diffuse");
-        if (shader == null) shader = Shader.Find("Diffuse");
-        if (shader == null) shader = Shader.Find("Standard");
-
-        cyanMat = new Material(shader);
-        cyanMat.color = new Color(0.0f, 0.95f, 1.0f);
-
-        magentaMat = new Material(shader);
-        magentaMat.color = new Color(1.0f, 0.1f, 0.65f);
-
-        goldMat = new Material(shader);
-        goldMat.color = new Color(1.0f, 0.85f, 0.15f);
-
-        bombMat = new Material(shader);
-        bombMat.color = new Color(0.2f, 0.2f, 0.25f);
-
-        runwayMat = new Material(shader);
-        runwayMat.color = new Color(0.04f, 0.06f, 0.12f);
-
-        saberLeftMat = new Material(shader);
-        saberLeftMat.color = new Color(0.0f, 0.95f, 1.0f);
-
-        saberRightMat = new Material(shader);
-        saberRightMat.color = new Color(1.0f, 0.1f, 0.65f);
-
-        pillarMat = new Material(shader);
-        pillarMat.color = stages[0].tunnelColor;
+        // Notes glow on their own, so they are unlit painted glass tiles.
+        cyanMat = ArtMat("note_cyan", Color.white);
+        magentaMat = ArtMat("note_magenta", Color.white);
+        goldMat = ArtMat("note_gold", Color.white);
+        bombMat = ArtMat("note_bomb", Color.white);
+        runwayMat = ArtMat("runway", Color.white, 14f);
+        saberLeftMat = ArtMat("blade", new Color(0.35f, 0.97f, 1.0f));
+        saberRightMat = ArtMat("blade", new Color(1.0f, 0.42f, 0.78f));
+        pillarMat = ArtMat("pillar", stages[0].tunnelColor);
+        hiltMat = ArtMat("hilt", Color.white);
+        backdropMat = ArtMat("horizon", Color.white);
+        backdropMat.renderQueue = 1000; // sky: drawn first
     }
 
     private void CreateRunwayAndTunnel()
@@ -336,9 +348,7 @@ public class BeatSlicePlayer : MonoBehaviour
             var line = GameObject.CreatePrimitive(PrimitiveType.Cube);
             line.transform.position = new Vector3(i * 1.5f, 0.02f, 25f);
             line.transform.localScale = new Vector3(0.06f, 0.05f, 70f);
-            var m = new Material(cyanMat);
-            m.color = new Color(0.2f, 0.4f, 0.8f, 0.6f);
-            line.GetComponent<Renderer>().material = m;
+            line.GetComponent<Renderer>().material = FlatMat(new Color(0.3f, 0.5f, 0.95f));
         }
 
         // Tunnel Neon Arches / Pillars along the track
@@ -367,6 +377,14 @@ public class BeatSlicePlayer : MonoBehaviour
             tunnelPillars.Add(bar.transform);
         }
 
+        // Painted night sky and skyline behind the far end of the runway
+        var sky = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        sky.name = "Horizon";
+        Destroy(sky.GetComponent<Collider>());
+        sky.transform.position = new Vector3(0f, 3f, 64f);
+        sky.transform.localScale = new Vector3(150f, 75f, 1f);
+        sky.GetComponent<Renderer>().material = backdropMat;
+
         // Directional Light
         var sunGo = new GameObject("RunwayLight");
         var sun = sunGo.AddComponent<Light>();
@@ -394,8 +412,6 @@ public class BeatSlicePlayer : MonoBehaviour
         hiltL.transform.localPosition = Vector3.zero;
         hiltL.transform.localRotation = Quaternion.Euler(45, 0, 0);
         hiltL.transform.localScale = new Vector3(0.14f, 0.25f, 0.14f);
-        var hiltMat = new Material(runwayMat);
-        hiltMat.color = Color.gray;
         hiltL.GetComponent<Renderer>().material = hiltMat;
 
         // Right Saber (Magenta)
@@ -427,6 +443,11 @@ public class BeatSlicePlayer : MonoBehaviour
         pm.startSpeed = 8f;
         pm.startColor = Color.cyan;
         pm.simulationSpace = ParticleSystemSimulationSpace.World;
+        // WebGL has no default particle material (it rendered as magenta squares)
+        var pr = pGo.GetComponent<ParticleSystemRenderer>();
+        var spark = new Material(Shader.Find("Sprites/Default"));
+        spark.mainTexture = Resources.Load<Texture2D>("BS/Art/spark");
+        pr.material = spark;
         var pe = sparkParticles.emission;
         pe.rateOverTime = 0f;
     }
@@ -437,6 +458,7 @@ public class BeatSlicePlayer : MonoBehaviour
         var trk = stages[currentStageIndex];
 
         pillarMat.color = trk.tunnelColor;
+        backdropMat.color = Color.Lerp(Color.white, trk.tunnelColor, 0.3f);
         mainCam.backgroundColor = new Color(trk.tunnelColor.r * 0.2f, trk.tunnelColor.g * 0.2f, trk.tunnelColor.b * 0.2f);
 
         score = 0;
@@ -537,6 +559,8 @@ public class BeatSlicePlayer : MonoBehaviour
     {
         var trk = stages[currentStageIndex];
         float speed = trk.scrollSpeed * dt;
+        runwayScroll += speed;
+        runwayMat.mainTextureOffset = new Vector2(0f, runwayScroll * 14f / 70f);
 
         for (int i = 0; i < tunnelPillars.Count; i++)
         {
@@ -641,15 +665,8 @@ public class BeatSlicePlayer : MonoBehaviour
         else if (type == 2) r.material = goldMat;
         else r.material = bombMat;
 
-        // Direction Arrow / Dot (small cylinder)
-        var arrow = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        arrow.transform.SetParent(go.transform);
-        arrow.transform.localPosition = new Vector3(0, 0, -0.45f);
-        arrow.transform.localRotation = Quaternion.Euler(90, 0, 0);
-        arrow.transform.localScale = new Vector3(0.35f, 0.08f, 0.35f);
-        var arrowMat = new Material(cyanMat);
-        arrowMat.color = Color.white;
-        arrow.GetComponent<Renderer>().material = arrowMat;
+        // The cut glyph is painted on the tile itself (note_*.png).
+        GameObject arrow = null;
 
         notes.Add(new BeatNote
         {

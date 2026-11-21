@@ -303,8 +303,55 @@ public class CaveDashPlayer : MonoBehaviour
         ResetToStage(0);
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/CD/Art) ----
+    private static readonly Dictionary<string, Texture2D> artTex = new Dictionary<string, Texture2D>();
+    private Material rockTopMat, rockBtmMat, backdropMat, shipArtMat;
+    private GameObject backdropGo;
+
+    private static Texture2D ArtTex(string name)
+    {
+        if (!artTex.TryGetValue(name, out var t))
+        {
+            t = Resources.Load<Texture2D>("CD/Art/" + name);
+            if (t != null) t.wrapMode = TextureWrapMode.Clamp;
+            artTex[name] = t;
+        }
+        return t;
+    }
+
+    private static Material ArtMat(string tex, bool blended = false)
+    {
+        var sh = blended ? null : Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        m.mainTexture = ArtTex(tex);
+        m.color = Color.white;
+        return m;
+    }
+
+    private static GameObject ArtQuad(string name, Transform parent, Material mat)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        if (parent != null) go.transform.SetParent(parent, false);
+        go.GetComponent<Renderer>().material = mat;
+        return go;
+    }
+
+    private static Color CaveTint(Color c)
+    {
+        return Color.Lerp(Color.white, new Color(Mathf.Min(1f, c.r * 1.9f), Mathf.Min(1f, c.g * 1.9f), Mathf.Min(1f, c.b * 1.9f)), 0.6f);
+    }
+
     private void CreateMaterials()
     {
+        rockTopMat = ArtMat("rock_top");
+        rockBtmMat = ArtMat("rock_btm");
+        backdropMat = ArtMat("backdrop");
+        backdropMat.mainTexture.wrapMode = TextureWrapMode.Repeat;
+        backdropMat.renderQueue = 1000;
+        shipArtMat = ArtMat("ship");
+
         var shader = Shader.Find("Mobile/Diffuse");
         if (shader == null) shader = Shader.Find("Diffuse");
         if (shader == null) shader = Shader.Find("Standard");
@@ -334,56 +381,15 @@ public class CaveDashPlayer : MonoBehaviour
         shipPos = new Vector3(0f, 0f, 0f);
         shipRoot.transform.position = shipPos;
 
-        // Fuselage (Cone/Wedge)
-        shipHull = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        shipHull.name = "Fuselage";
-        shipHull.transform.SetParent(shipRoot.transform);
-        shipHull.transform.localPosition = Vector3.zero;
-        shipHull.transform.localRotation = Quaternion.Euler(0, 0, -90);
-        shipHull.transform.localScale = new Vector3(0.42f, 0.85f, 0.42f);
-        shipHull.GetComponent<Renderer>().material = shipMat;
-
-        // Nose Cone
-        var nose = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        nose.transform.SetParent(shipRoot.transform);
-        nose.transform.localPosition = new Vector3(0.85f, 0, 0);
-        nose.transform.localScale = new Vector3(0.5f, 0.38f, 0.38f);
-        var noseMat = new Material(shipMat);
-        noseMat.color = new Color(0.1f, 0.8f, 1f);
-        nose.GetComponent<Renderer>().material = noseMat;
-
-        // Wings
-        var leftWing = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        leftWing.transform.SetParent(shipRoot.transform);
-        leftWing.transform.localPosition = new Vector3(-0.2f, 0, 0.65f);
-        leftWing.transform.localRotation = Quaternion.Euler(0, 25, 0);
-        leftWing.transform.localScale = new Vector3(0.6f, 0.08f, 0.85f);
-        leftWing.GetComponent<Renderer>().material = noseMat;
-
-        var rightWing = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        rightWing.transform.SetParent(shipRoot.transform);
-        rightWing.transform.localPosition = new Vector3(-0.2f, 0, -0.65f);
-        rightWing.transform.localRotation = Quaternion.Euler(0, -25, 0);
-        rightWing.transform.localScale = new Vector3(0.6f, 0.08f, 0.85f);
-        rightWing.GetComponent<Renderer>().material = noseMat;
-
-        // Thruster Engine Core
-        var thruster = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        thruster.transform.SetParent(shipRoot.transform);
-        thruster.transform.localPosition = new Vector3(-0.85f, 0, 0);
-        thruster.transform.localRotation = Quaternion.Euler(0, 0, 90);
-        thruster.transform.localScale = new Vector3(0.32f, 0.22f, 0.32f);
-        var thrusterMat = new Material(shipMat);
-        thrusterMat.color = new Color(1f, 0.5f, 0.1f);
-        thruster.GetComponent<Renderer>().material = thrusterMat;
+        // Painted skimmer (side view, nose to +x)
+        shipHull = ArtQuad("Skimmer", shipRoot.transform, shipArtMat);
+        shipHull.transform.localPosition = new Vector3(0.05f, 0f, 0f);
+        shipHull.transform.localScale = new Vector3(2.3f, 1.15f, 1f);
 
         // Shield Bubble
-        shieldBubble = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        shieldBubble.name = "ShieldBubble";
-        shieldBubble.transform.SetParent(shipRoot.transform);
-        shieldBubble.transform.localPosition = Vector3.zero;
+        shieldBubble = ArtQuad("ShieldBubble", shipRoot.transform, ArtMat("shield", true));
+        shieldBubble.transform.localPosition = new Vector3(0f, 0f, -0.05f);
         shieldBubble.transform.localScale = new Vector3(1.75f, 1.75f, 1.75f);
-        shieldBubble.GetComponent<Renderer>().material = shieldMat;
         shieldBubble.SetActive(true);
 
         // Headlight
@@ -412,44 +418,18 @@ public class CaveDashPlayer : MonoBehaviour
         bossWyrmRoot = new GameObject("BossWyrm");
         bossWyrmRoot.SetActive(false);
 
-        // Head
-        var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        head.transform.SetParent(bossWyrmRoot.transform);
-        head.transform.localPosition = Vector3.zero;
-        head.transform.localScale = new Vector3(2.4f, 2.0f, 2.0f);
-        head.GetComponent<Renderer>().material = bossMat;
+        // Painted head (facing +x, toward the ship) and plated body rings
+        var head = ArtQuad("WyrmHead", bossWyrmRoot.transform, ArtMat("wyrm_head"));
+        head.transform.localPosition = new Vector3(0.3f, 0.1f, -0.02f);
+        head.transform.localScale = new Vector3(3.2f, 2.66f, 1f);
 
-        // Glowing Eyes
-        var eyeMat = new Material(bossMat);
-        eyeMat.color = Color.yellow;
-
-        var eyeL = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        eyeL.transform.SetParent(head.transform);
-        eyeL.transform.localPosition = new Vector3(0.4f, 0.25f, 0.35f);
-        eyeL.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-        eyeL.GetComponent<Renderer>().material = eyeMat;
-
-        var eyeR = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        eyeR.transform.SetParent(head.transform);
-        eyeR.transform.localPosition = new Vector3(0.4f, 0.25f, -0.35f);
-        eyeR.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-        eyeR.GetComponent<Renderer>().material = eyeMat;
-
-        // Jaws
-        var jaw = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        jaw.transform.SetParent(head.transform);
-        jaw.transform.localPosition = new Vector3(0.45f, -0.2f, 0);
-        jaw.transform.localScale = new Vector3(0.5f, 0.3f, 0.6f);
-        jaw.GetComponent<Renderer>().material = bossMat;
-
-        // 3 Body Segments
+        var bodyMat = ArtMat("wyrm_body");
         for (int i = 1; i <= 3; i++)
         {
-            var seg = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            seg.transform.SetParent(bossWyrmRoot.transform);
-            seg.transform.localPosition = new Vector3(-i * 1.6f, 0, 0);
-            seg.transform.localScale = new Vector3(2.1f - i * 0.3f, 1.8f - i * 0.25f, 1.8f - i * 0.25f);
-            seg.GetComponent<Renderer>().material = bossMat;
+            var seg = ArtQuad("WyrmBody", bossWyrmRoot.transform, bodyMat);
+            seg.transform.localPosition = new Vector3(-i * 1.6f, -0.1f * i, i * 0.02f);
+            float sz = 2.1f - i * 0.3f;
+            seg.transform.localScale = new Vector3(sz, sz, 1f);
         }
     }
 
@@ -469,6 +449,8 @@ public class CaveDashPlayer : MonoBehaviour
         main.startColor = new Color(0.2f, 0.8f, 1f, 0.8f);
         main.simulationSpace = ParticleSystemSimulationSpace.World;
 
+        var sparkMat = ArtMat("spark", true);
+        pGo.GetComponent<ParticleSystemRenderer>().material = sparkMat;
         var emission = thrustParticles.emission;
         emission.rateOverTime = 45f;
         emission.enabled = false;
@@ -482,6 +464,7 @@ public class CaveDashPlayer : MonoBehaviour
         sm.startSpeed = 12f;
         sm.startColor = new Color(1f, 0.7f, 0.2f);
         sm.simulationSpace = ParticleSystemSimulationSpace.World;
+        sGo.GetComponent<ParticleSystemRenderer>().material = sparkMat;
         var se = sparkParticles.emission;
         se.rateOverTime = 0f;
     }
@@ -490,18 +473,18 @@ public class CaveDashPlayer : MonoBehaviour
     {
         for (int i = 0; i < 90; i++)
         {
-            var topBlock = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            topBlock.name = "CaveTop_" + i;
-            topBlock.GetComponent<Renderer>().material = caveMat;
+            var topBlock = ArtQuad("CaveTop_" + i, null, rockTopMat);
             topBlock.SetActive(false);
             caveBlockPool.Add(topBlock);
 
-            var btmBlock = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            btmBlock.name = "CaveBtm_" + i;
-            btmBlock.GetComponent<Renderer>().material = caveMat;
+            var btmBlock = ArtQuad("CaveBtm_" + i, null, rockBtmMat);
             btmBlock.SetActive(false);
             caveBlockPool.Add(btmBlock);
         }
+
+        // Far cave wall: follows the camera, texture drifts slower than the run (parallax)
+        backdropGo = ArtQuad("CaveBackdrop", null, backdropMat);
+        backdropGo.transform.localScale = new Vector3(52f, 26f, 1f);
     }
 
     private void ResetToStage(int index)
@@ -511,6 +494,9 @@ public class CaveDashPlayer : MonoBehaviour
 
         caveMat.color = stg.caveColor;
         crystalMat.color = stg.crystalColor;
+        rockTopMat.color = CaveTint(stg.caveColor);
+        rockBtmMat.color = CaveTint(stg.caveColor);
+        backdropMat.color = Color.Lerp(Color.white, CaveTint(stg.caveColor), 0.7f);
         RenderSettings.ambientLight = stg.ambientColor;
 
         shipPos = new Vector3(0f, 0f, 0f);
@@ -602,41 +588,20 @@ public class CaveDashPlayer : MonoBehaviour
         else if (roll < 0.90f) type = 1;
         else type = 2;
 
-        var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        string art = type == 0 ? "coin" : type == 1 ? "energy" : "shield_pick";
+        var go = ArtQuad("Pickup_" + art, null, ArtMat(art, true));
         go.transform.position = new Vector3(x, y, 0);
-        var r = go.GetComponent<Renderer>();
-
-        if (type == 0)
-        {
-            go.transform.localScale = new Vector3(0.55f, 0.55f, 0.15f);
-            var m = new Material(crystalMat);
-            m.color = new Color(1f, 0.85f, 0.1f);
-            r.material = m;
-        }
-        else if (type == 1)
-        {
-            go.transform.localScale = new Vector3(0.6f, 0.6f, 0.6f);
-            var m = new Material(crystalMat);
-            m.color = new Color(0.2f, 1f, 0.4f);
-            r.material = m;
-        }
-        else
-        {
-            go.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
-            var m = new Material(shieldMat);
-            m.color = new Color(0.1f, 0.7f, 1f);
-            r.material = m;
-        }
+        float size = type == 0 ? 0.75f : type == 1 ? 0.85f : 0.9f;
+        go.transform.localScale = new Vector3(size, size, 1f);
 
         pickups.Add(new CavePickup { pos = new Vector3(x, y, 0), type = type, collected = false, go = go });
     }
 
     private void SpawnLaser(float x, float minY, float maxY)
     {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        var go = ArtQuad("Laser", null, ArtMat("laser", true));
         go.transform.position = new Vector3(x, (minY + maxY) * 0.5f, 0);
-        go.transform.localScale = new Vector3(0.15f, (maxY - minY) * 0.4f, 0.15f);
-        go.GetComponent<Renderer>().material = laserMat;
+        go.transform.localScale = new Vector3(0.4f, (maxY - minY) * 0.8f, 1f);
 
         lasers.Add(new LaserBarrier {
             x = x, minY = minY, maxY = maxY, currentY = (minY + maxY) * 0.5f,
@@ -647,10 +612,9 @@ public class CaveDashPlayer : MonoBehaviour
 
     private void SpawnDebris(float x, float topY)
     {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        go.transform.position = new Vector3(x, topY, 0);
-        go.transform.localScale = new Vector3(0.8f, 2.2f, 0.8f);
-        go.GetComponent<Renderer>().material = caveMat;
+        var go = ArtQuad("FallingRock", null, ArtMat("debris"));
+        go.transform.position = new Vector3(x, topY, -0.05f);
+        go.transform.localScale = new Vector3(0.95f, 2.4f, 1f);
 
         debris.Add(new DebrisPillar { x = x, y = topY, falling = false, fallSpeed = 0f, go = go });
     }
@@ -1024,6 +988,12 @@ public class CaveDashPlayer : MonoBehaviour
             targetCamPos += new Vector3(UnityEngine.Random.Range(-camShake, camShake), UnityEngine.Random.Range(-camShake, camShake), 0);
         }
         mainCam.transform.position = Vector3.Lerp(mainCam.transform.position, targetCamPos, Time.deltaTime * 6.5f);
+        if (backdropGo != null)
+        {
+            var cp = mainCam.transform.position;
+            backdropGo.transform.position = new Vector3(cp.x, cp.y, 9f);
+            backdropMat.mainTextureOffset = new Vector2(cp.x * 0.008f, 0f);
+        }
 
         // Render cavern blocks from pool
         int blockIdx = 0;
@@ -1038,15 +1008,16 @@ public class CaveDashPlayer : MonoBehaviour
             var topGo = caveBlockPool[blockIdx++];
             topGo.SetActive(true);
             float topHeight = 12f;
-            topGo.transform.position = new Vector3(seg.x, seg.topY + topHeight * 0.5f, 0);
-            topGo.transform.localScale = new Vector3(2.8f, topHeight, 3.5f);
+            // painted spikes poke ~0.3 past the collision line; columns overlap so no seams show
+            topGo.transform.position = new Vector3(seg.x, seg.topY + topHeight * 0.5f - 0.3f, 0.1f + (i & 2) * 0.01f);
+            topGo.transform.localScale = new Vector3(3.5f, topHeight, 1f);
 
             // Bottom Stalagmite
             var btmGo = caveBlockPool[blockIdx++];
             btmGo.SetActive(true);
             float btmHeight = 12f;
-            btmGo.transform.position = new Vector3(seg.x, seg.bottomY - btmHeight * 0.5f, 0);
-            btmGo.transform.localScale = new Vector3(2.8f, btmHeight, 3.5f);
+            btmGo.transform.position = new Vector3(seg.x, seg.bottomY - btmHeight * 0.5f + 0.3f, 0.1f + (i & 2) * 0.01f);
+            btmGo.transform.localScale = new Vector3(3.5f, btmHeight, 1f);
         }
 
         // Deactivate unused blocks
