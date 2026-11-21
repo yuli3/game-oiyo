@@ -14,7 +14,12 @@ import {
 } from "../../lib/games/share-card";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
+import StageBar from "./StageBar";
+import { loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
 import {
+  PUZZLE_COUNT,
+  puzzleIndexForSeed,
+  seedForPuzzle,
   DIRS,
   STEP_CAP,
   createCloud,
@@ -468,9 +473,11 @@ export default function CloudSculptor({ locale = "en" }: { locale?: Locale }) {
   const [highScore, setHighScore] = useState(() => loadHighScore("cloud-sculptor", 0));
   const [draft, setDraft] = useState("0");
   const [state, setState] = useState<CloudState>(opening.current);
+  const [cleared, setCleared] = useState<number[]>([]);
 
   useEffect(() => {
     if (state.status === "win") {
+      setCleared(markStageCleared("cloud-sculptor", puzzleIndexForSeed(seed), PUZZLE_COUNT));
       const score = Math.max(10, 100 - state.steps * 10);
       const { isNewBest, bestScore } = saveHighScore("cloud-sculptor", score);
       if (isNewBest) setHighScore(bestScore);
@@ -478,7 +485,7 @@ export default function CloudSculptor({ locale = "en" }: { locale?: Locale }) {
         window.dispatchEvent(new CustomEvent("oiyo:game-score", { detail: { slug: "cloud-sculptor", score } }));
       }
     }
-  }, [state.status, state.steps]);
+  }, [state.status, state.steps, seed]);
   const [shown, setShown] = useState<CloudState>(opening.current);
   const [glide, setGlide] = useState<CloudGlide | null>(null);
   const [busy, setBusy] = useState(false);
@@ -538,7 +545,9 @@ export default function CloudSculptor({ locale = "en" }: { locale?: Locale }) {
   }, []);
 
   useEffect(() => {
-    const fromUrl = readSeed();
+    const done = loadClearedStages("cloud-sculptor", PUZZLE_COUNT);
+    setCleared(done);
+    const fromUrl = readSeed() || seedForPuzzle(nextOpenStage(done, PUZZLE_COUNT));
     if (fromUrl === 0) return;
     const next = createCloud(fromUrl);
     setSeed(fromUrl);
@@ -705,6 +714,13 @@ export default function CloudSculptor({ locale = "en" }: { locale?: Locale }) {
         <p className="line-clamp-2 text-sm leading-6 text-muted-foreground sm:line-clamp-none">{copy.lead}</p>
         <p className="hidden text-xs leading-5 text-muted-foreground sm:block">{copy.keys}</p>
       </header>
+      <StageBar
+        count={PUZZLE_COUNT}
+        current={puzzleIndexForSeed(seed)}
+        cleared={cleared}
+        locale={locale}
+        onSelect={(i) => load(seedForPuzzle(i))}
+      />
       <div className="grid grid-cols-2 gap-2 text-center text-sm">
         <div className="rounded-xl bg-muted p-2">
           <b>{copy.steps}</b>

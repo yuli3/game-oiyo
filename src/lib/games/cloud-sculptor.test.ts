@@ -9,7 +9,10 @@ import {
   blow,
   cellX,
   cellY,
+  PUZZLE_COUNT,
   createCloud,
+  puzzleIndexForSeed,
+  seedForPuzzle,
   destination,
   makeCloud,
   mixSeed,
@@ -26,6 +29,12 @@ const SOLUTIONS: Record<string, readonly Dir[]> = {
   "cross-cut": ["S", "E"],
   "high-blow": ["W", "N", "N"],
   "shed-east": ["E", "W", "S"],
+  "low-shelf": ["E", "N", "N"],
+  "side-wall": ["E", "E", "N"],
+  "split-gust": ["W", "W", "E"],
+  "twin-peaks": ["S", "N", "N"],
+  "long-shear": ["S", "S", "N", "N"],
+  "full-rim": ["N", "N", "S", "S"],
 };
 
 function replay(id: string, actions: readonly Dir[]): CloudState {
@@ -33,7 +42,7 @@ function replay(id: string, actions: readonly Dir[]): CloudState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 80; seed += 1) {
+  for (let seed = 0; seed < 400; seed += 1) {
     if (createCloud(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -115,6 +124,11 @@ describe("cloud sculptor", () => {
     expect(north.dot(up)).toBeGreaterThan(south.dot(up));
   });
 
+  it("ships ten stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(10);
+    for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
+  });
+
   it("keeps one hand-checked shortest carving for each sky", () => {
     for (const [id, solution] of Object.entries(SOLUTIONS)) {
       const start = createCloud(seedFor(id));
@@ -177,7 +191,7 @@ describe("cloud sculptor", () => {
 
   it("rebuilds the same sky from the same seed", () => {
     const seen = new Set<string>();
-    for (let seed = 0; seed < 40; seed += 1) {
+    for (let seed = 0; seed < 200; seed += 1) {
       const sky = createCloud(seed);
       expect(createCloud(seed)).toEqual(sky);
       expect(mixSeed(seed)).toBe(mixSeed(seed));
