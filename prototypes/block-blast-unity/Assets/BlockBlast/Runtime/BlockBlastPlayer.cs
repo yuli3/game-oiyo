@@ -186,7 +186,6 @@ public class BlockBlastPlayer : MonoBehaviour
     private void Awake()
     {
         switch (OiyoLang.Pick("ko", "en", "ja", "es")) { case "en": currentLang = Language.EN; break; case "ja": currentLang = Language.JA; break; case "es": currentLang = Language.ES; break; default: currentLang = Language.KO; break; }
-        InitLocalization();
         InitStages();
         InitShapeTemplates();
         SetupCameraAndLighting();
@@ -196,14 +195,6 @@ public class BlockBlastPlayer : MonoBehaviour
         LoadStage(0);
     }
 
-    private void InitLocalization()
-    {
-        // Detected system language or default KO
-        if (Application.systemLanguage == SystemLanguage.Korean) currentLang = Language.KO;
-        else if (Application.systemLanguage == SystemLanguage.Japanese) currentLang = Language.JA;
-        else if (Application.systemLanguage == SystemLanguage.Spanish) currentLang = Language.ES;
-        else currentLang = Language.EN;
-    }
 
     private void InitStages()
     {
@@ -1388,7 +1379,8 @@ public class BlockBlastPlayer : MonoBehaviour
 
         // Score
         string scoreLabel = currentLang == Language.KO ? "점수" : currentLang == Language.JA ? "スコア" : currentLang == Language.ES ? "Puntos" : "Score";
-        GUILayout.Label(string.Format("💎 {0}: <color=#ffd700><b>{1}</b></color> (최고: {2})", scoreLabel, currentScore, bestScore), GUILayout.Width(220));
+        string bestLabel = currentLang == Language.KO ? "최고" : currentLang == Language.JA ? "最高" : currentLang == Language.ES ? "Récord" : "Best";
+        GUILayout.Label(string.Format("💎 {0}: <color=#ffd700><b>{1}</b></color> ({2}: {3})", scoreLabel, currentScore, bestLabel, bestScore), GUILayout.Width(220));
 
         GUILayout.FlexibleSpace();
 
