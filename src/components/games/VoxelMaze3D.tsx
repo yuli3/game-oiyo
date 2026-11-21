@@ -1,4 +1,5 @@
 import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import * as THREE from "three";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
@@ -26,6 +27,7 @@ export default function VoxelMaze3D() {
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [gameState, setGameState] = useState<VoxelMazeState>(createInitialVoxelMazeState);
   const [shareCardCopied, setShareCardCopied] = useState(false);
+  useRunRecord("voxel-maze-3d", gameState.gameOver || gameState.levelCleared, gameState.score);
   const stateRef = useRef<VoxelMazeState>(gameState);
   stateRef.current = gameState;
 

@@ -1,4 +1,5 @@
 import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import MazeRunnerScene from './MazeRunnerScene';
@@ -141,6 +142,7 @@ export default function MazeRunner({ locale }: Props) {
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [gameState, setGameState] = useState<MazeRunnerState>(() => createInitialMazeRunnerState(1));
   const [shareCopied, setShareCopied] = useState(false);
+  useRunRecord("maze-runner-3d", gameState.status === 'escaped' || gameState.status === 'timeout', gameState.score);
   const [muted, setMuted] = useState(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {

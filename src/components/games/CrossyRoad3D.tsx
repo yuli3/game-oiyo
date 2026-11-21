@@ -1,4 +1,5 @@
 import { useGameText } from "../../lib/games/game-text";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import { HOP_ACROSS_TEXT } from "../../lib/games/text/hop-across-3d";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CrossyRoadEngine } from '../../lib/games/crossy-road';
@@ -41,6 +42,7 @@ export default function CrossyRoad3D({ locale: pageLocale }: { locale?: string }
   const [highScore, setHighScore] = useState<number>(0);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [deathReason, setDeathReason] = useState<string>('');
+  useRunRecord("hop-across-3d", isGameOver, score);
 
   // Audio Context
   const audioCtxRef = useRef<AudioContext | null>(null);

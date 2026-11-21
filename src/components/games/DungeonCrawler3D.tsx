@@ -1,4 +1,5 @@
 import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import * as THREE from "three";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
@@ -189,6 +190,7 @@ export default function DungeonCrawler3D() {
   }, []);
 
   const [shareCardCopied, setShareCardCopied] = useState(false);
+  useRunRecord("dungeon-crawler-3d", gameState.gameOver || gameState.floorCleared, gameState.floor);
 
   useEffect(() => {
     if (gameState.floorCleared) {
