@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useRunRecord } from "../../lib/games/use-run-record";
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import { celebrate } from '../../lib/games/celebration';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
@@ -120,6 +121,7 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [gameState, setGameState] = useState<GravityRollerState>(() => createInitialState(0));
   const [shareCardCopied, setShareCardCopied] = useState(false);
+  useRunRecord("gravity-roller-3d", gameState.status === 'cleared' || gameState.status === 'failed', gameState.score);
   const [muted, setMuted] = useState(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {

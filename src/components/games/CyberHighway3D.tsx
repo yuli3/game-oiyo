@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Share2 } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
@@ -254,6 +255,7 @@ export default function CyberHighway3D() {
   }, []);
 
   const [shareCardCopied, setShareCardCopied] = useState(false);
+  useRunRecord("cyber-highway-3d", gameState.gameOver, gameState.score);
 
   const handleShareCard = useCallback(async () => {
     try {

@@ -1,4 +1,5 @@
 import StageBar from './StageBar';
+import { useRunRecord } from "../../lib/games/use-run-record";
 import { useEnglishSourceText } from "../../lib/games/game-text";
 import { SHADOW_STEALTH_TEXT } from "../../lib/games/text/shadow-stealth";
 import type { Locale } from "../../lib/i18n";
@@ -76,6 +77,7 @@ export default function ShadowStealth() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const [shareCardCopied, setShareCardCopied] = useState(false);
+  useRunRecord("shadow-stealth", gameState.isGameOver || gameState.isVictory, gameState.score);
 
   const inputStateRef = useRef({
     up: false,

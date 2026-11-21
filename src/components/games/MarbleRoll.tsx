@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useRunRecord } from '../../lib/games/use-run-record';
 import MarbleRollScene from './MarbleRollScene';
 import {
   type MarbleState,
@@ -139,6 +140,7 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
   const [marble, setMarble] = useState<MarbleState>(createInitialMarbleState);
   const [bestTime, setBestTime] = useState<number | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
+  useRunRecord("marble-roll-3d", marble.status === 'cleared', marble.elapsedTime, "seconds");
   const [muted, setMuted] = useState(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {

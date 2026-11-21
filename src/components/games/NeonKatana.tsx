@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import {
   createInitialKatanaState,
   executeParry,
@@ -166,6 +167,7 @@ export default function NeonKatana({ locale = "ko" }: NeonKatanaProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gameStateRef = useRef<GameState>(createInitialKatanaState());
   const [uiState, setUiState] = useState<GameState>(gameStateRef.current);
+  useRunRecord("neon-katana", uiState.isGameOver, uiState.score);
   const [highScore, setHighScore] = useState(() => loadHighScore("neon-katana", 0));
   const [ratingPopup, setRatingPopup] = useState<{ text: string; color: string } | null>(null);
 

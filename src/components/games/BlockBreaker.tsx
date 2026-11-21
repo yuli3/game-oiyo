@@ -1,4 +1,5 @@
 import { ENDLESS_STAGE_CAP, finaleLabel, isFinalStage, nextCappedStage } from "@/lib/games/stage-progress";
+import { useRunRecord } from "../../lib/games/use-run-record";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import BlockBreakerScene from './BlockBreakerScene';
@@ -191,6 +192,7 @@ const UI_TEXT: Record<Locale, {
 export default function BlockBreaker({ locale }: Props) {
   const t = UI_TEXT[locale] ?? UI_TEXT.en;
   const [gameState, setGameState] = useState<BlockBreakerState>(() => createInitialBlockBreakerState());
+  useRunRecord("block-breaker-3d", gameState.status === 'gameover' || gameState.status === 'cleared', gameState.score);
   const [shareCopied, setShareCopied] = useState(false);
   const [muted, setMuted] = useState<boolean>(() => {
     try {
