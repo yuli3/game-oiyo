@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import StageBar from "./StageBar";
 import { loadClearedStages, markStageCleared, nextOpenStage } from "@/lib/games/stage-progress";
 
@@ -54,7 +54,7 @@ export default function ScoreStages({ slug, targets, score, locale, track = true
         <span>{Math.min(score, target).toLocaleString()} / {target.toLocaleString()}</span>
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full border border-border/40 bg-muted">
-        <div className="h-full bg-primary transition-all duration-300" style={{ width: `${pct}%` }} />
+        <div className="h-full w-(--stage-pct) bg-primary transition-all duration-300" style={{ "--stage-pct": `${pct}%` } as CSSProperties} />
       </div>
     </div>
   );
