@@ -34,6 +34,19 @@ import {
     type KurodokoMode as Mode,
 } from '../../lib/games/kurodoko-save';
 import { LOGIC_CELL_SPRITES, KURODOKO_UI_SPRITES } from '../../lib/games/sprites';
+import StageBar from './StageBar';
+import { finaleLabel, loadClearedStages, markStageCleared, nextOpenStage } from '../../lib/games/stage-progress';
+import { KURODOKO_STAGE_COUNT, KURODOKO_STAGE_SLUG, kurodokoStage, kurodokoStageForSeed } from '../../lib/games/kurodoko-stages';
+
+/** Stage copy (stage range 2026-11-22). */
+const STAGE_COPY: Record<string, { tab: string; next: string }> = {
+    ko: { tab: '단계 30', next: '다음 단계' },
+    en: { tab: '30 Stages', next: 'Next stage' },
+    ja: { tab: '30ステージ', next: '次のステージ' },
+    zh: { tab: '30 关', next: '下一关' },
+    fr: { tab: '30 niveaux', next: 'Niveau suivant' },
+    es: { tab: '30 niveles', next: 'Siguiente nivel' },
+};
 
 function TiltKurodokoButton({
     children,
@@ -155,6 +168,9 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [copied, setCopied] = useState(false);
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
     const [shareCardCopied, setShareCardCopied] = useState(false);
+    const stageCopy = STAGE_COPY[locale] ?? STAGE_COPY.en;
+    const [stage, setStage] = useState<number | null>(null);
+    const [stageCleared, setStageCleared] = useState<number[]>([]);
 
     const challengeUrl = typeof window !== 'undefined'
         ? buildChallengeUrl({
@@ -264,7 +280,9 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             setMoves(saved.moves);
             setSeconds(restoredKurodokoSeconds(saved));
             setValidation(validateKurodokoBoard(playableBoard(saved.marks), restoredPuzzle));
+            if (saved.mode === 'free') setStage(kurodokoStageForSeed(saved.difficulty, saved.seed));
         }
+        setStageCleared(loadClearedStages(KURODOKO_STAGE_SLUG, KURODOKO_STAGE_COUNT));
         setHydrated(true);
     }, []);
 
@@ -294,9 +312,33 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setSeconds(0);
         setValidation({ ok: true, complete: false, error: null });
         setActiveCell(0);
+        setStage(null);
         clearKurodokoSaveV1();
         MobileHapticsPro.selectionClick();
     }, []);
+
+    const loadStage = useCallback((index: number) => {
+        const next = kurodokoStage(index);
+        const p = generateKurodokoPuzzle(next.difficulty, mulberry32(next.seed)).puzzle;
+        setMode('free');
+        setDifficulty(next.difficulty);
+        setDailyDate(todayKey());
+        setSeed(next.seed);
+        setPuzzle(p);
+        setBoard(initialMarks(p));
+        setHistory([]);
+        setMoves(0);
+        setSeconds(0);
+        setValidation({ ok: true, complete: false, error: null });
+        setActiveCell(0);
+        setStage(index);
+        clearKurodokoSaveV1();
+        MobileHapticsPro.selectionClick();
+    }, []);
+
+    useEffect(() => {
+        if (validation.complete && stage !== null) setStageCleared(markStageCleared(KURODOKO_STAGE_SLUG, stage, KURODOKO_STAGE_COUNT));
+    }, [validation.complete, stage]);
 
     const toggle = (r: number, c: number, reverse = false) => {
         if (validation.complete || puzzle[r][c] !== null) return;
@@ -393,8 +435,13 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     : "relative"
             }
         >
-            <GameContainer title={t.title} subtitle={a11y.subtitle} resetLabel={a11y.reset} onReset={() => newPuzzle(mode === 'daily' ? 'daily' : difficulty)}>
+            <GameContainer title={t.title} subtitle={a11y.subtitle} resetLabel={a11y.reset} onReset={() => (stage !== null ? loadStage(stage) : newPuzzle(mode === 'daily' ? 'daily' : difficulty))}>
                 <p className="text-xs text-muted-foreground mb-4 leading-relaxed">{t.desc}</p>
+                {stage !== null && (
+                    <div className="mb-3 max-h-28 overflow-y-auto" data-kurodoko-stages>
+                        <StageBar count={KURODOKO_STAGE_COUNT} current={stage} cleared={stageCleared} locale={locale} onSelect={loadStage} />
+                    </div>
+                )}
 
                 <div className="mb-4 flex flex-wrap items-center gap-2">
                     <div className="inline-flex flex-wrap gap-1">
@@ -413,11 +460,16 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         </TiltKurodokoButton>
                         {(['easy', 'medium', 'hard'] as Difficulty[]).map((d) => (
                             <TiltKurodokoButton key={d} onClick={() => newPuzzle(d)}
-                                ariaPressed={mode === 'free' && difficulty === d}
-                                className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${mode === 'free' && difficulty === d ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                                ariaPressed={mode === 'free' && stage === null && difficulty === d}
+                                className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${mode === 'free' && stage === null && difficulty === d ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
                                 {t[d]}
                             </TiltKurodokoButton>
                         ))}
+                        <TiltKurodokoButton onClick={() => loadStage(stage ?? nextOpenStage(stageCleared, KURODOKO_STAGE_COUNT))}
+                            ariaPressed={stage !== null}
+                            className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${stage !== null ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                            {stageCopy.tab}
+                        </TiltKurodokoButton>
                     </div>
                     <div className="ml-auto flex items-center gap-1.5">
                         <TiltKurodokoButton onClick={handleAutoMark} disabled={validation.complete}
@@ -512,6 +564,14 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <p className="text-lg font-black text-primary">🎉 {t.win}</p>
                         <p className="mt-1 text-xs font-bold text-muted-foreground">{t.moves} {moves} · {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')} · {mode === 'daily' ? t.daily : t[difficulty]}</p>
                         <div className="mt-3 flex flex-wrap justify-center gap-2">
+                            {stage !== null && (
+                                <TiltKurodokoButton
+                                    onClick={() => loadStage(stage + 1 < KURODOKO_STAGE_COUNT ? stage + 1 : 0)}
+                                    className="min-h-11 px-4 py-2 rounded-xl bg-primary text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
+                                >
+                                    {stage + 1 < KURODOKO_STAGE_COUNT ? stageCopy.next : finaleLabel(locale)}
+                                </TiltKurodokoButton>
+                            )}
                             <TiltKurodokoButton
                                 onClick={handleShareCard}
                                 className="min-h-11 px-4 py-2 rounded-xl border border-primary/50 bg-primary/20 shadow-xs text-xs font-bold text-primary hover:bg-primary/30 transition-colors flex items-center gap-1.5"

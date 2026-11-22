@@ -55,6 +55,29 @@ import {
   downloadShareCard,
 } from "../../lib/games/share-card";
 import type { Locale } from "../../lib/i18n";
+import StageBar from "./StageBar";
+import { finaleLabel, loadClearedStages, markStageCleared, nextOpenStage, STAGE_LABEL } from "../../lib/games/stage-progress";
+import {
+  WORDLE_STAGE_COUNT,
+  WORDLE_STAGE_SLUG,
+  wordleStageGuessLimit,
+  wordleStagePassed,
+  wordleStageSeed,
+} from "../../lib/games/wordle-stages";
+
+/** Word stages copy (stage range 2026-11-22). {n} stage, {limit} guesses. */
+const STAGE_COPY: Record<Locale, { tab: string; goal: string; cleared: string; notYet: string; next: string }> = {
+  ko: { tab: "단계", goal: "{limit}번 안에 맞히기", cleared: "단계 {n} 클리어!", notYet: "단계 {n}: {limit}번 안에 맞혀야 해요", next: "다음 단계" },
+  en: { tab: "Stages", goal: "Solve in {limit} guesses", cleared: "Stage {n} cleared!", notYet: "Stage {n}: solve it in {limit} guesses", next: "Next stage" },
+  ja: { tab: "ステージ", goal: "{limit}回以内に当てる", cleared: "ステージ {n} クリア!", notYet: "ステージ {n}: {limit}回以内に当てましょう", next: "次のステージ" },
+  zh: { tab: "关卡", goal: "{limit} 次内猜中", cleared: "第 {n} 关通过！", notYet: "第 {n} 关：需在 {limit} 次内猜中", next: "下一关" },
+  fr: { tab: "Niveaux", goal: "Trouver en {limit} essais", cleared: "Niveau {n} réussi !", notYet: "Niveau {n} : trouvez en {limit} essais", next: "Niveau suivant" },
+  es: { tab: "Niveles", goal: "Acierta en {limit} intentos", cleared: "¡Nivel {n} superado!", notYet: "Nivel {n}: acierta en {limit} intentos", next: "Siguiente nivel" },
+};
+
+function fillStage(template: string, values: Record<string, number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? ""));
+}
 
 const DATA_BASE = "/data/wordle";
 const ROWS = [
@@ -279,6 +302,12 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
     useArcadePortal({ locale: loc });
 
   const [phase, setPhase] = useState<FlowPhase>("title");
+  const stageCopy = STAGE_COPY[loc] ?? STAGE_COPY.en;
+  const [stage, setStage] = useState<number | null>(null);
+  const [stageCleared, setStageCleared] = useState<number[]>([]);
+  useEffect(() => {
+    setStageCleared(loadClearedStages(WORDLE_STAGE_SLUG, WORDLE_STAGE_COUNT));
+  }, []);
   const [targets, setTargets] = useState<string[]>([]);
   const [valid, setValid] = useState<Set<string>>(new Set());
   const [game, setGame] = useState<WordleState | null>(null);
@@ -383,8 +412,9 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
   );
 
   const start = useCallback(
-    (mode: WordleMode, seedOverride?: number) => {
+    (mode: WordleMode, seedOverride?: number, stageIndex?: number) => {
       if (!targets.length) return;
+      setStage(stageIndex ?? null);
       const date = mode === "daily" ? localDateKey() : null;
       const seed =
         seedOverride ??
@@ -509,6 +539,9 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
     } else {
       clearWordleSave();
       setPhase("result");
+      if (stage !== null && wordleStagePassed(stage, game)) {
+        setStageCleared(markStageCleared(WORDLE_STAGE_SLUG, stage, WORDLE_STAGE_COUNT));
+      }
       if (!analyticsCompleted.current) {
         analyticsCompleted.current = true;
         track("game_complete", game.mode, {
@@ -532,7 +565,7 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
         }
       }
     }
-  }, [game, elapsed, track]);
+  }, [game, elapsed, track, stage]);
 
   // Flip Animation on New Guess
   useEffect(() => {
@@ -780,7 +813,30 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
       onStart={() => start("daily")}
       onResume={() => setPhase("play")}
       onPause={pause}
-      onRetry={() => start(game.mode)}
+      onRetry={() => (stage !== null ? start("random", wordleStageSeed(stage), stage) : start(game.mode))}
+      resultExtra={
+        stage !== null ? (
+          <div className="space-y-2" data-wordle-stage-result>
+            <p className="text-sm font-bold text-foreground">
+              {wordleStagePassed(stage, game)
+                ? fillStage(stageCopy.cleared, { n: stage + 1 })
+                : fillStage(stageCopy.notYet, { n: stage + 1, limit: wordleStageGuessLimit(stage) })}
+            </p>
+            {wordleStagePassed(stage, game) && (
+              <button
+                type="button"
+                onClick={() => {
+                  const next = stage + 1 < WORDLE_STAGE_COUNT ? stage + 1 : 0;
+                  start("random", wordleStageSeed(next), next);
+                }}
+                className="min-h-11 w-full rounded-xl bg-primary px-4 text-xs font-black text-primary-foreground hover:bg-primary/90"
+              >
+                {stage + 1 < WORDLE_STAGE_COUNT ? stageCopy.next : finaleLabel(loc)}
+              </button>
+            )}
+          </div>
+        ) : undefined
+      }
       resultTitle={game.status === "won" ? t.won : t.lost(target)}
       resultSubtitle={`${t.attempts} ${game.guesses.length}/6 · ${t.time} ${formatTime(elapsed)}${game.mode === 'daily' ? ` · ${nextCopy(nextMinutes)}` : ''}`}
       resultStats={[
@@ -860,15 +916,28 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
           <button
             type="button"
             onClick={() => start("random")}
-            aria-pressed={game.mode === "random"}
+            aria-pressed={game.mode === "random" && stage === null}
             className={`inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-bold transition-colors ${
-              game.mode === "random"
+              game.mode === "random" && stage === null
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "bg-muted/40 text-foreground hover:bg-muted"
             }`}
           >
             <img src={WORDLE_GAME_UI_SPRITES.hint} alt="" className="size-4 object-contain" />
             {t.random}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const next = nextOpenStage(stageCleared, WORDLE_STAGE_COUNT);
+              start("random", wordleStageSeed(next), next);
+            }}
+            aria-pressed={stage !== null}
+            className={`inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-bold transition-colors ${
+              stage !== null ? "bg-primary text-primary-foreground shadow-xs" : "bg-muted/40 text-foreground hover:bg-muted"
+            }`}
+          >
+            <span>{stageCopy.tab}</span>
           </button>
           {stats && stats.currentStreak > 0 && (
             <span className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-border bg-muted/40 px-3 text-xs font-bold text-foreground">
@@ -882,6 +951,23 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
             </span>
           )}
         </div>
+
+        {stage !== null && (
+          <div className="w-full space-y-1" data-wordle-stages>
+            <div className="max-h-28 overflow-y-auto">
+              <StageBar
+                count={WORDLE_STAGE_COUNT}
+                current={stage}
+                cleared={stageCleared}
+                locale={loc}
+                onSelect={(i) => start("random", wordleStageSeed(i), i)}
+              />
+            </div>
+            <p className="text-center text-xs font-bold text-muted-foreground">
+              {STAGE_LABEL[loc] ?? STAGE_LABEL.en} {stage + 1}: {fillStage(stageCopy.goal, { limit: wordleStageGuessLimit(stage) })}
+            </p>
+          </div>
+        )}
 
         {/* Wordle 5x6 Board Grid */}
         <div className="grid gap-1.5 py-1" role="grid" aria-label="Palabra de 5 letras Grid">
@@ -976,6 +1062,7 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
         onSelectDate={(selectedDate) => {
           setDailyDate(selectedDate);
           const seed = wordleDateSeed(selectedDate);
+          setStage(null);
           setGame(createWordle(seed, targets.length, "daily", selectedDate));
           guessCount.current = 0;
           startedAt.current = Date.now();
