@@ -8,6 +8,11 @@ public class CrossyRoadPlayer : MonoBehaviour
     public enum Language { KO, EN, JA, ES }
     private Language currentLang = Language.KO;
 
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => currentLang == Language.EN ? OiyoI18n.ForEnglish : currentLang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
+
     public class LocalizedText
     {
         public string ko;
@@ -28,7 +33,7 @@ public class CrossyRoadPlayer : MonoBehaviour
             switch (lang)
             {
                 case Language.KO: return ko;
-                case Language.EN: return en;
+                case Language.EN: return OiyoI18n.En(en);
                 case Language.JA: return ja;
                 case Language.ES: return es;
                 default: return en;
@@ -1093,12 +1098,12 @@ public class CrossyRoadPlayer : MonoBehaviour
         GUILayout.BeginHorizontal();
 
         StageDef def = stages[currentStageIdx];
-        string title = isEndlessMode ? (currentLang == Language.KO ? "무한 자유 홉 모드" : "Endless Mode") : def.name.Get(currentLang);
+        string title = isEndlessMode ? (U("Endless Mode")) : def.name.Get(currentLang);
         GUILayout.Label(string.Format("<b><color=#00f0ff>{0}</color></b>", title), GUILayout.Width(280));
 
         // Score (Meters)
-        string scoreLabel = currentLang == Language.KO ? "거리" : currentLang == Language.JA ? "距離" : currentLang == Language.ES ? "Distancia" : "Dist";
-        string bestLabel = currentLang == Language.KO ? "최고" : currentLang == Language.JA ? "最高" : currentLang == Language.ES ? "Récord" : "Best";
+        string scoreLabel = U("Dist");
+        string bestLabel = U("Best");
         GUILayout.Label(string.Format("🚶 {0}: <b><color=#ffd700>{1}m</color></b> ({2}: {3}m)", scoreLabel, score, bestLabel, bestScore), GUILayout.Width(220));
 
         // Coins
@@ -1107,7 +1112,7 @@ public class CrossyRoadPlayer : MonoBehaviour
         GUILayout.FlexibleSpace();
 
         // Stage Select Modal Button
-        string stageBtn = currentLang == Language.KO ? "📑 스테이지" : currentLang == Language.JA ? "📑 ステージ" : currentLang == Language.ES ? "📑 Etapas" : "📑 Stages";
+        string stageBtn = U("📑 Stages");
         if (GUILayout.Button(stageBtn, GUILayout.Width(110), GUILayout.Height(34)))
         {
             showStageSelect = !showStageSelect;
@@ -1151,25 +1156,25 @@ public class CrossyRoadPlayer : MonoBehaviour
         float by = Screen.height - 110;
 
         // Up Button
-        if (GUI.Button(new Rect(cx - 35, by - 65, 70, 50), "▲\nUP"))
+        if (GUI.Button(new Rect(cx - 35, by - 65, 70, 50), "▲\n" + U("UP")))
         {
             OnVirtualButtonHop("up");
         }
 
         // Down Button
-        if (GUI.Button(new Rect(cx - 35, by + 5, 70, 50), "▼\nDOWN"))
+        if (GUI.Button(new Rect(cx - 35, by + 5, 70, 50), "▼\n" + U("DOWN")))
         {
             OnVirtualButtonHop("down");
         }
 
         // Left Button
-        if (GUI.Button(new Rect(cx - 115, by - 30, 70, 50), "◀\nLEFT"))
+        if (GUI.Button(new Rect(cx - 115, by - 30, 70, 50), "◀\n" + U("LEFT")))
         {
             OnVirtualButtonHop("left");
         }
 
         // Right Button
-        if (GUI.Button(new Rect(cx + 45, by - 30, 70, 50), "▶\nRIGHT"))
+        if (GUI.Button(new Rect(cx + 45, by - 30, 70, 50), "▶\n" + U("RIGHT")))
         {
             OnVirtualButtonHop("right");
         }
@@ -1180,7 +1185,7 @@ public class CrossyRoadPlayer : MonoBehaviour
         GUI.Box(new Rect(Screen.width * 0.5f - 240, Screen.height * 0.5f - 230, 480, 460), "");
         GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 220, Screen.height * 0.5f - 210, 440, 420));
 
-        string mapHeader = currentLang == Language.KO ? "<b><color=#00f0ff>월드 스테이지 선택 (12 Stages)</color></b>" : "<b><color=#00f0ff>Select Stage (12 Stages)</color></b>";
+        string mapHeader = U("<b><color=#00f0ff>Select Stage (12 Stages)</color></b>");
         GUILayout.Label(mapHeader, GUILayout.Height(30));
 
         for (int i = 0; i < stages.Count; i++)
@@ -1201,14 +1206,14 @@ public class CrossyRoadPlayer : MonoBehaviour
         GUILayout.Space(8);
 
         // Endless Mode Toggle
-        string endlessTxt = isEndlessMode ? (currentLang == Language.KO ? "★ 무한 모드 플레이 중 ★" : "★ Playing Endless Mode ★") : (currentLang == Language.KO ? "무한 자유 모드 전환" : "Switch to Endless Mode");
+        string endlessTxt = isEndlessMode ? (U("★ Playing Endless Mode ★")) : (U("Switch to Endless Mode"));
         if (GUILayout.Button(endlessTxt, GUILayout.Height(38)))
         {
             isEndlessMode = true;
             LoadStage(0);
         }
 
-        if (GUILayout.Button(currentLang == Language.KO ? "닫기" : "Close", GUILayout.Height(36)))
+        if (GUILayout.Button(U("Close"), GUILayout.Height(36)))
         {
             showStageSelect = false;
         }
@@ -1221,24 +1226,24 @@ public class CrossyRoadPlayer : MonoBehaviour
         GUI.Box(new Rect(Screen.width * 0.5f - 190, Screen.height * 0.5f - 140, 380, 280), "");
         GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 170, Screen.height * 0.5f - 120, 340, 240));
 
-        GUILayout.Label("<b><color=#ef4444>GAME OVER</color></b>", GUILayout.Height(30));
+        GUILayout.Label("<b><color=#ef4444>" + U("GAME OVER") + "</color></b>", GUILayout.Height(30));
         if (deathCauseText != null)
         {
             GUILayout.Label(string.Format("<color=#fca5a5>{0}</color>", deathCauseText.Get(currentLang)));
         }
 
-        GUILayout.Label(string.Format("Distance: <b><color=#ffd700>{0}m</color></b>", score));
-        GUILayout.Label(string.Format("Coins: <b><color=#38bdf8>{0}</color></b>", coinsCollected));
+        GUILayout.Label(U("Distance") + string.Format(": <b><color=#ffd700>{0}m</color></b>", score));
+        GUILayout.Label(U("Coins") + string.Format(": <b><color=#38bdf8>{0}</color></b>", coinsCollected));
 
         GUILayout.Space(12);
 
-        string retryTxt = currentLang == Language.KO ? "다시 도전" : "Retry";
+        string retryTxt = U("Retry");
         if (GUILayout.Button(retryTxt, GUILayout.Height(40)))
         {
             LoadStage(currentStageIdx);
         }
 
-        string stageTxt = currentLang == Language.KO ? "스테이지 목록" : "Stage Select";
+        string stageTxt = U("Stage Select");
         if (GUILayout.Button(stageTxt, GUILayout.Height(36)))
         {
             showStageSelect = true;
@@ -1252,15 +1257,15 @@ public class CrossyRoadPlayer : MonoBehaviour
         GUI.Box(new Rect(Screen.width * 0.5f - 190, Screen.height * 0.5f - 140, 380, 280), "");
         GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 170, Screen.height * 0.5f - 120, 340, 240));
 
-        GUILayout.Label("<b><color=#22c55e>★ STAGE COMPLETED! ★</color></b>", GUILayout.Height(30));
-        GUILayout.Label(string.Format("Distance: <b><color=#ffd700>{0}m</color></b>", score));
-        GUILayout.Label(string.Format("Coins Collected: <b><color=#38bdf8>{0}</color></b>", coinsCollected));
+        GUILayout.Label("<b><color=#22c55e>★ " + U("STAGE COMPLETED!") + " ★</color></b>", GUILayout.Height(30));
+        GUILayout.Label(U("Distance") + string.Format(": <b><color=#ffd700>{0}m</color></b>", score));
+        GUILayout.Label(U("Coins Collected") + string.Format(": <b><color=#38bdf8>{0}</color></b>", coinsCollected));
 
         GUILayout.Space(12);
 
         if (currentStageIdx < stages.Count - 1)
         {
-            string nextTxt = currentLang == Language.KO ? "다음 스테이지 →" : "Next Stage →";
+            string nextTxt = U("Next Stage →");
             if (GUILayout.Button(nextTxt, GUILayout.Height(42)))
             {
                 LoadStage(currentStageIdx + 1);
@@ -1268,11 +1273,11 @@ public class CrossyRoadPlayer : MonoBehaviour
         }
         else
         {
-            string masterTxt = currentLang == Language.KO ? "★ 12개 전 스테이지 정복 완료! ★" : "★ All 12 Stages Mastered! ★";
+            string masterTxt = U("★ All 12 Stages Mastered! ★");
             GUILayout.Label(masterTxt, GUILayout.Height(36));
         }
 
-        string replayTxt = currentLang == Language.KO ? "현재 스테이지 다시하기" : "Replay Stage";
+        string replayTxt = U("Replay Stage");
         if (GUILayout.Button(replayTxt, GUILayout.Height(36)))
         {
             LoadStage(currentStageIdx);

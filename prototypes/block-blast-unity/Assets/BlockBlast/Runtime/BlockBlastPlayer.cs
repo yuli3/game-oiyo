@@ -8,6 +8,11 @@ public class BlockBlastPlayer : MonoBehaviour
     public enum Language { KO, EN, JA, ES }
     private Language currentLang = Language.KO;
 
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => currentLang == Language.EN ? OiyoI18n.ForEnglish : currentLang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
+
     public class LocalizedText
     {
         public string ko;
@@ -28,7 +33,7 @@ public class BlockBlastPlayer : MonoBehaviour
             switch (lang)
             {
                 case Language.KO: return ko;
-                case Language.EN: return en;
+                case Language.EN: return OiyoI18n.En(en);
                 case Language.JA: return ja;
                 case Language.ES: return es;
                 default: return en;
@@ -1133,12 +1138,12 @@ public class BlockBlastPlayer : MonoBehaviour
                 {
                     gemsCollected++;
                     currentScore += 150;
-                    SpawnFloatingFeedback("+150 GEM!", GetCellCenter(cell.x, cell.y), Color.yellow);
+                    SpawnFloatingFeedback(U("+150 GEM!"), GetCellCenter(cell.x, cell.y), Color.yellow);
                 }
                 else if (ct == CellType.Boss)
                 {
                     bossCurrentHp = Mathf.Max(0, bossCurrentHp - 1);
-                    SpawnFloatingFeedback(string.Format("BOSS HP: {0}", bossCurrentHp), boardCenter + new Vector3(0f, 1.2f, 0f), Color.magenta);
+                    SpawnFloatingFeedback(F("BOSS HP: {0}", bossCurrentHp), boardCenter + new Vector3(0f, 1.2f, 0f), Color.magenta);
                 }
 
                 SpawnCellShards(GetCellCenter(cell.x, cell.y), GetColorForCellType(ct));
@@ -1166,23 +1171,23 @@ public class BlockBlastPlayer : MonoBehaviour
     {
         if (combo <= 1)
         {
-            return currentLang == Language.KO ? "좋아요!" : currentLang == Language.JA ? "ナイス!" : currentLang == Language.ES ? "¡BIEN!" : "GOOD!";
+            return U("GOOD!");
         }
         else if (combo == 2)
         {
-            return currentLang == Language.KO ? "멋져요!" : currentLang == Language.JA ? "グレート!" : currentLang == Language.ES ? "¡GENIAL!" : "GREAT!";
+            return U("GREAT!");
         }
         else if (combo == 3)
         {
-            return currentLang == Language.KO ? "대단해요!" : currentLang == Language.JA ? "すばらしい!" : currentLang == Language.ES ? "¡INCREÍBLE!" : "AMAZING!";
+            return U("AMAZING!");
         }
         else if (combo == 4)
         {
-            return currentLang == Language.KO ? "믿을 수 없어요!" : currentLang == Language.JA ? "アンビリーバブル!" : currentLang == Language.ES ? "¡EXTRAORDINARIO!" : "UNBELIEVABLE!";
+            return U("UNBELIEVABLE!");
         }
         else
         {
-            return currentLang == Language.KO ? "전설의 폭파!" : currentLang == Language.JA ? "伝説的!" : currentLang == Language.ES ? "¡LEGENDARIO!" : "LEGENDARY!";
+            return U("LEGENDARY!");
         }
     }
 
@@ -1321,7 +1326,7 @@ public class BlockBlastPlayer : MonoBehaviour
             if (bombPowerups > 0)
             {
                 // Can revive using bomb!
-                SpawnFloatingFeedback(currentLang == Language.KO ? "배치 불가! 폭탄을 사용하세요!" : "No moves! Use Emergency Bomb!", boardCenter, Color.red);
+                SpawnFloatingFeedback(U("No moves! Use Emergency Bomb!"), boardCenter, Color.red);
             }
             else
             {
@@ -1377,7 +1382,7 @@ public class BlockBlastPlayer : MonoBehaviour
             }
         }
 
-        SpawnFloatingFeedback(currentLang == Language.KO ? "긴급 폭탄 발동!" : "EMERGENCY BOMB!", boardCenter, Color.yellow);
+        SpawnFloatingFeedback(U("EMERGENCY BOMB!"), boardCenter, Color.yellow);
         CheckGameOverConditions();
     }
 
@@ -1387,7 +1392,7 @@ public class BlockBlastPlayer : MonoBehaviour
         shufflePowerups--;
         PlayProceduralTone(520f, 0.2f, "triangle");
         SpawnHandPieces();
-        SpawnFloatingFeedback(currentLang == Language.KO ? "블록 셔플 완료!" : "PIECES SHUFFLED!", boardCenter, Color.green);
+        SpawnFloatingFeedback(U("PIECES SHUFFLED!"), boardCenter, Color.green);
     }
 
     // GUI HUD & Modals
@@ -1403,18 +1408,18 @@ public class BlockBlastPlayer : MonoBehaviour
 
         // Title & Mode
         StageDef currentDef = stages[currentStageIdx];
-        string titleText = isEndlessMode ? (currentLang == Language.KO ? "무한 자유 모드" : "Endless Mode") : currentDef.title.Get(currentLang);
+        string titleText = isEndlessMode ? (U("Endless Mode")) : currentDef.title.Get(currentLang);
         GUILayout.Label(string.Format("<b><color=#00f0ff>{0}</color></b>", titleText), GUILayout.Width(280));
 
         // Score
-        string scoreLabel = currentLang == Language.KO ? "점수" : currentLang == Language.JA ? "スコア" : currentLang == Language.ES ? "Puntos" : "Score";
-        string bestLabel = currentLang == Language.KO ? "최고" : currentLang == Language.JA ? "最高" : currentLang == Language.ES ? "Récord" : "Best";
+        string scoreLabel = U("Score");
+        string bestLabel = U("Best");
         GUILayout.Label(string.Format("💎 {0}: <color=#ffd700><b>{1}</b></color> ({2}: {3})", scoreLabel, currentScore, bestLabel, bestScore), GUILayout.Width(220));
 
         GUILayout.FlexibleSpace();
 
         // Stage Select Button
-        string stageBtn = currentLang == Language.KO ? "📑 스테이지" : currentLang == Language.JA ? "📑 ステージ" : currentLang == Language.ES ? "📑 Etapas" : "📑 Stages";
+        string stageBtn = U("📑 Stages");
         if (GUILayout.Button(stageBtn, GUILayout.Width(110), GUILayout.Height(34)))
         {
             showStageSelect = !showStageSelect;
@@ -1436,7 +1441,7 @@ public class BlockBlastPlayer : MonoBehaviour
 
         // Bomb Button
         GUI.enabled = bombPowerups > 0 && state == GameState.Playing;
-        string bombText = string.Format("💣 BOMB ({0})", bombPowerups);
+        string bombText = "💣 " + F("BOMB ({0})", bombPowerups);
         if (GUILayout.Button(bombText, GUILayout.Width(140), GUILayout.Height(44)))
         {
             UseEmergencyBomb();
@@ -1444,7 +1449,7 @@ public class BlockBlastPlayer : MonoBehaviour
 
         // Shuffle Button
         GUI.enabled = shufflePowerups > 0 && state == GameState.Playing;
-        string shuffleText = string.Format("🔄 SHUFFLE ({0})", shufflePowerups);
+        string shuffleText = "🔄 " + F("SHUFFLE ({0})", shufflePowerups);
         if (GUILayout.Button(shuffleText, GUILayout.Width(140), GUILayout.Height(44)))
         {
             UseShuffleHand();
@@ -1454,7 +1459,7 @@ public class BlockBlastPlayer : MonoBehaviour
         GUILayout.FlexibleSpace();
 
         // Retry Button
-        string retryText = currentLang == Language.KO ? "다시하기" : currentLang == Language.JA ? "リトライ" : currentLang == Language.ES ? "Reintentar" : "Retry";
+        string retryText = U("Retry");
         if (GUILayout.Button(retryText, GUILayout.Width(100), GUILayout.Height(44)))
         {
             LoadStage(currentStageIdx);
@@ -1503,7 +1508,7 @@ public class BlockBlastPlayer : MonoBehaviour
         GUI.Box(new Rect(Screen.width * 0.5f - 240, Screen.height * 0.5f - 230, 480, 460), "");
         GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 220, Screen.height * 0.5f - 210, 440, 420));
 
-        string selectHeader = currentLang == Language.KO ? "<b><color=#00f0ff>스테이지 선택 (12 Stages)</color></b>" : "<b><color=#00f0ff>Select Stage (12 Stages)</color></b>";
+        string selectHeader = U("<b><color=#00f0ff>Select Stage (12 Stages)</color></b>");
         GUILayout.Label(selectHeader, GUILayout.Height(30));
 
         for (int i = 0; i < stages.Count; i++)
@@ -1524,14 +1529,14 @@ public class BlockBlastPlayer : MonoBehaviour
         GUILayout.Space(8);
 
         // Endless Mode Toggle Button
-        string endlessText = isEndlessMode ? (currentLang == Language.KO ? "★ 무한 모드 플레이 중 ★" : "★ Playing Endless Mode ★") : (currentLang == Language.KO ? "무한 자유 모드 전환" : "Switch to Endless Mode");
+        string endlessText = isEndlessMode ? (U("★ Playing Endless Mode ★")) : (U("Switch to Endless Mode"));
         if (GUILayout.Button(endlessText, GUILayout.Height(38)))
         {
             isEndlessMode = true;
             LoadStage(0);
         }
 
-        if (GUILayout.Button(currentLang == Language.KO ? "닫기" : "Close", GUILayout.Height(36)))
+        if (GUILayout.Button(U("Close"), GUILayout.Height(36)))
         {
             showStageSelect = false;
         }
@@ -1544,19 +1549,19 @@ public class BlockBlastPlayer : MonoBehaviour
         GUI.Box(new Rect(Screen.width * 0.5f - 180, Screen.height * 0.5f - 130, 360, 260), "");
         GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 160, Screen.height * 0.5f - 110, 320, 220));
 
-        GUILayout.Label("<b><color=#ef4444>GAME OVER</color></b>", GUILayout.Height(32));
-        GUILayout.Label(string.Format("Score: <b><color=#ffd700>{0}</color></b>", currentScore));
-        GUILayout.Label(string.Format("Max Combo: <b><color=#06b6d4>{0}</color></b>", maxComboAchieved));
+        GUILayout.Label("<b><color=#ef4444>" + U("GAME OVER") + "</color></b>", GUILayout.Height(32));
+        GUILayout.Label(U("Score") + string.Format(": <b><color=#ffd700>{0}</color></b>", currentScore));
+        GUILayout.Label(U("Max Combo") + string.Format(": <b><color=#06b6d4>{0}</color></b>", maxComboAchieved));
 
         GUILayout.Space(12);
 
-        string retryText = currentLang == Language.KO ? "다시 도전" : "Retry";
+        string retryText = U("Retry");
         if (GUILayout.Button(retryText, GUILayout.Height(40)))
         {
             LoadStage(currentStageIdx);
         }
 
-        string stagesText = currentLang == Language.KO ? "스테이지 목록" : "Stage Select";
+        string stagesText = U("Stage Select");
         if (GUILayout.Button(stagesText, GUILayout.Height(36)))
         {
             showStageSelect = true;
@@ -1570,16 +1575,16 @@ public class BlockBlastPlayer : MonoBehaviour
         GUI.Box(new Rect(Screen.width * 0.5f - 190, Screen.height * 0.5f - 140, 380, 280), "");
         GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 170, Screen.height * 0.5f - 120, 340, 240));
 
-        GUILayout.Label("<b><color=#22c55e>★ STAGE CLEAR! ★</color></b>", GUILayout.Height(32));
-        GUILayout.Label(string.Format("Score: <b><color=#ffd700>{0}</color></b>", currentScore));
-        GUILayout.Label(string.Format("Max Combo: <b><color=#06b6d4>{0}</color></b>", maxComboAchieved));
-        GUILayout.Label(string.Format("Lines Cleared: <b><color=#a855f7>{0}</color></b>", totalLinesCleared));
+        GUILayout.Label("<b><color=#22c55e>★ " + U("STAGE CLEAR!") + " ★</color></b>", GUILayout.Height(32));
+        GUILayout.Label(U("Score") + string.Format(": <b><color=#ffd700>{0}</color></b>", currentScore));
+        GUILayout.Label(U("Max Combo") + string.Format(": <b><color=#06b6d4>{0}</color></b>", maxComboAchieved));
+        GUILayout.Label(U("Lines Cleared") + string.Format(": <b><color=#a855f7>{0}</color></b>", totalLinesCleared));
 
         GUILayout.Space(12);
 
         if (currentStageIdx < stages.Count - 1)
         {
-            string nextText = currentLang == Language.KO ? "다음 스테이지 →" : "Next Stage →";
+            string nextText = U("Next Stage →");
             if (GUILayout.Button(nextText, GUILayout.Height(42)))
             {
                 LoadStage(currentStageIdx + 1);
@@ -1587,7 +1592,7 @@ public class BlockBlastPlayer : MonoBehaviour
         }
         else
         {
-            string masterText = currentLang == Language.KO ? "★ 전설의 마스터 달성! 무한 모드 시작 ★" : "★ All 12 Stages Cleared! Start Endless ★";
+            string masterText = U("★ All 12 Stages Cleared! Start Endless ★");
             if (GUILayout.Button(masterText, GUILayout.Height(42)))
             {
                 isEndlessMode = true;
@@ -1595,7 +1600,7 @@ public class BlockBlastPlayer : MonoBehaviour
             }
         }
 
-        string retryText = currentLang == Language.KO ? "현재 스테이지 다시하기" : "Replay Stage";
+        string retryText = U("Replay Stage");
         if (GUILayout.Button(retryText, GUILayout.Height(36)))
         {
             LoadStage(currentStageIdx);

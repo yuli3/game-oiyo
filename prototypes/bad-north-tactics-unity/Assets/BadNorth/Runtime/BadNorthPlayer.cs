@@ -8,6 +8,11 @@ public class BadNorthPlayer : MonoBehaviour
     public enum Language { KO, EN, JA, ES }
     private Language currentLang = Language.KO;
 
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => currentLang == Language.EN ? OiyoI18n.ForEnglish : currentLang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
+
     public class LocalizedText
     {
         public string ko;
@@ -28,7 +33,7 @@ public class BadNorthPlayer : MonoBehaviour
             switch (lang)
             {
                 case Language.KO: return ko;
-                case Language.EN: return en;
+                case Language.EN: return OiyoI18n.En(en);
                 case Language.JA: return ja;
                 case Language.ES: return es;
                 default: return en;
@@ -843,9 +848,9 @@ public class BadNorthPlayer : MonoBehaviour
             selectedSquadIdx = idx;
             PlayTone(520f, 0.1f, "triangle");
             PlayerSquad sq = playerSquads[idx];
-            string sqName = sq.type == SquadType.Swordsmen ? (currentLang == Language.KO ? "검보병 분대 선택" : "Swordsmen Squad") :
-                            sq.type == SquadType.Archers ? (currentLang == Language.KO ? "궁병 분대 선택" : "Archers Squad") :
-                            (currentLang == Language.KO ? "창병 분대 선택" : "Pikemen Squad");
+            string sqName = sq.type == SquadType.Swordsmen ? (U("Swordsmen Squad")) :
+                            sq.type == SquadType.Archers ? (U("Archers Squad")) :
+                            (U("Pikemen Squad"));
             SpawnFloatingText(sqName, sq.centerPos + Vector3.up * 1.5f, Color.yellow);
         }
     }
@@ -882,7 +887,7 @@ public class BadNorthPlayer : MonoBehaviour
         sq.braceTimer = 0f;
 
         PlayTone(380f, 0.12f, "sine");
-        SpawnFloatingText("→ MOVE", target, Color.white);
+        SpawnFloatingText("→ " + U("MOVE"), target, Color.white);
     }
 
     private void UpdateWaveSpawning()
@@ -1000,7 +1005,7 @@ public class BadNorthPlayer : MonoBehaviour
             activeShips.Add(ship);
         }
 
-        string waveAnnounce = string.Format(currentLang == Language.KO ? "★ 제 {0} 파도 바이킹 침공!" : "★ Wave {0} Viking Landing!", waveNum);
+        string waveAnnounce = string.Format(U("★ Wave {0} Viking Landing!"), waveNum);
         SpawnFloatingText(waveAnnounce, new Vector3(0f, 5f, 0f), Color.red);
     }
 
@@ -1099,7 +1104,7 @@ public class BadNorthPlayer : MonoBehaviour
                     {
                         sq.isBraced = true;
                         PlayPikeBraceSound();
-                        SpawnFloatingText("🛡️ BRACED!", sq.centerPos + Vector3.up * 1.2f, Color.yellow);
+                        SpawnFloatingText("🛡️ " + U("BRACED!"), sq.centerPos + Vector3.up * 1.2f, Color.yellow);
                     }
                 }
             }
@@ -1152,7 +1157,7 @@ public class BadNorthPlayer : MonoBehaviour
                     targetH.go.SetActive(false);
                     PlayTone(120f, 0.45f, "noise");
                     shakeTrauma = 0.45f;
-                    SpawnFloatingText("🔥 HOUSE RAZED!", targetH.worldPos, Color.red);
+                    SpawnFloatingText("🔥 " + U("HOUSE RAZED!"), targetH.worldPos, Color.red);
                     CheckDefeatConditions();
                 }
             }
@@ -1238,7 +1243,7 @@ public class BadNorthPlayer : MonoBehaviour
                             float damage = 180f;
                             raider.hp -= damage;
                             PlayPikeBraceSound();
-                            SpawnFloatingText("⚡ IMPALED!", raider.pos, Color.yellow);
+                            SpawnFloatingText("⚡ " + U("IMPALED!"), raider.pos, Color.yellow);
 
                             // Push raider back
                             Vector3 knockDir = (raider.pos - sq.centerPos).normalized;
@@ -1341,7 +1346,7 @@ public class BadNorthPlayer : MonoBehaviour
 
                     if (hitRaider.type == RaiderType.ShieldBearer)
                     {
-                        SpawnFloatingText("🛡️ BLOCKED", hitRaider.pos, Color.gray);
+                        SpawnFloatingText("🛡️ " + U("BLOCKED"), hitRaider.pos, Color.gray);
                     }
                     else
                     {
@@ -1559,16 +1564,16 @@ public class BadNorthPlayer : MonoBehaviour
             GUILayout.BeginHorizontal();
             GUILayout.Label(string.Format("<b><color=#00f0ff>{0}</color></b>", def.name.Get(currentLang)));
             GUILayout.FlexibleSpace();
-            string mapBtnN = currentLang == Language.KO ? "🗺️ 지도" : currentLang == Language.JA ? "🗺️ マップ" : currentLang == Language.ES ? "🗺️ Mapa" : "🗺️ Map";
+            string mapBtnN = U("🗺️ Map");
             if (GUILayout.Button(mapBtnN, GUILayout.Width(78), GUILayout.Height(32))) showArchipelagoModal = !showArchipelagoModal;
-            if (GUILayout.Button(currentLang.ToString(), GUILayout.Width(44), GUILayout.Height(32))) currentLang = (Language)(((int)currentLang + 1) % 4);
+            if (GUILayout.Button(LangCode().ToUpperInvariant(), GUILayout.Width(44), GUILayout.Height(32))) currentLang = (Language)(((int)currentLang + 1) % 4);
             GUILayout.EndHorizontal();
         }
         GUILayout.BeginHorizontal();
         if (!narrow) GUILayout.Label(string.Format("<b><color=#00f0ff>{0}</color></b>", def.name.Get(currentLang)), GUILayout.Width(280));
 
         // Waves & Gold
-        string waveTxt = string.Format(currentLang == Language.KO ? "🌊 파도: {0}/{1}" : "🌊 Wave: {0}/{1}", currentWave, totalWavesInStage);
+        string waveTxt = string.Format(U("🌊 Wave: {0}/{1}"), currentWave, totalWavesInStage);
         GUILayout.Label(waveTxt, GUILayout.Width(narrow ? 110 : 130));
 
         string goldTxt = string.Format("💰 {0}G", coinsEarned);
@@ -1581,7 +1586,7 @@ public class BadNorthPlayer : MonoBehaviour
         if (!narrow) {
 
         // Archipelago Modal Button
-        string mapBtn = currentLang == Language.KO ? "🗺️ 군도 지도" : currentLang == Language.JA ? "🗺️ 群島マップ" : currentLang == Language.ES ? "🗺️ Archipiélago" : "🗺️ Archipelago";
+        string mapBtn = U("🗺️ Archipelago");
         if (GUILayout.Button(mapBtn, GUILayout.Width(120), GUILayout.Height(34)))
         {
             showArchipelagoModal = !showArchipelagoModal;
@@ -1610,9 +1615,9 @@ public class BadNorthPlayer : MonoBehaviour
             int alive = GetAliveSoldiersCount(sq);
             bool isSel = (i == selectedSquadIdx);
 
-            string squadName = (sq.type == SquadType.Swordsmen) ? (currentLang == Language.KO ? "검보병" : "Swords") :
-                               (sq.type == SquadType.Archers) ? (currentLang == Language.KO ? "궁병" : "Archers") :
-                               (currentLang == Language.KO ? "창병" : "Pikes");
+            string squadName = (sq.type == SquadType.Swordsmen) ? (U("Swords")) :
+                               (sq.type == SquadType.Archers) ? (U("Archers")) :
+                               (U("Pikes"));
 
             string btnLabel = string.Format("[{0}] {1}\n({2}/9) {3}", i + 1, squadName, alive, (sq.type == SquadType.Pikemen && sq.isBraced ? "🛡️" : ""));
 
@@ -1627,7 +1632,7 @@ public class BadNorthPlayer : MonoBehaviour
         GUILayout.FlexibleSpace();
 
         // Retry Button
-        string retryText = currentLang == Language.KO ? "다시하기" : currentLang == Language.JA ? "リトライ" : currentLang == Language.ES ? "Reintentar" : "Retry";
+        string retryText = U("Retry");
         if (GUILayout.Button(retryText, GUILayout.Width(retryW), GUILayout.Height(50)))
         {
             LoadIsland(currentStageIdx);
@@ -1702,7 +1707,7 @@ public class BadNorthPlayer : MonoBehaviour
         GUI.Box(box, "");
         GUILayout.BeginArea(ModalInner(box));
 
-        string mapHeader = currentLang == Language.KO ? "<b><color=#00f0ff>군도 지도 - 12개 섬 선택</color></b>" : "<b><color=#00f0ff>Archipelago - Select Island (12 Stages)</color></b>";
+        string mapHeader = U("<b><color=#00f0ff>Archipelago - Select Island (12 Stages)</color></b>");
         GUILayout.Label(mapHeader, GUILayout.Height(30));
 
         for (int i = 0; i < stages.Count; i++)
@@ -1722,7 +1727,7 @@ public class BadNorthPlayer : MonoBehaviour
 
         GUILayout.Space(8);
 
-        if (GUILayout.Button(currentLang == Language.KO ? "닫기" : "Close", GUILayout.Height(36)))
+        if (GUILayout.Button(U("Close"), GUILayout.Height(36)))
         {
             showArchipelagoModal = false;
         }
@@ -1737,15 +1742,15 @@ public class BadNorthPlayer : MonoBehaviour
         GUI.Box(box, "");
         GUILayout.BeginArea(ModalInner(box));
 
-        GUILayout.Label("<b><color=#22c55e>★ ISLAND DEFENDED! ★</color></b>", GUILayout.Height(32));
-        GUILayout.Label(string.Format("Slain: <b><color=#ef4444>{0}</color></b>", raidersSlain));
-        GUILayout.Label(string.Format("Gold Earned: <b><color=#ffd700>{0}G</color></b>", coinsEarned));
+        GUILayout.Label("<b><color=#22c55e>★ " + U("ISLAND DEFENDED!") + " ★</color></b>", GUILayout.Height(32));
+        GUILayout.Label(U("Slain") + string.Format(": <b><color=#ef4444>{0}</color></b>", raidersSlain));
+        GUILayout.Label(U("Gold Earned") + string.Format(": <b><color=#ffd700>{0}G</color></b>", coinsEarned));
 
         GUILayout.Space(12);
 
         if (currentStageIdx < stages.Count - 1)
         {
-            string nextTxt = currentLang == Language.KO ? "다음 섬으로 항해 →" : "Sail to Next Island →";
+            string nextTxt = U("Sail to Next Island →");
             if (GUILayout.Button(nextTxt, GUILayout.Height(42)))
             {
                 LoadIsland(currentStageIdx + 1);
@@ -1753,11 +1758,11 @@ public class BadNorthPlayer : MonoBehaviour
         }
         else
         {
-            string finaleTxt = currentLang == Language.KO ? "★ 12개 전 군도 수호 완결! ★" : "★ All 12 Islands Saved! Victory! ★";
+            string finaleTxt = U("★ All 12 Islands Saved! Victory! ★");
             GUILayout.Label(finaleTxt, GUILayout.Height(36));
         }
 
-        string retryTxt = currentLang == Language.KO ? "이 섬 다시 방어하기" : "Replay Island";
+        string retryTxt = U("Replay Island");
         if (GUILayout.Button(retryTxt, GUILayout.Height(36)))
         {
             LoadIsland(currentStageIdx);
@@ -1773,18 +1778,18 @@ public class BadNorthPlayer : MonoBehaviour
         GUI.Box(box, "");
         GUILayout.BeginArea(ModalInner(box));
 
-        GUILayout.Label("<b><color=#ef4444>ISLAND FALLEN</color></b>", GUILayout.Height(32));
-        GUILayout.Label(currentLang == Language.KO ? "마을이 약탈당하고 방어선이 무너졌습니다." : "The village was raided and the defense collapsed.");
+        GUILayout.Label("<b><color=#ef4444>" + U("ISLAND FALLEN") + "</color></b>", GUILayout.Height(32));
+        GUILayout.Label(U("The village was raided and the defense collapsed."));
 
         GUILayout.Space(14);
 
-        string retryTxt = currentLang == Language.KO ? "재도전" : "Retry";
+        string retryTxt = U("Retry");
         if (GUILayout.Button(retryTxt, GUILayout.Height(40)))
         {
             LoadIsland(currentStageIdx);
         }
 
-        string mapTxt = currentLang == Language.KO ? "군도 지도" : "Archipelago Map";
+        string mapTxt = U("Archipelago Map");
         if (GUILayout.Button(mapTxt, GUILayout.Height(36)))
         {
             showArchipelagoModal = true;
