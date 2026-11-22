@@ -2,8 +2,21 @@
 // Messages come from the Unity build's iframe:
 //   public/prototypes/unity-frame-bridge.js -> oiyo:unity-progress | oiyo:unity-ready | oiyo:unity-error
 //   game code (jslib)                        -> oiyo:game-result (see prototype-result-bridge.ts)
-import { getBest, getRecord, recordAchievementEvent } from "./records";
-import { parsePrototypeResult, savePrototypeResult, type PrototypeResult } from "./prototype-result-bridge";
+import { getBestForConditions, getRecord, recordAchievementEvent, recordBestForConditions, recordResult, type BestConditions } from "./records";
+import { parsePrototypeResult, type PrototypeResult } from "./prototype-result-bridge";
+
+// Unity editions score differently from the React quick-play game on the same page,
+// so their bests live in their own cohort and never overwrite the quick-play best.
+export const UNITY_BEST_CONDITIONS: BestConditions = { seed: "unity-3d", difficulty: "standard", assist: "none" };
+
+/** Saves a Unity run: win/loss/draw to the page's record, score to the Unity cohort. Returns the previous Unity best. */
+export function saveUnityResult(result: PrototypeResult): number {
+  const previous = getBestForConditions(result.slug, UNITY_BEST_CONDITIONS)?.value ?? 0;
+  recordAchievementEvent(result.slug, "played");
+  recordResult(result.slug, result.outcome);
+  if (result.score) recordBestForConditions(result.slug, result.score, "score", UNITY_BEST_CONDITIONS);
+  return previous;
+}
 
 export type ShellLabels = Record<
   | "play" | "replay" | "fullscreen" | "exit" | "best" | "plays" | "win" | "loss" | "draw"
@@ -108,11 +121,11 @@ export function initUnityMainShell(shell: HTMLElement): void {
   };
 
   const formatBest = () => {
-    const best = getBest(slug);
+    const best = getBestForConditions(slug, UNITY_BEST_CONDITIONS);
     const record = getRecord(slug);
     const plays = record.w + record.l + record.d;
     const parts: string[] = [];
-    if (best && best.unit === "score") parts.push(fill(ui.best, { v: fill(ui.score, { v: numberFormat.format(best.value) }) }));
+    if (best) parts.push(fill(ui.best, { v: fill(ui.score, { v: numberFormat.format(best.value) }) }));
     if (plays > 0) parts.push(fill(ui.plays, { n: numberFormat.format(plays) }));
     return { text: parts.join(" · "), played: plays > 0 || Boolean(best) };
   };
@@ -277,10 +290,7 @@ export function initUnityMainShell(shell: HTMLElement): void {
     if (!result) return;
     let previousBest = Infinity;
     try {
-      const best = getBest(slug);
-      previousBest = best && best.unit === "score" ? best.value : 0;
-      recordAchievementEvent(slug, "played");
-      savePrototypeResult(result);
+      previousBest = saveUnityResult(result);
     } catch {
       /* storage blocked */
     }

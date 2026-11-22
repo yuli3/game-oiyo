@@ -37,3 +37,19 @@ describe("fill", () => {
     expect(fill("{x}", {})).toBe("{x}");
   });
 });
+
+describe("saveUnityResult", () => {
+  it("keeps Unity bests apart from the quick-play best", async () => {
+    const store = new Map<string, string>();
+    const ls = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k), clear: () => store.clear(), key: () => null, length: 0 };
+    Object.defineProperty(globalThis, "localStorage", { value: ls, configurable: true });
+    const records = await import("./records");
+    const { saveUnityResult, UNITY_BEST_CONDITIONS } = await import("./unity-main-shell");
+    records.recordBest("grid-clear", 50, "score");
+    expect(saveUnityResult({ slug: "grid-clear", outcome: "w", score: 900 })).toBe(0);
+    expect(saveUnityResult({ slug: "grid-clear", outcome: "l", score: 400 })).toBe(900);
+    expect(records.getBest("grid-clear")?.value).toBe(50);
+    expect(records.getBestForConditions("grid-clear", UNITY_BEST_CONDITIONS)?.value).toBe(900);
+    expect(records.getRecord("grid-clear")).toEqual({ w: 1, l: 1, d: 0 });
+  });
+});
