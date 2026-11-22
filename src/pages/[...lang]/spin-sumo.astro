@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SpinSumo from "../../components/games/SpinSumo";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "팽이 씨름 — 한 폰으로 둘이서 하는 무료 팽이 대결 게임 12판",
+    description: "꾹 눌러 방향과 힘을 고르고 손을 떼면 돌진! 상대 팽이를 판 밖으로 밀어내세요. 컴퓨터와 12개 경기장, 또는 휴대폰 하나로 친구와 2인 대결.",
+  },
+  en: {
+    title: "Spin Sumo — Free one-button spinning top duel for 1 or 2 players",
+    description: "Hold to pick direction and power, release to dash, and knock the other top out of the ring. Twelve arenas against the computer, or two players on one phone.",
+  },
+  ja: {
+    title: "コマずもう — 1台のスマホで2人対戦できる無料コマバトル12場所",
+    description: "長押しで向きと力を選び、離すと突進！相手のコマを土俵の外へ押し出そう。コンピューターと12の土俵、またはスマホ1台で友だちと2人対戦。",
+  },
+  zh: {
+    title: "陀螺相扑 — 一部手机双人对战的免费陀螺游戏，12个场地",
+    description: "按住选择方向和力度，松手就冲！把对方陀螺撞出场外。与电脑挑战12个场地，或用一部手机和朋友双人对战。",
+  },
+  fr: {
+    title: "Sumo de toupies — Duel de toupies gratuit à un bouton, solo ou à deux",
+    description: "Maintenez pour choisir direction et puissance, relâchez pour foncer et éjectez l'autre toupie de l'arène. Douze arènes contre l'ordinateur, ou à deux sur un seul téléphone.",
+  },
+  es: {
+    title: "Sumo de peonzas — Duelo de peonzas gratis de un botón, solo o a dos",
+    description: "Mantén pulsado para elegir dirección y fuerza, suelta para embestir y saca la otra peonza del ring. Doce arenas contra la máquina o dos jugadores en un solo móvil.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["spin-sumo"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <SpinSumo client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="spin-sumo" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

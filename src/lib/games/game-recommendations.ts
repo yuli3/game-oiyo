@@ -177,6 +177,13 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
   "cat-expedition": { emoji: "🐈", cat: "arcade", name: {"ko":"고양이 원정대","en":"Cat Expedition","ja":"ねこ遠征隊","zh":"猫咪远征队","fr":"L'Expédition des chats","es":"La Expedición Gatuna"} },
   "trap-stairs": { emoji: "🪜", cat: "arcade", name: {"ko":"함정 계단","en":"Trap Stairs","ja":"罠の階段","zh":"陷阱台阶","fr":"L'Escalier piégé","es":"La Escalera Trampa"} },
   "alley-appraiser": { emoji: "🔍", cat: "puzzle", name: {"ko":"골목 감정소","en":"Alley Appraiser","ja":"路地裏鑑定所","zh":"胡同鉴定铺","fr":"L'Expert de la ruelle","es":"El Tasador del Callejón"} },
+  "bubble-garden": { emoji: "🫧", cat: "arcade", name: {"ko":"비눗방울 정원","en":"Bubble Garden","ja":"しゃぼん玉ガーデン","zh":"泡泡花园","fr":"Le Jardin de bulles","es":"El Jardín de Burbujas"} },
+  "picture-logic": { emoji: "🖼️", cat: "puzzle", name: {"ko":"그림 로직","en":"Picture Logic","ja":"お絵かきロジック","zh":"数字画谜","fr":"Logique en images","es":"Lógica de dibujos"} },
+  "ice-penguin": { emoji: "🐧", cat: "puzzle", name: {"ko":"펭귄 얼음 배달","en":"Penguin Ice Post","ja":"ペンギン氷上便","zh":"企鹅冰上快递","fr":"Le Manchot postier","es":"El Pingüino Cartero"} },
+  "mirror-lanterns": { emoji: "🪞", cat: "puzzle", name: {"ko":"등불 거울 정원","en":"Lantern Mirror Garden","ja":"灯籠と鏡の庭","zh":"灯笼镜子花园","fr":"Le Jardin des lanternes","es":"El Jardín de Farolillos"} },
+  "typing-defense": { emoji: "⌨️", cat: "arcade", name: {"ko":"타자 방어선","en":"Typing Siege","ja":"タイピング防衛線","zh":"打字守城","fr":"Siège au clavier","es":"Asedio de teclas"} },
+  "spin-sumo": { emoji: "🌀", cat: "arcade", name: {"ko":"팽이 씨름","en":"Spin Sumo","ja":"コマずもう","zh":"陀螺相扑","fr":"Sumo de toupies","es":"Sumo de peonzas"} },
+  "spider-cards": { emoji: "🕷️", cat: "card", name: {"ko":"스파이더 카드","en":"Spider Cards","ja":"スパイダーカード","zh":"蜘蛛纸牌","fr":"Spider Solitaire","es":"Solitario Spider"} },
   "rampart-keeper": { emoji: "🏯", cat: "arcade", name: {"ko":"성벽 지기","en":"Rampart Keeper","ja":"城壁の守り手","zh":"城墙守卫","fr":"Gardien du rempart","es":"Guardián de la muralla"} },
   "link-duel": { emoji: "⚔️", cat: "puzzle", name: {"ko":"링크 대결","en":"Link Duel","ja":"リンク対決","zh":"链接对决","fr":"Duel par lien","es":"Duelo por enlace"} },
   "season-workshop": { emoji: "🥣", cat: "arcade", name: {"ko":"절기 공방","en":"Season Workshop","ja":"節気工房","zh":"节气工坊","fr":"L'Atelier des saisons","es":"El Taller de las Estaciones"} },
@@ -197,6 +204,13 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
  * Players finishing or exploring these games receive hand-tuned next-best suggestions.
  */
 export const CURATED_CLUSTERS: Record<string, string[]> = {
+  "typing-defense": ["word-stack", "rampart-keeper", "five-letter-guess", "aim-trainer"],
+  "spin-sumo": ["link-duel", "liar-onephone", "mini-golf-3d", "stack-tower"],
+  "spider-cards": ["solitaire", "freecell", "hearts-game", "tile-rummy"],
+  "bubble-garden": ["fruit-merge-drop", "block-burst", "animal-pop", "brick-breaker"],
+  "picture-logic": ["sudoku", "hitori", "light-up", "tents-and-trees"],
+  "ice-penguin": ["arrow-walk", "puzzle-15", "maze", "water-sort"],
+  "mirror-lanterns": ["light-up", "loop-road", "firefly-keeper", "frame-weaver"],
   "rampart-keeper": ["dot-tower", "truss-bridge", "shield-isle-tactics", "trap-stairs"],
   "link-duel": ["rhythm-tap", "memory-card-game", "aim-trainer", "number-guessing"],
   "season-workshop": ["dot-farm", "cheese-factory", "village", "alley-appraiser"],

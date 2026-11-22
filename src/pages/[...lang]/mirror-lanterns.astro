@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MirrorLanterns from "../../components/games/MirrorLanterns";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "등불 거울 정원 — 거울을 돌려 빛으로 등불을 밝히는 무료 빛 반사 퍼즐 30단계",
+    description: "밤의 정원에서 구릿빛 거울을 돌려 호박색·푸른 빛줄기를 이끄세요. 같은 색 등불은 모두 켜고 밤꽃은 어둠 속에. 반투명 거울이 빛을 나누는 30단계.",
+  },
+  en: {
+    title: "Lantern Mirror Garden — Free light-beam mirror puzzle in 30 gardens",
+    description: "Turn bronze mirrors to guide amber and blue beams through a night garden. Light every lantern of the same colour and keep night flowers dark. Half-mirrors split beams across 30 stages.",
+  },
+  ja: {
+    title: "灯籠と鏡の庭 — 鏡を回して光で灯籠をともす無料の反射パズル30ステージ",
+    description: "夜の庭で銅の鏡を回し、琥珀と青の光を導こう。同じ色の灯籠をすべて灯し、夜の花は暗いままに。半透明の鏡が光を分ける30ステージ。",
+  },
+  zh: {
+    title: "灯笼镜子花园 — 转动镜子用光点亮灯笼的免费光线反射解谜30关",
+    description: "在夜晚的花园里转动铜镜，引导琥珀色和蓝色光束。点亮所有同色灯笼，让夜花留在黑暗中。半透镜会分光，共30关。",
+  },
+  fr: {
+    title: "Le Jardin des lanternes — Puzzle de miroirs et rayons gratuit en 30 jardins",
+    description: "Tournez les miroirs de bronze pour guider les rayons ambre et bleus dans un jardin de nuit. Allumez chaque lanterne de sa couleur et laissez les fleurs de nuit dans l'ombre. 30 niveaux.",
+  },
+  es: {
+    title: "El Jardín de Farolillos — Puzle de espejos y rayos de luz gratis en 30 jardines",
+    description: "Gira espejos de bronce para guiar rayos ámbar y azules por un jardín nocturno. Enciende cada farolillo de su color y deja a oscuras las flores nocturnas. 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["mirror-lanterns"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <MirrorLanterns client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="mirror-lanterns" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
