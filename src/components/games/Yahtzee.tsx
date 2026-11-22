@@ -346,7 +346,7 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         {isRec && <span className="text-xs font-black text-primary animate-pulse">✨ {t.recommendation}</span>}
                     </div>
                 </td>
-                <td className={`p-0 text-center text-sm w-20 ${cell.used ? 'bg-muted/60 font-black text-foreground' : 'text-muted-foreground/40'}`}>
+                <td className={`p-0 text-center text-sm w-20 ${cell.used ? 'bg-muted/60 font-black text-foreground' : 'text-muted-foreground'}`}>
                     {cell.used ? <span className="inline-flex min-h-11 items-center">{cell.score}</span> : (
                         <button
                             ref={(node) => { if (node) scoreButtonRefs.current.set(category, node); else scoreButtonRefs.current.delete(category); }}

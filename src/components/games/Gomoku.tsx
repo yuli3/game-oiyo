@@ -544,7 +544,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                                 <span className="text-[11px] font-bold text-muted-foreground">흑선 (Black to move)</span>
                             </div>
                             <p className="mt-1 text-muted-foreground">{tsumegoPuzzle.description}</p>
-                            <p className="mt-1 font-bold text-primary/80">💡 힌트: {tsumegoPuzzle.hint}</p>
+                            <p className="mt-1 font-bold text-primary">💡 힌트: {tsumegoPuzzle.hint}</p>
                             {tsumegoFeedback && (
                                 <p className={`mt-2 font-black ${tsumegoFeedback.includes('정답') ? 'text-primary' : 'text-destructive'}`}>
                                     {tsumegoFeedback}

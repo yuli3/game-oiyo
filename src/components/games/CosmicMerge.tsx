@@ -1408,7 +1408,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
             title={blackHoleUsed ? t.blackHoleUsed : t.blackHole}
             className={`min-h-11 px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all ${
               blackHoleUsed
-                ? "border-border/40 bg-muted/30 text-muted-foreground/60 cursor-not-allowed"
+                ? "border-border/40 bg-muted/30 text-muted-foreground cursor-not-allowed"
                 : isDanger
                   ? "border-primary bg-primary text-primary-foreground animate-bounce shadow-md"
                   : "border-border bg-background/85 hover:bg-muted text-foreground"

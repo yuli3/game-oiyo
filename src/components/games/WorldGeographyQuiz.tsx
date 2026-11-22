@@ -425,7 +425,7 @@ export default function WorldGeographyQuiz({ locale }: Props) {
             else cls += ' opacity-50 border-border/40'
             return (
               <TiltGeoChoiceButton key={opt} disabled={selected !== null} onClick={() => choose(opt)} className={cls}>
-                <span className="absolute top-1.5 left-2 text-xs font-mono text-muted-foreground/60">{idx + 1}</span>
+                <span className="absolute top-1.5 left-2 text-xs font-mono text-muted-foreground">{idx + 1}</span>
                 {opt}
               </TiltGeoChoiceButton>
             )

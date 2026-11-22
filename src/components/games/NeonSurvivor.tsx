@@ -1555,7 +1555,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
 
       {/* Bottom Hint */}
       <div className="absolute bottom-2 left-4 right-4 pointer-events-none text-center hidden sm:block">
-        <span className="text-xs font-semibold text-muted-foreground/80 bg-background/70 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-border/50">
+        <span className="text-xs font-semibold text-muted-foreground bg-background/70 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-border/50">
           {t.controlsHint}
         </span>
       </div>
@@ -1991,7 +1991,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
                             ? 'bg-muted text-muted-foreground cursor-default'
                             : canAfford
                             ? 'bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95'
-                            : 'bg-muted text-muted-foreground/60 cursor-not-allowed border border-border'
+                            : 'bg-muted text-muted-foreground cursor-not-allowed border border-border'
                         }`}
                       >
                         {isMax ? (

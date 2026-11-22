@@ -535,7 +535,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
                     className={`h-16 rounded border border-dashed flex items-center justify-center text-xs transition-colors ${
                       canExpand
                         ? 'border-primary/60 bg-primary/10 text-primary cursor-pointer hover:bg-primary/20'
-                        : 'border-border/30 bg-muted/10 text-muted-foreground/30'
+                        : 'border-border/30 bg-muted/10 text-muted-foreground'
                     }`}
                   >
                     {canExpand ? '🔓' : '🔒'}
@@ -588,7 +588,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
                   className={`h-16 rounded border transition-colors flex items-center justify-center text-xs ${
                     isEmptySnap
                       ? 'border-primary bg-primary/20 text-primary ring-2 ring-primary'
-                      : 'border-border/40 bg-background/50 hover:bg-muted/40 text-muted-foreground/20'
+                      : 'border-border/40 bg-background/50 hover:bg-muted/40 text-muted-foreground'
                   }`}
                 >
                   ·

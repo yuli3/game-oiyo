@@ -518,7 +518,7 @@ export default function SpacePinball({ locale }: Props) {
                 <CircleDot
                   key={b}
                   className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                    b <= gameState.ballsLeft ? "text-primary" : "text-muted-foreground/30"
+                    b <= gameState.ballsLeft ? "text-primary" : "text-muted-foreground"
                   }`}
                 />
               ))}

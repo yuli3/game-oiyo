@@ -202,7 +202,7 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
                panel is open or closed — no JS <select>, no framework state. -->
           <details id="header-lang-switcher" class="group relative border-l border-border/40 pl-4" aria-label="Language">
             <summary
-              class="flex cursor-pointer list-none items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground/70 transition-colors hover:text-primary [&::-webkit-details-marker]:hidden"
+              class="flex cursor-pointer list-none items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground transition-colors hover:text-primary [&::-webkit-details-marker]:hidden"
             >
               <span aria-hidden="true">{currentLangItem.flag}</span>{currentLangItem.label}
               <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="transition-transform duration-200 group-open:rotate-180">
@@ -213,7 +213,7 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
               {langItems.map(({ code, label, flag, name }) => (
                 <a
                   href={getLocalizedPath(code)}
-                  class={`rounded-md px-2 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-colors hover:bg-muted/60 hover:text-primary ${locale === code ? "text-primary" : "text-muted-foreground/70"}`}
+                  class={`rounded-md px-2 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-colors hover:bg-muted/60 hover:text-primary ${locale === code ? "text-primary" : "text-muted-foreground"}`}
                  aria-label={name} title={name}><span aria-hidden="true">{flag}</span> {label}</a>
               ))}
             </div>
@@ -295,7 +295,7 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
 
       <!-- Language switcher at bottom -->
       <div class="px-6 pb-6 pt-4 border-t border-border/40 shrink-0">
-        <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 mb-3">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
           {t.common?.selectLanguage ?? "Language"}
         </p>
         <div class="flex flex-wrap gap-2">

@@ -223,7 +223,7 @@
 }
 
 .prose blockquote {
-  @apply border-l-4 border-primary bg-primary/5 px-8 py-4 rounded-r-2xl font-serif text-xl italic tracking-tight text-primary/80;
+  @apply border-l-4 border-primary bg-primary/5 px-8 py-4 rounded-r-2xl font-serif text-xl italic tracking-tight text-primary;
 }
 
 .prose p {

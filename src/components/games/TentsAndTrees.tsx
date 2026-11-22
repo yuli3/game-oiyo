@@ -741,7 +741,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             <GameContainer title={t.title} subtitle={a11y.subtitle} resetLabel={a11y.reset} onReset={() => newPuzzle(mode, difficulty)}>
                 <div className="flex flex-col items-center">
                     <p className="text-sm font-medium text-muted-foreground mb-2 text-center leading-relaxed">{t.desc}</p>
-                    <p className="text-xs text-muted-foreground/80 mb-4 text-center max-w-xs leading-relaxed">{t.note}</p>
+                    <p className="text-xs text-muted-foreground mb-4 text-center max-w-xs leading-relaxed">{t.note}</p>
 
                     <div className="mb-3 inline-flex flex-wrap justify-center gap-1">
                         {(['daily', 'stage', 'free', 'chaos'] as const).map((m) => (
@@ -962,7 +962,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                             onFocus={() => setActiveCell(index)} onKeyDown={(event) => handleGridKeyDown(event, index)}
                                             className={`${common} ${
                                                 mark === 'tent' ? 'bg-rose-100 text-rose-700 shadow-md motion-safe:-translate-y-0.5' :
-                                                mark === 'grass' ? 'bg-muted/50 text-muted-foreground/30' : 'bg-background hover:bg-muted/20 motion-safe:active:scale-95'
+                                                mark === 'grass' ? 'bg-muted/50 text-muted-foreground' : 'bg-background hover:bg-muted/20 motion-safe:active:scale-95'
                                             } ${verdict === 'legal' ? 'ring-2 ring-emerald-600' : ''} ${verdict === 'illegal' ? 'ring-2 ring-stone-500' : ''} ${hint?.cells.some(([hr, hc]) => hr === r && hc === c) ? 'ring-4 ring-amber-400' : ''} ${smartDeduction && ((smartDeduction.type === 'row' && smartDeduction.index === r) || (smartDeduction.type === 'col' && smartDeduction.index === c) || (smartDeduction.type === 'tree' && smartDeduction.pos && smartDeduction.pos[0] === r && smartDeduction.pos[1] === c)) ? 'ring-2 ring-primary ring-offset-1 animate-pulse' : ''}`}
                                         >
                                             {mark === 'tent' && <img src={TENTS_SPRITES.tent} alt="" draggable={false} className="h-7 w-7 object-contain pointer-events-none" aria-hidden="true" />}
