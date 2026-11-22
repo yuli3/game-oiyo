@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MarketMercenaries from "../../components/games/MarketMercenaries";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "장터 용병단 — 용병을 사서 합치고 자동으로 싸우는 무료 오토배틀러 20라운드",
+    description: "장터에서 용병을 사고, 같은 용병 3명을 합쳐 별을 올리고, 앞줄·뒷줄을 짜서 상대 용병단과 자동 전투! 칼잡이·방패꾼·궁수·약초꾼 조합 보너스와 두목전까지 20라운드.",
+  },
+  en: {
+    title: "Market Mercenaries — Free auto-battler with 20 rounds",
+    description: "Buy mercenaries at the market, merge three copies for a star, set your front and back rows and watch the fight. Blades, guards, archers and herbalists give guild bonuses across 20 rounds with two boss fights.",
+  },
+  ja: {
+    title: "市場の傭兵団 — 傭兵を買って合体させる無料オートバトラー20ラウンド",
+    description: "市場で傭兵を買い、同じ傭兵3人を合体させて星を増やし、前列・後列を組んで相手と自動バトル！剣士・盾持ち・弓兵・薬師の組ボーナスと親分戦まで20ラウンド。",
+  },
+  zh: {
+    title: "集市佣兵团 — 买佣兵、合成升星的免费自走棋20回合",
+    description: "在集市买佣兵，3个相同佣兵合成升星，排好前排后排，与对手佣兵团自动对战！剑客、盾兵、弓手、药师组合加成，还有头目战，共20回合。",
+  },
+  fr: {
+    title: "Les Mercenaires du marché — Auto-battler gratuit en 20 manches",
+    description: "Achetez des mercenaires au marché, fusionnez trois exemplaires pour gagner une étoile, réglez vos lignes avant et arrière et regardez le combat. Lames, gardes, archers et herboristes donnent des bonus sur 20 manches.",
+  },
+  es: {
+    title: "Mercenarios del Mercado — Autobattler gratis de 20 rondas",
+    description: "Compra mercenarios en el mercado, fusiona tres iguales para ganar una estrella, organiza las filas delantera y trasera y mira la pelea. Espadas, guardias, arqueros y herbolarios dan bonus en 20 rondas con dos jefes.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["market-mercenaries"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <MarketMercenaries client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="market-mercenaries" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
