@@ -5,10 +5,12 @@ using UnityEngine;
 
 public class PeglinRoguePlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
     // Page language (?lang=): Korean when ko, English for every other locale.
     static bool _isKoInit, _isKo;
     static bool IsKo { get { if (!_isKoInit) { _isKo = OiyoLang.Pick("ko", "en") == "ko"; _isKoInit = true; } return _isKo; } }
-    static string T(string ko, string en) => IsKo ? ko : en;
+    static string T(string ko, string en) => IsKo ? ko : OiyoI18n.Ui(en, OiyoI18n.Page);
     public enum PegType { Normal, Crit, Refresh, Bomb, Bumper }
 
     public class PegData
@@ -335,7 +337,7 @@ public class PeglinRoguePlayer : MonoBehaviour
         isBallActive = false;
         ballGo.SetActive(false);
 
-        ShowBanner("STAGE " + s.stageNum + ": " + T(s.titleKo, s.name) + "!", 2.5f);
+        ShowBanner(U("STAGE ") + s.stageNum + ": " + T(s.titleKo, s.name) + "!", 2.5f);
         GeneratePegsForStage(s.stageNum);
     }
 
@@ -670,28 +672,28 @@ public class PeglinRoguePlayer : MonoBehaviour
                 isCritActive = true;
                 AddScreenTrauma(0.18f);
                 PlayClip(sndCrit, 1.0f);
-                SpawnFloatText("CRIT ACTIVE! x2", peg.pos, Color.yellow);
+                SpawnFloatText(U("CRIT ACTIVE! x2"), peg.pos, Color.yellow);
                 break;
 
             case PegType.Refresh:
                 turnBaseDamage += 6;
                 PlayClip(sndRefresh, 1.0f);
                 RefreshAllHitPegs();
-                SpawnFloatText("PEGS REFRESHED!", peg.pos, Color.green);
+                SpawnFloatText(U("PEGS REFRESHED!"), peg.pos, Color.green);
                 break;
 
             case PegType.Bomb:
                 turnBaseDamage += 60;
                 AddScreenTrauma(0.4f);
                 PlayClip(sndBomb, 1.1f);
-                SpawnFloatText("BOMB +60!", peg.pos, new Color(1f, 0.4f, 0.1f));
+                SpawnFloatText(U("BOMB +60!"), peg.pos, new Color(1f, 0.4f, 0.1f));
                 DetonateBomb(peg.pos, 2.3f);
                 break;
 
             case PegType.Bumper:
                 turnBaseDamage += 8;
                 AddScreenTrauma(0.12f);
-                SpawnFloatText("BOUNCE +8", peg.pos, new Color(0.9f, 0.3f, 1f));
+                SpawnFloatText(U("BOUNCE +8"), peg.pos, new Color(0.9f, 0.3f, 1f));
                 break;
         }
     }
@@ -755,7 +757,7 @@ public class PeglinRoguePlayer : MonoBehaviour
 
         PlayClip(sndJackpot, 1.0f);
         AddScreenTrauma(0.25f);
-        SpawnFloatText(bucket.label + " -> " + finalDamage + " DMG!", new Vector3(dropXToBucket(bucket), -5.5f, 0f), bucket.color);
+        SpawnFloatText(U(bucket.label) + " -> " + finalDamage + U(" DMG!"), new Vector3(dropXToBucket(bucket), -5.5f, 0f), bucket.color);
 
         yield return new WaitForSeconds(0.6f);
 
@@ -769,13 +771,13 @@ public class PeglinRoguePlayer : MonoBehaviour
             int shieldDmg = Mathf.Min(enemyShield, finalDamage);
             enemyShield -= shieldDmg;
             finalDamage -= shieldDmg;
-            SpawnFloatText("-" + shieldDmg + " Shield Broken!", enemyBasePos + Vector3.up * 0.8f, Color.white);
+            SpawnFloatText("-" + shieldDmg + U(" Shield Broken!"), enemyBasePos + Vector3.up * 0.8f, Color.white);
         }
 
         if (finalDamage > 0)
         {
             enemyHp = Mathf.Max(0, enemyHp - finalDamage);
-            SpawnFloatText("-" + finalDamage + (isCritActive ? " CRIT!" : ""), enemyBasePos, Color.red);
+            SpawnFloatText("-" + finalDamage + (isCritActive ? U(" CRIT!") : ""), enemyBasePos, Color.red);
         }
 
         totalScore += finalDamage * 10;
@@ -800,14 +802,14 @@ public class PeglinRoguePlayer : MonoBehaviour
             PlayClip(sndPlayerHurt, 1.0f);
             AddScreenTrauma(0.5f);
             playerHp = Mathf.Max(0, playerHp - s.attack);
-            SpawnFloatText("ENEMY STRIKE! -" + s.attack + " HP", new Vector3(0f, -2f, 0f), Color.red);
+            SpawnFloatText(U("ENEMY STRIKE! -") + s.attack + " HP", new Vector3(0f, -2f, 0f), Color.red);
 
             yield return new WaitForSeconds(0.6f);
 
             if (playerHp <= 0)
             {
                 state = GameState.GameOver;
-                ShowBanner("GAME OVER - DEFEATED IN STAGE " + (currentStageIdx + 1), 5.0f);
+                ShowBanner(U("GAME OVER - DEFEATED IN STAGE ") + (currentStageIdx + 1), 5.0f);
                 yield break;
             }
         }
@@ -833,11 +835,11 @@ public class PeglinRoguePlayer : MonoBehaviour
 
         if (currentStageIdx >= stages.Length - 1)
         {
-            ShowBanner("★ CONGRATULATIONS! ALL 12 STAGES CLEARED! ★", 6.0f);
+            ShowBanner(U("★ CONGRATULATIONS! ALL 12 STAGES CLEARED! ★"), 6.0f);
         }
         else
         {
-            ShowBanner("STAGE " + (currentStageIdx + 1) + " CLEARED! HEALED +30 HP", 3.0f);
+            ShowBanner(U("STAGE ") + (currentStageIdx + 1) + U(" CLEARED! HEALED +30 HP"), 3.0f);
         }
     }
 
@@ -914,18 +916,18 @@ public class PeglinRoguePlayer : MonoBehaviour
 
         // Player Info
         GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(190));
-        GUILayout.Label("🛡️ <b>HERO</b>: " + playerHp + " / " + maxPlayerHp + " HP" + (playerShield > 0 ? " (Shield: " + playerShield + ")" : ""));
+        GUILayout.Label(U("🛡️ <b>HERO</b>: ") + playerHp + " / " + maxPlayerHp + " HP" + (playerShield > 0 ? U(" (Shield: ") + playerShield + ")" : ""));
         DrawProgressBar(playerHp / (float)maxPlayerHp, new Color(0.2f, 0.8f, 0.4f), 12);
-        GUILayout.Label("🏆 Score: <b>" + totalScore + "</b>");
+        GUILayout.Label(U("🏆 Score: <b>") + totalScore + "</b>");
         GUILayout.EndVertical();
 
         GUILayout.FlexibleSpace();
 
         // Center Status / Turn Combo
         GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(250));
-        GUILayout.Label("<color=#facc15><b>STAGE " + (currentStageIdx + 1) + "/12</b></color>: " + T(stages[currentStageIdx].titleKo, stages[currentStageIdx].name));
-        string critTag = isCritActive ? " <color=#fde047>[CRIT x2!]</color>" : "";
-        GUILayout.Label("🎯 Turn Dmg: <b>" + turnBaseDamage + "</b> (" + turnHits + " hits)" + critTag);
+        GUILayout.Label(U("<color=#facc15><b>STAGE ") + (currentStageIdx + 1) + "/12</b></color>: " + T(stages[currentStageIdx].titleKo, stages[currentStageIdx].name));
+        string critTag = isCritActive ? U(" <color=#fde047>[CRIT x2!]</color>") : "";
+        GUILayout.Label(U("🎯 Turn Dmg: <b>") + turnBaseDamage + "</b> (" + turnHits + U(" hits)") + critTag);
         GUILayout.EndVertical();
 
         GUILayout.FlexibleSpace();
@@ -935,11 +937,11 @@ public class PeglinRoguePlayer : MonoBehaviour
         GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(200));
         GUILayout.Label("👾 <b>" + s.name + "</b>: " + enemyHp + "/" + enemyMaxHp + " HP");
         DrawProgressBar(enemyHp / (float)enemyMaxHp, new Color(0.9f, 0.2f, 0.2f), 12);
-        GUILayout.Label("⚔️ Attack in: <b>" + turnsUntilEnemyAttack + " turn(s)</b> (" + s.attack + " Dmg)");
+        GUILayout.Label(U("⚔️ Attack in: <b>") + turnsUntilEnemyAttack + U(" turn(s)</b> (") + s.attack + U(" Dmg)"));
         GUILayout.EndVertical();
 
         // Stage Select Toggle Button
-        if (GUILayout.Button("🗺️ STAGES\n(1~12)", GUILayout.Width(85), GUILayout.Height(50)))
+        if (GUILayout.Button(U("🗺️ STAGES\n(1~12)"), GUILayout.Width(85), GUILayout.Height(50)))
         {
             showStageSelect = !showStageSelect;
         }
@@ -985,14 +987,14 @@ public class PeglinRoguePlayer : MonoBehaviour
             GUI.Box(clearRect, "");
             GUILayout.BeginArea(clearRect);
             GUILayout.Space(15);
-            GUILayout.Label("<size=18><color=#4ade80><b>★ STAGE CLEARED! ★</b></color></size>", GetCenterStyle(Color.green));
+            GUILayout.Label(U("<size=18><color=#4ade80><b>★ STAGE CLEARED! ★</b></color></size>"), GetCenterStyle(Color.green));
             GUILayout.Space(8);
-            GUILayout.Label("Defeated " + T(stages[currentStageIdx].titleKo, stages[currentStageIdx].name) + "!", GetCenterStyle(Color.white));
-            GUILayout.Label("Hero healed +30 HP! Ready for next encounter.", GetCenterStyle(Color.cyan));
+            GUILayout.Label(U("Defeated ") + T(stages[currentStageIdx].titleKo, stages[currentStageIdx].name) + "!", GetCenterStyle(Color.white));
+            GUILayout.Label(U("Hero healed +30 HP! Ready for next encounter."), GetCenterStyle(Color.cyan));
             GUILayout.Space(12);
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button(currentStageIdx < 11 ? "▶ NEXT STAGE (" + (currentStageIdx + 2) + ")" : "🏆 PLAY AGAIN", GUILayout.Width(170), GUILayout.Height(40)))
+            if (GUILayout.Button(currentStageIdx < 11 ? U("▶ NEXT STAGE (") + (currentStageIdx + 2) + ")" : U("🏆 PLAY AGAIN"), GUILayout.Width(170), GUILayout.Height(40)))
             {
                 NextStage();
             }
@@ -1008,13 +1010,13 @@ public class PeglinRoguePlayer : MonoBehaviour
             GUI.Box(overRect, "");
             GUILayout.BeginArea(overRect);
             GUILayout.Space(15);
-            GUILayout.Label("<size=18><color=#ef4444><b>☠️ YOU WERE DEFEATED ☠️</b></color></size>", GetCenterStyle(Color.red));
+            GUILayout.Label(U("<size=18><color=#ef4444><b>☠️ YOU WERE DEFEATED ☠️</b></color></size>"), GetCenterStyle(Color.red));
             GUILayout.Space(8);
-            GUILayout.Label("Stage " + (currentStageIdx + 1) + ": " + T(stages[currentStageIdx].titleKo, stages[currentStageIdx].name), GetCenterStyle(Color.white));
+            GUILayout.Label(U("Stage ") + (currentStageIdx + 1) + ": " + T(stages[currentStageIdx].titleKo, stages[currentStageIdx].name), GetCenterStyle(Color.white));
             GUILayout.Space(12);
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button("🔄 RESTART FROM STAGE 1", GUILayout.Width(200), GUILayout.Height(40)))
+            if (GUILayout.Button(U("🔄 RESTART FROM STAGE 1"), GUILayout.Width(200), GUILayout.Height(40)))
             {
                 RestartGame();
             }
@@ -1027,7 +1029,7 @@ public class PeglinRoguePlayer : MonoBehaviour
         if (showStageSelect)
         {
             Rect modalRect = new Rect(Screen.width * 0.5f - 260, 110, 520, 420);
-            GUI.Box(modalRect, "<b>SELECT STAGE (1~12)</b>");
+            GUI.Box(modalRect, U("<b>SELECT STAGE (1~12)</b>"));
             GUILayout.BeginArea(new Rect(modalRect.x + 15, modalRect.y + 35, modalRect.width - 30, modalRect.height - 45));
 
             int colsCount = 2;
@@ -1040,8 +1042,8 @@ public class PeglinRoguePlayer : MonoBehaviour
                     if (idx < stages.Length)
                     {
                         var st = stages[idx];
-                        string bossTag = st.isBoss ? " ★ BOSS" : "";
-                        string btnText = "<b>Stage " + st.stageNum + "</b>: " + T(st.titleKo, st.name) + bossTag + "\n(HP: " + st.maxHp + " | Atk: " + st.attack + ")";
+                        string bossTag = st.isBoss ? U(" ★ BOSS") : "";
+                        string btnText = U("<b>Stage ") + st.stageNum + "</b>: " + T(st.titleKo, st.name) + bossTag + "\n(HP: " + st.maxHp + U(" | Atk: ") + st.attack + ")";
                         if (GUILayout.Button(btnText, GUILayout.Height(50)))
                         {
                             showStageSelect = false;
@@ -1054,7 +1056,7 @@ public class PeglinRoguePlayer : MonoBehaviour
             }
 
             GUILayout.Space(8);
-            if (GUILayout.Button("× CLOSE", GUILayout.Height(30)))
+            if (GUILayout.Button(U("× CLOSE"), GUILayout.Height(30)))
             {
                 showStageSelect = false;
             }

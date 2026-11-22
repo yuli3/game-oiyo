@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class SliceMasterPlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
     // Page language (?lang=): Korean when ko, English for every other locale.
     static bool _isKoInit, _isKo;
     static bool IsKo { get { if (!_isKoInit) { _isKo = OiyoLang.Pick("ko", "en") == "ko"; _isKoInit = true; } return _isKo; } }
-    static string T(string ko, string en) => IsKo ? ko : en;
+    static string T(string ko, string en) => IsKo ? ko : OiyoI18n.Ui(en, OiyoI18n.Page);
     const int MaxStages = 12;
 
     // Stage Definition
@@ -594,7 +596,7 @@ public class SliceMasterPlayer : MonoBehaviour
         };
 
         string comboStr = comboCount > 1 ? T(" | 🔥 콤보 x", " | 🔥 Combo x") + comboCount : "";
-        GUI.Label(new Rect(20, 12, 420, 24), "Stage " + (currentStageIndex + 1) + ". " + (IsKo ? def.titleKo + " (" + def.titleEn + ")" : def.titleEn), stageTitle);
+        GUI.Label(new Rect(20, 12, 420, 24), U("Stage ") + (currentStageIndex + 1) + ". " + (IsKo ? def.titleKo + " (" + def.titleEn + ")" : U(def.titleEn)), stageTitle);
         GUI.Label(new Rect(20, 34, 450, 22), T("★ 점수: ", "★ Score: ") + score + T("점 | 🔪 슬라이스: ", " | 🔪 Slices: ") + totalSliced + "/" + def.targetCount + comboStr, subTitle);
 
         if (GUI.Button(new Rect(w - 180, 15, 75, 42), T("🗺️ 스테이지", "🗺️ Stages")))
@@ -660,7 +662,7 @@ public class SliceMasterPlayer : MonoBehaviour
             normal = { textColor = Color.white }
         };
 
-        GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), "★ STAGE CLEAR! (x" + earnedMultiplier + ") ★", title);
+        GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), U("★ STAGE CLEAR! (x") + earnedMultiplier + ") ★", title);
         GUI.Label(new Rect(r.x, r.y + 55, r.width, 25), T("골 배율 표적에 칼을 꽂아 최종 ", "You stuck the goal target for a final ") + score + T("점을 획득했습니다!", " points!"), sub);
 
         if (currentStageIndex < MaxStages - 1)

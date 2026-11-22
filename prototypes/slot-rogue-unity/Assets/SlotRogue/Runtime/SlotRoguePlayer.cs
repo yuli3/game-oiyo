@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class SlotRoguePlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
     // Page language (?lang=): Korean when ko, English for every other locale.
     static bool _isKoInit, _isKo;
     static bool IsKo { get { if (!_isKoInit) { _isKo = OiyoLang.Pick("ko", "en") == "ko"; _isKoInit = true; } return _isKo; } }
-    static string T(string ko, string en) => IsKo ? ko : en;
+    static string T(string ko, string en) => IsKo ? ko : OiyoI18n.Ui(en, OiyoI18n.Page);
     const int GridRows = 4;
     const int GridCols = 4;
     const int TotalSlots = GridRows * GridCols;
@@ -268,7 +270,7 @@ public class SlotRoguePlayer : MonoBehaviour
         }
         UpdateSlotVisuals();
 
-        lastActionLog = IsKo ? "Stage " + (currentStageIndex + 1) + ": " + def.bossNameKo + " 등장! 월세 " + def.rentDue + "G 목표." : "Stage " + (currentStageIndex + 1) + ": " + def.bossNameEn + " appears! Rent due: " + def.rentDue + "G.";
+        lastActionLog = IsKo ? U("Stage ") + (currentStageIndex + 1) + ": " + def.bossNameKo + " 등장! 월세 " + def.rentDue + "G 목표." : U("Stage ") + (currentStageIndex + 1) + ": " + U(def.bossNameEn) + U(" appears! Rent due: ") + def.rentDue + "G.";
         PlaySound(440f, 0.15f);
     }
 
@@ -512,7 +514,7 @@ public class SlotRoguePlayer : MonoBehaviour
         {
             SymbolType chosen = draftChoices[choiceIdx];
             playerDeck.Add(chosen);
-            lastActionLog = IsKo ? SymbolCatalog[(int)chosen].nameKo + " 심볼을 덱에 추가했습니다!" : "Added " + SymbolCatalog[(int)chosen].nameEn + " to your deck!";
+            lastActionLog = IsKo ? SymbolCatalog[(int)chosen].nameKo + " 심볼을 덱에 추가했습니다!" : U("Added ") + U(SymbolCatalog[(int)chosen].nameEn) + U(" to your deck!");
             PlaySound(784f, 0.15f);
         }
         isDrafting = false;
@@ -629,7 +631,7 @@ public class SlotRoguePlayer : MonoBehaviour
             normal = { textColor = Color.white }
         };
 
-        GUI.Label(new Rect(20, 12, 400, 24), "Stage " + (currentStageIndex + 1) + ". " + T(def.bossNameKo, def.bossNameEn) + " (" + T(def.titleKo, def.titleEn) + ")", stageTitle);
+        GUI.Label(new Rect(20, 12, 400, 24), U("Stage ") + (currentStageIndex + 1) + ". " + T(def.bossNameKo, def.bossNameEn) + " (" + T(def.titleKo, def.titleEn) + ")", stageTitle);
         GUI.Label(new Rect(20, 34, 450, 22), T("💰 보유: ", "💰 Gold: ") + playerCoins + T("G | 🎯 목표 월세: ", "G | 🎯 Rent due: ") + def.rentDue + T("G | ⏳ 남은 스핀: ", "G | ⏳ Spins left: ") + spinsRemaining + T("회 | 🃏 덱: ", " | 🃏 Deck: ") + playerDeck.Count + T("장", ""), subTitle);
 
         if (GUI.Button(new Rect(w - 180, 15, 75, 42), T("🗺️ 스테이지", "🗺️ Stages")))
@@ -792,7 +794,7 @@ public class SlotRoguePlayer : MonoBehaviour
             normal = { textColor = Color.white }
         };
 
-        GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), "★ ALL STAGES CLEAR! ★", title);
+        GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), U("★ ALL STAGES CLEAR! ★"), title);
         GUI.Label(new Rect(r.x, r.y + 55, r.width, 25), T("탐욕의 악마 마몬의 1800G 빚을 모두 갚고 카지노를 정복했습니다!", "You paid off Mammon's 1800G debt and conquered the casino!"), sub);
 
         if (GUI.Button(new Rect(r.x + 130, r.y + 105, 180, 45), T("새로운 카지노 런 시작", "Start a new casino run")))
@@ -820,7 +822,7 @@ public class SlotRoguePlayer : MonoBehaviour
             Rect btnRect = new Rect(45 + col * (itemW + 10), 105 + row * (itemH + 8), itemW, itemH);
 
             StageDef s = Stages[i];
-            string text = IsKo ? "Stage " + s.stage + ". " + s.bossNameKo + " [월세 " + s.rentDue + "G] (" + s.titleKo + ")" : "Stage " + s.stage + ". " + s.bossNameEn + " [Rent " + s.rentDue + "G] (" + s.titleEn + ")";
+            string text = IsKo ? U("Stage ") + s.stage + ". " + s.bossNameKo + " [월세 " + s.rentDue + "G] (" + s.titleKo + ")" : U("Stage ") + s.stage + ". " + U(s.bossNameEn) + U(" [Rent ") + s.rentDue + "G] (" + U(s.titleEn) + ")";
 
             if (GUI.Button(btnRect, text))
             {

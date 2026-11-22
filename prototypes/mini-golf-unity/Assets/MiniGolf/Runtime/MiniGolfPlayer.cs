@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class MiniGolfPlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
     // Page language (?lang=): Korean when ko, English for every other locale.
     static bool _isKoInit, _isKo;
     static bool IsKo { get { if (!_isKoInit) { _isKo = OiyoLang.Pick("ko", "en") == "ko"; _isKoInit = true; } return _isKo; } }
-    static string T(string ko, string en) => IsKo ? ko : en;
+    static string T(string ko, string en) => IsKo ? ko : OiyoI18n.Ui(en, OiyoI18n.Page);
     const int TotalHoles = 12;
     const float BallRadius = 0.15f;
     const float CupRadius = 0.35f;
@@ -606,7 +608,7 @@ public class MiniGolfPlayer : MonoBehaviour
             normal = { textColor = Color.white }
         };
 
-        GUI.Label(new Rect(20, 12, 450, 24), "Hole " + def.holeNum + "/12. " + T(def.titleKo, def.titleEn) + " (Par " + def.par + ")", holeTitle);
+        GUI.Label(new Rect(20, 12, 450, 24), U("Hole ") + def.holeNum + "/12. " + T(def.titleKo, def.titleEn) + U(" (Par ") + def.par + ")", holeTitle);
         GUI.Label(new Rect(20, 34, 450, 22), T("⛳ 이번 홀 타수: ", "⛳ Strokes this hole: ") + strokesThisHole + T("타 | 🏆 누적 총타수: ", " | 🏆 Total strokes: ") + totalStrokes + T("타", ""), subTitle);
 
         if (GUI.Button(new Rect(w - 180, 15, 75, 42), T("🗺️ 홀 선택", "🗺️ Holes")))
@@ -674,7 +676,7 @@ public class MiniGolfPlayer : MonoBehaviour
 
         HoleDef def = Holes[currentHoleIndex];
         GUI.Label(new Rect(r.x, r.y + 15, r.width, 35), celebrationTitle, title);
-        GUI.Label(new Rect(r.x, r.y + 55, r.width, 25), "Hole " + def.holeNum + T(" 완성! (Par ", " done! (Par ") + def.par + " vs " + strokesThisHole + T("타)", ")"), sub);
+        GUI.Label(new Rect(r.x, r.y + 55, r.width, 25), U("Hole ") + def.holeNum + T(" 완성! (Par ", " done! (Par ") + def.par + " vs " + strokesThisHole + T("타)", ")"), sub);
 
         if (currentHoleIndex < TotalHoles - 1)
         {
@@ -747,7 +749,7 @@ public class MiniGolfPlayer : MonoBehaviour
 
             HoleDef hdef = Holes[i];
             string scoreInfo = holeScores[i] > 0 ? " [" + holeScores[i] + T("타]", " strokes]") : "";
-            string text = "Hole " + hdef.holeNum + ". " + T(hdef.titleKo, hdef.titleEn) + scoreInfo + "\nPar " + hdef.par;
+            string text = U("Hole ") + hdef.holeNum + ". " + T(hdef.titleKo, hdef.titleEn) + scoreInfo + U("\nPar ") + hdef.par;
 
             if (GUI.Button(btnRect, text))
             {
