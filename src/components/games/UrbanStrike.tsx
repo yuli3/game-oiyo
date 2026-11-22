@@ -2,7 +2,9 @@ import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { Crosshair, Headphones, Maximize2, Minimize2, Radio, Shield, Smartphone, Target, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
-import { reviewUrbanStrikeResult } from "../../lib/games/urban-strike";
+import { URBAN_STRIKE_OPS, URBAN_STRIKE_OP_SLUG, reviewUrbanStrikeResult, urbanStrikeOpWon } from "../../lib/games/urban-strike";
+import StageBar from "./StageBar";
+import { finaleLabel, loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
 import type { MatchResult, UrbanStrikeSceneCopy } from "./UrbanStrikeScene";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
@@ -11,6 +13,16 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
+
+/** Operation labels (2026-11-22): 20 matches against ever sharper bots. */
+const OP_COPY: Record<string, { op: (n: number) => string; next: string; hint: string; share: string }> = {
+  ko: { op: (n) => `작전 ${n}`, next: "다음 작전", hint: "이기면 다음 작전이 열려요. 작전마다 적이 더 정확하고 빨라져요.", share: "전투 결과 카드 공유" },
+  en: { op: (n) => `Operation ${n}`, next: "Next operation", hint: "Win to unlock the next operation. Each one has sharper, faster enemies.", share: "Share battle card" },
+  ja: { op: (n) => `作戦${n}`, next: "次の作戦", hint: "勝つと次の作戦が開きます。作戦ごとに敵が正確で速くなります。", share: "戦闘結果カードを共有" },
+  zh: { op: (n) => `行动 ${n}`, next: "下一次行动", hint: "获胜即可解锁下一次行动，每次行动敌人都更准、更快。", share: "分享战斗结果卡" },
+  fr: { op: (n) => `Opération ${n}`, next: "Opération suivante", hint: "Gagnez pour débloquer l'opération suivante. Les ennemis deviennent plus précis et plus rapides.", share: "Partager la carte de combat" },
+  es: { op: (n) => `Operación ${n}`, next: "Siguiente operación", hint: "Gana para desbloquear la siguiente operación. Cada una trae enemigos más precisos y rápidos.", share: "Compartir tarjeta de combate" },
+};
 
 const Scene = lazy(() => import("./UrbanStrikeScene"));
 const GAME_KEY = "urban-strike";
@@ -267,6 +279,9 @@ function supportsWebgl(): boolean {
 
 export default function UrbanStrike({ locale }: { locale: Locale }) {
   const t = COPY[locale] ?? COPY.en;
+  const opCopy = OP_COPY[locale] ?? OP_COPY.en;
+  const [op, setOp] = useState(1);
+  const [clearedOps, setClearedOps] = useState<number[]>([]);
   const [phase, setPhase] = useState<Phase>("briefing");
   const [best, setBest] = useState(0);
   const [available, setAvailable] = useState(true);
@@ -323,6 +338,9 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
   useEffect(() => {
     setAvailable(supportsWebgl());
     setBest(getBest(GAME_KEY)?.value ?? 0);
+    const cleared = loadClearedStages(URBAN_STRIKE_OP_SLUG, URBAN_STRIKE_OPS);
+    setClearedOps(cleared);
+    setOp(nextOpenStage(cleared, URBAN_STRIKE_OPS) + 1);
   }, []);
 
   // Keyboard shortcut: F for portal only when not playing to avoid hijacking KeyF (fire)
@@ -356,6 +374,7 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
       won: next.blueScore > next.redScore,
     }));
     setBest(saved.value);
+    if (urbanStrikeOpWon(next)) setClearedOps(markStageCleared(URBAN_STRIKE_OP_SLUG, op - 1, URBAN_STRIKE_OPS));
     setResult(next);
     setPhase("result");
     if (containerRef.current) {
@@ -363,7 +382,7 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
         preset: next.blueScore > next.redScore ? "sparks" : "shards",
       });
     }
-  }, [containerRef]);
+  }, [containerRef, op]);
 
   if (phase === "playing" || phase === "loading") {
     return (
@@ -405,7 +424,7 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
         <div className={`w-full ${isImmersive ? "h-full" : "aspect-[16/10] min-h-[560px] max-h-[82vh]"}`}>
           <Suspense fallback={<Loading label={t.loading} />}>
             {phase === "playing" ? (
-              <Scene copy={t.scene} onFinish={finish} muted={muted} onToggleMute={toggleMute} />
+              <Scene copy={t.scene} onFinish={finish} muted={muted} onToggleMute={toggleMute} op={op} />
             ) : (
               <Loading label={t.loading} />
             )}
@@ -433,6 +452,15 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
             >
               {phase === "result" ? t.again : t.start}
             </button>
+            {result && urbanStrikeOpWon(result) && (
+              <button
+                type="button"
+                onClick={() => { setOp(op >= URBAN_STRIKE_OPS ? 1 : op + 1); setResult(null); }}
+                className="min-h-12 rounded-xl border border-border bg-card/60 px-5 py-3 text-xs font-black uppercase tracking-widest text-foreground"
+              >
+                {op >= URBAN_STRIKE_OPS ? finaleLabel(locale) : opCopy.next}
+              </button>
+            )}
             <button
               type="button"
               onClick={togglePortal}
@@ -447,6 +475,11 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
             <span className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 font-mono text-xs text-slate-300">
               {t.best}: <strong className="text-white">{best.toLocaleString()}</strong>
             </span>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-border bg-card p-3 text-foreground" data-urban-ops>
+            <p className="mb-2 text-xs font-bold text-muted-foreground">{opCopy.op(op)} / {URBAN_STRIKE_OPS} · {opCopy.hint}</p>
+            <StageBar count={URBAN_STRIKE_OPS} current={op - 1} cleared={clearedOps} locale={locale} onSelect={(i) => { setOp(i + 1); setResult(null); }} />
           </div>
 
           {!available && <p role="alert" className="mt-4 text-sm font-bold text-amber-300">{t.unavailable}</p>}
@@ -480,7 +513,7 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
                   className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/80 hover:bg-muted px-5 py-2.5 text-xs font-bold text-foreground transition-colors shadow-xs"
                 >
                   {shareCardCopied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
-                  <span>{shareCardCopied ? "복사 완료!" : "전투 결과 카드 공유"}</span>
+                  <span>{shareCardCopied ? "✓" : opCopy.share}</span>
                 </button>
               </div>
             </div>

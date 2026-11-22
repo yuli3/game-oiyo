@@ -32,6 +32,7 @@ import {
 import {
   MATCH_SECONDS,
   SCORE_LIMIT,
+  urbanStrikeOpStats,
   WEAPONS,
   damageForHit,
   directionFromAim,
@@ -90,6 +91,8 @@ interface Props {
   onFinish: (result: MatchResult) => void;
   muted: boolean;
   onToggleMute: () => void;
+  /** Operation 1-20 (stage range 2026-11-22). */
+  op?: number;
 }
 
 interface HudState {
@@ -182,7 +185,7 @@ const initialHud = (): HudState => ({
   killfeed: [],
 });
 
-export default function UrbanStrikeScene({ copy, onFinish, muted, onToggleMute }: Props) {
+export default function UrbanStrikeScene({ copy, onFinish, muted, onToggleMute, op = 1 }: Props) {
   const controls = useRef<Controls>(initialControls());
   const [hud, setHud] = useState<HudState>(initialHud);
   const [coarse, setCoarse] = useState(false);
@@ -303,6 +306,7 @@ export default function UrbanStrikeScene({ copy, onFinish, muted, onToggleMute }
         }}
       >
         <CombatScene
+          op={op}
           controls={controls}
           active={coarse || locked || fallbackActive}
           coarse={coarse}
@@ -547,6 +551,7 @@ interface CombatSceneProps {
   setHud: Dispatch<SetStateAction<HudState>>;
   onFinish: (result: MatchResult) => void;
   muted: boolean;
+  op: number;
 }
 
 const ENEMY_NAMES = ["VIPER", "NOMAD", "KILO", "RAZOR", "GHOST", "MERCURY"];
@@ -556,7 +561,8 @@ const ENEMY_SPAWNS = [
 ] as const;
 const PLAYER_SPAWNS = [[0, 18], [-8, 20], [9, 18]] as const;
 
-function CombatScene({ controls, active, coarse, copy, setHud, onFinish, muted }: CombatSceneProps) {
+function CombatScene({ controls, active, coarse, copy, setHud, onFinish, muted, op }: CombatSceneProps) {
+  const opStats = urbanStrikeOpStats(op);
   const { camera, gl } = useThree();
   const bots = useRef<BotState[]>(createBots());
   const botGroups = useRef<Array<Group | null>>([]);
@@ -941,7 +947,7 @@ function CombatScene({ controls, active, coarse, copy, setHud, onFinish, muted }
       const targetAngle = Math.atan2(dx, dz);
       const desiredRange = 10 + index * 1.5;
       const move = distanceToPlayer > desiredRange ? 1 : distanceToPlayer < 5 ? -0.6 : 0;
-      const botSpeed = 1.45 + (index % 3) * 0.15;
+      const botSpeed = (1.45 + (index % 3) * 0.15) * opStats.speedScale;
       const botDx = (Math.sin(targetAngle) * move + Math.cos(targetAngle) * bot.strafe * 0.36) * botSpeed * delta;
       const botDz = (Math.cos(targetAngle) * move - Math.sin(targetAngle) * bot.strafe * 0.36) * botSpeed * delta;
       moveWithCollision(bot.position, botDx, botDz, 0.36);
@@ -952,12 +958,12 @@ function CombatScene({ controls, active, coarse, copy, setHud, onFinish, muted }
       if (bot.position.length() < 5.2) enemiesAtObjective += 1;
 
       if (distanceToPlayer < 43 && now >= bot.nextShot && respawnUntil.current <= now) {
-        bot.nextShot = now + 0.52 + ((index * 0.17 + elapsed.current * 0.13) % 0.5);
+        bot.nextShot = now + (0.52 + ((index * 0.17 + elapsed.current * 0.13) % 0.5)) * opStats.fireIntervalScale;
         audio.current?.enemyShot(bot.position);
-        const accuracyChance = Math.max(0.12, 0.40 - distanceToPlayer * 0.0075 - (input.sprint ? 0.1 : 0));
+        const accuracyChance = Math.max(0.12, 0.40 - distanceToPlayer * 0.0075 - (input.sprint ? 0.1 : 0)) * opStats.accuracyScale;
         const roll = (Math.sin(now * 17.73 + index * 8.12) + 1) / 2;
         if (roll < accuracyChance) {
-          let damage = 5 + (index % 3);
+          let damage = 5 + (index % 3) + opStats.damageBonus;
           const absorbed = Math.min(armor.current, Math.ceil(damage * 0.58));
           armor.current -= absorbed;
           damage -= absorbed;

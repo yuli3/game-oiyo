@@ -274,3 +274,36 @@ export function formatMatchTime(seconds: number): string {
   const safe = Math.max(0, Math.ceil(seconds));
   return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, "0")}`;
 }
+
+/** Operations (2026-11-22, stage range 10-50): 20 matches against ever sharper bots. Op 1 is the original match. */
+export const URBAN_STRIKE_OPS = 20;
+export const URBAN_STRIKE_OP_SLUG = "urban-strike";
+
+export interface UrbanStrikeOpStats {
+  /** Multiplies each bot's hit chance (the 12% floor is scaled too). */
+  accuracyScale: number;
+  /** Multiplies the pause between bot shots. */
+  fireIntervalScale: number;
+  /** Extra damage per bot hit, before armor. */
+  damageBonus: number;
+  /** Multiplies bot movement speed. */
+  speedScale: number;
+}
+
+export function clampUrbanStrikeOp(op: number): number {
+  return Math.min(URBAN_STRIKE_OPS, Math.max(1, Math.trunc(Number.isFinite(op) ? op : 1)));
+}
+
+export function urbanStrikeOpStats(op: number): UrbanStrikeOpStats {
+  const t = (clampUrbanStrikeOp(op) - 1) / (URBAN_STRIKE_OPS - 1);
+  return {
+    accuracyScale: Number((1 + 0.6 * t).toFixed(3)),
+    fireIntervalScale: Number((1 - 0.35 * t).toFixed(3)),
+    damageBonus: Math.round(4 * t),
+    speedScale: Number((1 + 0.35 * t).toFixed(3)),
+  };
+}
+
+export function urbanStrikeOpWon(result: { blueScore: number; redScore: number }): boolean {
+  return result.blueScore > result.redScore;
+}
