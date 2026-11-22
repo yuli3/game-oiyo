@@ -36,10 +36,12 @@ type Labels = {
   hint: string; touchHint: string; loading: string; firstLoad: string; error: string; retry: string;
   tryQuick: string; best: string; plays: string; win: string; loss: string; draw: string; score: string;
   newBest: string; share: string; copied: string; close: string; keys: string; touch: string;
+  offline: string; saving: string; saved: string; removeHint: string; noRoom: string; saveFailed: string;
 };
 
 const labels: Record<Locale, Labels> = {
   ko: {
+    offline: "오프라인 저장", saving: "저장 중", saved: "오프라인 저장됨", removeHint: "다시 누르면 저장한 파일을 지워요", noRoom: "저장 공간이 부족해요", saveFailed: "저장하지 못했어요",
     main: "3D 본편", quick: "빠른 플레이", play: "3D로 플레이", replay: "이어서 플레이", note: "Unity 3D 본편이에요. 처음 한 번 약 5MB를 받아요.",
     fullscreen: "전체 화면", exit: "전체 화면 닫기", hint: "게임 안을 한 번 누르면 키보드 조작이 켜져요.", touchHint: "화면을 눌러 조작해요. 가로로 돌리면 더 넓게 보여요.",
     loading: "불러오는 중", firstLoad: "처음 한 번만 받아요. 다음부터는 금방 열려요.", error: "게임을 불러오지 못했어요.", retry: "다시 시도", tryQuick: "빠른 플레이로 하기",
@@ -47,6 +49,7 @@ const labels: Record<Locale, Labels> = {
     share: "기록 공유", copied: "링크를 복사했어요", close: "닫기", keys: "키보드·마우스", touch: "터치",
   },
   en: {
+    offline: "Save offline", saving: "Saving", saved: "Saved offline", removeHint: "Press again to remove the saved files", noRoom: "Not enough storage", saveFailed: "Could not save",
     main: "3D game", quick: "Quick play", play: "Play in 3D", replay: "Play again", note: "The full Unity 3D game. About 5 MB on first load.",
     fullscreen: "Full screen", exit: "Exit full screen", hint: "Click inside the game once to use the keyboard.", touchHint: "Tap the screen to play. Turn your phone sideways for a wider view.",
     loading: "Loading", firstLoad: "Only the first load takes a moment. Next time it opens fast.", error: "The game could not load.", retry: "Try again", tryQuick: "Play the quick version",
@@ -54,6 +57,7 @@ const labels: Record<Locale, Labels> = {
     share: "Share score", copied: "Link copied", close: "Close", keys: "Keyboard & mouse", touch: "Touch",
   },
   ja: {
+    offline: "オフライン保存", saving: "保存中", saved: "オフライン保存済み", removeHint: "もう一度押すと保存したファイルを削除します", noRoom: "保存容量が足りません", saveFailed: "保存できませんでした",
     main: "3D本編", quick: "クイックプレイ", play: "3Dで遊ぶ", replay: "続けて遊ぶ", note: "Unity 3D本編です。初回のみ約5MBを読み込みます。",
     fullscreen: "全画面", exit: "全画面を終了", hint: "ゲーム内を一度押すとキーボード操作が有効になります。", touchHint: "画面をタップして操作します。横向きにするとより広く見えます。",
     loading: "読み込み中", firstLoad: "時間がかかるのは初回だけです。次回からはすぐに開きます。", error: "ゲームを読み込めませんでした。", retry: "もう一度", tryQuick: "クイック版で遊ぶ",
@@ -61,6 +65,7 @@ const labels: Record<Locale, Labels> = {
     share: "記録をシェア", copied: "リンクをコピーしました", close: "閉じる", keys: "キーボード・マウス", touch: "タッチ",
   },
   zh: {
+    offline: "离线保存", saving: "保存中", saved: "已离线保存", removeHint: "再按一次删除已保存的文件", noRoom: "存储空间不足", saveFailed: "保存失败",
     main: "3D 正式版", quick: "快速游玩", play: "玩 3D 版", replay: "继续游玩", note: "Unity 3D 正式版，首次加载约 5MB。",
     fullscreen: "全屏", exit: "退出全屏", hint: "点击游戏区域一次即可使用键盘。", touchHint: "点击屏幕进行操作。横屏可以看得更宽。",
     loading: "加载中", firstLoad: "只有第一次需要等待，之后会很快打开。", error: "游戏加载失败。", retry: "重试", tryQuick: "改玩快速版",
@@ -68,6 +73,7 @@ const labels: Record<Locale, Labels> = {
     share: "分享成绩", copied: "链接已复制", close: "关闭", keys: "键盘和鼠标", touch: "触屏",
   },
   fr: {
+    offline: "Enregistrer hors ligne", saving: "Enregistrement", saved: "Disponible hors ligne", removeHint: "Appuyez à nouveau pour supprimer les fichiers", noRoom: "Espace insuffisant", saveFailed: "Échec de l'enregistrement",
     main: "Jeu 3D", quick: "Partie rapide", play: "Jouer en 3D", replay: "Rejouer", note: "Le jeu complet en 3D Unity. Environ 5 Mo au premier chargement.",
     fullscreen: "Plein écran", exit: "Quitter le plein écran", hint: "Cliquez une fois dans le jeu pour utiliser le clavier.", touchHint: "Touchez l'écran pour jouer. Tournez le téléphone pour une vue plus large.",
     loading: "Chargement", firstLoad: "Seul le premier chargement prend un moment. La prochaine fois, c'est rapide.", error: "Le jeu n'a pas pu se charger.", retry: "Réessayer", tryQuick: "Jouer à la version rapide",
@@ -75,6 +81,7 @@ const labels: Record<Locale, Labels> = {
     share: "Partager le score", copied: "Lien copié", close: "Fermer", keys: "Clavier et souris", touch: "Tactile",
   },
   es: {
+    offline: "Guardar sin conexión", saving: "Guardando", saved: "Guardado sin conexión", removeHint: "Pulsa otra vez para borrar los archivos guardados", noRoom: "No hay espacio suficiente", saveFailed: "No se pudo guardar",
     main: "Juego 3D", quick: "Partida rápida", play: "Jugar en 3D", replay: "Seguir jugando", note: "El juego completo en 3D con Unity. Unos 5 MB la primera vez.",
     fullscreen: "Pantalla completa", exit: "Salir de pantalla completa", hint: "Haz clic una vez en el juego para usar el teclado.", touchHint: "Toca la pantalla para jugar. Gira el móvil para verlo más amplio.",
     loading: "Cargando", firstLoad: "Solo la primera carga tarda un poco. La próxima vez abrirá rápido.", error: "No se pudo cargar el juego.", retry: "Reintentar", tryQuick: "Jugar la versión rápida",
@@ -92,10 +99,16 @@ const toolButton = "inline-flex min-h-11 items-center gap-2 rounded-xl border bo
   <div class="mb-3 flex flex-wrap items-center gap-2" role="tablist" aria-label={name}>
     <button type="button" role="tab" id={`${slug}-tab-main`} aria-controls={`${slug}-panel-main`} aria-selected="true" data-tab="main" class="min-h-11 rounded-full border border-border bg-card px-4 py-2 font-bold text-foreground cursor-pointer aria-selected:border-primary aria-selected:bg-primary aria-selected:text-primary-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary">{ui.main}</button>
     <button type="button" role="tab" id={`${slug}-tab-quick`} aria-controls={`${slug}-panel-quick`} aria-selected="false" tabindex="-1" data-tab="quick" class="min-h-11 rounded-full border border-border bg-card px-4 py-2 font-bold text-foreground cursor-pointer aria-selected:border-primary aria-selected:bg-primary aria-selected:text-primary-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary">{ui.quick}</button>
-    <button type="button" class={`ml-auto ${toolButton}`} data-fullscreen aria-label={ui.fullscreen} hidden>
+    <div class="ml-auto flex flex-wrap items-center gap-2">
+    <button type="button" class={`${toolButton} aria-pressed:border-primary aria-pressed:text-primary`} data-offline-save aria-pressed="false" hidden>
+      <svg class="size-4 stroke-current stroke-2" fill="none" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
+      <span class="text-sm" data-offline-label>{ui.offline}</span>
+    </button>
+    <button type="button" class={toolButton} data-fullscreen aria-label={ui.fullscreen} hidden>
       <svg class="size-4 stroke-current stroke-2" fill="none" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3H3v5M16 3h5v5M8 21H3v-5m13 5h5v-5" /></svg>
       <span class="sr-only sm:not-sr-only">{ui.fullscreen}</span>
     </button>
+    </div>
   </div>
 
   <div role="tabpanel" id={`${slug}-panel-main`} aria-labelledby={`${slug}-tab-main`} data-panel="main">
@@ -161,5 +174,13 @@ const toolButton = "inline-flex min-h-11 items-center gap-2 rounded-xl border bo
 
 <script>
   import { initUnityMainShell } from "../../lib/games/unity-main-shell";
-  for (const shell of document.querySelectorAll<HTMLElement>("[data-unity-main]")) initUnityMainShell(shell);
+  import { initUnityOfflineButton, type OfflineLabels } from "../../lib/pwa/unity-offline-button";
+  for (const shell of document.querySelectorAll<HTMLElement>("[data-unity-main]")) {
+    initUnityMainShell(shell);
+    try {
+      initUnityOfflineButton(shell, JSON.parse(shell.dataset.labels ?? "{}") as OfflineLabels);
+    } catch {
+      /* the game still plays online */
+    }
+  }
 </script>
