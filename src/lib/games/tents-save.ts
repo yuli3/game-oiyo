@@ -7,6 +7,7 @@ import {
   isChaosAugmentId,
   type ChaosAugmentId,
 } from "./tents-chaos";
+import { isTentsStageIndex, tentsStagePuzzle } from "./tents-stages";
 
 /**
  * Fail-closed active-puzzle save, mirroring the Sudoku save contract: the
@@ -18,7 +19,7 @@ import {
 export const TENTS_SAVE_KEY = "oiyo:tents-and-trees-state:v1";
 
 export type CellMark = "empty" | "tent" | "grass";
-export type TentsMode = "daily" | "free" | "chaos";
+export type TentsMode = "daily" | "free" | "chaos" | "stage";
 export type TentsDifficulty = "easy" | "medium" | "hard";
 
 export const TENTS_DIFFICULTIES: Record<TentsDifficulty, { size: number; pairs: number }> = {
@@ -37,7 +38,7 @@ export interface TentsSaveV1 {
   difficulty?: TentsDifficulty;
   /** The civil date the save was made on. Enforced for "daily" and "chaos". */
   dailyDate: string;
-  /** Regenerates the exact board for mode "free"; ignored for "daily" and "chaos". */
+  /** Regenerates the exact board for mode "free"; the 0-based stage index for mode "stage"; ignored for "daily" and "chaos". */
   seed: number;
   marks: CellMark[][];
   savedAtEpochMs: number;
@@ -90,6 +91,7 @@ export function puzzleForTentsSave(
     ).puzzle;
   }
   if (mode === "chaos") return chaosBoard(dayIndexFromKey(dailyDate)).puzzle;
+  if (mode === "stage") return tentsStagePuzzle(seed);
   const cfg = TENTS_DIFFICULTIES[difficulty] ?? FREE_BOARD;
   return generateTents(cfg.size, cfg.pairs, mulberry32(seed)).puzzle;
 }
@@ -116,11 +118,12 @@ export function parseTentsSave(raw: string | null, expectedDailyDate: string, no
   try {
     const value: unknown = JSON.parse(raw);
     if (!isRecord(value) || value.version !== 1) return null;
-    if (value.mode !== "daily" && value.mode !== "free" && value.mode !== "chaos") return null;
+    if (value.mode !== "daily" && value.mode !== "free" && value.mode !== "chaos" && value.mode !== "stage") return null;
     const mode = value.mode as TentsMode;
     if (!validCivilDate(value.dailyDate)) return null;
     if ((mode === "daily" || mode === "chaos") && value.dailyDate !== expectedDailyDate) return null;
     if (!Number.isInteger(value.seed) || (value.seed as number) < 0 || (value.seed as number) > 0xffffffff) return null;
+    if (mode === "stage" && !isTentsStageIndex(value.seed)) return null;
     if (!Number.isInteger(value.savedAtEpochMs) || (value.savedAtEpochMs as number) < 0 || (value.savedAtEpochMs as number) > now + 300_000) return null;
 
     let difficulty: TentsDifficulty | undefined;

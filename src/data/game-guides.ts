@@ -3235,6 +3235,7 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
     faqs: [
       { q: { ko: "오늘의 퍼즐은 언제 바뀌나요?", en: "When does the daily puzzle change?", ja: "今日のパズルはいつ変わる？", zh: "每日谜题何时更换？", fr: "Quand le puzzle du jour change-t-il ?", es: "¿Cuándo cambia el puzle diario?" }, a: { ko: "기기 시간 기준 매일 자정에 새 퍼즐로 바뀌며, 같은 날에는 모두가 같은 퍼즐을 풉니다. 오늘의 퍼즐은 정답이 하나뿐인 판만 출제됩니다.", en: "It rolls over at midnight (device time), and everyone gets the same board on the same day. Daily boards are guaranteed to have exactly one solution.", ja: "端末時間の毎日0時に新しいパズルへ切り替わり、同じ日には全員が同じ盤面を解きます。今日のパズルは解が一つだけの盤面のみ出題されます。", zh: "以设备时间为准，每天零点更换新谜题，同一天所有人解同一盘面。每日谜题保证唯一解。", fr: "Il change à minuit (heure de l'appareil) et tout le monde reçoit la même grille le même jour. Les grilles du jour ont une solution unique garantie.", es: "Cambia a medianoche (hora del dispositivo) y todos reciben el mismo tablero el mismo día. Los tableros diarios tienen solución única garantizada." } },
       { q: { ko: "연속 기록(스트릭)은 어떻게 쌓이나요?", en: "How does the streak work?", ja: "連続記録はどう貯まる？", zh: "连续记录如何累积？", fr: "Comment fonctionne la série ?", es: "¿Cómo funciona la racha?" }, a: { ko: "오늘의 퍼즐을 완료한 날이 하루씩 이어질 때마다 스트릭이 1씩 늘고, 하루라도 건너뛰면 다시 1부터 시작합니다. 기록은 이 기기 브라우저에만 저장됩니다.", en: "Solving the daily puzzle on consecutive days grows your streak by one; skipping a day resets it to one. Records are stored only in this device's browser.", ja: "今日のパズルを連続した日に解くごとにストリークが1ずつ増え、1日でも空くと1から再開します。記録はこの端末のブラウザにのみ保存されます。", zh: "连续每天完成每日谜题，连续记录加1；漏掉一天则从1重新开始。记录仅保存在本设备浏览器中。", fr: "Résoudre le puzzle du jour des jours consécutifs augmente la série de un ; sauter un jour la remet à un. Les records restent dans le navigateur de cet appareil.", es: "Resolver el puzle diario en días consecutivos suma uno a la racha; saltarte un día la reinicia. Los récords se guardan solo en el navegador de este dispositivo." } },
+      { q: { ko: "단계 모드는 무엇인가요?", en: "What is Stage mode?", ja: "ステージモードとは？", zh: "关卡模式是什么？", fr: "Qu'est-ce que le mode niveaux ?", es: "¿Qué es el modo niveles?" }, a: { ko: "5×5에서 10×10까지 커지는 고정 퍼즐 50단계입니다. 모든 판은 정답이 하나뿐이고, 깬 단계에는 체크 표시가 남아 다음에 이어서 풀 수 있습니다.", en: "Fifty fixed boards that grow from 5×5 to 10×10. Every board has exactly one solution, and cleared stages keep a check mark so you can pick up where you left off.", ja: "5×5から10×10まで大きくなる固定パズル50ステージです。どの盤面も解は一つだけで、クリアしたステージにはチェックが残り、続きから遊べます。", zh: "从5×5到10×10逐步变大的50个固定关卡。每关都只有唯一解，通关的关卡会留下勾号，下次可接着玩。", fr: "Cinquante grilles fixes qui passent de 5×5 à 10×10. Chaque grille a une solution unique et les niveaux réussis gardent une coche pour reprendre plus tard.", es: "Cincuenta tableros fijos que crecen de 5×5 a 10×10. Cada uno tiene una única solución y los niveles superados quedan marcados para continuar luego." } },
     ],
   },
   "water-sort": {
@@ -6799,18 +6800,18 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "grappling-boss": {
     origin: {
-      ko: "『그래플링 보스 아레나 (Grappling Boss Arena: Beholder)』는 공중 보스전과 그래플링 훅 기동을 다룬 OIYO 오리지널 2D 액션 게임입니다. 베를레 진자 적분(Verlet Pendulum) 기반의 사실적인 훅 장력·스윙 물리와 거대 보스의 4개 다관절 촉수를 실시간으로 움직이는 FABRIK 역운동학(IK)을 엔진 코어로 탑재했습니다.",
-      en: "Grappling Boss Arena: Beholder is an aerial combat action game. Powered by Verlet pendulum swing physics and procedural 4-chain FABRIK inverse kinematics, weave through mechanical tentacle sweeps and plasma barrages.",
-      ja: "『グラップリング・ボスアリーナ：ビホルダー（Grappling Boss Arena: Beholder）』は、2Dバトルアクションです。ベルレ積分による振り子スイング物理と、巨大ボスの4本触手をリアルタイム制御するFABRIK逆運動学（IK）を搭載しています。",
-      zh: "《抓钩领主竞技场：机械眼魔（Grappling Boss Arena: Beholder）》是 OIYO 原创作品。运用韦尔莱摆锤张力物理与驱动机械四触手实时追击的FABRIK反向动力学算法构建。",
+      ko: "『그래플링 보스 아레나 (Grappling Boss Arena)』는 공중 보스전과 그래플링 훅 기동을 다룬 OIYO 오리지널 2D 액션 게임입니다. 베를레 진자 적분(Verlet Pendulum) 기반의 사실적인 훅 장력·스윙 물리와 거대 보스의 4개 다관절 촉수를 실시간으로 움직이는 FABRIK 역운동학(IK)을 엔진 코어로 탑재했습니다.",
+      en: "Grappling Boss Arena is an aerial combat action game. Powered by Verlet pendulum swing physics and procedural 4-chain FABRIK inverse kinematics, weave through mechanical tentacle sweeps and plasma barrages.",
+      ja: "『グラップリング・ボスアリーナ（Grappling Boss Arena）』は、2Dバトルアクションです。ベルレ積分による振り子スイング物理と、巨大ボスの4本触手をリアルタイム制御するFABRIK逆運動学（IK）を搭載しています。",
+      zh: "《抓钩领主竞技场（Grappling Boss Arena）》是 OIYO 原创作品。运用韦尔莱摆锤张力物理与驱动机械四触手实时追击的FABRIK反向动力学算法构建。",
       fr: "Grappling Boss Arena est un jeu d'action aérienne.",
       es: "Arena del Jefe con Gancho es un juego de acción aérea.",
     },
     how: {
       ko: "1) 이동(A/D) 및 점프(W)로 바닥 발판을 이동하고, 마우스 우클릭(또는 Space)으로 천장 앵커 오브(푸른 구체)에 그래플링 훅을 발사해 매달리세요. 2) 진자 스윙 반동으로 가속한 뒤 점프(W)를 누르면 로프를 풀고 폭발적인 탄성 도약(Slingshot)을 펼칠 수 있습니다. 3) 마우스 좌클릭(또는 F)으로 보스의 눈을 조준 사격하세요. 보스 HP가 50% 이하가 되면 붉게 폭주(ENRAGED)하며 촉수 휘두르기와 탄막 속도가 2배 빨라지므로 바닥 용암 가시에 떨어지지 않도록 공중 기동을 유지하세요.",
-      en: "1) Move with A/D and jump with W, then fire your grapple hook with Right-Click or Space at floating cyan anchor orbs to latch on. 2) Build pendulum swing momentum, then press W to release with an explosive slingshot jump. 3) Aim and fire energy bolts at the Beholder's eye with Left-Click or F. When below 50% HP, the boss enters Enraged Phase 2 with whirling tentacle strikes and faster plasma volleys—stay airborne to avoid bottom spike lava.",
+      en: "1) Move with A/D and jump with W, then fire your grapple hook with Right-Click or Space at floating cyan anchor orbs to latch on. 2) Build pendulum swing momentum, then press W to release with an explosive slingshot jump. 3) Aim and fire energy bolts at the Iron Gazer's eye with Left-Click or F. When below 50% HP, the boss enters Enraged Phase 2 with whirling tentacle strikes and faster plasma volleys—stay airborne to avoid bottom spike lava.",
       ja: "1) A/Dで移動しWでジャンプ、右クリック（またはSpace）で天井の青いアンカーにフックを撃ち込んでスイングします。2) 振り子の反動をつけた状態でWを押すとパチンコのように空中へ急加速ジャンプします。3) 左クリック（またはF）でボスの眼球を狙い撃ちしてください。ボスの体力が半分以下になると怒り状態となり触手攻撃が激化します。",
-      zh: "1) 使用 A/D 左右走位、W 键跳跃，按鼠标右键（或 Space 键）向空中蓝光锚点射出抓钩挂绳。2) 顺应钟摆张力摆动加速，在最高点按 W 键松钩实现弹弓弹射飞跃。3) 按鼠标左键（或 F 键）瞄准眼魔弱点射击。Boss 血量降至 50% 时进入狂暴二阶段，触手挥击与弹幕加速，需全程依靠抓钩滞空规避下方的熔岩地刺。",
+      zh: "1) 使用 A/D 左右走位、W 键跳跃，按鼠标右键（或 Space 键）向空中蓝光锚点射出抓钩挂绳。2) 顺应钟摆张力摆动加速，在最高点按 W 键松钩实现弹弓弹射飞跃。3) 按鼠标左键（或 F 键）瞄准铁之凝视者弱点射击。Boss 血量降至 50% 时进入狂暴二阶段，触手挥击与弹幕加速，需全程依靠抓钩滞空规避下方的熔岩地刺。",
       fr: "1) Déplacez-vous et sautez, puis lancez le grappin (clic droit ou Espace) vers les ancres. 2) Utilisez le balancier pour vous propulser. 3) Tirez sur le boss et esquivez ses tentacules.",
       es: "1) Muévete y salta, dispara tu gancho (clic derecho o Espacio) a los anclajes celestes. 2) Aprovecha el balanceo para lanzarte en tirachinas. 3) Dispara al ojo del jefe y esquiva los tentáculos.",
     },
@@ -6828,7 +6829,7 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
           ko: "바닥에 머무르면 촉수 끝단에 맞기 쉽습니다. 천장 앵커에 훅을 걸어 진자 운동 중 반대편으로 스윙하거나, 스윙 최정점에서 W 점프를 눌러 보스의 머리 위로 높게 슬링샷 도약하세요. 공중에 오래 머무를수록 촉수의 유효 타격 범위를 벗어날 수 있습니다.",
           en: "Staying grounded makes you an easy target. Hook into high ceiling anchors to build swing speed, and slingshot jump (W) right over the boss's head. Maintaining high aerial momentum keeps you well clear of the tentacle tips' lethal strike radius.",
           ja: "地上にとどまると格好の的になります。高いアンカーにフックをかけてスピードをつけ、ボスの頭上を飛び越えるようにスリングショットジャンプしてください。",
-          zh: "地面停留极易被触手尖端横扫。利用天花板高位锚点荡绳，在摆速最大时按 W 弹射跃过眼魔头顶，高空高机动滞空可彻底破坏触手的攻击判定。",
+          zh: "地面停留极易被触手尖端横扫。利用天花板高位锚点荡绳，在摆速最大时按 W 弹射跃过铁之凝视者头顶，高空高机动滞空可彻底破坏触手的攻击判定。",
           fr: "Ne restez pas au sol : balancez-vous haut au plafond et sautez par-dessus la tête du boss.",
           es: "No te quedes en el suelo: engánchate alto al techo y balancéate por encima de la cabeza del jefe.",
         },

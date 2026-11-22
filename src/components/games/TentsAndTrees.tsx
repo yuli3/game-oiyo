@@ -54,6 +54,9 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from '../../lib/games/share-card';
+import StageBar from './StageBar';
+import { finaleLabel, loadClearedStages, markStageCleared, nextOpenStage } from '../../lib/games/stage-progress';
+import { TENTS_STAGE_COUNT, TENTS_STAGE_SLUG, tentsStagePuzzle } from '../../lib/games/tents-stages';
 
 // ─── Tents & Trees — logic puzzle with generated boards ─────────────────────
 // Every tree pairs with one tent on an orthogonally adjacent cell; tents never
@@ -202,6 +205,16 @@ const TENTS_HINT: Record<keyof typeof COPY, Record<TentsHint['reason'], string>>
     fr: { adjacent: 'Vérifiez les tentes qui se touchent.', orphan: 'Vérifiez la tente éloignée de tout arbre.', count: 'Vérifiez les tentes qui dépassent un compteur.', pairing: 'Vérifiez qu’arbre et tente vont par paires.' },
     es: { adjacent: 'Revisa las tiendas que se tocan.', orphan: 'Revisa la tienda que no está junto a un árbol.', count: 'Revisa las tiendas que superan un recuento.', pairing: 'Comprueba que cada árbol tenga una tienda.' },
 };
+/** Stage mode (2026-11-22): 50 fixed boards from 5×5 to 10×10, plus labels that used to be Korean on every page. */
+const STAGE_COPY: Record<keyof typeof COPY, { tab: string; nextStage: string; keepGoing: string; stageBadge: (n: number, size: number) => string; calendar: string; shareCard: string; copied: string }> = {
+    ko: { tab: '🏕️ 단계', nextStage: '다음 단계', keepGoing: '단계 모드로 계속하기', stageBadge: (n, size) => `${n}단계 · ${size}×${size}`, calendar: '달력', shareCard: '공유 카드', copied: '복사됨!' },
+    en: { tab: '🏕️ Stages', nextStage: 'Next stage', keepGoing: 'Keep going in Stages', stageBadge: (n, size) => `Stage ${n} · ${size}×${size}`, calendar: 'Calendar', shareCard: 'Share card', copied: 'Copied!' },
+    ja: { tab: '🏕️ ステージ', nextStage: '次のステージ', keepGoing: 'ステージで続ける', stageBadge: (n, size) => `ステージ${n} · ${size}×${size}`, calendar: 'カレンダー', shareCard: 'シェアカード', copied: 'コピーしました!' },
+    zh: { tab: '🏕️ 关卡', nextStage: '下一关', keepGoing: '继续闯关', stageBadge: (n, size) => `第${n}关 · ${size}×${size}`, calendar: '日历', shareCard: '分享卡片', copied: '已复制!' },
+    fr: { tab: '🏕️ Niveaux', nextStage: 'Niveau suivant', keepGoing: 'Continuer en mode niveaux', stageBadge: (n, size) => `Niveau ${n} · ${size}×${size}`, calendar: 'Calendrier', shareCard: 'Carte à partager', copied: 'Copié !' },
+    es: { tab: '🏕️ Niveles', nextStage: 'Siguiente nivel', keepGoing: 'Seguir en modo niveles', stageBadge: (n, size) => `Nivel ${n} · ${size}×${size}`, calendar: 'Calendario', shareCard: 'Tarjeta para compartir', copied: '¡Copiado!' },
+};
+
 const HINT_LABEL: Record<keyof typeof COPY, string> = { ko: '힌트', en: 'Hint', ja: 'ヒント', zh: '提示', fr: 'Indice', es: 'Pista' };
 
 const A11Y_COPY = {
@@ -303,6 +316,7 @@ const CHAOS_COPY = {
 const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const localeKey = (locale in COPY ? locale : 'en') as keyof typeof COPY;
     const t = COPY[localeKey];
+    const sc = STAGE_COPY[localeKey];
     const chaosCopy = CHAOS_COPY[localeKey];
     const a11y = A11Y_COPY[locale as keyof typeof A11Y_COPY] ?? A11Y_COPY.en;
     const nextDailyCopy = NEXT_DAILY_COPY[locale as keyof typeof NEXT_DAILY_COPY] ?? NEXT_DAILY_COPY.en;
@@ -331,6 +345,8 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [clock, setClock] = useState(() => Date.now());
     const [copied, setCopied] = useState(false);
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    const [clearedStages, setClearedStages] = useState<number[]>([]);
+    useEffect(() => { setClearedStages(loadClearedStages(TENTS_STAGE_SLUG, TENTS_STAGE_COUNT)); }, []);
     const cellRefs = useRef<Array<HTMLButtonElement | HTMLDivElement | null>>([]);
     const draftRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const startedRef = useRef(initial.resumed);
@@ -427,7 +443,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         return () => window.clearInterval(timer);
     }, [mode, chaosAugment, chaosDeadline, validation.complete, chaosFailed]);
 
-    const newPuzzle = useCallback((nextMode: TentsMode, nextDifficulty: TentsDifficulty = difficulty) => {
+    const newPuzzle = useCallback((nextMode: TentsMode, nextDifficulty: TentsDifficulty = difficulty, stageIndex?: number) => {
         clearTentsSave();
         const today = todayKey();
         const day = dayIndex();
@@ -450,6 +466,13 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             const { puzzle: p } = generateDailyTents();
             setMode('daily');
             setSeed(0);
+            setPuzzle(p);
+            setMarks(emptyMarksFor(p.size));
+        } else if (nextMode === 'stage') {
+            const index = stageIndex ?? nextOpenStage(loadClearedStages(TENTS_STAGE_SLUG, TENTS_STAGE_COUNT), TENTS_STAGE_COUNT);
+            const p = tentsStagePuzzle(index);
+            setMode('stage');
+            setSeed(index);
             setPuzzle(p);
             setMarks(emptyMarksFor(p.size));
         } else if (nextMode === 'chaos') {
@@ -604,6 +627,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 setStreak(recordDailyWin(DAILY_GAME_ID, today, previousDayKey(today)));
                 recordDailyPuzzleClear('tents', dailyDate);
             }
+            if (mode === 'stage') setClearedStages(markStageCleared(TENTS_STAGE_SLUG, seed, TENTS_STAGE_COUNT));
         } else {
             if (v.error) tone(180, 0.08);
             remember(next);
@@ -613,7 +637,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const handleShareCard = useCallback(async () => {
         const canvas = createShareCardCanvas({
             title: "Tents and Trees",
-            subtitle: mode === 'daily' ? `Daily Puzzle (${dailyDate})` : `${puzzle.size}×${puzzle.size} Logic Grid`,
+            subtitle: mode === 'daily' ? `Daily Puzzle (${dailyDate})` : mode === 'stage' ? `Stage ${seed + 1} / ${TENTS_STAGE_COUNT}` : `${puzzle.size}×${puzzle.size} Logic Grid`,
             score: validation.complete ? "Solved!" : "Camping In Progress",
             slug: "tents",
             customStats: [
@@ -629,7 +653,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         } else {
             downloadShareCard(canvas, `tents-and-trees-${dailyDate}.png`);
         }
-    }, [mode, dailyDate, puzzle.size, puzzle.trees.length, validation.complete, streak]);
+    }, [mode, dailyDate, seed, puzzle.size, puzzle.trees.length, validation.complete, streak]);
 
     const copyShare = () => {
         if (!chaosAugment || chaosStartedAt == null) return;
@@ -720,14 +744,14 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     <p className="text-xs text-muted-foreground/80 mb-4 text-center max-w-xs leading-relaxed">{t.note}</p>
 
                     <div className="mb-3 inline-flex flex-wrap justify-center gap-1">
-                        {(['daily', 'free', 'chaos'] as const).map((m) => (
+                        {(['daily', 'stage', 'free', 'chaos'] as const).map((m) => (
                             <button key={m} onClick={() => {
                                 if (m !== mode) track('mode_change', m);
                                 newPuzzle(m);
                             }}
                                 aria-pressed={mode === m}
                                 className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === m ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-                                {t[m]}
+                                {m === 'stage' ? sc.tab : t[m]}
                             </button>
                         ))}
                         <button type="button" onClick={() => {
@@ -758,10 +782,10 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             type="button"
                             onClick={() => setIsCalendarOpen(true)}
                             className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                            aria-label="달력"
+                            aria-label={sc.calendar}
                         >
                             <Calendar className="size-3.5" />
-                            <span>달력</span>
+                            <span>{sc.calendar}</span>
                         </button>
                         <button
                             type="button"
@@ -812,6 +836,17 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     </div>
                 )}
 
+                {mode === 'stage' && (
+                    <div className="mb-3 flex w-full max-w-sm flex-col items-center gap-2">
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                            {sc.stageBadge(seed + 1, puzzle.size)}
+                        </span>
+                        <div className="max-h-28 w-full overflow-y-auto">
+                            <StageBar count={TENTS_STAGE_COUNT} current={seed} cleared={clearedStages} locale={locale} onSelect={(i) => newPuzzle('stage', difficulty, i)} />
+                        </div>
+                    </div>
+                )}
+
                 {mode === 'daily' && (
                     <div className="mb-2 flex items-center justify-center gap-2">
                         <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
@@ -842,7 +877,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
                 <div className="bg-muted/30 p-1 sm:p-3 rounded-2xl sm:rounded-3xl border border-border shadow-inner w-full max-w-sm overflow-x-auto touch-manipulation">
                     <div className="grid gap-0.5 sm:gap-1" role="grid" aria-label={t.title} aria-rowcount={size + 1} aria-colcount={size + 1}
-                        style={{ gridTemplateColumns: `1.5rem repeat(${size}, minmax(2rem, 1fr))` }}>
+                        style={{ gridTemplateColumns: `1.5rem repeat(${size}, minmax(${size >= 9 ? '1.6rem' : '2rem'}, 1fr))` }}>
                         <div role="row" aria-rowindex={1} className="contents">
                         <div role="columnheader" aria-rowindex={1} aria-colindex={1} aria-label={`${a11y.row} / ${a11y.column}`} />
                             {puzzle.colHints.map((h, i) => {
@@ -1014,11 +1049,21 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                     className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
                                 >
                                     <Share2 className="w-4 h-4" />
-                                    <span>{shareCardCopied ? "복사됨!" : "공유 카드"}</span>
+                                    <span>{shareCardCopied ? sc.copied : sc.shareCard}</span>
                                 </button>
                                 {mode === 'free' && (
                                     <button onClick={() => { track('play_again', 'free'); newPuzzle('free', difficulty); }} className="px-8 py-2.5 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
                                         {t.next}
+                                    </button>
+                                )}
+                                {mode === 'stage' && (
+                                    <button type="button" onClick={() => { track('play_again', 'stage'); newPuzzle('stage', difficulty, seed + 1 >= TENTS_STAGE_COUNT ? 0 : seed + 1); }} className="px-8 py-2.5 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
+                                        {seed + 1 >= TENTS_STAGE_COUNT ? finaleLabel(locale) : sc.nextStage}
+                                    </button>
+                                )}
+                                {mode === 'daily' && (
+                                    <button type="button" onClick={() => { track('mode_change', 'stage'); newPuzzle('stage'); }} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
+                                        {sc.keepGoing}
                                     </button>
                                 )}
                                 {mode === 'chaos' && chaosAugment && (

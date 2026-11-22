@@ -76,6 +76,8 @@ import {
   upgradeCell,
   upgradeCost,
 } from "../../lib/games/isometric-city";
+import { CITY_GOALS, CITY_GOAL_COUNT, CITY_GOAL_SLUG, cityGoalMet, cityGoalText, cityGoalValue } from "../../lib/games/isometric-city-goals";
+import { loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
 
 const CELL_SIZE = 2;
 const WORLD_SIZE = GRID_SIZE * CELL_SIZE;
@@ -128,6 +130,7 @@ declare global { interface Window { webkitAudioContext?: typeof AudioContext } }
 
 interface Props {
   copy: IsometricCitySceneCopy;
+  locale?: string;
 }
 
 const TOOL_ICONS = {
@@ -155,7 +158,7 @@ function reasonMessage(reason: ReturnType<typeof placementReason>, copy: Isometr
   return "";
 }
 
-export default function IsometricCityScene({ copy }: Props) {
+export default function IsometricCityScene({ copy, locale = "en" }: Props) {
   const [city, setCity] = useState<CityState>(() => createStarterCity());
   const [hydrated, setHydrated] = useState(false);
   const [tool, setTool] = useState<BuildTool>("residential");
@@ -234,13 +237,22 @@ export default function IsometricCityScene({ copy }: Props) {
     [sound]
   );
   useEffect(() => () => player.current?.close(), []);
-  const mayorMilestone = useMemo(() => {
-    const pop = summary.population;
-    if (pop < 50) return { tier: "Lv.1 Hamlet", nextGoal: 50 };
-    if (pop < 150) return { tier: "Lv.2 Town", nextGoal: 150 };
-    if (pop < 300) return { tier: "Lv.3 City", nextGoal: 300 };
-    return { tier: "Lv.4 Metropolis", nextGoal: 500 };
-  }, [summary.population]);
+  // City goals (2026-11-22): 30 stages in order; the first one not met is shown in the HUD.
+  const goalText = cityGoalText(locale);
+  const [clearedGoals, setClearedGoals] = useState<number[]>([]);
+  useEffect(() => { setClearedGoals(loadClearedStages(CITY_GOAL_SLUG, CITY_GOAL_COUNT)); }, []);
+  const allGoalsDone = clearedGoals.length >= CITY_GOAL_COUNT;
+  const goalIndex = nextOpenStage(clearedGoals, CITY_GOAL_COUNT);
+  const goal = CITY_GOALS[goalIndex];
+  const goalValue = cityGoalValue(city, goal.metric);
+  useEffect(() => {
+    if (!hydrated || allGoalsDone || !cityGoalMet(city, goalIndex)) return;
+    const next = markStageCleared(CITY_GOAL_SLUG, goalIndex, CITY_GOAL_COUNT);
+    setClearedGoals(next);
+    setNotice(next.length >= CITY_GOAL_COUNT ? goalText.allDone : goalText.reached(goalIndex + 1));
+    if (containerRef.current) celebrate(containerRef.current, { preset: "coins" });
+    nativeHaptics.trigger("levelUp");
+  }, [city, hydrated, goalIndex, allGoalsDone]);
   const clock = formatClock(city);
   const selectedCell = selected ? getCell(city, selected.x, selected.z) : undefined;
   const weatherLabel = city.weather === "rain" ? copy.rain : city.weather === "fog" ? copy.fog : copy.clear;
@@ -256,7 +268,7 @@ export default function IsometricCityScene({ copy }: Props) {
     const canvas = createShareCardCanvas({
       title: "Isometric City 3D",
       subtitle: `${copy.cityName} · DAY ${clock.day}`,
-      score: `${summary.population.toLocaleString()}명 시민`,
+      score: `${summary.population.toLocaleString()} ${copy.citizens}`,
       slug: "isometric-city",
       customStats: [
         { label: "FUNDS", value: `$${formatMoney(city.funds)}` },
@@ -271,7 +283,7 @@ export default function IsometricCityScene({ copy }: Props) {
     } else {
       downloadShareCard(canvas, `isometric-city-day${clock.day}.png`);
     }
-  }, [city.funds, clock.day, copy.cityName, summary.filledJobs, summary.happiness, summary.jobs, summary.population]);
+  }, [city.funds, clock.day, copy.cityName, copy.citizens, summary.filledJobs, summary.happiness, summary.jobs, summary.population]);
 
   const lastMilestoneRef = useRef(0);
   useEffect(() => {
@@ -386,10 +398,12 @@ export default function IsometricCityScene({ copy }: Props) {
               <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#526b48] text-white"><Sparkles size={14} /></span>
               <div>
                 <p className="text-[9px] font-black tracking-[.18em] text-[#83907d]">
-                  {copy.cityName} · {mayorMilestone.tier}
+                  {copy.cityName} · {copy.day} {clock.day} · {clock.text}
                 </p>
-                <p className="text-xs font-black text-[#344033]">
-                  {copy.day} {clock.day} · {clock.text} · {summary.population}/{mayorMilestone.nextGoal}
+                <p className="text-xs font-black text-[#344033]" data-city-goal>
+                  {allGoalsDone
+                    ? goalText.allDone
+                    : `${goalText.goal} ${goalIndex + 1}/${CITY_GOAL_COUNT} · ${goalText.metric(goal.metric)} ${formatMoney(Math.min(goalValue, goal.target))}/${formatMoney(goal.target)}`}
                 </p>
               </div>
             </div>

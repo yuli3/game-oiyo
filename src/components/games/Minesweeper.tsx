@@ -81,6 +81,26 @@ const LEGACY_BEST_KEY = 'oiyo-minesweeper-best'; // pre-unification key, read on
 // every player gets the exact same board — first-click-safe generation
 // otherwise depends on wherever the player clicks, which free play wants but a
 // shared daily puzzle can't allow.
+import StageBar from './StageBar';
+import { finaleLabel, loadClearedStages, markStageCleared, nextOpenStage } from '../../lib/games/stage-progress';
+import {
+    MINESWEEPER_STAGE_BEST_KEY,
+    MINESWEEPER_STAGE_COUNT,
+    MINESWEEPER_STAGE_SLUG,
+    createMinesweeperStageBoard,
+    minesweeperStageDifficulty,
+} from '../../lib/games/minesweeper-stages';
+
+/** Stage mode labels (2026-11-22): 30 fixed boards from 8×8 to 16×16. */
+const STAGE_COPY: Record<string, { tab: string; nextStage: string; keepGoing: string; badge: (n: number, side: number, mines: number) => string }> = {
+    ko: { tab: '🎯 단계', nextStage: '다음 단계', keepGoing: '단계 모드로 계속하기', badge: (n, side, mines) => `${n}단계 · ${side}×${side} · 지뢰 ${mines}` },
+    en: { tab: '🎯 Stages', nextStage: 'Next stage', keepGoing: 'Keep going in Stages', badge: (n, side, mines) => `Stage ${n} · ${side}×${side} · ${mines} mines` },
+    ja: { tab: '🎯 ステージ', nextStage: '次のステージ', keepGoing: 'ステージで続ける', badge: (n, side, mines) => `ステージ${n} · ${side}×${side} · 地雷${mines}` },
+    zh: { tab: '🎯 关卡', nextStage: '下一关', keepGoing: '继续闯关', badge: (n, side, mines) => `第${n}关 · ${side}×${side} · ${mines}颗雷` },
+    fr: { tab: '🎯 Niveaux', nextStage: 'Niveau suivant', keepGoing: 'Continuer en mode niveaux', badge: (n, side, mines) => `Niveau ${n} · ${side}×${side} · ${mines} mines` },
+    es: { tab: '🎯 Niveles', nextStage: 'Siguiente nivel', keepGoing: 'Seguir en modo niveles', badge: (n, side, mines) => `Nivel ${n} · ${side}×${side} · ${mines} minas` },
+};
+
 const DAILY_DIFFICULTY_ID: MinesweeperDifficultyId = 'intermediate';
 const DAILY_GAME_ID = 'minesweeper-daily';
 
@@ -150,7 +170,7 @@ const NUM_COLORS: Record<number, string> = {
     8: 'text-muted-foreground',
 };
 
-type Mode = 'daily' | MinesweeperDifficultyId;
+type Mode = 'daily' | 'stage' | MinesweeperDifficultyId;
 
 const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
@@ -160,9 +180,15 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'en' });
     const { shakeCssVars, addTrauma } = useGameJuicePro();
 
+    const sc = STAGE_COPY[locale] ?? STAGE_COPY.en;
     const [mode, setMode] = useState<Mode>('daily');
-    const difficultyId: MinesweeperDifficultyId = mode === 'daily' ? DAILY_DIFFICULTY_ID : mode;
-    const { width, height, mineCount } = MINESWEEPER_DIFFICULTIES[difficultyId];
+    const [stageIndex, setStageIndex] = useState(0);
+    const [clearedStages, setClearedStages] = useState<number[]>([]);
+    const difficultyId: MinesweeperDifficultyId = mode === 'daily' || mode === 'stage' ? DAILY_DIFFICULTY_ID : mode;
+    const { width, height, mineCount } = mode === 'stage' ? minesweeperStageDifficulty(stageIndex) : MINESWEEPER_DIFFICULTIES[difficultyId];
+    // Stage times are compared only within the same stage (ConditionalBestRecord), under their own key.
+    const recordKey = mode === 'stage' ? MINESWEEPER_STAGE_BEST_KEY : bestKeyFor(difficultyId);
+    const recordDifficulty = mode === 'stage' ? `stage-${stageIndex + 1}` : difficultyId;
 
     const [board, setBoard] = useState<MinesweeperBoard>(() => createEmptyBoard(width, height));
     const [status, setStatus] = useState<'playing' | 'won' | 'lost'>('playing');
@@ -369,16 +395,23 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         });
     }, [getAudioContext]);
 
-    const recordConditions = useCallback((): BestConditions => ({
-        seed: mode === 'daily' ? `daily-${dailyDate}` : `free-${generationSeed.current}`,
-        difficulty: difficultyId,
-        assist,
-    }), [assist, dailyDate, difficultyId, mode]);
+    const seedLabel = (m: Mode, date: string, stage: number) =>
+        m === 'daily' ? `daily-${date}` : m === 'stage' ? `stage-${stage + 1}` : `free-${generationSeed.current}`;
 
-    const initBoard = useCallback((next: Mode) => {
-        const id = next === 'daily' ? DAILY_DIFFICULTY_ID : next;
+    const recordConditions = useCallback((): BestConditions => ({
+        seed: seedLabel(mode, dailyDate, stageIndex),
+        difficulty: recordDifficulty,
+        assist,
+    }), [assist, dailyDate, recordDifficulty, mode, stageIndex]);
+
+    const initBoard = useCallback((next: Mode, stage?: number) => {
+        const id = next === 'daily' || next === 'stage' ? DAILY_DIFFICULTY_ID : next;
         const dims = MINESWEEPER_DIFFICULTIES[id];
+        const nextStage = next === 'stage'
+            ? stage ?? nextOpenStage(loadClearedStages(MINESWEEPER_STAGE_SLUG, MINESWEEPER_STAGE_COUNT), MINESWEEPER_STAGE_COUNT)
+            : 0;
         setMode(next);
+        setStageIndex(nextStage);
         setFlagMode(false);
         setActiveCell(0);
         setTimer(0);
@@ -400,6 +433,12 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             setFirstClick(false);
             setDailyDate(todayKey());
             generationSeed.current = daily.seed;
+        } else if (next === 'stage') {
+            const staged = createMinesweeperStageBoard(nextStage);
+            setBoard(staged.board);
+            setGenerationStrategy(staged.verified ? 'verified' : 'safe-fallback');
+            setFirstClick(false);
+            generationSeed.current = 0;
         } else {
             setBoard(createEmptyBoard(dims.width, dims.height));
             setGenerationStrategy('pending');
@@ -408,11 +447,11 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         }
         setStatus('playing');
         const conditions: BestConditions = {
-            seed: next === 'daily' ? `daily-${todayKey()}` : `free-${generationSeed.current}`,
-            difficulty: id,
+            seed: next === 'daily' ? `daily-${todayKey()}` : next === 'stage' ? `stage-${nextStage + 1}` : `free-${generationSeed.current}`,
+            difficulty: next === 'stage' ? `stage-${nextStage + 1}` : id,
             assist: 'none',
         };
-        setBestTime(getBestForConditions(bestKeyFor(id), conditions)?.value ?? null);
+        setBestTime(getBestForConditions(next === 'stage' ? MINESWEEPER_STAGE_BEST_KEY : bestKeyFor(id), conditions)?.value ?? null);
     }, []);
 
     useEffect(() => {
@@ -436,16 +475,19 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             setAssist(saved.assist);
             generationSeed.current = saved.generationSeed;
             startedAtRef.current = saved.hasStarted ? performance.now() - restoredElapsed : null;
-            const restoredDifficulty = saved.mode === 'daily' ? DAILY_DIFFICULTY_ID : saved.mode;
-            setBestTime(getBestForConditions(bestKeyFor(restoredDifficulty), {
-                seed: saved.mode === 'daily' ? `daily-${saved.dailyDate}` : `free-${saved.generationSeed}`,
-                difficulty: restoredDifficulty,
+            const restoredDifficulty = saved.mode === 'daily' || saved.mode === 'stage' ? DAILY_DIFFICULTY_ID : saved.mode;
+            const restoredStage = saved.stageIndex ?? 0;
+            setStageIndex(restoredStage);
+            setBestTime(getBestForConditions(saved.mode === 'stage' ? MINESWEEPER_STAGE_BEST_KEY : bestKeyFor(restoredDifficulty), {
+                seed: saved.mode === 'daily' ? `daily-${saved.dailyDate}` : saved.mode === 'stage' ? `stage-${restoredStage + 1}` : `free-${saved.generationSeed}`,
+                difficulty: saved.mode === 'stage' ? `stage-${restoredStage + 1}` : restoredDifficulty,
                 assist: saved.assist,
             })?.value ?? null);
         } else {
             initBoard('daily');
         }
         setStreak(getDailyStreak(DAILY_GAME_ID, today, previousDayKey(today)));
+        setClearedStages(loadClearedStages(MINESWEEPER_STAGE_SLUG, MINESWEEPER_STAGE_COUNT));
         // One-time migration from the pre-unification per-game key (beginner best time)
         try {
             if (!getBest('minesweeper')) {
@@ -495,8 +537,9 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             flagMode,
             activeCell,
             assist,
+            ...(mode === 'stage' ? { stageIndex } : {}),
         });
-    }, [activeCell, assist, board, dailyDate, firstClick, flagMode, generationStrategy, hasStarted, hydrated, mode, status]);
+    }, [activeCell, assist, board, dailyDate, firstClick, flagMode, generationStrategy, hasStarted, hydrated, mode, stageIndex, status]);
 
     useEffect(() => {
         if (status !== 'playing' || !hasStarted) return;
@@ -543,7 +586,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             setTimer(elapsed);
             const previousBest = bestTime;
             const isNewBest = previousBest === null || elapsed < previousBest;
-            const nextBest = recordBestForConditions(bestKeyFor(difficultyId), elapsed, 'seconds', recordConditions()).value;
+            const nextBest = recordBestForConditions(recordKey, elapsed, 'seconds', recordConditions()).value;
             if (isNewBest) recordAchievementEvent('minesweeper', 'personal-best');
             setIsNewBest(isNewBest);
             setBestTime(nextBest);
@@ -551,6 +594,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 const today = todayKey();
                 setStreak(recordDailyWin(DAILY_GAME_ID, today, previousDayKey(today)));
             }
+            if (mode === 'stage') setClearedStages(markStageCleared(MINESWEEPER_STAGE_SLUG, stageIndex, MINESWEEPER_STAGE_COUNT));
         }
     };
 
@@ -627,9 +671,9 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             startedAtRef.current = performance.now();
             setHasStarted(true);
         }
-        setBestTime(getBestForConditions(bestKeyFor(difficultyId), {
-            seed: mode === 'daily' ? `daily-${dailyDate}` : `free-${generationSeed.current}`,
-            difficulty: difficultyId,
+        setBestTime(getBestForConditions(recordKey, {
+            seed: seedLabel(mode, dailyDate, stageIndex),
+            difficulty: recordDifficulty,
             assist: 'hint',
         })?.value ?? null);
     };
@@ -723,7 +767,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             const isWon = status === 'won';
             const canvas = createShareCardCanvas({
                 title: t.title,
-                subtitle: `${difficultyId.toUpperCase()} · ${isWon ? (locale === 'ko' ? '승리 클리어' : 'Clear') : (locale === 'ko' ? '지뢰 격발' : 'Detonated')}`,
+                subtitle: `${mode === 'stage' ? `STAGE ${stageIndex + 1}/${MINESWEEPER_STAGE_COUNT}` : difficultyId.toUpperCase()} · ${isWon ? (locale === 'ko' ? '승리 클리어' : 'Clear') : (locale === 'ko' ? '지뢰 격발' : 'Detonated')}`,
                 score: isWon ? `${timer}s` : `${summary.safeRevealed}/${summary.safeTotal} SAFE`,
                 bestScore: bestTime ? `${bestTime}s` : undefined,
                 slug: "minesweeper",
@@ -732,7 +776,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 customStats: [
                     { label: m3.safeProgress, value: `${summary.safeRevealed}/${summary.safeTotal}` },
                     { label: m3.correctFlags, value: `${summary.correctFlags}/${summary.flags}` },
-                    { label: "DIFFICULTY", value: difficultyId.toUpperCase() },
+                    { label: "DIFFICULTY", value: mode === 'stage' ? `${width}×${height} · ${mineCount}` : difficultyId.toUpperCase() },
                 ],
             });
             const success = await copyShareCardToClipboard(canvas);
@@ -745,7 +789,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         } catch {
             /* best effort */
         }
-    }, [board, status, t.title, difficultyId, locale, timer, bestTime, m3.safeProgress, m3.correctFlags]);
+    }, [board, status, t.title, difficultyId, mode, stageIndex, width, height, mineCount, locale, timer, bestTime, m3.safeProgress, m3.correctFlags]);
 
     return (
         <div
@@ -762,11 +806,15 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     : "relative"
             }`}
         >
-            <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.reset} onReset={() => initBoard(mode)}>
+            <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.reset} onReset={() => initBoard(mode, stageIndex)}>
                 <div className="mb-4 flex flex-wrap items-center gap-1.5">
                     <button onClick={() => initBoard('daily')} aria-pressed={mode === 'daily'}
                         className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'daily' ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
                         {t.daily}{solvedToday ? ' ✓' : ''}
+                    </button>
+                    <button onClick={() => initBoard('stage')} aria-pressed={mode === 'stage'}
+                        className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'stage' ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                        {sc.tab}
                     </button>
                     {(['beginner', 'intermediate', 'expert'] as const).map((id) => (
                         <button key={id} onClick={() => initBoard(id)} aria-pressed={mode === id}
@@ -775,6 +823,17 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         </button>
                     ))}
                 </div>
+
+                {mode === 'stage' && (
+                    <div className="mb-3 flex flex-col items-center gap-2">
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                            {sc.badge(stageIndex + 1, width, mineCount)}
+                        </span>
+                        <div className="max-h-28 w-full overflow-y-auto">
+                            <StageBar count={MINESWEEPER_STAGE_COUNT} current={stageIndex} cleared={clearedStages} locale={locale} onSelect={(i) => initBoard('stage', i)} />
+                        </div>
+                    </div>
+                )}
 
                 {mode === 'daily' && streak && streak.played > 0 && (
                     <p className="mb-3 text-center text-xs font-bold text-muted-foreground">🔥 {t.streak} {streak.currentStreak} · {t.best} {streak.maxStreak}</p>
@@ -967,12 +1026,29 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         </TiltSweepButton>
                     </div>
                     {assist === 'hint' && <p className="mt-1 text-xs font-bold text-muted-foreground">{m3.assistedResult}</p>}
-                    <TiltSweepButton
-                        onClick={() => initBoard(mode)}
-                        className="mt-4 min-h-11 px-8 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
-                    >
-                        {t.reset}
-                    </TiltSweepButton>
+                    {status === 'won' && mode === 'stage' ? (
+                        <TiltSweepButton
+                            onClick={() => initBoard('stage', stageIndex + 1 >= MINESWEEPER_STAGE_COUNT ? 0 : stageIndex + 1)}
+                            className="mt-4 min-h-11 px-8 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
+                        >
+                            {stageIndex + 1 >= MINESWEEPER_STAGE_COUNT ? finaleLabel(locale) : sc.nextStage}
+                        </TiltSweepButton>
+                    ) : (
+                        <TiltSweepButton
+                            onClick={() => initBoard(mode, stageIndex)}
+                            className="mt-4 min-h-11 px-8 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
+                        >
+                            {t.reset}
+                        </TiltSweepButton>
+                    )}
+                    {status === 'won' && mode === 'daily' && (
+                        <TiltSweepButton
+                            onClick={() => initBoard('stage')}
+                            className="mt-2 min-h-11 px-6 py-2 rounded-full border border-primary/40 font-bold text-primary"
+                        >
+                            {sc.keepGoing}
+                        </TiltSweepButton>
+                    )}
                 </div>
             ) : onboardingText ? (
                 <p role="status" aria-live="polite" className="mx-auto mt-4 max-w-md rounded-xl border border-chart-2/40 bg-chart-2/10 px-3 py-2 text-center text-xs font-bold text-foreground">
