@@ -560,7 +560,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 </span>
               </div>
             </div>
-            <span className="inline-flex items-center gap-1 text-xs font-mono text-primary/80 shrink-0 hidden sm:inline-flex">
+            <span className="inline-flex items-center gap-1 text-xs font-mono text-primary shrink-0 hidden sm:inline-flex">
               <img src={CHESS_PLAY_UI_SPRITES.scroll} alt="" className="size-4 object-contain" />
               오프닝 북
             </span>

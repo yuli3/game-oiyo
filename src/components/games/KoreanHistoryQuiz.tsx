@@ -470,7 +470,7 @@ export default function KoreanHistoryQuiz({ locale }: Props) {
             else cls += ' opacity-50 border-border text-muted-foreground';
             return (
               <TiltQuizButton key={opt} onClick={() => choose(opt)} className={cls}>
-                <span className="absolute top-1.5 left-2 text-xs font-mono text-muted-foreground/60">{idx + 1}</span>
+                <span className="absolute top-1.5 left-2 text-xs font-mono text-muted-foreground">{idx + 1}</span>
                 {opt}
               </TiltQuizButton>
             );

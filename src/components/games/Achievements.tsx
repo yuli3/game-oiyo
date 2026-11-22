@@ -368,7 +368,7 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
         return (
           <div key={category}>
             <h2 className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{catLabel[category]}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div role="list" className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {items.map((a) => {
                 const copy = ACHIEVEMENT_COPY[a.id]?.[locale] ?? ACHIEVEMENT_COPY[a.id]?.en;
                 const pct = a.target > 0 ? Math.round((a.progress / a.target) * 100) : 0;

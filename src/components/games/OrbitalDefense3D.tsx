@@ -491,7 +491,7 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
         )}
       </div>
 
-      <p className="text-center text-xs text-muted-foreground/80">{t.howToPlay}</p>
+      <p className="text-center text-xs text-muted-foreground">{t.howToPlay}</p>
     </div>
   );
 }

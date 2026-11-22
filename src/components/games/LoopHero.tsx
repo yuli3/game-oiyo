@@ -1082,7 +1082,7 @@ export const LoopHero: React.FC = () => {
                         draggable={false}
                       />
                     ) : (
-                      <Shield className="size-5 text-muted-foreground/60" />
+                      <Shield className="size-5 text-muted-foreground" />
                     )}
                   </div>
                   <span className="text-xs font-bold uppercase text-muted-foreground">

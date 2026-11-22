@@ -961,7 +961,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     </div>
                 </div>
 
-                <div className="mt-3 flex justify-between text-xs font-bold text-muted-foreground/60 uppercase tracking-widest shrink-0 max-w-sm w-full mx-auto">
+                <div className="mt-3 flex justify-between text-xs font-bold text-muted-foreground uppercase tracking-widest shrink-0 max-w-sm w-full mx-auto">
                     <span>{t.hint}</span>
                     <span>{t.best}: {best}</span>
                 </div>

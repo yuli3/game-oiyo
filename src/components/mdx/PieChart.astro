@@ -24,7 +24,7 @@ const gradient = `conic-gradient(${segments.join(", ")})`;
 >
   {
     title && (
-      <h3 class="text-sm font-bold uppercase tracking-[0.2em] text-primary/60 mb-8 text-center">
+      <h3 class="text-sm font-bold uppercase tracking-[0.2em] text-primary mb-8 text-center">
         {title}
       </h3>
     )
@@ -45,10 +45,10 @@ const gradient = `conic-gradient(${segments.join(", ")})`;
               class="w-3 h-3 rounded-full shrink-0"
               style={`background: ${item.color}`}
             />
-            <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 group-hover:text-primary transition-colors">
+            <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">
               {item.label}
             </span>
-            <span class="text-[10px] font-medium text-muted-foreground/40">
+            <span class="text-[10px] font-medium text-muted-foreground">
               {Math.round((item.value / total) * 100)}%
             </span>
           </div>
