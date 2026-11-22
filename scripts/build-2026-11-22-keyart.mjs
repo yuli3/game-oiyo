@@ -97,7 +97,50 @@ function mirrorLanterns() {
   );
 }
 
-const jobs = { "bubble-garden": bubbleGarden, "picture-logic": pictureLogic, "ice-penguin": icePenguin, "mirror-lanterns": mirrorLanterns };
+function typingDefense() {
+  const words = [["사과", 180, 200, "#fff"], ["bridge", 420, 230, "#fff"], ["나비", 720, 180, "#ffd43b"], ["lantern", 930, 260, "#ff6b6b"], ["바람", 560, 340, "#fff"]];
+  const tags = words.map(([t, x, y, c]) => `<g><rect x="${x - 70}" y="${y - 34}" width="140" height="50" rx="12" fill="rgba(0,0,0,.45)" stroke="${c}" stroke-width="3"/><text x="${x}" y="${y}" text-anchor="middle" font-family="sans-serif" font-size="30" font-weight="700" fill="${c}">${t}</text></g>`).join("");
+  let wall = "";
+  for (let i = 0; i < 20; i++) wall += `<rect x="${i * 62}" y="${470 + (i % 2) * 6}" width="58" height="40" fill="#adb5bd" stroke="#495057" stroke-width="3"/>`;
+  return svg(
+    `<rect width="${W}" height="${H}" fill="#1c2541"/><rect y="510" width="${W}" height="120" fill="#5c940d"/>${wall}${tags}` +
+      `<rect x="330" y="545" width="540" height="62" rx="14" fill="#fff" stroke="#4dabf7" stroke-width="4"/><text x="360" y="588" font-family="sans-serif" font-size="32" fill="#212529">바람|</text>` +
+      title("타자 방어선 · Typing Siege", "단어를 쳐서 성벽을 지켜라 — Type to hold the wall", 600, "#fff", 70),
+  );
+}
+
+function spinSumo() {
+  const top = (x, y, c, rot) => `<g transform="translate(${x} ${y}) rotate(${rot})"><ellipse rx="78" ry="78" fill="${c}"/><path d="M-78 0 A78 78 0 0 1 78 0 Z" fill="rgba(255,255,255,.25)"/><circle r="22" fill="#fff"/><circle r="9" fill="#343a40"/></g>`;
+  return svg(
+    `<rect width="${W}" height="${H}" fill="#e9c46a"/><ellipse cx="600" cy="390" rx="470" ry="210" fill="#d4a373" stroke="#7f5539" stroke-width="14"/><ellipse cx="600" cy="390" rx="380" ry="160" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="4" stroke-dasharray="18 14"/>` +
+      top(470, 390, "#e03131", 20) + top(740, 370, "#1971c2", -30) +
+      `<g fill="#fff3bf"><path d="M600 300 l18 50 l50 -20 l-34 42 l44 30 l-54 0 l-6 54 l-24 -48 l-24 48 l-6 -54 l-54 0 l44 -30 l-34 -42 l50 20 Z" opacity=".9"/></g>` +
+      `<path d="M330 450 q-40 30 -90 20" stroke="#fff" stroke-width="6" fill="none" opacity=".7"/><path d="M880 330 q50 -20 90 0" stroke="#fff" stroke-width="6" fill="none" opacity=".7"/>` +
+      title("팽이 씨름 · Spin Sumo", "꾹 눌렀다 떼면 돌진 — Hold, release, ram", 600, "#fff", 90),
+  );
+}
+
+function spiderCards() {
+  const card = (x, y, r, s, red) => `<g transform="translate(${x} ${y})"><rect width="110" height="156" rx="10" fill="#fff" stroke="#adb5bd" stroke-width="2"/><text x="10" y="34" font-family="sans-serif" font-size="30" font-weight="800" fill="${red ? "#e03131" : "#212529"}">${r}</text><text x="55" y="110" text-anchor="middle" font-family="sans-serif" font-size="54" fill="${red ? "#e03131" : "#212529"}">${s}</text></g>`;
+  const back = (x, y) => `<rect x="${x}" y="${y}" width="110" height="156" rx="10" fill="#364fc7" stroke="#748ffc" stroke-width="3"/>`;
+  const ranks = ["K", "Q", "J", "10", "9", "8", "7"];
+  let cols = "";
+  for (let c = 0; c < 7; c++) {
+    const x = 90 + c * 150;
+    for (let k = 0; k < 2; k++) cols += back(x, 200 + k * 16);
+    const n = 1 + ((c * 3) % 4);
+    for (let k = 0; k < n; k++) cols += card(x, 240 + k * 52, ranks[(c % 3) + k], c % 2 ? "♥" : "♠", c % 2 === 1);
+  }
+  let web = "";
+  for (let k = 1; k < 6; k++) web += `<circle cx="1120" cy="40" r="${k * 30}" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"/>`;
+  for (let k = 0; k < 8; k++) web += `<line x1="1120" y1="40" x2="${1120 + Math.cos(k * 0.785) * 160}" y2="${40 + Math.sin(k * 0.785) * 160}" stroke="rgba(255,255,255,.25)" stroke-width="2"/>`;
+  return svg(
+    `<rect width="${W}" height="${H}" fill="#2b8a3e"/>${web}${cols}` +
+      title("스파이더 카드 · Spider Cards", "30판 모두 풀 수 있는 판 — 30 deals, all winnable", 560, "#fff", 90),
+  );
+}
+
+const jobs = { "bubble-garden": bubbleGarden, "picture-logic": pictureLogic, "ice-penguin": icePenguin, "mirror-lanterns": mirrorLanterns, "typing-defense": typingDefense, "spin-sumo": spinSumo, "spider-cards": spiderCards };
 const only = process.argv.slice(2);
 for (const [slug, make] of Object.entries(jobs)) {
   if (only.length && !only.includes(slug)) continue;

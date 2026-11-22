@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TypingDefense from "../../components/games/TypingDefense";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "타자 방어선 — 떨어지는 단어를 쳐서 마을을 지키는 무료 타자 게임 30웨이브",
+    description: "내려오는 단어를 그대로 치고 Enter! 금색 단어는 시간을 늦추고 빨간 단어는 화면을 비웁니다. 10웨이브마다 속담 보스, 분당 타수까지 재 주는 한글 타자 연습 게임.",
+  },
+  en: {
+    title: "Typing Siege — Free typing defense game with 30 waves",
+    description: "Type the falling words and press Enter before they hit the wall. Golden words slow time, red words clear the screen, and a proverb boss lands every tenth wave. Tracks your characters per minute.",
+  },
+  ja: {
+    title: "タイピング防衛線 — 落ちてくる単語を打って村を守る無料タイピングゲーム30ウェーブ",
+    description: "落ちてくる言葉をそのまま打ってEnter。金の言葉は時間をゆっくりに、赤い言葉は画面を一掃。10ウェーブごとにことわざボス、1分あたりの打鍵数も計測。",
+  },
+  zh: {
+    title: "打字守城 — 打出下落的词语守护村庄，免费打字游戏30波",
+    description: "照着下落的词语打字并按回车，别让它们撞上城墙。金色词语让时间变慢，红色词语清空全屏，每10波出现一次成语头目，还会统计每分钟字数。",
+  },
+  fr: {
+    title: "Siège au clavier — Jeu de frappe gratuit en 30 vagues",
+    description: "Tapez les mots qui tombent et validez avant qu'ils touchent le rempart. Les mots dorés ralentissent le temps, les rouges vident l'écran et un proverbe géant arrive toutes les dix vagues.",
+  },
+  es: {
+    title: "Asedio de teclas — Juego de mecanografía gratis con 30 oleadas",
+    description: "Escribe las palabras que caen y pulsa Enter antes de que lleguen a la muralla. Las doradas frenan el tiempo, las rojas limpian la pantalla y cada diez oleadas baja un refrán jefe.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["typing-defense"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <TypingDefense client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="typing-defense" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

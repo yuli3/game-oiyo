@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 177종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 177종." },
-  en: { title: "OIYO Arcade — 177 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 177 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム177種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム177種。" },
-  zh: { title: "OIYO 街机 — 无需安装的177款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，177款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 177 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 177 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 177 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 177 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 180종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 180종." },
+  en: { title: "OIYO Arcade — 180 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 180 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム180種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム180種。" },
+  zh: { title: "OIYO 街机 — 无需安装的180款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，180款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 180 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 180 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 180 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 180 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 177종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "177 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム177種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的177款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "177 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "177 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 180종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "180 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム180種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的180款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "180 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "180 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -236,6 +236,9 @@ const GAMES: Game[] = [
   { slug: "picture-logic", emoji: "🖼️", cat: "puzzle", name: { ko: "그림 로직", en: "Picture Logic", ja: "お絵かきロジック", zh: "数字画谜", fr: "Logique en images", es: "Lógica de dibujos" } },
   { slug: "ice-penguin", emoji: "🐧", cat: "puzzle", name: { ko: "펭귄 얼음 배달", en: "Penguin Ice Post", ja: "ペンギン氷上便", zh: "企鹅冰上快递", fr: "Le Manchot postier", es: "El Pingüino Cartero" } },
   { slug: "mirror-lanterns", emoji: "🪞", cat: "puzzle", name: { ko: "등불 거울 정원", en: "Lantern Mirror Garden", ja: "灯籠と鏡の庭", zh: "灯笼镜子花园", fr: "Le Jardin des lanternes", es: "El Jardín de Farolillos" } },
+  { slug: "typing-defense", emoji: "⌨️", cat: "arcade", name: { ko: "타자 방어선", en: "Typing Siege", ja: "タイピング防衛線", zh: "打字守城", fr: "Siège au clavier", es: "Asedio de teclas" } },
+  { slug: "spin-sumo", emoji: "🌀", cat: "arcade", name: { ko: "팽이 씨름", en: "Spin Sumo", ja: "コマずもう", zh: "陀螺相扑", fr: "Sumo de toupies", es: "Sumo de peonzas" } },
+  { slug: "spider-cards", emoji: "🕷️", cat: "card", name: { ko: "스파이더 카드", en: "Spider Cards", ja: "スパイダーカード", zh: "蜘蛛纸牌", fr: "Spider Solitaire", es: "Solitario Spider" } },
   { slug: "rampart-keeper", emoji: "🏯", cat: "arcade", name: { ko: "성벽 지기", en: "Rampart Keeper", ja: "城壁の守り手", zh: "城墙守卫", fr: "Gardien du rempart", es: "Guardián de la muralla" } },
   { slug: "link-duel", emoji: "⚔️", cat: "puzzle", name: { ko: "링크 대결", en: "Link Duel", ja: "リンク対決", zh: "链接对决", fr: "Duel par lien", es: "Duelo por enlace" } },
   { slug: "season-workshop", emoji: "🥣", cat: "arcade", name: { ko: "절기 공방", en: "Season Workshop", ja: "節気工房", zh: "节气工坊", fr: "L'Atelier des saisons", es: "El Taller de las Estaciones" } },
@@ -295,6 +298,42 @@ const newReleasesLabel: Record<Locale, { sectionTitle: string; badge: string; su
 const newReleaseLabels = newReleasesLabel[locale] ?? newReleasesLabel.en;
 
 const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; desc: Record<Locale, string> }> = [
+  {
+    slug: "typing-defense",
+    tag: { ko: "타자 연습", en: "Typing", ja: "タイピング", zh: "打字", fr: "Frappe", es: "Mecanografía" },
+    desc: {
+      ko: "30웨이브, 금색 단어·폭탄 단어·속담 보스",
+      en: "30 waves: golden words, bomb words, proverb bosses",
+      ja: "30ウェーブ、金の言葉・爆弾の言葉・ことわざボス",
+      zh: "30波：金色词、炸弹词、成语头目",
+      fr: "30 vagues : mots dorés, mots bombes, proverbes géants",
+      es: "30 oleadas: palabras doradas, bomba y refranes jefe",
+    },
+  },
+  {
+    slug: "spin-sumo",
+    tag: { ko: "2인 대결", en: "2-player duel", ja: "2人対戦", zh: "双人对战", fr: "Duel à deux", es: "Duelo a dos" },
+    desc: {
+      ko: "12개 경기장, 컴퓨터 또는 한 폰 2인 대결",
+      en: "12 arenas, vs computer or 2 players on one phone",
+      ja: "12の土俵、CPU戦か1台で2人対戦",
+      zh: "12个场地，对战电脑或一部手机双人",
+      fr: "12 arènes, contre l'ordinateur ou à deux sur un téléphone",
+      es: "12 arenas, contra la máquina o a dos en un móvil",
+    },
+  },
+  {
+    slug: "spider-cards",
+    tag: { ko: "카드놀이", en: "Solitaire", ja: "ソリティア", zh: "纸牌接龙", fr: "Réussite", es: "Solitario" },
+    desc: {
+      ko: "풀 수 있는 30판, 한 무늬·두 무늬",
+      en: "30 winnable deals, one and two suits",
+      ja: "解ける30局、1スートと2スート",
+      zh: "30局可通关牌局，单花色和双花色",
+      fr: "30 donnes gagnables, une et deux couleurs",
+      es: "30 partidas ganables, uno y dos palos",
+    },
+  },
   {
     slug: "bubble-garden",
     tag: { ko: "버블 슈터", en: "Bubble shooter", ja: "バブルシューター", zh: "泡泡射击", fr: "Tir de bulles", es: "Lanzador de burbujas" },

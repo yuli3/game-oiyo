@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SpiderCards from "../../components/games/SpiderCards";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "스파이더 카드 — 모든 판을 깰 수 있는 무료 스파이더 카드놀이 30판",
+    description: "같은 무늬로 K부터 A까지 모아 걷어 내는 스파이더 카드놀이. 한 무늬 15판, 두 무늬 15판 모두 풀 수 있는 판만 골랐어요. 누르면 자동 이동, 되돌리기·힌트.",
+  },
+  en: {
+    title: "Spider Cards — Free spider solitaire with 30 winnable deals",
+    description: "Build King to Ace in one suit to clear the table. 15 one-suit and 15 two-suit deals, each one checked to be winnable. Tap to auto-move, with undo and hints.",
+  },
+  ja: {
+    title: "スパイダーカード — 全局クリアできる無料スパイダーソリティア30局",
+    description: "同じマークでKからAまでそろえて片付けるスパイダー。1スート15局と2スート15局、すべて解ける局だけを選びました。タップで自動移動、戻す・ヒント付き。",
+  },
+  zh: {
+    title: "蜘蛛纸牌 — 30局都能通关的免费蜘蛛纸牌",
+    description: "同花色从K排到A就能收走。单花色15局、双花色15局，每一局都确认可以通关。点击自动移动，支持撤销和提示。",
+  },
+  fr: {
+    title: "Spider Solitaire — Réussite Spider gratuite en 30 donnes gagnables",
+    description: "Montez du Roi à l'As dans une couleur pour vider la table. 15 donnes à une couleur et 15 à deux couleurs, toutes vérifiées gagnables. Touchez pour déplacer, avec annulation et indices.",
+  },
+  es: {
+    title: "Solitario Spider — Spider gratis con 30 partidas que se pueden ganar",
+    description: "Ordena del Rey al As en un palo para despejar la mesa. 15 partidas de un palo y 15 de dos, todas comprobadas para poder ganarse. Toca para mover, con deshacer y pistas.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["spider-cards"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <SpiderCards client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="spider-cards" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
