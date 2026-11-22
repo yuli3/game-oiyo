@@ -89,6 +89,11 @@ public class OrbitalDefensePlayer : MonoBehaviour
     // Game state
     private GameState state = GameState.Ready;
     private DefenseLanguage lang = DefenseLanguage.KO;
+
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => lang == DefenseLanguage.EN ? OiyoI18n.ForEnglish : lang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
     private int currentStageIndex = 0;
     private bool isEndless = false;
     private bool showStageSelect = false;
@@ -1016,7 +1021,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
         GUI.color = lang == DefenseLanguage.KO ? Color.cyan : Color.white;
         if (GUILayout.Button("KO", GUILayout.Width(45), GUILayout.Height(28))) lang = DefenseLanguage.KO;
         GUI.color = lang == DefenseLanguage.EN ? Color.cyan : Color.white;
-        if (GUILayout.Button("EN", GUILayout.Width(45), GUILayout.Height(28))) lang = DefenseLanguage.EN;
+        if (GUILayout.Button(OiyoI18n.ForEnglish.ToUpperInvariant(), GUILayout.Width(45), GUILayout.Height(28))) lang = DefenseLanguage.EN;
         GUI.color = lang == DefenseLanguage.JA ? Color.cyan : Color.white;
         if (GUILayout.Button("JA", GUILayout.Width(45), GUILayout.Height(28))) lang = DefenseLanguage.JA;
         GUI.color = lang == DefenseLanguage.ES ? Color.cyan : Color.white;
@@ -1052,7 +1057,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
             GUI.color = Color.white;
             string stageTitle = isEndless ? GetText("무한 행성 방어전", "Endless Defense", "無限惑星防衛戦", "Defensa Infinita")
-                                          : $"Sector {stg.id}: {GetStageName(stg)}";
+                                          : $"{U("Sector")} {stg.id}: {GetStageName(stg)}";
             GUILayout.Label($"<size=17><b>{stageTitle}</b></size>");
 
             GUILayout.Space(4);
@@ -1060,7 +1065,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
             string targetLabel = isEndless ? "∞" : $"{stg.targetEnemies}";
             GUILayout.Label($"{enemiesLabel}: <b>{enemiesDestroyed} / {targetLabel}</b>");
 
-            GUILayout.Label($"Credits: <b>💰 {credits}G</b> | Score: <b>{score}</b>");
+            GUILayout.Label($"{U("Credits")}: <b>💰 {credits}G</b> | {U("Score")}: <b>{score}</b>");
 
             // Planet HP Bar
             string hpLabel = GetText("행성 내구도", "Planet HP", "惑星耐久力", "Vida Planetaria");
@@ -1085,7 +1090,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
             {
                 GUILayout.Space(6);
                 GUI.color = Color.red;
-                GUILayout.Label($"<b>⚠️ BOSS HP: {bossHp:0} / {bossMaxHp:0}</b>");
+                GUILayout.Label($"<b>⚠️ {U("BOSS HP")}: {bossHp:0} / {bossMaxHp:0}</b>");
                 Rect barRect = GUILayoutUtility.GetRect(220, 10);
                 GUI.Box(barRect, "");
                 GUI.Box(new Rect(barRect.x, barRect.y, barRect.width * (bossHp / bossMaxHp), barRect.height), "");
@@ -1165,7 +1170,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
         GUILayout.BeginArea(new Rect(r.x + 20, r.y + 15, r.width - 40, r.height - 30));
         GUI.color = Color.cyan;
-        GUILayout.Label($"<size=22><b>SECTOR {stg.id}: {GetStageName(stg)}</b></size>", GUILayout.Height(32));
+        GUILayout.Label($"<size=22><b>{U("SECTOR")} {stg.id}: {GetStageName(stg)}</b></size>", GUILayout.Height(32));
         GUI.color = Color.white;
 
         GUILayout.Space(8);
@@ -1209,7 +1214,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
         GUILayout.Space(8);
         GUILayout.Label($"{GetText("요격한 적", "Enemies Destroyed", "迎撃数", "Bajas")}: <b>{enemiesDestroyed}</b>");
-        GUILayout.Label($"Credits: <b>💰 {credits}G</b> | Score: <b>{score}</b> (Best: {bestScore})");
+        GUILayout.Label($"{U("Credits")}: <b>💰 {credits}G</b> | {U("Score")}: <b>{score}</b> ({U("Best")}: {bestScore})");
 
         GUILayout.FlexibleSpace();
         GUI.color = Color.green;
@@ -1238,7 +1243,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
         GUILayout.Space(8);
         GUILayout.Label($"{GetText("최종 격추수", "Final Intercepts", "最終迎撃数", "Bajas Finales")}: <b>{enemiesDestroyed}</b>");
-        GUILayout.Label($"Score: <b>{score}</b> (Best: {bestScore})");
+        GUILayout.Label($"{U("Score")}: <b>{score}</b> ({U("Best")}: {bestScore})");
 
         GUILayout.FlexibleSpace();
         GUILayout.BeginHorizontal();
@@ -1281,7 +1286,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
                                 "¡Defensa legendaria! Has destruido la Nave Nodriza alienígena y salvado a la humanidad."));
 
         GUILayout.Space(8);
-        GUILayout.Label($"Final Score: <b>{score}</b> | Intercepts: <b>{enemiesDestroyed}</b>");
+        GUILayout.Label($"{U("Final Score")}: <b>{score}</b> | {U("Intercepts")}: <b>{enemiesDestroyed}</b>");
 
         GUILayout.FlexibleSpace();
         GUI.color = Color.green;
@@ -1329,7 +1334,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
                     var stg = stages[idx];
                     GUI.color = idx == currentStageIndex ? Color.cyan : Color.white;
 
-                    string btnText = $"<b>Sector {stg.id}</b>\n<size=11>{GetStageName(stg)}</size>\n<size=10>{stg.targetEnemies} Kills</size>";
+                    string btnText = $"<b>{U("Sector")} {stg.id}</b>\n<size=11>{GetStageName(stg)}</size>\n<size=10>{F("{0} Kills", stg.targetEnemies)}</size>";
                     if (GUILayout.Button(btnText, GUILayout.Height(85), GUILayout.Width((r.width - 50) / 4f)))
                     {
                         showStageSelect = false;
@@ -1352,7 +1357,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
         switch (lang)
         {
             case DefenseLanguage.KO: return ko;
-            case DefenseLanguage.EN: return en;
+            case DefenseLanguage.EN: return OiyoI18n.En(en);
             case DefenseLanguage.JA: return ja;
             case DefenseLanguage.ES: return es;
             default: return en;
@@ -1364,7 +1369,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
         switch (lang)
         {
             case DefenseLanguage.KO: return s.nameKo;
-            case DefenseLanguage.EN: return s.nameEn;
+            case DefenseLanguage.EN: return OiyoI18n.En(s.nameEn);
             case DefenseLanguage.JA: return s.nameJa;
             case DefenseLanguage.ES: return s.nameEs;
             default: return s.nameEn;
@@ -1376,7 +1381,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
         switch (lang)
         {
             case DefenseLanguage.KO: return s.descKo;
-            case DefenseLanguage.EN: return s.descEn;
+            case DefenseLanguage.EN: return OiyoI18n.En(s.descEn);
             case DefenseLanguage.JA: return s.descJa;
             case DefenseLanguage.ES: return s.descEs;
             default: return s.descEn;

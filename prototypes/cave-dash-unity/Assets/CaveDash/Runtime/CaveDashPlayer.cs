@@ -96,6 +96,11 @@ public class CaveDashPlayer : MonoBehaviour
     // Game state
     private GameState state = GameState.Ready;
     private CaveLanguage lang = CaveLanguage.KO;
+
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => lang == CaveLanguage.EN ? OiyoI18n.ForEnglish : lang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
     private int currentStageIndex = 0;
     private bool isEndless = false;
     private bool showStageSelect = false;
@@ -1083,7 +1088,7 @@ public class CaveDashPlayer : MonoBehaviour
         GUI.color = lang == CaveLanguage.KO ? Color.cyan : Color.white;
         if (GUILayout.Button("KO", GUILayout.Width(45), GUILayout.Height(28))) lang = CaveLanguage.KO;
         GUI.color = lang == CaveLanguage.EN ? Color.cyan : Color.white;
-        if (GUILayout.Button("EN", GUILayout.Width(45), GUILayout.Height(28))) lang = CaveLanguage.EN;
+        if (GUILayout.Button(OiyoI18n.ForEnglish.ToUpperInvariant(), GUILayout.Width(45), GUILayout.Height(28))) lang = CaveLanguage.EN;
         GUI.color = lang == CaveLanguage.JA ? Color.cyan : Color.white;
         if (GUILayout.Button("JA", GUILayout.Width(45), GUILayout.Height(28))) lang = CaveLanguage.JA;
         GUI.color = lang == CaveLanguage.ES ? Color.cyan : Color.white;
@@ -1119,7 +1124,7 @@ public class CaveDashPlayer : MonoBehaviour
 
             GUI.color = Color.white;
             string stageTitle = isEndless ? GetText("무한 동굴 런", "Endless Cave Run", "エンドレス洞窟ラン", "Carrera Infinita")
-                                          : $"Stage {stg.id}: {GetStageName(stg)}";
+                                          : $"{U("Stage")} {stg.id}: {GetStageName(stg)}";
             GUILayout.Label($"<size=17><b>{stageTitle}</b></size>");
 
             GUILayout.Space(4);
@@ -1128,7 +1133,7 @@ public class CaveDashPlayer : MonoBehaviour
             GUILayout.Label($"{distLabel}: <b>{shipDistance:0.0}m / {targetLabel}</b>");
 
             string coinsLabel = GetText("코인", "Coins", "コイン", "Monedas");
-            GUILayout.Label($"{coinsLabel}: <b>{coinsCollected}</b> | Score: <b>{score}</b> (Best: {bestScore})");
+            GUILayout.Label($"{coinsLabel}: <b>{coinsCollected}</b> | {U("Score")}: <b>{score}</b> ({U("Best")}: {bestScore})");
 
             string shieldLabel = GetText("쉴드", "Shields", "シールド", "Escudos");
             string shieldIcons = shields > 0 ? "🛡️".Repeat(shields) : GetText("없음", "None", "なし", "Ninguno");
@@ -1187,7 +1192,7 @@ public class CaveDashPlayer : MonoBehaviour
 
         GUILayout.BeginArea(new Rect(r.x + 20, r.y + 15, r.width - 40, r.height - 30));
         GUI.color = Color.cyan;
-        GUILayout.Label($"<size=22><b>STAGE {stg.id}: {GetStageName(stg)}</b></size>", GUILayout.Height(32));
+        GUILayout.Label($"<size=22><b>{U("STAGE")} {stg.id}: {GetStageName(stg)}</b></size>", GUILayout.Height(32));
         GUI.color = Color.white;
 
         GUILayout.Space(8);
@@ -1229,7 +1234,7 @@ public class CaveDashPlayer : MonoBehaviour
         GUILayout.Space(8);
         GUILayout.Label($"{GetText("달성 거리", "Distance Reached", "到達距離", "Distancia")}: <b>{shipDistance:0.0}m</b>");
         GUILayout.Label($"{GetText("획득 코인", "Coins Collected", "獲得コイン", "Monedas")}: <b>+{coinsCollected}</b>");
-        GUILayout.Label($"Score: <b>{score}</b> (Best: {bestScore})");
+        GUILayout.Label($"{U("Score")}: <b>{score}</b> ({U("Best")}: {bestScore})");
 
         GUILayout.FlexibleSpace();
         GUI.color = Color.green;
@@ -1258,7 +1263,7 @@ public class CaveDashPlayer : MonoBehaviour
 
         GUILayout.Space(8);
         GUILayout.Label($"{GetText("최종 거리", "Final Distance", "最終到達距離", "Distancia Final")}: <b>{shipDistance:0.0}m</b>");
-        GUILayout.Label($"Score: <b>{score}</b> (Best: {bestScore})");
+        GUILayout.Label($"{U("Score")}: <b>{score}</b> ({U("Best")}: {bestScore})");
 
         GUILayout.FlexibleSpace();
         GUILayout.BeginHorizontal();
@@ -1301,7 +1306,7 @@ public class CaveDashPlayer : MonoBehaviour
                                 "¡Felicidades! Has atravesado el núcleo de la Tierra y dominado el abismo."));
 
         GUILayout.Space(8);
-        GUILayout.Label($"Final Score: <b>{score}</b> | Coins: <b>{coinsCollected}</b>");
+        GUILayout.Label($"{U("Final Score")}: <b>{score}</b> | {U("Coins")}: <b>{coinsCollected}</b>");
 
         GUILayout.FlexibleSpace();
         GUI.color = Color.green;
@@ -1350,7 +1355,7 @@ public class CaveDashPlayer : MonoBehaviour
                     var stg = stages[idx];
                     GUI.color = idx == currentStageIndex ? Color.cyan : Color.white;
 
-                    string btnText = $"<b>Stage {stg.id}</b>\n<size=11>{GetStageName(stg)}</size>";
+                    string btnText = $"<b>{U("Stage")} {stg.id}</b>\n<size=11>{GetStageName(stg)}</size>";
                     if (GUILayout.Button(btnText, GUILayout.Height(85), GUILayout.Width((r.width - 50) / 4f)))
                     {
                         showStageSelect = false;
@@ -1373,7 +1378,7 @@ public class CaveDashPlayer : MonoBehaviour
         switch (lang)
         {
             case CaveLanguage.KO: return ko;
-            case CaveLanguage.EN: return en;
+            case CaveLanguage.EN: return OiyoI18n.En(en);
             case CaveLanguage.JA: return ja;
             case CaveLanguage.ES: return es;
             default: return en;
@@ -1385,7 +1390,7 @@ public class CaveDashPlayer : MonoBehaviour
         switch (lang)
         {
             case CaveLanguage.KO: return s.nameKo;
-            case CaveLanguage.EN: return s.nameEn;
+            case CaveLanguage.EN: return OiyoI18n.En(s.nameEn);
             case CaveLanguage.JA: return s.nameJa;
             case CaveLanguage.ES: return s.nameEs;
             default: return s.nameEn;
@@ -1397,7 +1402,7 @@ public class CaveDashPlayer : MonoBehaviour
         switch (lang)
         {
             case CaveLanguage.KO: return s.descKo;
-            case CaveLanguage.EN: return s.descEn;
+            case CaveLanguage.EN: return OiyoI18n.En(s.descEn);
             case CaveLanguage.JA: return s.descJa;
             case CaveLanguage.ES: return s.descEs;
             default: return s.descEn;

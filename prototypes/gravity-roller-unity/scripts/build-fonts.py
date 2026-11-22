@@ -29,7 +29,7 @@ paths = [os.path.join(out, 'f0.tmp.ttf')]
 kr.save(paths[0])
 covered = set(kr.getBestCmap())
 from_jp = 0
-for i, family in enumerate(['Noto Sans JP', 'Noto Sans Symbols 2', 'Noto Sans Symbols'], 1):
+for i, family in enumerate(['Noto Sans JP', 'Noto Sans SC', 'Noto Sans Symbols 2', 'Noto Sans Symbols'], 1):
     missing = ''.join(sorted(c for c in chars if ord(c) not in covered))
     if not missing: break
     try: f = fetch(family, missing)

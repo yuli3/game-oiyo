@@ -59,6 +59,10 @@ def main(build):
 
         s, n = chain.subn(repl, s)
         total += n
+        # key tables: `case Lang.EN: switch (key) { case "a": return "A"; ... } break;`
+        def wrap_block(m):
+            return re.sub(r'return (' + LIT + r');', r'return OiyoI18n.En(\1);', m.group(0))
+        s = re.sub(r'case \w+\.EN:\s*switch\s*\(\w+\)\s*\{.*?\n\s*\}', wrap_block, s, flags=re.S)
         s, k = re.subn(r'case (\w+)\.EN:\s*return (?!OiyoI18n)([^;]+);', r'case \1.EN: return OiyoI18n.En(\2);', s)
         for m in re.finditer(r'OiyoI18n\.En\((' + LIT + r')\)', s):
             row_for(unescape(m.group(1)))
@@ -67,10 +71,17 @@ def main(build):
         for fld in set(re.findall(r'OiyoI18n\.En\(\w+\.(\w+En)\)', s)):
             for m in re.finditer(r'\b' + fld + r'\s*=\s*(' + LIT + r')', s):
                 row_for(unescape(m.group(1)))
-        for m in re.finditer(r'GetLocalizedText\(\s*(' + LIT + r')\s*,\s*(' + LIT + r')\s*,\s*(' + LIT + r')\s*,\s*(' + LIT + r')\s*\)', s):
-            row = row_for(unescape(m.group(1)))
-            for i, g in enumerate((2, 3, 4)):
-                row[i] = row[i] or unescape(m.group(g))
+        # string Name(string ko, string en, string ja, string es) style helpers, any argument order
+        for sig in re.finditer(r'string\s+(\w+)\s*\(\s*string\s+(\w+)\s*,\s*string\s+(\w+)\s*,\s*string\s+(\w+)\s*,\s*string\s+(\w+)\s*\)', s):
+            names = [n.lower()[:2] for n in sig.groups()[1:]]
+            if sorted(names) != ['en', 'es', 'ja', 'ko']:
+                continue
+            call = r'\b' + sig.group(1) + r'\(\s*' + r'\s*,\s*'.join(['(' + LIT + ')'] * 4) + r'\s*\)'
+            for m in re.finditer(call, s):
+                vals = dict(zip(names, (unescape(m.group(i)) for i in range(1, 5))))
+                row = row_for(vals['en'])
+                for i, code in enumerate(('ko', 'ja', 'es')):
+                    row[i] = row[i] or vals[code]
         if langvar and 'string LangCode()' not in s:
             enum, var = langvar.group(1), langvar.group(2)
             decl = langvar.group(0)
@@ -81,6 +92,7 @@ def main(build):
             line_end = s.index('\n', s.index(decl))
             s = s[:line_end + 1] + helpers + s[line_end + 1:]
             s = re.sub(r'(GUILayout\.Button\([^\n]*?)\b' + var + r'\.ToString\(\)', r'\1LangCode().ToUpperInvariant()', s)
+            s = s.replace('GUILayout.Button("EN"', 'GUILayout.Button(OiyoI18n.ForEnglish.ToUpperInvariant()')
         elif not langvar:
             print(f'{p.name}: no `Language x = Language.KO;` field; add LangCode/U/F by hand')
         p.write_text(s, encoding='utf-8')

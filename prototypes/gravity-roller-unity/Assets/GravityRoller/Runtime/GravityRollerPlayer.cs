@@ -19,6 +19,11 @@ public class GravityRollerPlayer : MonoBehaviour
     public enum GameLang { KO, EN, JA, ES }
     public static GameLang CurrentLang = GameLang.KO;
 
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => CurrentLang == GameLang.EN ? OiyoI18n.ForEnglish : CurrentLang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
+
     public enum GameState { Ready, Playing, Falling, Cleared, GameOver }
     public GameState state = GameState.Ready;
 
@@ -858,20 +863,20 @@ public class GravityRollerPlayer : MonoBehaviour
             case GameLang.EN:
                 switch (key)
                 {
-                    case "title": return "Gravity Roller 3D: Marble Maze";
-                    case "ready_prompt": return "TILT TO ROLL OR PRESS SPACE!";
-                    case "time": return "Time Left";
-                    case "score": return "Score";
-                    case "gems": return "Gems";
-                    case "lives": return "Lives";
-                    case "stage": return "Stage";
-                    case "endless": return "Endless Rolling";
-                    case "clear_title": return "STAGE COMPLETED!";
-                    case "gameover_title": return "TIME OUT OR FALLEN!";
-                    case "restart": return "RETRY [R]";
-                    case "next_stage": return "NEXT STAGE";
-                    case "stage_select": return "SELECT STAGE";
-                    case "controls_hint": return "WASD / Arrows / Mouse Drag: Tilt Board | Space: Start | L: Language";
+                    case "title": return OiyoI18n.En("Gravity Roller 3D: Marble Maze");
+                    case "ready_prompt": return OiyoI18n.En("TILT TO ROLL OR PRESS SPACE!");
+                    case "time": return OiyoI18n.En("Time Left");
+                    case "score": return OiyoI18n.En("Score");
+                    case "gems": return OiyoI18n.En("Gems");
+                    case "lives": return OiyoI18n.En("Lives");
+                    case "stage": return OiyoI18n.En("Stage");
+                    case "endless": return OiyoI18n.En("Endless Rolling");
+                    case "clear_title": return OiyoI18n.En("STAGE COMPLETED!");
+                    case "gameover_title": return OiyoI18n.En("TIME OUT OR FALLEN!");
+                    case "restart": return OiyoI18n.En("RETRY [R]");
+                    case "next_stage": return OiyoI18n.En("NEXT STAGE");
+                    case "stage_select": return OiyoI18n.En("SELECT STAGE");
+                    case "controls_hint": return OiyoI18n.En("WASD / Arrows / Mouse Drag: Tilt Board | Space: Start | L: Language");
                 }
                 break;
             case GameLang.JA:
@@ -941,7 +946,7 @@ public class GravityRollerPlayer : MonoBehaviour
         StageDef s = Stages[index];
         switch (CurrentLang)
         {
-            case GameLang.EN: return s.nameEn;
+            case GameLang.EN: return OiyoI18n.En(s.nameEn);
             case GameLang.JA: return s.nameJa;
             case GameLang.ES: return s.nameEs;
             default: return s.nameKo;
@@ -1061,7 +1066,7 @@ public class GravityRollerPlayer : MonoBehaviour
 
         // Tilt
         GUILayout.BeginVertical(GUILayout.Width(110));
-        GUILayout.Label("Tilt (X, Z)", hudLabelStyle);
+        GUILayout.Label(U("Tilt (X, Z)"), hudLabelStyle);
         GUILayout.Label($"{tiltX:F0}°, {tiltZ:F0}°", hudValueStyle);
         GUILayout.EndVertical();
 
@@ -1147,7 +1152,7 @@ public class GravityRollerPlayer : MonoBehaviour
                     {
                         bool isCur = (!isEndlessMode && currentStageIndex == idx);
                         GUI.backgroundColor = isCur ? new Color(0.2f, 0.8f, 0.4f) : Color.white;
-                        if (GUILayout.Button($"Stage {idx + 1}: {GetStageName(idx)}", btnStyle, GUILayout.Height(32)))
+                        if (GUILayout.Button($"{U("Stage")} {idx + 1}: {GetStageName(idx)}", btnStyle, GUILayout.Height(32)))
                         {
                             isEndlessMode = false;
                             showStageSelect = false;
@@ -1173,7 +1178,7 @@ public class GravityRollerPlayer : MonoBehaviour
             GUI.backgroundColor = Color.white;
 
             GUILayout.Space(6);
-            if (GUILayout.Button("Close", btnStyle, GUILayout.Height(28)))
+            if (GUILayout.Button(U("Close"), btnStyle, GUILayout.Height(28)))
             {
                 showStageSelect = false;
             }

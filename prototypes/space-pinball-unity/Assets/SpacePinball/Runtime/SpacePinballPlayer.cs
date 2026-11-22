@@ -19,6 +19,11 @@ public class SpacePinballPlayer : MonoBehaviour
     public enum GameLang { KO, EN, JA, ES }
     public static GameLang CurrentLang = GameLang.KO;
 
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => CurrentLang == GameLang.EN ? OiyoI18n.ForEnglish : CurrentLang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
+
     public enum GameState { Idle, Plunging, InPlay, Drained, GameOver }
     public GameState state = GameState.Idle;
 
@@ -632,19 +637,19 @@ public class SpacePinballPlayer : MonoBehaviour
             case GameLang.EN:
                 switch (key)
                 {
-                    case "title": return "Space Pinball 3D: Cosmic Arc";
-                    case "ready_prompt": return "HOLD SPACE OR DRAG PLUNGER TO LAUNCH!";
-                    case "score": return "Score";
-                    case "balls": return "Balls";
-                    case "multiplier": return "Multiplier";
-                    case "stage": return "Stage";
-                    case "endless": return "Endless Pinball";
-                    case "clear_title": return "MISSION ACCOMPLISHED!";
-                    case "gameover_title": return "GAME OVER";
-                    case "restart": return "NEW GAME [R]";
-                    case "next_stage": return "NEXT MISSION";
-                    case "stage_select": return "SELECT MISSION";
-                    case "controls_hint": return "A/D: Flippers | Space/Down: Plunger | Space (Play): Nudge | L: Language";
+                    case "title": return OiyoI18n.En("Space Pinball 3D: Cosmic Arc");
+                    case "ready_prompt": return OiyoI18n.En("HOLD SPACE OR DRAG PLUNGER TO LAUNCH!");
+                    case "score": return OiyoI18n.En("Score");
+                    case "balls": return OiyoI18n.En("Balls");
+                    case "multiplier": return OiyoI18n.En("Multiplier");
+                    case "stage": return OiyoI18n.En("Stage");
+                    case "endless": return OiyoI18n.En("Endless Pinball");
+                    case "clear_title": return OiyoI18n.En("MISSION ACCOMPLISHED!");
+                    case "gameover_title": return OiyoI18n.En("GAME OVER");
+                    case "restart": return OiyoI18n.En("NEW GAME [R]");
+                    case "next_stage": return OiyoI18n.En("NEXT MISSION");
+                    case "stage_select": return OiyoI18n.En("SELECT MISSION");
+                    case "controls_hint": return OiyoI18n.En("A/D: Flippers | Space/Down: Plunger | Space (Play): Nudge | L: Language");
                 }
                 break;
             case GameLang.JA:
@@ -711,7 +716,7 @@ public class SpacePinballPlayer : MonoBehaviour
         StageDef s = Stages[index];
         switch (CurrentLang)
         {
-            case GameLang.EN: return s.nameEn;
+            case GameLang.EN: return OiyoI18n.En(s.nameEn);
             case GameLang.JA: return s.nameJa;
             case GameLang.ES: return s.nameEs;
             default: return s.nameKo;
@@ -830,14 +835,14 @@ public class SpacePinballPlayer : MonoBehaviour
 
         // Lanes Lit
         GUILayout.BeginVertical(GUILayout.Width(110));
-        GUILayout.Label("Lanes (A B C)", hudLabelStyle);
+        GUILayout.Label(U("Lanes (A B C)"), hudLabelStyle);
         string laneStr = $"[{(lanesLit[0]?"A":"_")} {(lanesLit[1]?"B":"_")} {(lanesLit[2]?"C":"_")}]";
         GUILayout.Label(laneStr, hudValueStyle);
         GUILayout.EndVertical();
 
         // Plunger Power
         GUILayout.BeginVertical(GUILayout.Width(110));
-        GUILayout.Label("Plunger", hudLabelStyle);
+        GUILayout.Label(U("Plunger"), hudLabelStyle);
         int pBars = Mathf.RoundToInt((plungerPower / 42f) * 10f);
         GUILayout.Label("[" + "|".Repeat(pBars) + ".".Repeat(10 - pBars) + "]", hudValueStyle);
         GUILayout.EndVertical();
@@ -877,7 +882,7 @@ public class SpacePinballPlayer : MonoBehaviour
             GUILayout.Space(10);
 
             GUILayout.Label($"{GetText("score")}: {score}", hudValueStyle);
-            GUILayout.Label($"Max Multiplier: x{multiplier}", hudLabelStyle);
+            GUILayout.Label($"{U("Max Multiplier")}: x{multiplier}", hudLabelStyle);
             GUILayout.Space(14);
 
             if (GUILayout.Button(GetText("restart"), btnStyle, GUILayout.Height(40)))
@@ -934,7 +939,7 @@ public class SpacePinballPlayer : MonoBehaviour
             GUI.backgroundColor = Color.white;
 
             GUILayout.Space(6);
-            if (GUILayout.Button("Close", btnStyle, GUILayout.Height(28)))
+            if (GUILayout.Button(U("Close"), btnStyle, GUILayout.Height(28)))
             {
                 showStageSelect = false;
             }

@@ -74,6 +74,11 @@ public class BeatSlicePlayer : MonoBehaviour
     // Game state
     private GameState state = GameState.Ready;
     private BeatLanguage lang = BeatLanguage.KO;
+
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => lang == BeatLanguage.EN ? OiyoI18n.ForEnglish : lang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
     private int currentStageIndex = 0;
     private bool isEndless = false;
     private bool showStageSelect = false;
@@ -730,7 +735,7 @@ public class BeatSlicePlayer : MonoBehaviour
                     combo = 0;
                     multiplier = 1;
                     health = Mathf.Max(0f, health - 12f);
-                    ShowJudgment("MISS", Color.red);
+                    ShowJudgment(U("MISS"), Color.red);
                     if (health <= 0f)
                     {
                         state = GameState.GameOver;
@@ -760,21 +765,21 @@ public class BeatSlicePlayer : MonoBehaviour
         {
             pts = 1000;
             perfectCount++;
-            ShowJudgment("PERFECT", Color.cyan);
+            ShowJudgment(U("PERFECT"), Color.cyan);
             PlaySound(perfectClip, 0.7f);
         }
         else if (zAccuracy < 0.75f)
         {
             pts = 650;
             greatCount++;
-            ShowJudgment("GREAT", Color.green);
+            ShowJudgment(U("GREAT"), Color.green);
             PlaySound(sliceClip, 0.6f);
         }
         else
         {
             pts = 350;
             goodCount++;
-            ShowJudgment("GOOD", Color.yellow);
+            ShowJudgment(U("GOOD"), Color.yellow);
             PlaySound(sliceClip, 0.5f);
         }
 
@@ -819,7 +824,7 @@ public class BeatSlicePlayer : MonoBehaviour
 
         camShake = 0.8f;
         PlaySound(bombClip, 0.9f);
-        ShowJudgment("BOMB HIT!", Color.red);
+        ShowJudgment(U("BOMB HIT!"), Color.red);
 
         combo = 0;
         multiplier = 1;
@@ -967,7 +972,7 @@ public class BeatSlicePlayer : MonoBehaviour
         GUI.color = lang == BeatLanguage.KO ? Color.cyan : Color.white;
         if (GUILayout.Button("KO", GUILayout.Width(45), GUILayout.Height(28))) lang = BeatLanguage.KO;
         GUI.color = lang == BeatLanguage.EN ? Color.cyan : Color.white;
-        if (GUILayout.Button("EN", GUILayout.Width(45), GUILayout.Height(28))) lang = BeatLanguage.EN;
+        if (GUILayout.Button(OiyoI18n.ForEnglish.ToUpperInvariant(), GUILayout.Width(45), GUILayout.Height(28))) lang = BeatLanguage.EN;
         GUI.color = lang == BeatLanguage.JA ? Color.cyan : Color.white;
         if (GUILayout.Button("JA", GUILayout.Width(45), GUILayout.Height(28))) lang = BeatLanguage.JA;
         GUI.color = lang == BeatLanguage.ES ? Color.cyan : Color.white;
@@ -1013,7 +1018,7 @@ public class BeatSlicePlayer : MonoBehaviour
 
             GUI.color = Color.white;
             string trackTitle = isEndless ? GetText("무한 네온 런웨이", "Endless Neon Runway", "エンドレス・ネオンランウェイ", "Pista Neón Infinita")
-                                          : $"Track {trk.id}: {GetTrackName(trk)}";
+                                          : $"{U("Track")} {trk.id}: {GetTrackName(trk)}";
             GUILayout.Label($"<size=17><b>{trackTitle}</b></size>");
 
             GUILayout.Space(4);
@@ -1021,9 +1026,9 @@ public class BeatSlicePlayer : MonoBehaviour
             string targetLabel = isEndless ? "∞" : $"{trk.targetNotes}";
             GUILayout.Label($"{notesLabel}: <b>{notesHit} / {targetLabel}</b> (BPM: {trk.bpm:0})");
 
-            GUILayout.Label($"Score: <b>{score:N0}</b> (Best: {bestScore:N0})");
+            GUILayout.Label($"{U("Score")}: <b>{score:N0}</b> ({U("Best")}: {bestScore:N0})");
 
-            string comboText = isFever ? $"🔥 FEVER COMBO: <b>{combo}x (x{multiplier})</b>" : $"COMBO: <b>{combo}x (x{multiplier})</b>";
+            string comboText = isFever ? $"🔥 {U("FEVER COMBO")}: <b>{combo}x (x{multiplier})</b>" : $"{U("COMBO")}: <b>{combo}x (x{multiplier})</b>";
             GUI.color = isFever ? Color.yellow : (combo > 10 ? Color.green : Color.white);
             GUILayout.Label($"<size=16><b>{comboText}</b></size>");
             GUI.color = Color.white;
@@ -1042,14 +1047,14 @@ public class BeatSlicePlayer : MonoBehaviour
             // Mobile Slicing Buttons (Optional touch aids on bottom corners)
             Rect leftCutBtn = new Rect(20, h - 85, 110, 65);
             GUI.color = new Color(0f, 0.9f, 1f, 0.8f);
-            if (GUI.Button(leftCutBtn, $"<b>⚔️ LEFT\n[A / S]</b>"))
+            if (GUI.Button(leftCutBtn, $"<b>⚔️ {U("LEFT")}\n[A / S]</b>"))
             {
                 TriggerManualCut(saberLeftPos, 0);
             }
 
             Rect rightCutBtn = new Rect(w - 130, h - 85, 110, 65);
             GUI.color = new Color(1f, 0.1f, 0.65f, 0.8f);
-            if (GUI.Button(rightCutBtn, $"<b>⚔️ RIGHT\n[K / L]</b>"))
+            if (GUI.Button(rightCutBtn, $"<b>⚔️ {U("RIGHT")}\n[K / L]</b>"))
             {
                 TriggerManualCut(saberRightPos, 1);
             }
@@ -1074,7 +1079,7 @@ public class BeatSlicePlayer : MonoBehaviour
 
         GUILayout.BeginArea(new Rect(r.x + 20, r.y + 15, r.width - 40, r.height - 30));
         GUI.color = Color.cyan;
-        GUILayout.Label($"<size=22><b>TRACK {trk.id}: {GetTrackName(trk)}</b></size>", GUILayout.Height(32));
+        GUILayout.Label($"<size=22><b>{U("TRACK")} {trk.id}: {GetTrackName(trk)}</b></size>", GUILayout.Height(32));
         GUI.color = Color.white;
 
         GUILayout.Space(8);
@@ -1115,9 +1120,9 @@ public class BeatSlicePlayer : MonoBehaviour
         GUI.color = Color.white;
 
         GUILayout.Space(8);
-        GUILayout.Label($"Score: <b>{score:N0}</b> (Best: {bestScore:N0})");
-        GUILayout.Label($"Max Combo: <b>{maxCombo}x</b>");
-        GUILayout.Label($"PERFECT: <color=#00f0ff><b>{perfectCount}</b></color> | GREAT: <color=#00ff88><b>{greatCount}</b></color> | GOOD: <b>{goodCount}</b>");
+        GUILayout.Label($"{U("Score")}: <b>{score:N0}</b> ({U("Best")}: {bestScore:N0})");
+        GUILayout.Label($"{U("Max Combo")}: <b>{maxCombo}x</b>");
+        GUILayout.Label($"{U("PERFECT")}: <color=#00f0ff><b>{perfectCount}</b></color> | {U("GREAT")}: <color=#00ff88><b>{greatCount}</b></color> | {U("GOOD")}: <b>{goodCount}</b>");
 
         GUILayout.FlexibleSpace();
         GUI.color = Color.green;
@@ -1145,8 +1150,8 @@ public class BeatSlicePlayer : MonoBehaviour
         GUI.color = Color.white;
 
         GUILayout.Space(8);
-        GUILayout.Label($"Score: <b>{score:N0}</b> | Max Combo: <b>{maxCombo}x</b>");
-        GUILayout.Label($"Miss: <color=red><b>{missCount}</b></color>");
+        GUILayout.Label($"{U("Score")}: <b>{score:N0}</b> | {U("Max Combo")}: <b>{maxCombo}x</b>");
+        GUILayout.Label($"{U("Miss")}: <color=red><b>{missCount}</b></color>");
 
         GUILayout.FlexibleSpace();
         GUILayout.BeginHorizontal();
@@ -1189,7 +1194,7 @@ public class BeatSlicePlayer : MonoBehaviour
                                 "¡Maestría rítmica absoluta! Has conquistado la Sinfonía Cósmica de 200 BPM."));
 
         GUILayout.Space(8);
-        GUILayout.Label($"Final Score: <b>{score:N0}</b> | Max Combo: <b>{maxCombo}x</b>");
+        GUILayout.Label($"{U("Final Score")}: <b>{score:N0}</b> | {U("Max Combo")}: <b>{maxCombo}x</b>");
 
         GUILayout.FlexibleSpace();
         GUI.color = Color.green;
@@ -1237,7 +1242,7 @@ public class BeatSlicePlayer : MonoBehaviour
                     var trk = stages[idx];
                     GUI.color = idx == currentStageIndex ? Color.cyan : Color.white;
 
-                    string btnText = $"<b>Track {trk.id}</b>\n<size=11>{GetTrackName(trk)}</size>\n<size=10>{trk.bpm:0} BPM</size>";
+                    string btnText = $"<b>{U("Track")} {trk.id}</b>\n<size=11>{GetTrackName(trk)}</size>\n<size=10>{trk.bpm:0} BPM</size>";
                     if (GUILayout.Button(btnText, GUILayout.Height(85), GUILayout.Width((r.width - 50) / 4f)))
                     {
                         showStageSelect = false;
@@ -1260,7 +1265,7 @@ public class BeatSlicePlayer : MonoBehaviour
         switch (lang)
         {
             case BeatLanguage.KO: return ko;
-            case BeatLanguage.EN: return en;
+            case BeatLanguage.EN: return OiyoI18n.En(en);
             case BeatLanguage.JA: return ja;
             case BeatLanguage.ES: return es;
             default: return en;
@@ -1272,7 +1277,7 @@ public class BeatSlicePlayer : MonoBehaviour
         switch (lang)
         {
             case BeatLanguage.KO: return t.nameKo;
-            case BeatLanguage.EN: return t.nameEn;
+            case BeatLanguage.EN: return OiyoI18n.En(t.nameEn);
             case BeatLanguage.JA: return t.nameJa;
             case BeatLanguage.ES: return t.nameEs;
             default: return t.nameEn;
@@ -1284,7 +1289,7 @@ public class BeatSlicePlayer : MonoBehaviour
         switch (lang)
         {
             case BeatLanguage.KO: return t.descKo;
-            case BeatLanguage.EN: return t.descEn;
+            case BeatLanguage.EN: return OiyoI18n.En(t.descEn);
             case BeatLanguage.JA: return t.descJa;
             case BeatLanguage.ES: return t.descEs;
             default: return t.descEn;

@@ -19,6 +19,11 @@ public class PaperFlightPlayer : MonoBehaviour
     public enum GameLang { KO, EN, JA, ES }
     public static GameLang CurrentLang = GameLang.KO;
 
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => CurrentLang == GameLang.EN ? OiyoI18n.ForEnglish : CurrentLang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
+
     public enum GameState { Ready, Flying, Stalled, Landed, StageClear, GameOver }
     public GameState state = GameState.Ready;
 
@@ -978,24 +983,24 @@ public class PaperFlightPlayer : MonoBehaviour
             case GameLang.EN:
                 switch (key)
                 {
-                    case "title": return "Paper Flight 3D: Origami Glider";
-                    case "ready_prompt": return "PRESS SPACE OR CLICK TO LAUNCH!";
-                    case "altitude": return "Altitude";
-                    case "speed": return "Airspeed";
-                    case "stamina": return "Stamina";
-                    case "score": return "Score";
-                    case "streak": return "Streak";
-                    case "cranes": return "Cranes";
-                    case "stage": return "Stage";
-                    case "endless": return "Endless Flight";
-                    case "stall_warning": return "STALL WARNING! NOSE DOWN OR BOOST!";
-                    case "landed_title": return "SOFT GLIDE LANDING";
-                    case "clear_title": return "STAGE COMPLETED!";
-                    case "gameover_title": return "CRASHED INTO OBSTACLE";
-                    case "restart": return "FLY AGAIN [R]";
-                    case "next_stage": return "NEXT STAGE";
-                    case "stage_select": return "SELECT STAGE";
-                    case "controls_hint": return "WASD / Arrows: Steer & Pitch | Space: Paper Flap Boost | L: Language";
+                    case "title": return OiyoI18n.En("Paper Flight 3D: Origami Glider");
+                    case "ready_prompt": return OiyoI18n.En("PRESS SPACE OR CLICK TO LAUNCH!");
+                    case "altitude": return OiyoI18n.En("Altitude");
+                    case "speed": return OiyoI18n.En("Airspeed");
+                    case "stamina": return OiyoI18n.En("Stamina");
+                    case "score": return OiyoI18n.En("Score");
+                    case "streak": return OiyoI18n.En("Streak");
+                    case "cranes": return OiyoI18n.En("Cranes");
+                    case "stage": return OiyoI18n.En("Stage");
+                    case "endless": return OiyoI18n.En("Endless Flight");
+                    case "stall_warning": return OiyoI18n.En("STALL WARNING! NOSE DOWN OR BOOST!");
+                    case "landed_title": return OiyoI18n.En("SOFT GLIDE LANDING");
+                    case "clear_title": return OiyoI18n.En("STAGE COMPLETED!");
+                    case "gameover_title": return OiyoI18n.En("CRASHED INTO OBSTACLE");
+                    case "restart": return OiyoI18n.En("FLY AGAIN [R]");
+                    case "next_stage": return OiyoI18n.En("NEXT STAGE");
+                    case "stage_select": return OiyoI18n.En("SELECT STAGE");
+                    case "controls_hint": return OiyoI18n.En("WASD / Arrows: Steer & Pitch | Space: Paper Flap Boost | L: Language");
                 }
                 break;
             case GameLang.JA:
@@ -1077,7 +1082,7 @@ public class PaperFlightPlayer : MonoBehaviour
         StageDef s = Stages[index];
         switch (CurrentLang)
         {
-            case GameLang.EN: return s.nameEn;
+            case GameLang.EN: return OiyoI18n.En(s.nameEn);
             case GameLang.JA: return s.nameJa;
             case GameLang.ES: return s.nameEs;
             default: return s.nameKo;
@@ -1281,7 +1286,7 @@ public class PaperFlightPlayer : MonoBehaviour
 
             GUILayout.Label($"{GetText("score")}: {score}", hudValueStyle);
             GUILayout.Label($"{GetText("cranes")}: {cranesCollected}/{totalCranesInStage} | {GetText("streak")}: x{ringStreak}", hudLabelStyle);
-            GUILayout.Label($"Flight Time: {flightTime:F1}s | Distance: {distanceTraveled:F0}m", hudLabelStyle);
+            GUILayout.Label($"{U("Flight Time")}: {flightTime:F1}s | {U("Distance")}: {distanceTraveled:F0}m", hudLabelStyle);
             GUILayout.Space(14);
 
             GUILayout.BeginHorizontal();
@@ -1325,7 +1330,7 @@ public class PaperFlightPlayer : MonoBehaviour
                     {
                         bool isCur = (!isEndlessMode && currentStageIndex == idx);
                         GUI.backgroundColor = isCur ? new Color(0.2f, 0.8f, 0.4f) : Color.white;
-                        if (GUILayout.Button($"Stage {idx + 1}: {GetStageName(idx)}", btnStyle, GUILayout.Height(32)))
+                        if (GUILayout.Button($"{U("Stage")} {idx + 1}: {GetStageName(idx)}", btnStyle, GUILayout.Height(32)))
                         {
                             isEndlessMode = false;
                             showStageSelect = false;
@@ -1350,7 +1355,7 @@ public class PaperFlightPlayer : MonoBehaviour
             GUI.backgroundColor = Color.white;
 
             GUILayout.Space(6);
-            if (GUILayout.Button("Close", btnStyle, GUILayout.Height(28)))
+            if (GUILayout.Button(U("Close"), btnStyle, GUILayout.Height(28)))
             {
                 showStageSelect = false;
             }
