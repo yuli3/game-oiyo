@@ -89,6 +89,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
     private bool isGameOver = false;
     private bool isVictory = false;
     private bool showStageSelect = false;
+    private Vector2 stageSelectScroll;
     private float forwardSpeed = 18f;
 
     // Toast & Audio
@@ -415,6 +416,59 @@ public class SubwayRunnerPlayer : MonoBehaviour
             targetDistance = 2800f, baseSpeed = 26f,
             generateTrack = (list, parent) => GenerateTrackLayout(list, parent, 2800f, 0.42f, 0.25f, 0.25f, 0.25f, true)
         });
+
+        AddAdvancedStages();
+    }
+
+    // Stages 13-30 keep climbing from stage 12: faster base speed, longer runs, obstacles
+    // closer together and fewer power-ups. Every fifth stage the trains move.
+    private void AddAdvancedStages()
+    {
+        string[][] titles = new string[][]
+        {
+            new[] { "Busan Harbor Line", "부산 항구선", "釜山ハーバーライン", "Línea del Puerto de Busan" },
+            new[] { "Rainy Platform Dash", "빗속 승강장 대시", "雨のホームダッシュ", "Andén Bajo la Lluvia" },
+            new[] { "Freight Yard Maze", "화물 조차장 미로", "貨物ヤード迷路", "Laberinto de Carga" },
+            new[] { "Osaka Loop Express", "오사카 순환 급행", "大阪環状急行", "Expreso Circular de Osaka" },
+            new[] { "Neon Underpass", "네온 지하차도", "ネオン地下道", "Paso Subterráneo Neón" },
+            new[] { "Storm Viaduct", "폭풍 고가교", "嵐の高架橋", "Viaducto Tormentoso" },
+            new[] { "Maglev Corridor", "자기부상 회랑", "リニア回廊", "Corredor Maglev" },
+            new[] { "Boss: Twin Enforcers", "보스: 쌍둥이 집행자", "ボス：双子の執行者", "Jefe: Ejecutores Gemelos" },
+            new[] { "Midnight Express", "한밤의 특급", "真夜中の特急", "Expreso de Medianoche" },
+            new[] { "Snowline Tunnel", "설선 터널", "雪線トンネル", "Túnel Nevado" },
+            new[] { "Overclock Rails", "오버클럭 레일", "オーバークロック・レール", "Rieles Overclock" },
+            new[] { "Crossfire Junction", "교차 분기점", "クロスファイア分岐", "Cruce de Fuego" },
+            new[] { "Sky Rail Gauntlet", "스카이레일 건틀릿", "スカイレール試練", "Desafío Aéreo" },
+            new[] { "Boss: Iron Serpent", "보스: 강철 뱀", "ボス：鋼鉄の大蛇", "Jefe: Serpiente de Hierro" },
+            new[] { "Quantum Metro", "퀀텀 메트로", "量子メトロ", "Metro Cuántico" },
+            new[] { "Light Speed Line", "광속 노선", "光速ライン", "Línea Luz" },
+            new[] { "Last Train Home", "막차의 질주", "終電ダッシュ", "Último Tren" },
+            new[] { "Legend of the Rails", "선로의 전설", "レールの伝説", "Leyenda de los Rieles" },
+        };
+        for (int k = 1; k <= titles.Length; k++)
+        {
+            int n = 12 + k;
+            float dist = 2800f + k * 120f;                 // 2920 .. 4960 m
+            float speed = 26f + k * 0.34f;                 // 26.3 .. 32.1
+            float step = 18f - k * (2f / 18f);             // 17.9 .. 16 m between rows
+            float train = 0.42f + k * 0.006f;
+            float low = 0.25f + k * 0.0025f;
+            float high = 0.25f + k * 0.0025f;              // obstacle chance 0.93 .. 1.03 (capped by roll)
+            float power = 0.25f - k * 0.007f;              // 0.24 .. 0.12
+            bool moving = n % 5 == 0 || k > 9;
+            var tt = titles[k - 1];
+            stages.Add(new StageData
+            {
+                id = n,
+                titleEn = tt[0], titleKo = tt[1], titleJa = tt[2], titleEs = tt[3],
+                descEn = string.Format("Stage {0}: run {1:0} m at {2:0.0} m/s.", n, dist, speed),
+                descKo = string.Format("{0}단계: {2:0.0} m/s로 {1:0} m 달리기.", n, dist, speed),
+                descJa = string.Format("ステージ{0}：{2:0.0} m/sで{1:0} m走破。", n, dist, speed),
+                descEs = string.Format("Etapa {0}: corre {1:0} m a {2:0.0} m/s.", n, dist, speed),
+                targetDistance = dist, baseSpeed = speed,
+                generateTrack = (list, parent) => GenerateTrackLayout(list, parent, dist, train, low, high, power, moving, step)
+            });
+        }
     }
 
     private void StartStage(int stageIdx)
@@ -450,9 +504,9 @@ public class SubwayRunnerPlayer : MonoBehaviour
         PlayTone(523.25f, 0.15f); // C5 Start
     }
 
-    private void GenerateTrackLayout(List<TrackItem> list, Transform parent, float maxDist, float trainChance, float lowHurdleChance, float highBarrierChance, float powerupChance, bool movingTrains = false)
+    private void GenerateTrackLayout(List<TrackItem> list, Transform parent, float maxDist, float trainChance, float lowHurdleChance, float highBarrierChance, float powerupChance, bool movingTrains = false, float step = 18f)
     {
-        for (float z = 35f; z < maxDist; z += 18f)
+        for (float z = 35f; z < maxDist; z += step)
         {
             // Pick a lane for obstacles
             int obstacleLane = UnityEngine.Random.Range(0, 3);
@@ -1098,13 +1152,15 @@ public class SubwayRunnerPlayer : MonoBehaviour
         float h = Mathf.Min(480, Screen.height - 40);
         Rect rect = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
 
-        GUI.Box(rect, $"<b>{GetLocalizedText("SELECT STAGE", "스테이지 선택", "ステージ選択", "SELECCIONAR ETAPA")} (1~12)</b>");
+        GUI.Box(rect, $"<b>{GetLocalizedText("SELECT STAGE", "스테이지 선택", "ステージ選択", "SELECCIONAR ETAPA")} (1~{stages.Count})</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label(GetLocalizedText("Select from 12 subway parkour challenge stages.", "12개 테마별 지하철 파쿠르 전장 중 도전할 스테이지를 선택하세요.", "12の地下鉄パルクールステージから挑戦を選択してください。", "Selecciona entre 12 etapas de parkour de metro."), GetLabelStyle(12, Color.gray));
+        GUILayout.Label(GetLocalizedText("Select from 30 subway parkour challenge stages.", "30개 테마별 지하철 파쿠르 전장 중 도전할 스테이지를 선택하세요.", "30の地下鉄パルクールステージから挑戦を選択してください。", "Selecciona entre 30 etapas de parkour de metro."), GetLabelStyle(12, Color.gray));
 
         GUILayout.Space(10);
-        int cols = 3;
+        int cols = 4;
+        float btnW = (rect.width - 40f - 24f - cols * 6f) / cols;
+        stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, false, true);
         for (int i = 0; i < stages.Count; i += cols)
         {
             GUILayout.BeginHorizontal();
@@ -1115,7 +1171,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
                 {
                     var st = stages[sIdx];
                     string btnTxt = $"{U("Stage")} {sIdx + 1}\n{GetLocalizedStageTitle(st)}";
-                    if (GUILayout.Button(btnTxt, GUILayout.Height(48)))
+                    if (GUILayout.Button(btnTxt, GUILayout.Width(btnW), GUILayout.Height(44)))
                     {
                         showStageSelect = false;
                         StartStage(sIdx);
@@ -1125,6 +1181,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
             GUILayout.EndHorizontal();
             GUILayout.Space(6);
         }
+        GUILayout.EndScrollView();
 
         GUILayout.FlexibleSpace();
         if (GUILayout.Button(GetLocalizedText("Close", "닫기", "閉じる", "Cerrar"), GUILayout.Height(36)))
