@@ -14,6 +14,7 @@ case "${1:-probe}" in
     dest="$project/../../public/prototypes/firefly-keeper-unity"
     rm -rf "$dest"; mkdir -p "$dest"
     cp -R "$project/Builds/WebGL/"* "$dest/"
+    node "$dest/../../../scripts/unity/patch-unity-index.mjs"
     echo "WEBGL STAGED: public/prototypes/firefly-keeper-unity/"
     ;;
   *) echo 'Usage: build.sh probe|prepare|webgl' >&2; exit 2 ;;

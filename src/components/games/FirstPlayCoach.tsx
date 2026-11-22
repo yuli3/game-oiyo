@@ -100,7 +100,7 @@ export default function FirstPlayCoach({ slug, title, how, okLabel }: Props) {
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold">{title}</p>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{how}</p>
+          <p className="mt-1 max-h-32 overflow-y-auto text-sm leading-relaxed text-muted-foreground">{how}</p>
         </div>
         <button
           type="button"
