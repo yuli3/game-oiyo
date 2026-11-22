@@ -63,7 +63,7 @@ def install(build):
              '    // English -> { ko, ja, es, zh, fr }; null keeps the game\'s own text.',
              '    static readonly Dictionary<string, string[]> Table = new Dictionary<string, string[]>', '    {']
     for key, row in table.items():
-        lines.append(f'        [{cs_str(key)}] = new[] {{ {", ".join(cs_str(x) for x in row)} }},')
+        lines.append(f'        [{cs_str(key)}] = new string[] {{ {", ".join(cs_str(x) for x in row)} }},')
     lines += ['    };', '}', '']
     (runtime / 'OiyoI18nTable.cs').write_text('\n'.join(lines), encoding='utf-8')
     meta(runtime / 'OiyoI18nTable.cs', MONO)
