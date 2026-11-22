@@ -101,6 +101,32 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
         _foamMat = MakeMat(new Color(0.82f, 0.94f, 1.0f));
         _fireMat = MakeMat(new Color(1.0f, 0.55f, 0.12f));
         _greenMat = MakeMat(new Color(0.24f, 0.82f, 0.42f));
+
+        _hullMat = Painted("hull_player");
+        _raiderHullMat = Painted("hull_raider");
+        _raiderSailMat = Painted("sail_raider");
+        _sailMat = Painted("sail_player");
+        _rockMat = Painted("rock");
+        _serpentMat = Painted("scales");
+        _goldMat = Painted("chest");
+        _greenMat = Painted("repair");
+    }
+
+    // ---- Painted art (scripts/make_art.py -> Resources/VK/Art) ----
+    Material _seaArtMat, _hullMat, _raiderHullMat, _raiderSailMat;
+
+    static Material Painted(string tex, float tile = 1f, Color? tint = null)
+    {
+        var m = MakeMat(tint ?? Color.white);
+        var t = Resources.Load<Texture2D>("VK/Art/" + tex);
+        if (t != null)
+        {
+            t.wrapMode = tile != 1f ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+            m.mainTexture = t;
+        }
+        m.mainTextureScale = new Vector2(tile, tile);
+        if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.15f);
+        return m;
     }
 
     static Material MakeMat(Color c)
@@ -133,7 +159,8 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
 
     void BuildOceanAndRocks()
     {
-        var seaMat = MakeMat(new Color(0.06f, 0.22f, 0.36f));
+        var seaMat = Painted("sea", 4f, new Color(0.85f, 0.9f, 0.95f));
+        _seaArtMat = seaMat;
         for (int gx = -2; gx <= 2; gx++)
         {
             for (int gz = -2; gz <= 2; gz++)
@@ -170,14 +197,14 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
         var hull = GameObject.CreatePrimitive(PrimitiveType.Cube);
         hull.transform.SetParent(_shipRoot, false);
         hull.transform.localScale = new Vector3(1.5f, 0.65f, 3.8f);
-        hull.GetComponent<Renderer>().material = _woodMat;
+        hull.GetComponent<Renderer>().material = _hullMat;
 
         var prow = GameObject.CreatePrimitive(PrimitiveType.Cube);
         prow.transform.SetParent(_shipRoot, false);
         prow.transform.localPosition = new Vector3(0f, 0.45f, 2.0f);
         prow.transform.localRotation = Quaternion.Euler(-28f, 0f, 0f);
         prow.transform.localScale = new Vector3(0.45f, 1.1f, 0.7f);
-        prow.GetComponent<Renderer>().material = _goldMat;
+        prow.GetComponent<Renderer>().material = MakeMat(new Color(0.98f, 0.80f, 0.22f)); // gilded prow
 
         var mast = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         mast.transform.SetParent(_shipRoot, false);
@@ -234,13 +261,13 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
                 var hull = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 hull.transform.SetParent(root.transform, false);
                 hull.transform.localScale = new Vector3(1.4f, 0.6f, 3.2f);
-                hull.GetComponent<Renderer>().material = _enemyMat;
+                hull.GetComponent<Renderer>().material = _raiderHullMat;
 
                 var sail = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 sail.transform.SetParent(root.transform, false);
                 sail.transform.localPosition = new Vector3(0f, 1.6f, 0f);
                 sail.transform.localScale = new Vector3(1.8f, 1.3f, 0.1f);
-                sail.GetComponent<Renderer>().material = _darkWoodMat;
+                sail.GetComponent<Renderer>().material = _raiderSailMat;
             }
 
             _enemies.Add(new EnemyShip

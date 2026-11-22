@@ -213,11 +213,32 @@ public class SwatBreachPlayer : MonoBehaviour
 
     void CreateMaterials()
     {
-        floorMat = CreateMat(new Color(0.12f, 0.16f, 0.24f));
-        wallMat = CreateMat(new Color(0.24f, 0.30f, 0.42f));
-        doorClosedMat = CreateMat(new Color(0.75f, 0.50f, 0.20f));
-        doorOpenMat = CreateMat(new Color(0.35f, 0.40f, 0.30f));
-        coverMat = CreateMat(new Color(0.40f, 0.45f, 0.55f));
+        // Painted blueprint tiles (scripts/make_art.py -> Resources/SW/Art)
+        floorMat = ArtMat("floor");
+        wallMat = ArtMat("wall");
+        doorClosedMat = ArtMat("door_closed");
+        doorOpenMat = ArtMat("door_open");
+        coverMat = ArtMat("cover");
+    }
+
+    Material ArtMat(string tex, Color? tint = null)
+    {
+        var mat = CreateMat(tint ?? Color.white);
+        var t = Resources.Load<Texture2D>("SW/Art/" + tex);
+        if (t != null) { t.wrapMode = TextureWrapMode.Clamp; mat.mainTexture = t; }
+        return mat;
+    }
+
+    // Top-down figure facing +x (the root's z-rotation turns it to its heading).
+    static GameObject FigureQuad(Transform parent, Material mat, float size)
+    {
+        var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        q.name = "Figure";
+        Destroy(q.GetComponent<Collider>());
+        q.transform.SetParent(parent, false);
+        q.transform.localScale = new Vector3(size, size, 1f);
+        q.GetComponent<MeshRenderer>().material = mat;
+        return q;
     }
 
     Material CreateMat(Color c)
@@ -721,11 +742,9 @@ public class SwatBreachPlayer : MonoBehaviour
                 timer = 30f,
                 isDefused = false
             };
-            var bGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            bGo.name = "BombC4";
+            var bGo = new GameObject("BombC4");
             bGo.transform.position = GridToWorld(m.bombPos.x, m.bombPos.y) + Vector3.back * 0.2f;
-            bGo.transform.localScale = new Vector3(0.45f, 0.45f, 0.45f);
-            bGo.GetComponent<MeshRenderer>().material = CreateMat(new Color(0.95f, 0.2f, 0.1f));
+            FigureQuad(bGo.transform, ArtMat("bomb"), 0.7f);
             currentBomb.go = bGo;
         }
 
@@ -775,23 +794,10 @@ public class SwatBreachPlayer : MonoBehaviour
         var root = new GameObject("Operator_" + op.id);
         root.transform.position = op.pos;
 
-        var body = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        body.transform.SetParent(root.transform, false);
-        body.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-        body.transform.localScale = new Vector3(0.7f, 0.15f, 0.7f);
-        op.mat = CreateMat(c);
-        body.GetComponent<MeshRenderer>().material = op.mat;
-
-        if (op.hasShield)
-        {
-            var shield = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            shield.name = "ShieldMesh";
-            shield.transform.SetParent(root.transform, false);
-            shield.transform.localPosition = new Vector3(0.45f, 0f, -0.1f);
-            shield.transform.localScale = new Vector3(0.18f, 0.75f, 0.5f);
-            shield.GetComponent<MeshRenderer>().material = CreateMat(new Color(0.9f, 0.95f, 1f));
-            op.shieldGo = shield;
-        }
+        // painted operator, tinted toward the squad colour; the shield is part of the shield-bearer art
+        op.mat = ArtMat(op.hasShield ? "op_shield" : "op", Color.Lerp(Color.white, c, 0.35f));
+        var body = FigureQuad(root.transform, op.mat, 1.05f);
+        if (op.hasShield) op.shieldGo = body;
 
         return root;
     }
@@ -801,20 +807,10 @@ public class SwatBreachPlayer : MonoBehaviour
         var root = new GameObject("Suspect_" + s.id);
         root.transform.position = s.pos;
 
-        var body = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        body.transform.SetParent(root.transform, false);
-        body.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-
-        float scale = (s.type == SuspectType.JuggernautBoss) ? 1.1f : 0.68f;
-        body.transform.localScale = new Vector3(scale, 0.15f, scale);
-
-        Color c = new Color(0.95f, 0.25f, 0.25f);
-        if (s.type == SuspectType.Sniper) c = new Color(1.0f, 0.6f, 0.2f);
-        else if (s.type == SuspectType.JuggernautBoss) c = new Color(0.6f, 0.1f, 0.1f);
-        else if (s.type == SuspectType.Bomber) c = new Color(0.95f, 0.85f, 0.1f);
-
-        s.mat = CreateMat(c);
-        body.GetComponent<MeshRenderer>().material = s.mat;
+        float scale = (s.type == SuspectType.JuggernautBoss) ? 1.6f : 1.0f;
+        string art = s.type == SuspectType.Sniper ? "sniper" : s.type == SuspectType.JuggernautBoss ? "boss" : s.type == SuspectType.Bomber ? "bomber" : "suspect";
+        s.mat = ArtMat(art);
+        FigureQuad(root.transform, s.mat, scale);
         return root;
     }
 
@@ -823,11 +819,7 @@ public class SwatBreachPlayer : MonoBehaviour
         var root = new GameObject("Hostage_" + h.id);
         root.transform.position = h.pos;
 
-        var body = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        body.transform.SetParent(root.transform, false);
-        body.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-        body.transform.localScale = new Vector3(0.6f, 0.15f, 0.6f);
-        body.GetComponent<MeshRenderer>().material = CreateMat(new Color(0.2f, 0.95f, 0.45f));
+        FigureQuad(root.transform, ArtMat("hostage"), 0.9f);
         return root;
     }
 

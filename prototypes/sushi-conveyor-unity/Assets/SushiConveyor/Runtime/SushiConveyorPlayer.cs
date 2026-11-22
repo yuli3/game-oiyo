@@ -102,6 +102,30 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         return m;
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/SC/Art) ----
+    static Material Painted(Material m, string tex, float tile = 1f)
+    {
+        var t = Resources.Load<Texture2D>("SC/Art/" + tex);
+        if (t != null)
+        {
+            t.wrapMode = tile != 1f ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+            m.mainTexture = t;
+        }
+        m.mainTextureScale = new Vector2(tile, tile);
+        m.color = Color.white;
+        if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.15f);
+        return m;
+    }
+
+    static Material Cutout(string tex)
+    {
+        var sh = Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        m.mainTexture = Resources.Load<Texture2D>("SC/Art/" + tex);
+        m.color = Color.white;
+        return m;
+    }
+
     void CreateMaterials()
     {
         _woodMat = MakeMat(new Color(0.54f, 0.36f, 0.20f));
@@ -117,6 +141,19 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         _fishMats[Topping.Tamago] = MakeMat(new Color(0.96f, 0.84f, 0.22f));
         _fishMats[Topping.Ebi] = MakeMat(new Color(0.98f, 0.56f, 0.46f));
         _fishMats[Topping.Ikura] = MakeMat(new Color(0.95f, 0.34f, 0.12f));
+
+        // the lantern light washes pale paint out, so these are toned down
+        Painted(_woodMat, "counter", 3f).color = new Color(0.62f, 0.55f, 0.5f);
+        Painted(_boardMat, "bamboo").color = new Color(0.78f, 0.74f, 0.68f);
+        Painted(_beltMat, "slat").color = new Color(0.5f, 0.52f, 0.58f);
+        Painted(_riceMat, "rice").color = new Color(0.86f, 0.86f, 0.84f);
+        Painted(_fishMats[Topping.Salmon], "salmon");
+        Painted(_fishMats[Topping.Tuna], "tuna");
+        Painted(_fishMats[Topping.Tamago], "tamago");
+        Painted(_fishMats[Topping.Ebi], "ebi");
+        Painted(_fishMats[Topping.Ikura], "ikura");
+        _dinerMat = Cutout("diner");
+        _vipMat = Cutout("diner_vip");
     }
 
     void SetupCameraAndLight()
@@ -171,9 +208,12 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         for (int i = 0; i < 4; i++)
         {
             Vector3 p = BeltPoint(seatTs[i]) + new Vector3(0f, 0.45f, 1.45f);
-            var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.transform.position = p;
-            body.transform.localScale = new Vector3(0.95f, 0.85f, 0.95f);
+            // painted diner facing the camera
+            var body = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            Destroy(body.GetComponent<Collider>());
+            body.transform.position = p + new Vector3(0f, 0.25f, 0f);
+            body.transform.rotation = _cam.transform.rotation;
+            body.transform.localScale = new Vector3(1.6f, 1.87f, 1f);
             body.GetComponent<Renderer>().material = _dinerMat;
             _diners.Add(new Diner
             {

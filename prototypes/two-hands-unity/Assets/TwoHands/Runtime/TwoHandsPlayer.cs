@@ -138,8 +138,40 @@ public class TwoHandsPlayer : MonoBehaviour
         audioSource.playOnAwake = false;
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/TH/Art) ----
+    private readonly List<Material> trackMats = new List<Material>();
+
+    private static Material ArtMat(string tex, Color tint, bool blended = false)
+    {
+        var sh = blended ? null : Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        var t = Resources.Load<Texture2D>("TH/Art/" + tex);
+        if (t != null) { t.wrapMode = TextureWrapMode.Clamp; m.mainTexture = t; }
+        m.color = tint;
+        return m;
+    }
+
+    // Camera-facing painted card (the camera never turns, so set once).
+    private GameObject ArtCard(string name, Material mat)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        go.transform.rotation = mainCam.transform.rotation;
+        go.GetComponent<MeshRenderer>().material = mat;
+        return go;
+    }
+
     private void CreateTrackVisuals()
     {
+        // two-moon night sky far down the tracks
+        var skyMat = ArtMat("sky", Color.white);
+        skyMat.renderQueue = 1000;
+        var sky = ArtCard("NightSky", skyMat);
+        sky.transform.rotation = Quaternion.identity;
+        sky.transform.position = new Vector3(0f, 2f, 70f);
+        sky.transform.localScale = new Vector3(110f, 55f, 1f);
+
         // Left Track Bed (Cyan glow lines)
         CreateTrackBed(new Vector3(-2.4f, 0f, 20f), new Vector3(2.6f, 0.1f, 80f), new Color(0.05f, 0.12f, 0.25f), new Color(0.1f, 0.8f, 1.0f));
 
@@ -162,8 +194,11 @@ public class TwoHandsPlayer : MonoBehaviour
         bed.name = "TrackBed";
         bed.transform.position = pos;
         bed.transform.localScale = scale;
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = baseCol;
+        // neon grid tinted toward the border colour, scrolled as you run (see AdvanceDistance)
+        var mat = ArtMat("track", Color.Lerp(baseCol * 3f, neonBorder, 0.45f));
+        mat.mainTexture.wrapMode = TextureWrapMode.Repeat;
+        mat.mainTextureScale = new Vector2(1f, scale.z / 2.6f);
+        trackMats.Add(mat);
         bed.GetComponent<MeshRenderer>().material = mat;
 
         // Side neon borders
@@ -184,40 +219,23 @@ public class TwoHandsPlayer : MonoBehaviour
 
     private void CreatePlayerVisuals()
     {
-        // Left Orb (Cyan)
-        leftOrbGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        leftOrbGo.name = "LeftOrb";
-        leftOrbGo.transform.localScale = Vector3.one * 0.65f;
-        var leftMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        leftMat.color = new Color(0.1f, 0.9f, 1.0f);
-        leftOrbGo.GetComponent<MeshRenderer>().material = leftMat;
-
-        leftShieldGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        leftShieldGo.name = "LeftShield";
-        leftShieldGo.transform.SetParent(leftOrbGo.transform);
-        leftShieldGo.transform.localPosition = Vector3.zero;
+        // Painted orbs with bubble shields (cards facing the camera)
+        leftOrbGo = ArtCard("LeftOrb", ArtMat("orb_cyan", Color.white, true));
+        leftOrbGo.transform.localScale = Vector3.one * 0.95f;
+        leftShieldGo = ArtCard("LeftShield", ArtMat("bubble", new Color(0.4f, 0.95f, 1f, 0.9f), true));
+        leftShieldGo.transform.SetParent(leftOrbGo.transform, false);
+        leftShieldGo.transform.localRotation = Quaternion.identity;
+        leftShieldGo.transform.localPosition = new Vector3(0f, 0f, -0.01f);
         leftShieldGo.transform.localScale = Vector3.one * 1.4f;
-        var shieldMatL = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        shieldMatL.color = new Color(0.3f, 0.9f, 1f, 0.35f);
-        leftShieldGo.GetComponent<MeshRenderer>().material = shieldMatL;
         leftShieldGo.SetActive(false);
 
-        // Right Orb (Magenta)
-        rightOrbGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        rightOrbGo.name = "RightOrb";
-        rightOrbGo.transform.localScale = Vector3.one * 0.65f;
-        var rightMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        rightMat.color = new Color(1.0f, 0.25f, 0.75f);
-        rightOrbGo.GetComponent<MeshRenderer>().material = rightMat;
-
-        rightShieldGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        rightShieldGo.name = "RightShield";
-        rightShieldGo.transform.SetParent(rightOrbGo.transform);
-        rightShieldGo.transform.localPosition = Vector3.zero;
+        rightOrbGo = ArtCard("RightOrb", ArtMat("orb_pink", Color.white, true));
+        rightOrbGo.transform.localScale = Vector3.one * 0.95f;
+        rightShieldGo = ArtCard("RightShield", ArtMat("bubble", new Color(1f, 0.5f, 0.85f, 0.9f), true));
+        rightShieldGo.transform.SetParent(rightOrbGo.transform, false);
+        rightShieldGo.transform.localRotation = Quaternion.identity;
+        rightShieldGo.transform.localPosition = new Vector3(0f, 0f, -0.01f);
         rightShieldGo.transform.localScale = Vector3.one * 1.4f;
-        var shieldMatR = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        shieldMatR.color = new Color(1.0f, 0.3f, 0.8f, 0.35f);
-        rightShieldGo.GetComponent<MeshRenderer>().material = shieldMatR;
         rightShieldGo.SetActive(false);
     }
 
@@ -547,36 +565,32 @@ public class TwoHandsPlayer : MonoBehaviour
         };
 
         float x = rightTrack ? RightLanesX[ob.lane] : LeftLanesX[ob.lane];
-        var go = GameObject.CreatePrimitive(type == ObstacleType.SyncRing ? PrimitiveType.Cylinder : (type == ObstacleType.ShieldOrb ? PrimitiveType.Sphere : PrimitiveType.Cube));
-        go.name = "Obstacle_" + type;
+        string art = type == ObstacleType.SyncRing ? "ring" : type == ObstacleType.ShieldOrb ? "shield_pickup" : type == ObstacleType.BossLaser ? "laser" : "spike";
+        var go = ArtCard("Obstacle_" + type, ArtMat(art, Color.white));
         go.transform.position = new Vector3(x, 0.45f, z);
 
         Color col = Color.red;
         if (type == ObstacleType.Spike)
         {
-            go.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
+            go.transform.localScale = new Vector3(1.0f, 1.0f, 1f);
             col = new Color(1f, 0.2f, 0.25f);
         }
         else if (type == ObstacleType.SyncRing)
         {
-            go.transform.localScale = new Vector3(0.9f, 0.15f, 0.9f);
-            go.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            go.transform.localScale = new Vector3(1.2f, 1.2f, 1f);
             col = new Color(1.0f, 0.85f, 0.1f);
         }
         else if (type == ObstacleType.ShieldOrb)
         {
-            go.transform.localScale = Vector3.one * 0.75f;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
             col = new Color(0.2f, 0.8f, 1.0f);
         }
         else if (type == ObstacleType.BossLaser)
         {
-            go.transform.localScale = new Vector3(1.1f, 1.2f, 2.5f);
+            go.transform.localScale = new Vector3(1.3f, 1.5f, 1f);
             col = new Color(1.0f, 0.1f, 0.9f);
         }
 
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-        mat.color = col;
-        go.GetComponent<MeshRenderer>().material = mat;
         go.transform.SetParent(parent);
         ob.go = go;
 
@@ -659,6 +673,7 @@ public class TwoHandsPlayer : MonoBehaviour
     private void AdvanceDistance()
     {
         currentDistance += trackSpeed * Time.deltaTime;
+        for (int i = 0; i < trackMats.Count; i++) trackMats[i].mainTextureOffset = new Vector2(0f, currentDistance / 2.6f);
         score += (int)(trackSpeed * Time.deltaTime * 5f);
     }
 
