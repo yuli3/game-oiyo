@@ -7,6 +7,11 @@ public class BrickBreakerPlayer : MonoBehaviour
     public enum Language { KO, EN, JA, ES }
     private Language currentLang = Language.KO;
 
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => currentLang == Language.EN ? OiyoI18n.ForEnglish : currentLang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
+
     public enum BrickType { Normal, Steel, TNT, MultiBall, Laser, WidePaddle, BossCore }
 
     public class Brick
@@ -567,7 +572,7 @@ public class BrickBreakerPlayer : MonoBehaviour
         // Spawn Primary Ball
         SpawnBall(true);
 
-        ShowToast(GetLocalizedStageTitle(stageData) + " - START!");
+        ShowToast(GetLocalizedStageTitle(stageData) + " - " + U("START!"));
         PlayTone(523.25f, 0.15f); // C5 Start Jingle
     }
 
@@ -949,7 +954,7 @@ public class BrickBreakerPlayer : MonoBehaviour
             {
                 score += 2500;
                 shakeTrauma = 0.6f;
-                ShowToast("BOSS DESTROYED! +2500");
+                ShowToast(U("BOSS DESTROYED! +2500"));
                 PlayTone(659.25f, 0.4f);
             }
         }
@@ -1208,7 +1213,7 @@ public class BrickBreakerPlayer : MonoBehaviour
 
         // Title and Stage
         GUILayout.BeginVertical();
-        GUILayout.Label($"<b>BRICK BREAKER 3D</b> · STAGE {currentStageIndex + 1}/{stages.Count}", GetLabelStyle(16, Color.cyan));
+        GUILayout.Label($"<b>BRICK BREAKER 3D</b> · {U("STAGE")} {currentStageIndex + 1}/{stages.Count}", GetLabelStyle(16, Color.cyan));
         GUILayout.Label(GetLocalizedStageTitle(stages[currentStageIndex]), GetLabelStyle(12, Color.white));
         GUILayout.EndVertical();
 
@@ -1217,7 +1222,7 @@ public class BrickBreakerPlayer : MonoBehaviour
         // Score, Combo, Lives
         GUILayout.BeginVertical();
         GUILayout.Label($"{GetLocalizedText("SCORE", "점수", "スコア", "PUNTOS")}: <b>{score}</b>", GetLabelStyle(14, Color.white));
-        string comboStr = combo > 1 ? $" <color=#ff8800>({combo}x COMBO!)</color>" : "";
+        string comboStr = combo > 1 ? $" <color=#ff8800>({combo}x {U("COMBO!")})</color>" : "";
         GUILayout.Label($"{GetLocalizedText("LIVES", "생명", "ライフ", "VIDAS")}: {"♥".Repeat(lives)}{comboStr}", GetLabelStyle(13, Color.yellow));
         GUILayout.EndVertical();
 
@@ -1241,8 +1246,8 @@ public class BrickBreakerPlayer : MonoBehaviour
         if (laserTimer > 0f || widePaddleTimer > 0f)
         {
             GUILayout.BeginArea(new Rect(10, 75, 200, 50));
-            if (laserTimer > 0f) GUILayout.Label($"⚡ LASER: {laserTimer:F1}s", GetLabelStyle(13, Color.yellow));
-            if (widePaddleTimer > 0f) GUILayout.Label($"↔ WIDE: {widePaddleTimer:F1}s", GetLabelStyle(13, Color.green));
+            if (laserTimer > 0f) GUILayout.Label($"⚡ {U("LASER")}: {laserTimer:F1}s", GetLabelStyle(13, Color.yellow));
+            if (widePaddleTimer > 0f) GUILayout.Label($"↔ {U("WIDE")}: {widePaddleTimer:F1}s", GetLabelStyle(13, Color.green));
             GUILayout.EndArea();
         }
     }
@@ -1270,7 +1275,8 @@ public class BrickBreakerPlayer : MonoBehaviour
                 if (sIdx < stages.Count)
                 {
                     var st = stages[sIdx];
-                    string btnTxt = $"Stage {sIdx + 1}\n{GetLocalizedStageTitle(st)}";
+                    string btnTxt = $"{U("Stage")} {sIdx + 1}
+{GetLocalizedStageTitle(st)}";
                     if (GUILayout.Button(btnTxt, GUILayout.Height(48)))
                     {
                         showStageSelect = false;
@@ -1363,7 +1369,7 @@ public class BrickBreakerPlayer : MonoBehaviour
         switch (currentLang)
         {
             case Language.KO: return stage.titleKo;
-            case Language.EN: return stage.titleEn;
+            case Language.EN: return OiyoI18n.En(stage.titleEn);
             case Language.JA: return stage.titleJa;
             case Language.ES: return stage.titleEs;
             default: return stage.titleKo;
@@ -1375,7 +1381,7 @@ public class BrickBreakerPlayer : MonoBehaviour
         switch (currentLang)
         {
             case Language.KO: return ko;
-            case Language.EN: return en;
+            case Language.EN: return OiyoI18n.En(en);
             case Language.JA: return ja;
             case Language.ES: return es;
             default: return ko;
