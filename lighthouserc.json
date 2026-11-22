@@ -1,7 +1,7 @@
 {
   "ci": {
     "collect": {
-      "startServerCommand": "npx --yes http-server dist -p 8080",
+      "startServerCommand": ".github/lhci/node_modules/.bin/http-server dist -p 8080",
       "startServerReadyPattern": "Available on",
       "url": [
         "http://localhost:8080/en/",

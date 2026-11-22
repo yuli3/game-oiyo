@@ -34,7 +34,12 @@ jobs:
         # performance/seo are "error" assertions (fail the check); accessibility/
         # best-practices stay "warn" (see lighthouserc.json). No `|| true` — a
         # threshold miss now fails this workflow, not just the deploy pipeline.
-        run: npx --yes @lhci/cli@0.13 autorun
+        # Pinned + lockfile (.github/lhci). `npx --yes` re-resolved every transitive
+        # dep on each run; 2026-11-21 robots-parser 3.1.1 was 4 minutes old and
+        # 404'd on the npm CDN, failing every open PR at once.
+        run: |
+          npm ci --prefix .github/lhci --no-audit --no-fund
+          .github/lhci/node_modules/.bin/lhci autorun
 
       - name: CrUX (Chrome UX Report) — real-user field data
         # Skips gracefully if CRUX_API_KEY secret is not configured.

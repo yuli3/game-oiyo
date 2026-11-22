@@ -1,0 +1,9 @@
+{
+  "name": "lhci-runner",
+  "private": true,
+  "description": "Pinned Lighthouse CI tools. Installed with `npm ci` so CI never resolves fresh transitive versions (2026-11-21: robots-parser 3.1.1 was published minutes before a run and 404'd on the npm CDN).",
+  "devDependencies": {
+    "@lhci/cli": "0.13.0",
+    "http-server": "14.1.1"
+  }
+}
