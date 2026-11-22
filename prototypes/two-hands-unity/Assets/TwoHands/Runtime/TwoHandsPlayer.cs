@@ -1024,8 +1024,7 @@ public class TwoHandsPlayer : MonoBehaviour
                 if (sIdx < stages.Count)
                 {
                     var st = stages[sIdx];
-                    string btnTxt = $"{U("Stage")} {sIdx + 1}
-{GetLocalizedStageTitle(st)}";
+                    string btnTxt = $"{U("Stage")} {sIdx + 1}\n{GetLocalizedStageTitle(st)}";
                     if (GUILayout.Button(btnTxt, GUILayout.Height(48)))
                     {
                         showStageSelect = false;
