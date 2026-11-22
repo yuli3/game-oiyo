@@ -18,3 +18,19 @@ describe("Unity WebGL builds load the page bridge", () => {
     expect(head).toContain('<script src="../unity-frame-bridge.js"></script>');
   });
 });
+
+// unity-touch-pad.js draws on-screen controls for keyboard-only builds. A renamed build
+// folder would silently lose its pad.
+describe("Unity touch pad layouts", () => {
+  const pad = readFileSync(join(root, "unity-touch-pad.js"), "utf8");
+  const names = [...pad.matchAll(/"([a-z0-9-]+-unity)":/g)].map((m) => m[1]);
+  it("lists keyboard-only builds", () => {
+    expect(names.length).toBeGreaterThanOrEqual(5);
+  });
+  it.each(names)("%s exists", (dir) => {
+    expect(existsSync(join(root, dir, "index.html"))).toBe(true);
+  });
+  it("is loaded by the bridge", () => {
+    expect(readFileSync(join(root, "unity-frame-bridge.js"), "utf8")).toContain("../unity-touch-pad.js");
+  });
+});
