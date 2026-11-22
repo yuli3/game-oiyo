@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#020617">
+<title>OIYO Arcade · Offline</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root { color-scheme: dark; --bg:#020617; --card:#0f172a; --line:#1e293b; --text:#e2e8f0; --muted:#94a3b8; --accent:#84cc16; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100dvh; background:var(--bg); color:var(--text); font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; display:flex; justify-content:center; padding:max(24px,env(safe-area-inset-top)) 16px 32px; }
+  main { width:100%; max-width:560px; }
+  .logo { width:56px; height:56px; border-radius:14px; display:block; }
+  h1 { font-size:1.6rem; margin:16px 0 4px; }
+  p { color:var(--muted); margin:0 0 16px; }
+  h2 { font-size:1rem; margin:24px 0 8px; }
+  ul { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+  a.item { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; padding:12px 16px; border:1px solid var(--line); border-radius:12px; background:var(--card); color:var(--text); text-decoration:none; font-weight:600; }
+  a.item:hover, a.item:focus-visible { border-color:var(--accent); outline:none; }
+  .tag { font-size:.75rem; font-weight:700; color:#0f172a; background:var(--accent); border-radius:999px; padding:2px 8px; white-space:nowrap; }
+  button { min-height:48px; padding:12px 20px; border-radius:999px; border:0; background:var(--accent); color:#0f172a; font-weight:800; font-size:1rem; cursor:pointer; }
+  .empty { border:1px dashed var(--line); border-radius:12px; padding:16px; color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <img class="logo" src="/favicon.svg" alt="" width="56" height="56">
+  <h1 id="t-title">오프라인이에요</h1>
+  <p id="t-lead">인터넷이 연결되면 다시 열려요. 그 사이에 한 번 열었던 게임은 지금도 할 수 있어요.</p>
+  <button type="button" id="retry">다시 시도</button>
+  <h2 id="t-saved" hidden>저장한 3D 게임</h2>
+  <ul id="saved"></ul>
+  <h2 id="t-cached">지금 할 수 있는 게임</h2>
+  <ul id="cached"></ul>
+</main>
+<script>
+(function () {
+  var T = {
+    ko: { title: "오프라인이에요", lead: "인터넷이 연결되면 다시 열려요. 그 사이에 한 번 열었던 게임은 지금도 할 수 있어요.", retry: "다시 시도", saved: "저장한 3D 게임", cached: "지금 할 수 있는 게임", empty: "아직 저장된 게임이 없어요. 온라인에서 게임을 한 번 열면 다음부터 오프라인에서도 열려요.", tag: "3D" },
+    en: { title: "You're offline", lead: "This page opens again once you're back online. Games you opened before still work now.", retry: "Try again", saved: "Saved 3D games", cached: "Games you can play now", empty: "No games saved yet. Open a game once while online and it will open offline next time.", tag: "3D" },
+    ja: { title: "オフラインです", lead: "接続が戻ると再び開きます。一度開いたゲームは今も遊べます。", retry: "再試行", saved: "保存した3Dゲーム", cached: "今遊べるゲーム", empty: "まだ保存されたゲームはありません。オンラインで一度開くと、次回からオフラインでも開けます。", tag: "3D" },
+    zh: { title: "当前处于离线状态", lead: "联网后即可重新打开。之前打开过的游戏现在也能玩。", retry: "重试", saved: "已保存的 3D 游戏", cached: "现在可以玩的游戏", empty: "还没有保存的游戏。联网时打开一次，下次离线也能打开。", tag: "3D" },
+    fr: { title: "Vous êtes hors ligne", lead: "La page se rouvrira une fois la connexion revenue. Les jeux déjà ouverts fonctionnent encore.", retry: "Réessayer", saved: "Jeux 3D enregistrés", cached: "Jeux disponibles maintenant", empty: "Aucun jeu enregistré pour l'instant. Ouvrez un jeu une fois en ligne et il s'ouvrira hors ligne la prochaine fois.", tag: "3D" },
+    es: { title: "Sin conexión", lead: "La página se abrirá de nuevo al recuperar la conexión. Los juegos que ya abriste siguen funcionando.", retry: "Reintentar", saved: "Juegos 3D guardados", cached: "Juegos disponibles ahora", empty: "Aún no hay juegos guardados. Abre un juego una vez con conexión y la próxima vez se abrirá sin ella.", tag: "3D" }
+  };
+  var LOCALES = ["ko", "en", "ja", "zh", "fr", "es"];
+  var seg = location.pathname.split("/")[1];
+  var nav = (navigator.language || "en").slice(0, 2).toLowerCase();
+  var lang = LOCALES.indexOf(seg) >= 0 ? seg : (LOCALES.indexOf(nav) >= 0 ? nav : "en");
+  var t = T[lang];
+  document.documentElement.lang = lang;
+  document.getElementById("t-title").textContent = t.title;
+  document.getElementById("t-lead").textContent = t.lead;
+  document.getElementById("t-saved").textContent = t.saved;
+  document.getElementById("t-cached").textContent = t.cached;
+  var retry = document.getElementById("retry");
+  retry.textContent = t.retry;
+  retry.addEventListener("click", function () { location.reload(); });
+  window.addEventListener("online", function () { location.reload(); });
+
+  function item(href, label, tag) {
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.className = "item";
+    a.href = href;
+    var span = document.createElement("span");
+    span.textContent = label;
+    a.appendChild(span);
+    if (tag) { var b = document.createElement("span"); b.className = "tag"; b.textContent = tag; a.appendChild(b); }
+    li.appendChild(a);
+    return li;
+  }
+  function pretty(slug) {
+    return slug.split("-").map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(" ");
+  }
+
+  var saved = [];
+  try { saved = JSON.parse(localStorage.getItem("oiyo:pwa:unity-saved") || "[]"); } catch (e) {}
+  var savedList = document.getElementById("saved");
+  var savedPages = {};
+  saved.forEach(function (s) {
+    if (!s || !s.page) return;
+    savedPages[s.page] = 1;
+    savedList.appendChild(item(s.page, s.name || pretty(s.slug || ""), t.tag));
+  });
+  if (savedList.children.length) document.getElementById("t-saved").hidden = false;
+
+  var cachedList = document.getElementById("cached");
+  if (!("caches" in window)) { cachedList.innerHTML = ""; return; }
+  caches.open("oiyo-pages-v2").then(function (cache) { return cache.keys(); }).then(function (keys) {
+    var seen = {};
+    var rows = [];
+    keys.forEach(function (req) {
+      var u = new URL(req.url);
+      var parts = u.pathname.split("/").filter(Boolean);
+      if (parts.length !== 2 || LOCALES.indexOf(parts[0]) < 0) return;
+      if (savedPages[u.pathname] || seen[parts[1]]) return;
+      if (/^(achievements|embed|about|privacy|terms)$/.test(parts[1])) return;
+      seen[parts[1]] = 1;
+      rows.push({ href: u.pathname, slug: parts[1], mine: parts[0] === lang });
+    });
+    rows.sort(function (a, b) { return (b.mine ? 1 : 0) - (a.mine ? 1 : 0); });
+    rows.forEach(function (r) { cachedList.appendChild(item(r.href, pretty(r.slug))); });
+    if (!rows.length) {
+      var li = document.createElement("li");
+      li.className = "empty";
+      li.textContent = t.empty;
+      cachedList.appendChild(li);
+    }
+  }).catch(function () {});
+})();
+</script>
+</body>
+</html>
