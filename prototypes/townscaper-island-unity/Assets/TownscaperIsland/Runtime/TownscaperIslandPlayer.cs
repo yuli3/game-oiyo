@@ -183,6 +183,26 @@ public class TownscaperIslandPlayer : MonoBehaviour
 
         beamMat = new Material(OiyoShaders.Safe(unlitColor));
         beamMat.color = new Color(1.0f, 0.95f, 0.5f);
+
+        // Painted textures (scripts/make_art.py -> Resources/TI/Art); facades keep their palette tint
+        Paint(seaMat, "sea", 12f, new Color(0.62f, 0.7f, 0.78f)); // calmer sea under the bright sun
+        Paint(quayMat, "quay", 1f, Color.white);
+        for (int i = 0; i < buildingMats.Length; i++) Paint(buildingMats[i], "facade", 1f, PaletteColors[i]);
+        Paint(roofMat, "roof", 1f, Color.white);
+        Paint(gardenMat, "lawn", 1f, Color.white);
+    }
+
+    static void Paint(Material m, string tex, float tile, Color tint)
+    {
+        var t = Resources.Load<Texture2D>("TI/Art/" + tex);
+        if (t != null)
+        {
+            t.wrapMode = tile != 1f ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+            m.mainTexture = t;
+        }
+        m.mainTextureScale = new Vector2(tile, tile);
+        m.color = tint;
+        if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.12f);
     }
 
     void BuildSea()
@@ -270,6 +290,7 @@ public class TownscaperIslandPlayer : MonoBehaviour
         {
             float wave = Mathf.Sin(Time.time * 1.5f) * 0.02f;
             seaPlane.transform.position = new Vector3(0, -0.05f + wave, 0);
+            seaMat.mainTextureOffset = new Vector2(Time.time * 0.01f, Time.time * 0.006f);
         }
 
         // Rotating lighthouse beacon
@@ -569,7 +590,7 @@ public class TownscaperIslandPlayer : MonoBehaviour
                     blockObjects.Add(block);
 
                     // Add windows for residential floors (h >= 2)
-                    if (h >= 2)
+                    if (false) // windows are painted on the facade texture now
                     {
                         var win = GameObject.CreatePrimitive(PrimitiveType.Cube);
                         win.transform.position = new Vector3(wx, wy, wz + 0.48f);
