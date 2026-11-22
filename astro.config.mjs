@@ -11,6 +11,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import robotsTxt from "astro-robots-txt";
 import hreflangReconcile from "./src/integrations/hreflang-reconcile.mjs";
+import koRss from "./src/integrations/ko-rss.mjs";
 
 // Bridge pages are noindex stubs that canonicalize to oiyo.net —
 // they must never appear in the sitemap.
@@ -39,6 +40,7 @@ export default defineConfig({
   // 2026-10-10: retain Astro5's lossless whitespace during the security migration.
   compressHTML: true,
   integrations: [
+    koRss({ site: "https://game.oiyo.net", title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임", description: "체스·오목·스도쿠·에임 트레이너부터 오리지널 레트로 게임까지, 브라우저에서 바로 즐기는 무료 게임." }),
     react(),
     mdx(),
     sitemap({
