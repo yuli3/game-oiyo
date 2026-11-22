@@ -1,4 +1,7 @@
 # game.oiyo.net — short aliases into the locale tier studio
+# 2026-11-22: Naver Search Advisor HTML ownership file. Pages strips .html with a 308,
+# but Naver needs a 200 at the exact .html URL, so rewrite it to the asset (200 = no redirect).
+/naverfeb1d8514db116d06b5d11e882ee9d1c.html /naverfeb1d8514db116d06b5d11e882ee9d1c 200
 /  /en/  301
 /tier  /ko/tier-list/  301
 /tier/  /ko/tier-list/  301
