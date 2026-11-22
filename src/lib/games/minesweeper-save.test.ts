@@ -9,6 +9,7 @@ import {
   storeMinesweeperSave,
   type MinesweeperSave,
 } from "./minesweeper-save";
+import { createMinesweeperStageBoard } from "./minesweeper-stages";
 
 const TODAY = "2026-07-31";
 const NOW = Date.parse("2026-07-31T12:00:00.000Z");
@@ -50,6 +51,16 @@ describe("minesweeper active save", () => {
     expect(parsed.board).toEqual(source.board);
     expect(parsed.board).not.toBe(source.board);
     expect(parsed.board[0][0]).not.toBe(source.board[0][0]);
+  });
+
+  it("round-trips a stage board on any day and rejects a missing or wrong stage index", () => {
+    const stage = { ...activeSave(), mode: "stage" as const, dailyDate: "2026-07-01", board: createMinesweeperStageBoard(12).board, stageIndex: 12 };
+    const parsed = parseMinesweeperSave(serializeMinesweeperSave(stage), TODAY, NOW);
+    expect(parsed).toMatchObject({ mode: "stage", stageIndex: 12 });
+    expect(parseMinesweeperSave(serializeMinesweeperSave({ ...stage, stageIndex: 30 }), TODAY, NOW)).toBeNull();
+    expect(parseMinesweeperSave(serializeMinesweeperSave({ ...stage, stageIndex: undefined }), TODAY, NOW)).toBeNull();
+    expect(parseMinesweeperSave(serializeMinesweeperSave({ ...stage, stageIndex: 0 }), TODAY, NOW)).toBeNull();
+    expect(parseMinesweeperSave(serializeMinesweeperSave({ ...activeSave(), stageIndex: 3 }), TODAY, NOW)).toBeNull();
   });
 
   it("rejects stale daily, terminal, revealed-mine, bad clues, dimensions, coordinates, and future timestamps", () => {
