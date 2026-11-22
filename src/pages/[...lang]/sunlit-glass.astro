@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SunlitGlass from "../../components/games/SunlitGlass";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "햇살 스테인드글라스 — 맞닿은 조각이 같은 색이 되지 않게 칠하는 무료 색칠 퍼즐 30장",
+    description: "아치 창의 유리 조각을 칠해 보세요. 맞닿은 두 조각은 같은 색이 될 수 없고, 답은 하나뿐입니다. 다 맞추면 햇살이 창을 지나 바닥에 색 그림자를 드리웁니다. 3색·4색 창 30장.",
+  },
+  en: {
+    title: "Sunlit Glass — Free stained-glass colouring logic puzzle, 30 windows",
+    description: "Colour the panes of an arched window so no two touching panes share a colour. Every window has exactly one answer, and when you solve it the sun pours through and paints the floor. 30 windows in three and four colours.",
+  },
+  ja: {
+    title: "陽だまりステンドグラス — 隣り合う欠片を同じ色にしない無料の塗り分けパズル30枚",
+    description: "アーチ窓のガラス片を塗り分けましょう。隣り合う2枚は同じ色にできず、答えはひとつだけ。完成すると日差しが窓を通り、床に色の影を落とします。3色・4色の窓30枚。",
+  },
+  zh: {
+    title: "阳光彩绘玻璃 — 相邻玻璃不同色的免费涂色逻辑谜题30扇",
+    description: "为拱形窗的玻璃块上色，相邻两块不能同色，每扇窗只有一个答案。完成后阳光穿过窗户，在地板上投下彩色光影。三色、四色窗共30扇。",
+  },
+  fr: {
+    title: "Vitrail au soleil — Puzzle logique de coloriage gratuit, 30 vitraux",
+    description: "Coloriez les pièces d'un vitrail en arc sans que deux pièces voisines aient la même couleur. Chaque vitrail n'a qu'une solution ; résolu, il laisse passer le soleil qui colore le sol. 30 vitraux en trois et quatre couleurs.",
+  },
+  es: {
+    title: "Vitral al Sol — Puzle lógico de colorear gratis, 30 vitrales",
+    description: "Colorea los cristales de una ventana en arco sin que dos piezas vecinas compartan color. Cada vitral tiene una sola solución y, al resolverlo, el sol lo atraviesa y pinta el suelo. 30 vitrales de tres y cuatro colores.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["sunlit-glass"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <SunlitGlass client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="sunlit-glass" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

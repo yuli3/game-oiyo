@@ -185,6 +185,8 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
   "spin-sumo": { emoji: "🌀", cat: "arcade", name: {"ko":"팽이 씨름","en":"Spin Sumo","ja":"コマずもう","zh":"陀螺相扑","fr":"Sumo de toupies","es":"Sumo de peonzas"} },
   "spider-cards": { emoji: "🕷️", cat: "card", name: {"ko":"스파이더 카드","en":"Spider Cards","ja":"スパイダーカード","zh":"蜘蛛纸牌","fr":"Spider Solitaire","es":"Solitario Spider"} },
   "market-mercenaries": { emoji: "🏮", cat: "arcade", name: {"ko":"장터 용병단","en":"Market Mercenaries","ja":"市場の傭兵団","zh":"集市佣兵团","fr":"Les Mercenaires du marché","es":"Mercenarios del Mercado"} },
+  "sunlit-glass": { emoji: "🪟", cat: "puzzle", name: {"ko":"햇살 스테인드글라스","en":"Sunlit Glass","ja":"陽だまりステンドグラス","zh":"阳光彩绘玻璃","fr":"Vitrail au soleil","es":"Vitral al Sol"} },
+  "finger-hockey": { emoji: "🏒", cat: "arcade", name: {"ko":"손가락 에어하키","en":"Finger Air Hockey","ja":"指先エアホッケー","zh":"指尖桌上冰球","fr":"Air hockey du bout des doigts","es":"Air Hockey con el Dedo"} },
   "rampart-keeper": { emoji: "🏯", cat: "arcade", name: {"ko":"성벽 지기","en":"Rampart Keeper","ja":"城壁の守り手","zh":"城墙守卫","fr":"Gardien du rempart","es":"Guardián de la muralla"} },
   "link-duel": { emoji: "⚔️", cat: "puzzle", name: {"ko":"링크 대결","en":"Link Duel","ja":"リンク対決","zh":"链接对决","fr":"Duel par lien","es":"Duelo por enlace"} },
   "season-workshop": { emoji: "🥣", cat: "arcade", name: {"ko":"절기 공방","en":"Season Workshop","ja":"節気工房","zh":"节气工坊","fr":"L'Atelier des saisons","es":"El Taller de las Estaciones"} },
@@ -205,6 +207,8 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
  * Players finishing or exploring these games receive hand-tuned next-best suggestions.
  */
 export const CURATED_CLUSTERS: Record<string, string[]> = {
+  "sunlit-glass": ["picture-logic", "mirror-lanterns", "light-up", "hexa-sort"],
+  "finger-hockey": ["spin-sumo", "link-duel", "liar-onephone", "mini-golf-3d"],
   "market-mercenaries": ["tower-deck-rogue", "slot-rogue", "mech-grid-tactics", "shield-isle-tactics"],
   "typing-defense": ["word-stack", "rampart-keeper", "five-letter-guess", "aim-trainer"],
   "spin-sumo": ["link-duel", "liar-onephone", "mini-golf-3d", "stack-tower"],
