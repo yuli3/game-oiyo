@@ -331,65 +331,52 @@ public class StarBlasterPlayer : MonoBehaviour
         bossMat.color = new Color(0.85f, 0.1f, 0.15f);
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/BL/Art) ----
+    private static readonly Dictionary<string, Material> artMats = new Dictionary<string, Material>();
+    private Material nebulaMat;
+
+    private static Material ArtMat(string tex)
+    {
+        if (!artMats.TryGetValue(tex, out var m))
+        {
+            m = new Material(Shader.Find("Sprites/Default"));
+            var t = Resources.Load<Texture2D>("BL/Art/" + tex);
+            if (t != null) { t.wrapMode = TextureWrapMode.Clamp; m.mainTexture = t; }
+            m.color = Color.white;
+            artMats[tex] = m;
+        }
+        return m;
+    }
+
+    // Flat sprite facing the overhead camera; the art's "up" points along +z.
+    private static GameObject FlatArt(string name, string tex, Transform parent = null)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        if (parent != null) go.transform.SetParent(parent, false);
+        go.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        go.GetComponent<Renderer>().material = ArtMat(tex);
+        return go;
+    }
+
     private void CreatePlayerShip()
     {
         playerShip = new GameObject("PlayerStarfighter");
         playerShip.transform.position = playerPos;
 
-        // Fuselage
-        var fuselage = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        fuselage.transform.SetParent(playerShip.transform);
-        fuselage.transform.localPosition = Vector3.zero;
-        fuselage.transform.localScale = new Vector3(0.42f, 0.95f, 0.42f);
-        fuselage.transform.localRotation = Quaternion.Euler(90, 0, 0);
-        fuselage.GetComponent<Renderer>().material = shipMat;
-
-        // Cockpit canopy
-        var canopy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        canopy.transform.SetParent(playerShip.transform);
-        canopy.transform.localPosition = new Vector3(0, 0.18f, 0.2f);
-        canopy.transform.localScale = new Vector3(0.35f, 0.22f, 0.55f);
-        var cMat = new Material(shipMat);
-        cMat.color = new Color(0.9f, 0.95f, 1f);
-        canopy.GetComponent<Renderer>().material = cMat;
-
-        // Left Wing
-        var leftWing = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        leftWing.transform.SetParent(playerShip.transform);
-        leftWing.transform.localPosition = new Vector3(-0.85f, 0, -0.2f);
-        leftWing.transform.localRotation = Quaternion.Euler(0, -25, 0);
-        leftWing.transform.localScale = new Vector3(1.1f, 0.08f, 0.6f);
-        leftWing.GetComponent<Renderer>().material = shipMat;
-
-        // Right Wing
-        var rightWing = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        rightWing.transform.SetParent(playerShip.transform);
-        rightWing.transform.localPosition = new Vector3(0.85f, 0, -0.2f);
-        rightWing.transform.localRotation = Quaternion.Euler(0, 25, 0);
-        rightWing.transform.localScale = new Vector3(1.1f, 0.08f, 0.6f);
-        rightWing.GetComponent<Renderer>().material = shipMat;
-
-        // Blaster Pods
-        var gunL = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        gunL.transform.SetParent(playerShip.transform);
-        gunL.transform.localPosition = new Vector3(-1.25f, 0, 0.15f);
-        gunL.transform.localScale = new Vector3(0.12f, 0.45f, 0.12f);
-        gunL.transform.localRotation = Quaternion.Euler(90, 0, 0);
-        gunL.GetComponent<Renderer>().material = bulletMat;
-
-        var gunR = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        gunR.transform.SetParent(playerShip.transform);
-        gunR.transform.localPosition = new Vector3(1.25f, 0, 0.15f);
-        gunR.transform.localScale = new Vector3(0.12f, 0.45f, 0.12f);
-        gunR.transform.localRotation = Quaternion.Euler(90, 0, 0);
-        gunR.GetComponent<Renderer>().material = bulletMat;
+        // Painted starfighter (one flat sprite; banking still rolls the root)
+        var hull = FlatArt("FighterArt", "player", playerShip.transform);
+        hull.transform.localPosition = Vector3.zero;
+        hull.transform.localScale = new Vector3(2.7f, 2.7f, 1f);
 
         // Shield Bubble
         shieldBubble = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         shieldBubble.transform.SetParent(playerShip.transform);
         shieldBubble.transform.localPosition = Vector3.zero;
         shieldBubble.transform.localScale = new Vector3(2.4f, 2.4f, 2.4f);
-        shieldBubble.GetComponent<Renderer>().material = shieldMat;
+        var bubbleMat = new Material(Shader.Find("Sprites/Default")) { color = new Color(0.3f, 0.85f, 1f, 0.28f) };
+        shieldBubble.GetComponent<Renderer>().material = bubbleMat;
 
         // Light
         var lightGo = new GameObject("ShipLight");
@@ -412,6 +399,19 @@ public class StarBlasterPlayer : MonoBehaviour
 
     private void CreateStarfield()
     {
+        // painted nebula under the scrolling stars, tinted per stage
+        nebulaMat = new Material(Shader.Find("Sprites/Default"));
+        nebulaMat.mainTexture = Resources.Load<Texture2D>("BL/Art/nebula");
+        nebulaMat.mainTexture.wrapMode = TextureWrapMode.Repeat;
+        nebulaMat.renderQueue = 1000;
+        var neb = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        neb.name = "Nebula";
+        Destroy(neb.GetComponent<Collider>());
+        neb.transform.position = new Vector3(0f, -3f, 3f);
+        neb.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        neb.transform.localScale = new Vector3(36f, 36f, 1f);
+        neb.GetComponent<Renderer>().material = nebulaMat;
+
         for (int i = 0; i < 90; i++)
         {
             var s = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -424,7 +424,7 @@ public class StarBlasterPlayer : MonoBehaviour
                 UnityEngine.Random.Range(-10f, 15f)
             );
             s.transform.rotation = Quaternion.Euler(90, 0, 0);
-            var m = new Material(shipMat);
+            var m = new Material(Shader.Find("Sprites/Default"));
             float b = UnityEngine.Random.Range(0.4f, 1f);
             m.color = new Color(b * 0.7f, b * 0.9f, b);
             s.GetComponent<Renderer>().material = m;
@@ -445,6 +445,8 @@ public class StarBlasterPlayer : MonoBehaviour
         em.startSpeed = 6f;
         em.startColor = new Color(0.2f, 0.8f, 1f, 0.8f);
         em.simulationSpace = ParticleSystemSimulationSpace.World;
+        var sparkMat = ArtMat("spark");
+        eGo.GetComponent<ParticleSystemRenderer>().material = sparkMat; // WebGL has no default particle material
         var emission = engineParticles.emission;
         emission.rateOverTime = 40f;
 
@@ -457,6 +459,7 @@ public class StarBlasterPlayer : MonoBehaviour
         xm.startSpeed = 9f;
         xm.startColor = new Color(1f, 0.6f, 0.1f);
         xm.simulationSpace = ParticleSystemSimulationSpace.World;
+        xGo.GetComponent<ParticleSystemRenderer>().material = sparkMat;
         var xe = explosionParticles.emission;
         xe.rateOverTime = 0f;
     }
@@ -467,6 +470,7 @@ public class StarBlasterPlayer : MonoBehaviour
         var stg = stages[currentStageIndex];
 
         mainCam.backgroundColor = stg.nebulaColor;
+        if (nebulaMat != null) nebulaMat.color = Color.Lerp(Color.white, new Color(stg.nebulaColor.r * 4f, stg.nebulaColor.g * 4f, stg.nebulaColor.b * 4f), 0.5f);
 
         playerPos = new Vector3(0, 0, -3.5f);
         playerShip.transform.position = playerPos;
@@ -511,37 +515,10 @@ public class StarBlasterPlayer : MonoBehaviour
         bossPhase = 1;
         bossAttackTimer = 0f;
 
-        // Main Hull
-        var hull = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        hull.transform.SetParent(bossObject.transform);
+        // Painted leviathan (faces the player, turrets on its lower edge)
+        var hull = FlatArt("LeviathanArt", "boss", bossObject.transform);
         hull.transform.localPosition = Vector3.zero;
-        hull.transform.localScale = new Vector3(5.5f, 1.2f, 3.2f);
-        hull.GetComponent<Renderer>().material = bossMat;
-
-        // Glowing Reactor Core
-        var core = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        core.transform.SetParent(bossObject.transform);
-        core.transform.localPosition = new Vector3(0, 0.4f, 0);
-        core.transform.localScale = new Vector3(1.6f, 1.2f, 1.6f);
-        var cMat = new Material(bossMat);
-        cMat.color = Color.yellow;
-        core.GetComponent<Renderer>().material = cMat;
-
-        // Left Heavy Turret
-        var turretL = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        turretL.transform.SetParent(bossObject.transform);
-        turretL.transform.localPosition = new Vector3(-2.2f, 0.3f, -0.6f);
-        turretL.transform.localScale = new Vector3(0.6f, 0.8f, 0.6f);
-        turretL.transform.localRotation = Quaternion.Euler(90, 0, 0);
-        turretL.GetComponent<Renderer>().material = cruiserMat;
-
-        // Right Heavy Turret
-        var turretR = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        turretR.transform.SetParent(bossObject.transform);
-        turretR.transform.localPosition = new Vector3(2.2f, 0.3f, -0.6f);
-        turretR.transform.localScale = new Vector3(0.6f, 0.8f, 0.6f);
-        turretR.transform.localRotation = Quaternion.Euler(90, 0, 0);
-        turretR.GetComponent<Renderer>().material = cruiserMat;
+        hull.transform.localScale = new Vector3(6.4f, 3.7f, 1f);
 
         PlaySound(bossAlarmClip, 0.9f);
     }
@@ -698,22 +675,9 @@ public class StarBlasterPlayer : MonoBehaviour
 
     private void SpawnPlayerBullet(Vector3 pos, Vector3 vel, int type)
     {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        var go = FlatArt("Shot", type == 2 ? "missile" : "shot");
         go.transform.position = pos;
-        go.transform.rotation = Quaternion.Euler(90, 0, 0);
-
-        if (type == 2) // Missile
-        {
-            go.transform.localScale = new Vector3(0.2f, 0.5f, 0.2f);
-            var m = new Material(bulletMat);
-            m.color = Color.yellow;
-            go.GetComponent<Renderer>().material = m;
-        }
-        else
-        {
-            go.transform.localScale = new Vector3(0.12f, 0.4f, 0.12f);
-            go.GetComponent<Renderer>().material = bulletMat;
-        }
+        go.transform.localScale = type == 2 ? new Vector3(0.4f, 1.0f, 1f) : new Vector3(0.3f, 0.9f, 1f);
 
         playerBullets.Add(new PlayerBullet { pos = pos, vel = vel, type = type, lifetime = 1.6f, go = go });
     }
@@ -808,7 +772,8 @@ public class StarBlasterPlayer : MonoBehaviour
 
     private void SpawnEnemy(Vector3 pos, int type, float baseSpeed)
     {
-        var go = GameObject.CreatePrimitive(type == 3 ? PrimitiveType.Sphere : PrimitiveType.Cube);
+        string[] enemyArt = { "e_drone", "e_fast", "e_cruiser", "asteroid", "e_stealth", "e_shield" };
+        var go = FlatArt("Enemy", enemyArt[Mathf.Clamp(type, 0, 5)]);
         go.transform.position = pos;
 
         float hp = 20f;
@@ -816,44 +781,39 @@ public class StarBlasterPlayer : MonoBehaviour
 
         if (type == 0) // Drone
         {
-            go.transform.localScale = new Vector3(0.9f, 0.4f, 0.9f);
-            go.GetComponent<Renderer>().material = droneMat;
+            go.transform.localScale = new Vector3(1.2f, 1.2f, 1f);
             hp = 25f;
         }
         else if (type == 1) // Fast Interceptor
         {
-            go.transform.localScale = new Vector3(0.7f, 0.35f, 1.2f);
-            go.GetComponent<Renderer>().material = fastMat;
+            go.transform.localScale = new Vector3(1.3f, 1.3f, 1f);
             vel = new Vector3(Mathf.Sin(Time.time * 4f) * 3f, 0, -baseSpeed * 1.35f);
             hp = 18f;
         }
         else if (type == 2) // Heavy Cruiser
         {
-            go.transform.localScale = new Vector3(1.8f, 0.6f, 1.6f);
-            go.GetComponent<Renderer>().material = cruiserMat;
+            go.transform.localScale = new Vector3(2.1f, 2.1f, 1f);
             vel = new Vector3(0, 0, -baseSpeed * 0.7f);
             hp = 75f;
         }
         else if (type == 3) // Asteroid
         {
             float sz = UnityEngine.Random.Range(1.0f, 1.8f);
-            go.transform.localScale = new Vector3(sz, sz, sz);
-            go.GetComponent<Renderer>().material = asteroidMat;
+            go.transform.localScale = new Vector3(sz * 1.15f, sz * 1.15f, 1f);
             vel = new Vector3(UnityEngine.Random.Range(-1.2f, 1.2f), 0, -baseSpeed * 0.9f);
             hp = 60f;
         }
         else if (type == 4) // Stealth
         {
-            go.transform.localScale = new Vector3(0.8f, 0.3f, 1.1f);
-            var m = new Material(droneMat);
-            m.color = new Color(0.3f, 0.1f, 0.4f, 0.4f);
+            go.transform.localScale = new Vector3(1.3f, 1.3f, 1f);
+            var m = new Material(ArtMat("e_stealth"));
+            m.color = new Color(1f, 1f, 1f, 0.45f); // half-cloaked
             go.GetComponent<Renderer>().material = m;
             hp = 30f;
         }
         else if (type == 5) // Shield Drone
         {
-            go.transform.localScale = new Vector3(1.2f, 0.5f, 1.2f);
-            go.GetComponent<Renderer>().material = shieldMat;
+            go.transform.localScale = new Vector3(1.5f, 1.5f, 1f);
             hp = 45f;
         }
 
@@ -973,10 +933,9 @@ public class StarBlasterPlayer : MonoBehaviour
 
     private void SpawnEnemyBullet(Vector3 pos, Vector3 vel)
     {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        var go = FlatArt("EnemyShot", "enemy_shot");
         go.transform.position = pos;
-        go.transform.localScale = new Vector3(0.32f, 0.32f, 0.32f);
-        go.GetComponent<Renderer>().material = enemyBulletMat;
+        go.transform.localScale = new Vector3(0.55f, 0.55f, 1f);
 
         enemyBullets.Add(new EnemyBullet { pos = pos, vel = vel, go = go });
     }
@@ -1010,17 +969,9 @@ public class StarBlasterPlayer : MonoBehaviour
         else if (roll < 0.85f) type = 2;
         else type = 3;
 
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        var go = FlatArt("Powerup", type == 0 ? "p_weapon" : type == 1 ? "p_shield" : type == 2 ? "p_bomb" : "p_gem");
         go.transform.position = pos;
-        go.transform.localScale = new Vector3(0.55f, 0.15f, 0.55f);
-        go.transform.rotation = Quaternion.Euler(90, 0, 0);
-
-        var m = new Material(shipMat);
-        if (type == 0) m.color = Color.green;
-        else if (type == 1) m.color = Color.cyan;
-        else if (type == 2) m.color = Color.red;
-        else m.color = Color.yellow;
-        go.GetComponent<Renderer>().material = m;
+        go.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
 
         powerups.Add(new PowerupItem { pos = pos, type = type, go = go });
     }

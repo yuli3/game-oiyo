@@ -180,6 +180,34 @@ public class SpacePinballPlayer : MonoBehaviour
         SetupStage(0);
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/SP/Art) ----
+    private static Material ArtMat(string tex)
+    {
+        var sh = Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        var t = Resources.Load<Texture2D>("SP/Art/" + tex);
+        if (t != null) { t.wrapMode = TextureWrapMode.Clamp; m.mainTexture = t; }
+        m.color = Color.white;
+        return m;
+    }
+
+    // Flat sprite on the table seen by the overhead camera (art top points to +z).
+    private GameObject FlatArt(string name, Transform parent, Vector3 localPos, float w, float h, Material mat)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = localPos;
+        go.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        go.transform.localScale = new Vector3(w, h, 1f);
+        go.GetComponent<Renderer>().sharedMaterial = mat;
+        return go;
+    }
+
+    // stage colours are dark; the painted sheet is pale, so brighten the tint
+    private static Color TableTint(Color c) => new Color(Mathf.Min(1f, c.r * 2.6f + 0.12f), Mathf.Min(1f, c.g * 2.6f + 0.12f), Mathf.Min(1f, c.b * 2.6f + 0.12f), 1f);
+
     private void BuildTableVisuals()
     {
         tableGo = new GameObject("PinballTable");
@@ -191,15 +219,15 @@ public class SpacePinballPlayer : MonoBehaviour
         floor.transform.localPosition = new Vector3(0, -0.2f, 0);
         floor.transform.localScale = new Vector3(16f, 0.4f, 24f);
         var r = floor.GetComponent<Renderer>();
-        if (r) r.sharedMaterial = tableMat;
+        if (r) r.sharedMaterial = new Material(tableMat) { color = new Color(0.08f, 0.08f, 0.12f) };
+        // painted playfield sheet on top of the table
+        tableMat = ArtMat("playfield");
+        tableMat.color = TableTint(Stages[0].tableColor);
+        FlatArt("Playfield", tableGo.transform, new Vector3(0f, 0.005f, 0f), 16f, 24f, tableMat);
 
         // Ball
-        ballGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        ballGo.name = "PinballSphere";
-        ballGo.transform.SetParent(tableGo.transform);
-        ballGo.transform.localScale = Vector3.one * (ballRadius * 2f);
-        var br = ballGo.GetComponent<Renderer>();
-        if (br) br.sharedMaterial = ballMat;
+        ballGo = FlatArt("PinballSphere", tableGo.transform, Vector3.zero, ballRadius * 2.2f, ballRadius * 2.2f, ArtMat("ball"));
+        ballGo.transform.localScale = Vector3.one * (ballRadius * 2.2f);
 
         // Flippers
         leftFlipperGo = CreateFlipperVisual("LeftFlipper", leftPivot);
@@ -209,13 +237,8 @@ public class SpacePinballPlayer : MonoBehaviour
         bumperGos = new GameObject[bumpers.Length];
         for (int i = 0; i < bumpers.Length; i++)
         {
-            var bg = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            bg.name = $"Bumper_{i}";
-            bg.transform.SetParent(tableGo.transform);
-            bg.transform.localPosition = new Vector3(bumpers[i].pos.x, 0.4f, bumpers[i].pos.y);
-            bg.transform.localScale = new Vector3(bumpers[i].radius * 2f, 0.6f, bumpers[i].radius * 2f);
-            var bmr = bg.GetComponent<Renderer>();
-            if (bmr) bmr.sharedMaterial = bumperMat;
+            var bg = FlatArt($"Bumper_{i}", tableGo.transform, new Vector3(bumpers[i].pos.x, 0.4f, bumpers[i].pos.y),
+                bumpers[i].radius * 2.1f, bumpers[i].radius * 2.1f, ArtMat("bumper"));
             bumperGos[i] = bg;
         }
 
@@ -240,13 +263,8 @@ public class SpacePinballPlayer : MonoBehaviour
         root.transform.SetParent(tableGo.transform);
         root.transform.localPosition = new Vector3(pivot.x, 0.3f, pivot.y);
 
-        var blade = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        blade.name = "FlipperBlade";
-        blade.transform.SetParent(root.transform);
-        blade.transform.localPosition = new Vector3(flipperLength * 0.5f, 0, 0);
-        blade.transform.localScale = new Vector3(flipperLength, 0.5f, 0.55f);
-        var r = blade.GetComponent<Renderer>();
-        if (r) r.sharedMaterial = flipperMat;
+        // painted flipper: pivot cap at the left end of the art, sitting on the pivot
+        FlatArt("FlipperBlade", root.transform, new Vector3(flipperLength * 0.5f - 0.1f, 0.05f, 0f), flipperLength + 0.6f, 0.65f, ArtMat("flipper"));
 
         return root;
     }
@@ -256,7 +274,7 @@ public class SpacePinballPlayer : MonoBehaviour
         currentStageIndex = Mathf.Clamp(index, 0, Stages.Length - 1);
         StageDef s = Stages[currentStageIndex];
 
-        tableMat.color = s.tableColor;
+        tableMat.color = TableTint(s.tableColor);
         wallMat.color = s.neonColor;
 
         score = 0;

@@ -132,30 +132,52 @@ public class SliceMasterPlayer : MonoBehaviour
         boardMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.6f, 0.45f, 0.3f) }; // Wooden cutting board
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/SM/Art) ----
+    static readonly string[][] StageItems =
+    {
+        new[] { "melon", "orange" }, new[] { "bread", "cheese" }, new[] { "jelly", "cake" }, new[] { "cheese", "bread" },
+        new[] { "melon", "jelly" }, new[] { "pencil", "soap" }, new[] { "soap", "jelly" }, new[] { "orange", "melon" },
+        new[] { "ice", "soap" }, new[] { "chocolate", "bread" }, new[] { "bamboo", "pencil" }, new[] { "cake", "chocolate" }
+    };
+    string nextItemArt = "melon";
+    GameObject backdrop;
+
+    static Texture2D ArtTex(string name, bool repeat = false)
+    {
+        var t = Resources.Load<Texture2D>("SM/Art/" + name);
+        if (t != null) t.wrapMode = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+        return t;
+    }
+
+    static Material Cutout(string tex, float uScale = 1f, float uOffset = 0f)
+    {
+        var sh = Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        m.mainTexture = ArtTex(tex);
+        m.mainTextureScale = new Vector2(uScale, 1f);
+        m.mainTextureOffset = new Vector2(uOffset, 0f);
+        m.color = Color.white;
+        return m;
+    }
+
+    static GameObject ArtQuad(string name, Material mat)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        go.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        return go;
+    }
+
     void BuildKnife()
     {
         knifeObj = new GameObject("Knife");
 
-        // Blade
-        var blade = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        blade.transform.SetParent(knifeObj.transform);
-        blade.transform.localPosition = new Vector3(0, 0.35f, 0);
-        blade.transform.localScale = new Vector3(0.06f, bladeLength, 0.22f);
-        blade.GetComponent<MeshRenderer>().sharedMaterial = bladeMat;
-
-        // Brass Bolster
-        var bolster = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        bolster.transform.SetParent(knifeObj.transform);
-        bolster.transform.localPosition = new Vector3(0, -0.05f, 0);
-        bolster.transform.localScale = new Vector3(0.08f, 0.1f, 0.24f);
-        bolster.GetComponent<MeshRenderer>().sharedMaterial = goldMat;
-
-        // Handle
-        var handle = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        handle.transform.SetParent(knifeObj.transform);
-        handle.transform.localPosition = new Vector3(0, -0.4f, 0);
-        handle.transform.localScale = new Vector3(0.12f, 0.3f, 0.12f);
-        handle.GetComponent<MeshRenderer>().sharedMaterial = handleMat;
+        // Painted chef's knife (tip up, same span as the old blade + handle)
+        var art = ArtQuad("KnifeArt", Cutout("knife"));
+        art.transform.SetParent(knifeObj.transform, false);
+        art.transform.localPosition = new Vector3(0f, 0.01f, -0.15f);
+        art.transform.localScale = new Vector3(0.46f, 1.45f, 1f);
     }
 
     void BuildGroundBoard()
@@ -164,7 +186,19 @@ public class SliceMasterPlayer : MonoBehaviour
         groundBoard.name = "CuttingBoard";
         groundBoard.transform.position = new Vector3(25f, -0.6f, 0);
         groundBoard.transform.localScale = new Vector3(60f, 0.4f, 3.5f);
+        boardMat.mainTexture = ArtTex("counter", true);
+        boardMat.mainTextureScale = new Vector2(20f, 1f);
+        boardMat.color = Color.white;
         groundBoard.GetComponent<MeshRenderer>().sharedMaterial = boardMat;
+
+        // tiled splashback behind the counter (follows the camera sideways)
+        var bdMat = Cutout("splash");
+        bdMat.mainTexture.wrapMode = TextureWrapMode.Repeat;
+        bdMat.mainTextureScale = new Vector2(8f, 3f);
+        bdMat.renderQueue = 1000;
+        backdrop = ArtQuad("Splashback", bdMat);
+        backdrop.transform.position = new Vector3(0f, 2.5f, 4f);
+        backdrop.transform.localScale = new Vector3(24f, 9f, 1f);
     }
 
     void InitStage(int stageIdx)
@@ -208,6 +242,7 @@ public class SliceMasterPlayer : MonoBehaviour
             spawnX += UnityEngine.Random.Range(2.2f, 3.2f);
             bool isHazard = (i > 1 && i % 3 == 0 && def.hazardCount > 0);
             Color col = isHazard ? hazardMat.color : ((i % 2 == 0) ? def.objColorA : def.objColorB);
+            nextItemArt = isHazard ? "hazard" : StageItems[currentStageIndex % StageItems.Length][i % 2];
 
             SpawnTarget(new Vector3(spawnX, 0.35f, 0), new Vector3(0.7f, 0.7f, 0.7f), isHazard, col);
         }
@@ -230,6 +265,7 @@ public class SliceMasterPlayer : MonoBehaviour
             go.transform.localScale = new Vector3(0.5f, 0.75f, 2.0f);
 
             Material mat = new Material(OiyoShaders.Safe(Shader.Find("Mobile/Diffuse") ?? Shader.Find("Standard")));
+            mat.mainTexture = ArtTex("bonus");
             mat.color = Color.Lerp(new Color(0.3f, 0.8f, 0.4f), new Color(1.0f, 0.85f, 0.2f), (float)m / (mults.Length - 1));
             go.GetComponent<MeshRenderer>().sharedMaterial = mat;
 
@@ -253,18 +289,17 @@ public class SliceMasterPlayer : MonoBehaviour
         };
 
         // Left Half
-        var left = GameObject.CreatePrimitive(isHazard ? PrimitiveType.Cylinder : PrimitiveType.Cube);
-        left.transform.position = pos - new Vector3(size.x * 0.25f, 0, 0);
-        left.transform.localScale = new Vector3(size.x * 0.5f, size.y, size.z);
-        Material mat = new Material(OiyoShaders.Safe(Shader.Find("Mobile/Diffuse") ?? Shader.Find("Standard"))) { color = col };
-        left.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        // each half shows its half of the same painted item (UV split down the middle)
+        float k = 1.3f; // the paint has a margin, draw it a little larger than the hit box
+        var left = ArtQuad("ItemLeft", Cutout("item_" + nextItemArt, 0.5f, 0f));
+        left.transform.position = pos - new Vector3(size.x * 0.25f * k, 0, 0);
+        left.transform.localScale = new Vector3(size.x * 0.5f * k, size.y * k, 1f);
         target.leftHalf = left;
 
         // Right Half
-        var right = GameObject.CreatePrimitive(isHazard ? PrimitiveType.Cylinder : PrimitiveType.Cube);
-        right.transform.position = pos + new Vector3(size.x * 0.25f, 0, 0);
-        right.transform.localScale = new Vector3(size.x * 0.5f, size.y, size.z);
-        right.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        var right = ArtQuad("ItemRight", Cutout("item_" + nextItemArt, 0.5f, 0.5f));
+        right.transform.position = pos + new Vector3(size.x * 0.25f * k, 0, 0);
+        right.transform.localScale = new Vector3(size.x * 0.5f * k, size.y * k, 1f);
         target.rightHalf = right;
 
         targets.Add(target);
@@ -441,6 +476,7 @@ public class SliceMasterPlayer : MonoBehaviour
         Vector3 targetCamPos = new Vector3(knifePos.x + 3.2f, Mathf.Max(2.0f, knifePos.y + 0.8f), -8.5f);
         mainCam.transform.position = Vector3.Lerp(mainCam.transform.position, targetCamPos, Time.deltaTime * 7f);
         mainCam.transform.LookAt(new Vector3(knifePos.x + 3.2f, 1.2f, 0));
+        if (backdrop != null) backdrop.transform.position = new Vector3(mainCam.transform.position.x, 2.5f, 4f);
     }
 
     void PlaySwishSound()
