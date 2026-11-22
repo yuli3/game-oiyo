@@ -101,6 +101,9 @@ public class AimTrainerPlayer : MonoBehaviour
     private bool allowParabolic = false;
     private bool allowGold = false;
     private bool isBossStage = false;
+    private float targetLifeScale = 1f;
+    private int bossHp = 12;
+    private Vector2 stageSelectScroll;
 
     // Toast & Audio
     private string toastMessage = "";
@@ -426,6 +429,65 @@ public class AimTrainerPlayer : MonoBehaviour
                 p.allowBombs = true; p.allowMoving = true; p.allowParabolic = true; p.allowGold = true; p.isBossStage = true;
             }
         });
+
+        AddAdvancedStages();
+    }
+
+    // Stages 13-30 keep climbing from stage 12: faster spawns, more and smaller targets,
+    // shorter target lifetimes, a tougher boss every fifth stage.
+    private void AddAdvancedStages()
+    {
+        string[][] titles = new string[][]
+        {
+            new[] { "Neon Gauntlet", "네온 건틀릿", "ネオン・ガントレット", "Guantelete de Neón" },
+            new[] { "Pinpoint Storm", "핀포인트 폭풍", "ピンポイント・ストーム", "Tormenta Milimétrica" },
+            new[] { "Boss: Twin Cores", "보스: 쌍둥이 코어", "ボス：ツインコア", "Jefe: Núcleos Gemelos" },
+            new[] { "Clay Barrage", "클레이 연발", "クレー連射", "Andanada de Platos" },
+            new[] { "Decoy Labyrinth", "미끼 미로", "デコイ迷宮", "Laberinto de Señuelos" },
+            new[] { "Velocity Rails", "벨로시티 레일", "ベロシティ・レール", "Rieles de Velocidad" },
+            new[] { "Golden Hail", "황금 우박", "黄金の雹", "Granizo Dorado" },
+            new[] { "Boss: Iron Sentinel", "보스: 강철 파수꾼", "ボス：鉄の番人", "Jefe: Centinela de Hierro" },
+            new[] { "Midnight Swarm", "한밤의 스웜", "真夜中のスワーム", "Enjambre de Medianoche" },
+            new[] { "Reflex Cascade", "반사 캐스케이드", "反射カスケード", "Cascada de Reflejos" },
+            new[] { "Micro Meteor", "마이크로 유성", "マイクロ流星", "Micro Meteoro" },
+            new[] { "Chaos Engine", "카오스 엔진", "カオス・エンジン", "Motor del Caos" },
+            new[] { "Boss: Prism Warden", "보스: 프리즘 수호자", "ボス：プリズムの守護者", "Jefe: Guardián Prisma" },
+            new[] { "Hyperflick Zero", "하이퍼플릭 제로", "ハイパーフリック・ゼロ", "Hiperflick Cero" },
+            new[] { "Synapse Overload", "시냅스 과부하", "シナプス過負荷", "Sobrecarga Sináptica" },
+            new[] { "Event Horizon", "사건의 지평선", "事象の地平線", "Horizonte de Sucesos" },
+            new[] { "Legend Trial", "전설의 시련", "伝説の試練", "Prueba de Leyenda" },
+            new[] { "Apex Marksman", "정점의 사수", "頂点の射手", "Tirador Supremo" },
+        };
+        for (int k = 1; k <= titles.Length; k++)
+        {
+            int n = 12 + k;
+            bool boss = n % 5 == 0;
+            int mode = k % 4;
+            float interval = 0.32f - k * 0.006f;
+            int maxTargets = 8 + k / 3;
+            float radius = 0.4f - k * 0.006f;
+            float life = 1f - k * 0.014f;
+            int bossHp = 12 + (n / 5 - 2) * 2;
+            int goal = 16000 + k * 800;
+            var tt = titles[k - 1];
+            stages.Add(new StageData
+            {
+                id = n,
+                titleEn = tt[0], titleKo = tt[1], titleJa = tt[2], titleEs = tt[3],
+                descEn = string.Format("Stage {0}: up to {1} targets, spawn every {2:0.00}s, reach {3} pts.", n, maxTargets, interval, goal),
+                descKo = string.Format("{0}단계: 표적 최대 {1}개, {2:0.00}초마다 출현, 목표 {3}점.", n, maxTargets, interval, goal),
+                descJa = string.Format("ステージ{0}：標的最大{1}個、{2:0.00}秒ごとに出現、目標{3}点。", n, maxTargets, interval, goal),
+                descEs = string.Format("Etapa {0}: hasta {1} blancos, cada {2:0.00}s, meta {3} pts.", n, maxTargets, interval, goal),
+                targetScore = goal, stageTime = boss ? 35f : 30f,
+                setupMode = (p) => {
+                    p.spawnInterval = interval; p.maxConcurrentTargets = maxTargets; p.targetBaseRadius = radius;
+                    p.targetLifeScale = life; p.bossHp = bossHp;
+                    p.allowBombs = boss || mode != 1; p.allowMoving = boss || mode != 2;
+                    p.allowParabolic = boss || mode == 0 || mode == 1; p.allowGold = boss || mode == 0 || mode == 2;
+                    p.isBossStage = boss;
+                }
+            });
+        }
     }
 
     private void StartStage(int stageIdx)
@@ -449,6 +511,7 @@ public class AimTrainerPlayer : MonoBehaviour
         foreach (var p in particles) if (p.go != null) Destroy(p.go);
         particles.Clear();
 
+        targetLifeScale = 1f; bossHp = 12;
         st.setupMode(this);
 
         if (isBossStage)
@@ -473,8 +536,8 @@ public class AimTrainerPlayer : MonoBehaviour
             position = new Vector3(0f, 0.7f, TargetPlaneZ),
             type = TargetType.BossCore,
             radius = 1.3f,
-            hp = 12,
-            maxHp = 12,
+            hp = bossHp,
+            maxHp = bossHp,
             lifetime = 999f,
             baseColor = new Color(0.95f, 0.15f, 0.85f),
             spawnTime = Time.time
@@ -687,7 +750,7 @@ public class AimTrainerPlayer : MonoBehaviour
             TargetPlaneZ
         );
         target.radius = targetBaseRadius;
-        target.lifetime = UnityEngine.Random.Range(2.0f, 2.8f);
+        target.lifetime = UnityEngine.Random.Range(2.0f, 2.8f) * targetLifeScale;
 
         // Determine Type
         float roll = UnityEngine.Random.value;
@@ -701,7 +764,7 @@ public class AimTrainerPlayer : MonoBehaviour
             target.type = TargetType.Gold;
             target.baseColor = new Color(1.0f, 0.85f, 0.1f); // Gold
             target.isShrinking = true;
-            target.lifetime = 1.8f;
+            target.lifetime = 1.8f * targetLifeScale;
         }
         else if (allowParabolic && roll < 0.55f)
         {
@@ -969,13 +1032,15 @@ public class AimTrainerPlayer : MonoBehaviour
         float h = Mathf.Min(480, Screen.height - 40);
         Rect rect = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
 
-        GUI.Box(rect, $"<b>{GetLocalizedText("SELECT STAGE", "스테이지 선택", "ステージ選択", "SELECCIONAR ETAPA")} (1~12)</b>");
+        GUI.Box(rect, $"<b>{GetLocalizedText("SELECT STAGE", "스테이지 선택", "ステージ選択", "SELECCIONAR ETAPA")} (1~{stages.Count})</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label(GetLocalizedText("Select from 12 shooting range training formations.", "12개 에임 트레이너 사격장 중 도전할 스테이지를 선택하세요.", "12のエイム訓練射撃場から挑戦を選択してください。", "Selecciona entre 12 campos de entrenamiento de tiro."), GetLabelStyle(12, Color.gray));
+        GUILayout.Label(GetLocalizedText("Select from 30 shooting range training formations.", "30개 에임 트레이너 사격장 중 도전할 스테이지를 선택하세요.", "30のエイム訓練射撃場から挑戦を選択してください。", "Selecciona entre 30 campos de entrenamiento de tiro."), GetLabelStyle(12, Color.gray));
 
         GUILayout.Space(10);
-        int cols = 3;
+        int cols = 4;
+        float btnW = (rect.width - 40f - 24f - cols * 6f) / cols;
+        stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, false, true);
         for (int i = 0; i < stages.Count; i += cols)
         {
             GUILayout.BeginHorizontal();
@@ -986,7 +1051,7 @@ public class AimTrainerPlayer : MonoBehaviour
                 {
                     var st = stages[sIdx];
                     string btnTxt = $"{U("Stage")} {sIdx + 1}\n{GetLocalizedStageTitle(st)}";
-                    if (GUILayout.Button(btnTxt, GUILayout.Height(48)))
+                    if (GUILayout.Button(btnTxt, GUILayout.Width(btnW), GUILayout.Height(44)))
                     {
                         showStageSelect = false;
                         StartStage(sIdx);
@@ -996,6 +1061,7 @@ public class AimTrainerPlayer : MonoBehaviour
             GUILayout.EndHorizontal();
             GUILayout.Space(6);
         }
+        GUILayout.EndScrollView();
 
         GUILayout.FlexibleSpace();
         if (GUILayout.Button(GetLocalizedText("Close", "닫기", "閉じる", "Cerrar"), GUILayout.Height(36)))

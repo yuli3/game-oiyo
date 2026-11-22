@@ -89,6 +89,7 @@ public class TwoHandsPlayer : MonoBehaviour
     private bool isGameOver = false;
     private bool isVictory = false;
     private bool showStageSelect = false;
+    private Vector2 stageSelectScroll;
     private float trackSpeed = 16f;
 
     // Sync Gate Tracking
@@ -389,6 +390,67 @@ public class TwoHandsPlayer : MonoBehaviour
             targetDistance = 2000f, trackSpeed = 24f, isMirrored = false, isQuantumInvert = false,
             generatePattern = (list, parent) => GenerateFinalePattern(list, parent, 2000f)
         });
+
+        AddAdvancedStages();
+    }
+
+    // Stages 13-30 keep climbing from stage 12: faster tracks, longer runs and obstacles
+    // closer together, rotating through the earlier patterns; a boss run every fifth stage.
+    private void AddAdvancedStages()
+    {
+        string[][] titles = new string[][]
+        {
+            new[] { "Split Focus", "분할 집중", "分割集中", "Enfoque Dividido" },
+            new[] { "Offbeat Echo", "엇박 메아리", "裏拍エコー", "Eco a Contratiempo" },
+            new[] { "Boss: Twin Colossus", "보스: 쌍둥이 거상", "ボス：双子の巨像", "Jefe: Coloso Gemelo" },
+            new[] { "Looking Glass", "거울 너머", "鏡の向こう", "A Través del Espejo" },
+            new[] { "Lockstep Gates", "보조 맞춤 관문", "歩調合わせゲート", "Puertas al Unísono" },
+            new[] { "Shield Rally", "보호막 랠리", "シールドラリー", "Relevo de Escudos" },
+            new[] { "Neural Sprint", "신경 질주", "ニューラル疾走", "Sprint Neural" },
+            new[] { "Boss: Mirror Titan", "보스: 거울 타이탄", "ボス：ミラータイタン", "Jefe: Titán Espejo" },
+            new[] { "Crosswired", "교차 배선", "クロス配線", "Cables Cruzados" },
+            new[] { "Phase Shift", "위상 전환", "位相シフト", "Cambio de Fase" },
+            new[] { "Twin Pulse", "쌍둥이 맥박", "ツインパルス", "Pulso Gemelo" },
+            new[] { "Prism Lanes", "프리즘 차선", "プリズムレーン", "Carriles Prisma" },
+            new[] { "Boss: Dual Hydra", "보스: 듀얼 히드라", "ボス：デュアルヒドラ", "Jefe: Hidra Dual" },
+            new[] { "Hemisphere Storm", "반구의 폭풍", "半球の嵐", "Tormenta Hemisférica" },
+            new[] { "Mind Over Speed", "속도를 넘는 정신", "速度を超える精神", "Mente sobre Velocidad" },
+            new[] { "Perfect Symmetry", "완벽한 대칭", "完全なる対称", "Simetría Perfecta" },
+            new[] { "Ambidextrous Apex", "양손잡이의 정점", "両利きの頂点", "Cima Ambidiestra" },
+            new[] { "Boss: Singular Mind", "보스: 하나의 정신", "ボス：ひとつの精神", "Jefe: Mente Única" },
+        };
+        for (int k = 1; k <= titles.Length; k++)
+        {
+            int n = 12 + k;
+            float dist = 2000f + k * 100f;      // 2100 .. 3800
+            float speed = 24f + k * 0.33f;      // 24.3 .. 29.9
+            bool boss = n % 5 == 0;
+            int pattern = boss ? 6 : k % 6;
+            var tt = titles[k - 1];
+            int kk = k; // lambdas below must not share the loop variable
+            Action<List<TrackObstacle>, Transform> gen;
+            switch (pattern)
+            {
+                case 1: gen = (l, p) => GenerateIntervalObstacles(l, p, dist, 16f - kk * 0.2f, 0.25f, 0.35f); break;
+                case 2: gen = (l, p) => GenerateAlternatingObstacles(l, p, dist, 17f - kk * 0.2f); break;
+                case 3: gen = (l, p) => GenerateMirrorPattern(l, p, dist, 20f - kk * 0.3f); break;
+                case 4: gen = (l, p) => GenerateSyncGatePattern(l, p, dist, 24f - kk * 0.4f); break;
+                case 5: gen = (l, p) => GenerateShieldHazardPattern(l, p, dist, 18f - kk * 0.2f); break;
+                case 6: gen = (l, p) => GenerateBossPattern(l, p, dist, 22f - kk * 0.3f); break;
+                default: gen = (l, p) => GenerateFinalePattern(l, p, dist, 15f - kk * 0.15f); break;
+            }
+            stages.Add(new StageData
+            {
+                id = n,
+                titleEn = tt[0], titleKo = tt[1], titleJa = tt[2], titleEs = tt[3],
+                descEn = string.Format("Stage {0}: {1:0} m at {2:0.0} m/s with both hands.", n, dist, speed),
+                descKo = string.Format("{0}단계: 양손으로 {2:0.0} m/s, {1:0} m.", n, dist, speed),
+                descJa = string.Format("ステージ{0}：両手で{2:0.0} m/s、{1:0} m。", n, dist, speed),
+                descEs = string.Format("Etapa {0}: {1:0} m a {2:0.0} m/s con ambas manos.", n, dist, speed),
+                targetDistance = dist, trackSpeed = speed, isMirrored = pattern == 3, isQuantumInvert = k % 3 == 2,
+                generatePattern = gen
+            });
+        }
     }
 
     private void StartStage(int stageIdx)
@@ -525,11 +587,11 @@ public class TwoHandsPlayer : MonoBehaviour
         }
     }
 
-    private void GenerateBossPattern(List<TrackObstacle> list, Transform parent, float maxDist)
+    private void GenerateBossPattern(List<TrackObstacle> list, Transform parent, float maxDist, float step = 22f)
     {
-        for (float z = 30f; z < maxDist; z += 22f)
+        for (float z = 30f; z < maxDist; z += step)
         {
-            bool isBossLaser = (z % 44f < 22f);
+            bool isBossLaser = (z % (step * 2f) < step);
             if (isBossLaser)
             {
                 // Giant Boss Beam on one full track
@@ -545,13 +607,13 @@ public class TwoHandsPlayer : MonoBehaviour
         }
     }
 
-    private void GenerateFinalePattern(List<TrackObstacle> list, Transform parent, float maxDist)
+    private void GenerateFinalePattern(List<TrackObstacle> list, Transform parent, float maxDist, float step = 15f)
     {
-        for (float z = 25f; z < maxDist; z += 15f)
+        for (float z = 25f; z < maxDist; z += step)
         {
             CreateObstacle(list, false, UnityEngine.Random.Range(0, 2), z, ObstacleType.Spike, parent);
-            CreateObstacle(list, true, UnityEngine.Random.Range(0, 2), z + 5f, ObstacleType.Spike, parent);
-            if (z % 30f < 15f)
+            CreateObstacle(list, true, UnityEngine.Random.Range(0, 2), z + step / 3f, ObstacleType.Spike, parent);
+            if (z % (step * 2f) < step)
             {
                 CreateObstacle(list, false, UnityEngine.Random.Range(0, 2), z + 10f, ObstacleType.SyncRing, parent);
                 CreateObstacle(list, true, UnityEngine.Random.Range(0, 2), z + 10f, ObstacleType.SyncRing, parent);
@@ -1008,13 +1070,15 @@ public class TwoHandsPlayer : MonoBehaviour
         float h = Mathf.Min(480, Screen.height - 40);
         Rect rect = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
 
-        GUI.Box(rect, $"<b>{GetLocalizedText("SELECT STAGE", "스테이지 선택", "ステージ選択", "SELECCIONAR ETAPA")} (1~12)</b>");
+        GUI.Box(rect, $"<b>{GetLocalizedText("SELECT STAGE", "스테이지 선택", "ステージ選択", "SELECCIONAR ETAPA")} (1~{stages.Count})</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label(GetLocalizedText("Select from 12 bilateral brain coordination stages.", "12개 양손 인지 조율 전장 중 도전할 스테이지를 선택하세요.", "12の両手認知調和ステージから挑戦を選択してください。", "Selecciona entre 12 etapas de coordinación cerebral bilateral."), GetLabelStyle(12, Color.gray));
+        GUILayout.Label(GetLocalizedText("Select from 30 bilateral brain coordination stages.", "30개 양손 인지 조율 전장 중 도전할 스테이지를 선택하세요.", "30の両手認知調和ステージから挑戦を選択してください。", "Selecciona entre 30 etapas de coordinación cerebral bilateral."), GetLabelStyle(12, Color.gray));
 
         GUILayout.Space(10);
-        int cols = 3;
+        int cols = 4;
+        float btnW = (rect.width - 40f - 24f - cols * 6f) / cols;
+        stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, false, true);
         for (int i = 0; i < stages.Count; i += cols)
         {
             GUILayout.BeginHorizontal();
@@ -1025,7 +1089,7 @@ public class TwoHandsPlayer : MonoBehaviour
                 {
                     var st = stages[sIdx];
                     string btnTxt = $"{U("Stage")} {sIdx + 1}\n{GetLocalizedStageTitle(st)}";
-                    if (GUILayout.Button(btnTxt, GUILayout.Height(48)))
+                    if (GUILayout.Button(btnTxt, GUILayout.Width(btnW), GUILayout.Height(44)))
                     {
                         showStageSelect = false;
                         StartStage(sIdx);
@@ -1035,6 +1099,7 @@ public class TwoHandsPlayer : MonoBehaviour
             GUILayout.EndHorizontal();
             GUILayout.Space(6);
         }
+        GUILayout.EndScrollView();
 
         GUILayout.FlexibleSpace();
         if (GUILayout.Button(GetLocalizedText("Close", "닫기", "閉じる", "Cerrar"), GUILayout.Height(36)))

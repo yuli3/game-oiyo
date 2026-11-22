@@ -38,7 +38,7 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         public string ViolationReason;
     }
 
-    const int TotalStages = 12;
+    const int TotalStages = 30;
     readonly string[] _stageTitles =
     {
         "Day 1: Basic Passport Check",
@@ -52,7 +52,25 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         "Day 9: Smuggler Weight Discrepancy",
         "Day 10: Most-Wanted Fugitive Check",
         "Day 11: Diplomatic Seal Verification",
-        "Day 12: Grand Final Audit"
+        "Day 12: Grand Final Audit",
+        "Day 13: Night Shift Rush",
+        "Day 14: Holiday Crowds",
+        "Day 15: Forged Seals",
+        "Day 16: Border Tension",
+        "Day 17: Smuggler Ring",
+        "Day 18: Inspection Audit",
+        "Day 19: Double Agents",
+        "Day 20: Embassy Convoy",
+        "Day 21: Winter Queue",
+        "Day 22: Fugitive Network",
+        "Day 23: Paper Storm",
+        "Day 24: Ministry Visit",
+        "Day 25: Midnight Raid",
+        "Day 26: Trade Summit",
+        "Day 27: Last Checkpoint",
+        "Day 28: Shadow Ledger",
+        "Day 29: Full Lockdown",
+        "Day 30: Inspector of the Year"
     };
 
     Camera _cam;
@@ -66,7 +84,7 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
     Transform _denyStampArm;
 
     int _stage = 1;
-    int _highestUnlocked = TotalStages; // Allow direct access or progression across all 12 stages
+    int _highestUnlocked = TotalStages; // Allow direct access or progression across all stages
     int _caseIdx;
     int _credits = 20;
     int _citations;
@@ -222,6 +240,9 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         _caseIdx = 0;
         _citations = 0;
         _shiftDuration = Mathf.Max(55f, 90f - _stage * 2.5f);
+        // Past day 12 the queue keeps growing and each applicant gets a little less time
+        // (stage 12: 6 applicants in 60 s; stage 30: 11 applicants at 6.4 s each).
+        if (_stage > 12) _shiftDuration = QueueSize(_stage) * (10f - (_stage - 12) * 0.2f);
         _shiftTimer = _shiftDuration;
         _stageComplete = false;
         _stageFailed = false;
@@ -229,13 +250,15 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
 
         BuildQueueForStage(_stage);
         LoadCurrentApplicantDocs();
-        SetFeedback(F("Stage {0}/12 Started: {1}", _stage, U(_stageTitles[_stage - 1])));
+        SetFeedback(F("Stage {0}/{1} Started: {2}", _stage, TotalStages, U(_stageTitles[_stage - 1])));
     }
+
+    static int QueueSize(int st) => 4 + (st >= 6 ? 1 : 0) + (st >= 10 ? 1 : 0) + (st > 12 ? (st - 10) / 4 : 0);
 
     void BuildQueueForStage(int st)
     {
         _queue.Clear();
-        int count = 4 + (st >= 6 ? 1 : 0) + (st >= 10 ? 1 : 0);
+        int count = QueueSize(st);
         string[] firstNames = { "Viktor", "Elena", "Marek", "Olga", "Ivan", "Sora", "Dmitri", "Kira" };
         string[] countries = { "Velmora", "Oskaria", "Tarnhold", "Merivale", "Zelkova" };
         string[] purposes = { "TRANSIT", "WORK", "VISIT", "DIPLOMAT" };
@@ -553,22 +576,23 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         GUI.Label(new Rect(26, 40, 620, 20),
             F("Entrant {0}/{1}  •  Credits: {2}₵  •  Citations: {3}/{4}  •  Shift Left: {5}s", _caseIdx + 1, _queue.Count, _credits, _citations, MaxCitations, Mathf.CeilToInt(_shiftTimer)));
 
-        if (GUI.Button(new Rect(Screen.width - 170, 18, 144, 38), _showStageMap ? U("Close Stages") : U("12 Stages Map")))
+        if (GUI.Button(new Rect(Screen.width - 170, 18, 144, 38), _showStageMap ? U("Close Stages") : U("30 Stages Map")))
         {
             _showStageMap = !_showStageMap;
         }
 
         if (_showStageMap)
         {
-            GUI.Box(new Rect(Screen.width * 0.5f - 280, 90, 560, 320), "");
-            GUI.Label(new Rect(Screen.width * 0.5f - 260, 100, 520, 26), U("SELECT BORDER SHIFT (STAGES 1 - 12)"), bold);
+            GUI.Box(new Rect(Screen.width * 0.5f - 300, 90, 600, 370), "");
+            GUI.Label(new Rect(Screen.width * 0.5f - 280, 100, 560, 26), U("SELECT BORDER SHIFT (STAGES 1 - 30)"), bold);
+            var mapBtn = new GUIStyle(GUI.skin.button) { fontSize = 10, wordWrap = true };
             for (int i = 0; i < TotalStages; i++)
             {
-                int col = i % 3;
-                int row = i / 3;
-                float bx = Screen.width * 0.5f - 260 + col * 176;
-                float by = 138 + row * 64;
-                if (GUI.Button(new Rect(bx, by, 166, 54), F("Stage {0}", i + 1) + "\n" + U(_stageTitles[i])))
+                int col = i % 5;
+                int row = i / 5;
+                float bx = Screen.width * 0.5f - 285 + col * 114;
+                float by = 134 + row * 53;
+                if (GUI.Button(new Rect(bx, by, 108, 48), F("Stage {0}", i + 1) + "\n" + U(_stageTitles[i]), mapBtn))
                 {
                     StartStage(i + 1);
                 }

@@ -77,6 +77,7 @@ public class BrickBreakerPlayer : MonoBehaviour
         public string descJa;
         public string descEs;
         public int targetScore;
+        public float minBallSpeed = 7.5f;
         public Action<List<Brick>, Transform> setupAction;
     }
 
@@ -115,6 +116,7 @@ public class BrickBreakerPlayer : MonoBehaviour
     private bool isVictory = false;
     private bool isEndless = false;
     private bool showStageSelect = false;
+    private Vector2 stageSelectScroll;
 
     // Camera & Juice
     private Camera mainCam;
@@ -238,7 +240,7 @@ public class BrickBreakerPlayer : MonoBehaviour
 
     private void InitStages()
     {
-        // 12 Hand-crafted stages
+        // 12 hand-crafted stages, then 13-30 from AddAdvancedStages()
         stages.Add(new StageData
         {
             id = 1,
@@ -516,6 +518,128 @@ public class BrickBreakerPlayer : MonoBehaviour
                 CreateBrick(bList, new Vector3(2.2f, 4.0f, 0f), BrickType.MultiBall, 1, new Color(0.2f, 1f, 0.5f), parent);
             }
         });
+
+        AddAdvancedStages();
+    }
+
+    // Stages 13-30 keep climbing from stage 12: more rows, tougher normal and steel bricks,
+    // a faster minimum ball speed, and a stronger boss core every fifth stage.
+    private void AddAdvancedStages()
+    {
+        string[][] titles = new string[][]
+        {
+            new[] { "Neon Fortress", "네온 요새", "ネオン要塞", "Fortaleza Neón" },
+            new[] { "Inverted Pyramid", "역피라미드", "逆ピラミッド", "Pirámide Invertida" },
+            new[] { "Boss: Iron Leviathan", "보스: 강철 리바이어선", "ボス：鋼鉄リヴァイアサン", "Jefe: Leviatán de Hierro" },
+            new[] { "Steel Checkmate", "강철 체크메이트", "スチール・チェックメイト", "Jaque de Acero" },
+            new[] { "Triple Corridor", "삼중 회랑", "三重回廊", "Triple Corredor" },
+            new[] { "Crystal Vault", "크리스탈 금고", "クリスタル金庫", "Bóveda de Cristal" },
+            new[] { "Overclock Wall", "오버클럭 장벽", "オーバークロック壁", "Muro Overclock" },
+            new[] { "Boss: Twin Reactor", "보스: 쌍둥이 원자로", "ボス：ツインリアクター", "Jefe: Reactor Gemelo" },
+            new[] { "Chain Reaction", "연쇄 반응", "連鎖反応", "Reacción en Cadena" },
+            new[] { "Abyss Pyramid", "심연의 피라미드", "深淵のピラミッド", "Pirámide del Abismo" },
+            new[] { "Titan Grid", "타이탄 그리드", "タイタン・グリッド", "Rejilla Titán" },
+            new[] { "Labyrinth Bricks", "미궁 벽돌", "迷宮ブロック", "Ladrillos Laberinto" },
+            new[] { "Boss: Nova Core", "보스: 노바 코어", "ボス：ノヴァコア", "Jefe: Núcleo Nova" },
+            new[] { "Obsidian Vault", "흑요석 금고", "黒曜石の金庫", "Bóveda de Obsidiana" },
+            new[] { "Hyper Barrage", "하이퍼 탄막", "ハイパー弾幕", "Híper Andanada" },
+            new[] { "Gravity Well", "중력 우물", "重力井戸", "Pozo de Gravedad" },
+            new[] { "Last Bastion", "최후의 보루", "最後の砦", "Último Bastión" },
+            new[] { "Boss: Final Singularity", "보스: 최종 특이점", "ボス：最終特異点", "Jefe: Singularidad Final" },
+        };
+        for (int k = 1; k <= titles.Length; k++)
+        {
+            int n = 12 + k;
+            int rows = 5 + k / 4;          // 5 .. 9
+            int hp = 1 + k / 7;            // 1 .. 3
+            int steelHp = 2 + k / 6;       // 2 .. 5
+            int bossHp = 15 + (n / 5 - 2) * 3; // 18, 21, 24, 27
+            int pattern = n % 5 == 0 ? 5 : k % 5;
+            var tt = titles[k - 1];
+            stages.Add(new StageData
+            {
+                id = n,
+                titleEn = tt[0], titleKo = tt[1], titleJa = tt[2], titleEs = tt[3],
+                descEn = string.Format("Stage {0}: {1} rows, brick HP {2}, steel HP {3}.", n, rows, hp, steelHp),
+                descKo = string.Format("{0}단계: {1}줄, 벽돌 HP {2}, 강철 HP {3}.", n, rows, hp, steelHp),
+                descJa = string.Format("ステージ{0}：{1}段、ブロックHP {2}、鋼鉄HP {3}。", n, rows, hp, steelHp),
+                descEs = string.Format("Etapa {0}: {1} filas, PV {2}, acero PV {3}.", n, rows, hp, steelHp),
+                targetScore = 12000 + k * 1000,
+                minBallSpeed = 7.5f + k * 0.15f,
+                setupAction = (bList, parent) => BuildAdvancedLayout(bList, parent, pattern, rows, hp, steelHp, bossHp)
+            });
+        }
+    }
+
+    private void BuildAdvancedLayout(List<Brick> bList, Transform parent, int pattern, int rows, int hp, int steelHp, int bossHp)
+    {
+        Color steel = new Color(0.6f, 0.65f, 0.75f);
+        Color tnt = new Color(1f, 0.2f, 0.2f);
+        Color multi = new Color(0.2f, 1f, 0.5f);
+        Color wide = new Color(0.3f, 0.8f, 1f);
+        float top = 5.5f;
+        float step = 0.6f;
+        if (pattern == 5)
+        {
+            // Boss: big core with a steel shield row above, escorts and power-ups below.
+            CreateBrick(bList, new Vector3(0f, 3.6f, 0f), BrickType.BossCore, bossHp, new Color(0.95f, 0.2f, 0.85f), parent, new Vector3(2.6f, 1.3f, 0.8f));
+            for (int c = -3; c <= 3; c++)
+            {
+                CreateBrick(bList, new Vector3(c * 1.25f, 5.5f, 0f), BrickType.Steel, steelHp, steel, parent);
+                if (c != 0) CreateBrick(bList, new Vector3(c * 1.25f, 4.9f, 0f), BrickType.Normal, hp, GetRowColor(1), parent);
+                var t = (c == -3 || c == 3) ? BrickType.Laser : ((c == -1 || c == 1) ? BrickType.MultiBall : BrickType.TNT);
+                CreateBrick(bList, new Vector3(c * 1.25f, 2.3f, 0f), t, t == BrickType.TNT ? 1 : hp, t == BrickType.Laser ? Color.yellow : (t == BrickType.MultiBall ? multi : tnt), parent);
+            }
+            for (int r = 0; r < rows - 5; r++)
+                for (int c = -3; c <= 3; c += 2)
+                    CreateBrick(bList, new Vector3(c * 1.25f, 1.7f - r * step, 0f), BrickType.Normal, hp, GetRowColor(r + 2), parent);
+            return;
+        }
+        for (int r = 0; r < rows; r++)
+        {
+            for (int c = -3; c <= 3; c++)
+            {
+                float y = top - r * step;
+                BrickType type = BrickType.Normal;
+                int bhp = hp;
+                switch (pattern)
+                {
+                    case 1: // fortress: steel crown and walls, power-ups in the keep
+                        if (r == 0 || ((c == -3 || c == 3) && r < rows - 1)) type = BrickType.Steel;
+                        else if (r == rows / 2 && c == 0) type = BrickType.MultiBall;
+                        else if (r == rows / 2 && (c == -2 || c == 2)) type = BrickType.TNT;
+                        break;
+                    case 2: // inverted pyramid
+                        if (Mathf.Abs(c) > 3 - r * 3 / (rows - 1)) continue;
+                        if (r == 0 && (c == -3 || c == 3)) type = BrickType.Steel;
+                        else if (r == rows - 1) type = BrickType.Laser;
+                        else if (r == 1 && c == 0) type = BrickType.MultiBall;
+                        break;
+                    case 3: // checker of steel and bricks with TNT seeds
+                        if ((r + c) % 2 == 0) type = BrickType.Steel;
+                        else if ((r * 7 + c) % 5 == 0) type = BrickType.TNT;
+                        if (r == rows - 1 && c == 0) type = BrickType.MultiBall;
+                        break;
+                    case 4: // corridors: steel columns with gaps the ball has to find
+                        if ((c == -2 || c == 2) && r % 3 != 2) type = BrickType.Steel;
+                        else if (r == 0 && (c == -3 || c == 3)) type = BrickType.Laser;
+                        else if (r == rows - 1 && c == 0) type = BrickType.WidePaddle;
+                        else if (r == 1 && c == 0) type = BrickType.MultiBall;
+                        break;
+                    default: // vault: steel ring around a TNT core
+                        bool ring = r == 0 || r == rows - 1 || c == -3 || c == 3;
+                        if (ring) type = (r == rows - 1 && c == 0) ? BrickType.MultiBall : BrickType.Steel;
+                        else if (c == 0 && r == rows / 2) type = BrickType.TNT;
+                        else if ((c == -1 || c == 1) && r == rows / 2) type = BrickType.Laser;
+                        break;
+                }
+                if (type == BrickType.Steel) bhp = steelHp;
+                else if (type != BrickType.Normal) bhp = 1;
+                Color col = type == BrickType.Steel ? steel : type == BrickType.TNT ? tnt : type == BrickType.Laser ? Color.yellow
+                          : type == BrickType.MultiBall ? multi : type == BrickType.WidePaddle ? wide : GetRowColor(r);
+                CreateBrick(bList, new Vector3(c * 1.25f, y, 0f), type, bhp, col, parent);
+            }
+        }
     }
 
     private Color GetRowColor(int r)
@@ -833,7 +957,7 @@ public class BrickBreakerPlayer : MonoBehaviour
                 float hitOffset = (b.position.x - paddlePos.x) / (paddleCurrentWidth * 0.5f);
                 hitOffset = Mathf.Clamp(hitOffset, -0.92f, 0.92f);
 
-                float currentSpeed = Mathf.Max(b.velocity.magnitude, 7.5f);
+                float currentSpeed = Mathf.Max(b.velocity.magnitude, stages[currentStageIndex].minBallSpeed);
                 float bounceAngle = hitOffset * 65f * Mathf.Deg2Rad; // up to 65 deg deflection
                 b.velocity = new Vector3(Mathf.Sin(bounceAngle) * currentSpeed, Mathf.Cos(bounceAngle) * currentSpeed, 0f);
 
@@ -1259,13 +1383,15 @@ public class BrickBreakerPlayer : MonoBehaviour
         float h = Mathf.Min(480, Screen.height - 40);
         Rect rect = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
 
-        GUI.Box(rect, $"<b>{GetLocalizedText("SELECT STAGE", "스테이지 선택", "ステージ選択", "SELECCIONAR ETAPA")} (1~12)</b>");
+        GUI.Box(rect, $"<b>{GetLocalizedText("SELECT STAGE", "스테이지 선택", "ステージ選択", "SELECCIONAR ETAPA")} (1~{stages.Count})</b>");
 
         GUILayout.BeginArea(new Rect(rect.x + 20, rect.y + 40, rect.width - 40, rect.height - 50));
-        GUILayout.Label(GetLocalizedText("Select from 12 distinct challenge formations.", "12개 고유 챌린지 스테이지 중 원하는 전장을 선택하세요.", "12のステージから挑戦したい戦場を選択してください。", "Selecciona entre 12 formaciones de desafío distintas."), GetLabelStyle(12, Color.gray));
+        GUILayout.Label(GetLocalizedText("Select from 30 distinct challenge formations.", "30개 고유 챌린지 스테이지 중 원하는 전장을 선택하세요.", "30のステージから挑戦したい戦場を選択してください。", "Selecciona entre 30 formaciones de desafío distintas."), GetLabelStyle(12, Color.gray));
 
         GUILayout.Space(10);
-        int cols = 3;
+        int cols = 4;
+        float btnW = (rect.width - 40f - 24f - cols * 6f) / cols;
+        stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, false, true);
         for (int i = 0; i < stages.Count; i += cols)
         {
             GUILayout.BeginHorizontal();
@@ -1276,7 +1402,7 @@ public class BrickBreakerPlayer : MonoBehaviour
                 {
                     var st = stages[sIdx];
                     string btnTxt = $"{U("Stage")} {sIdx + 1}\n{GetLocalizedStageTitle(st)}";
-                    if (GUILayout.Button(btnTxt, GUILayout.Height(48)))
+                    if (GUILayout.Button(btnTxt, GUILayout.Width(btnW), GUILayout.Height(44)))
                     {
                         showStageSelect = false;
                         StartStage(sIdx);
@@ -1286,6 +1412,7 @@ public class BrickBreakerPlayer : MonoBehaviour
             GUILayout.EndHorizontal();
             GUILayout.Space(6);
         }
+        GUILayout.EndScrollView();
 
         GUILayout.FlexibleSpace();
         if (GUILayout.Button(GetLocalizedText("Close", "닫기", "閉じる", "Cerrar"), GUILayout.Height(36)))
