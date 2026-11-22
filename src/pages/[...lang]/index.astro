@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 182종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 182종." },
-  en: { title: "OIYO Arcade — 182 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 182 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム182種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム182種。" },
-  zh: { title: "OIYO 街机 — 无需安装的182款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，182款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 182 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 182 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 182 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 182 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 183종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 183종." },
+  en: { title: "OIYO Arcade — 183 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 183 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム183種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム183種。" },
+  zh: { title: "OIYO 街机 — 无需安装的183款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，183款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 183 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 183 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 183 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 183 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 182종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "182 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム182種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的182款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "182 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "182 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 183종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "183 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム183種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的183款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "183 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "183 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -239,6 +239,7 @@ const GAMES: Game[] = [
   { slug: "typing-defense", emoji: "⌨️", cat: "arcade", name: { ko: "타자 방어선", en: "Typing Siege", ja: "タイピング防衛線", zh: "打字守城", fr: "Siège au clavier", es: "Asedio de teclas" } },
   { slug: "spin-sumo", emoji: "🌀", cat: "arcade", name: { ko: "팽이 씨름", en: "Spin Sumo", ja: "コマずもう", zh: "陀螺相扑", fr: "Sumo de toupies", es: "Sumo de peonzas" } },
   { slug: "spider-cards", emoji: "🕷️", cat: "card", name: { ko: "스파이더 카드", en: "Spider Cards", ja: "スパイダーカード", zh: "蜘蛛纸牌", fr: "Spider Solitaire", es: "Solitario Spider" } },
+  { slug: "market-mercenaries", emoji: "🏮", cat: "arcade", name: { ko: "장터 용병단", en: "Market Mercenaries", ja: "市場の傭兵団", zh: "集市佣兵团", fr: "Les Mercenaires du marché", es: "Mercenarios del Mercado" } },
   { slug: "rampart-keeper", emoji: "🏯", cat: "arcade", name: { ko: "성벽 지기", en: "Rampart Keeper", ja: "城壁の守り手", zh: "城墙守卫", fr: "Gardien du rempart", es: "Guardián de la muralla" } },
   { slug: "link-duel", emoji: "⚔️", cat: "puzzle", name: { ko: "링크 대결", en: "Link Duel", ja: "リンク対決", zh: "链接对决", fr: "Duel par lien", es: "Duelo por enlace" } },
   { slug: "season-workshop", emoji: "🥣", cat: "arcade", name: { ko: "절기 공방", en: "Season Workshop", ja: "節気工房", zh: "节气工坊", fr: "L'Atelier des saisons", es: "El Taller de las Estaciones" } },
@@ -300,6 +301,18 @@ const newReleasesLabel: Record<Locale, { sectionTitle: string; badge: string; su
 const newReleaseLabels = newReleasesLabel[locale] ?? newReleasesLabel.en;
 
 const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; desc: Record<Locale, string> }> = [
+  {
+    slug: "market-mercenaries",
+    tag: { ko: "오토배틀러", en: "Auto-battler", ja: "オートバトラー", zh: "自走棋", fr: "Auto-battler", es: "Autobattler" },
+    desc: {
+      ko: "20라운드, 3합체 별 올리기·조합 보너스·두목전",
+      en: "20 rounds: merge for stars, guild bonuses, boss fights",
+      ja: "20ラウンド、3体合体・組ボーナス・親分戦",
+      zh: "20回合：三合一升星、组合加成、头目战",
+      fr: "20 manches : fusions, bonus de guilde, caïds",
+      es: "20 rondas: fusiones, bonus de gremio y jefes",
+    },
+  },
   {
     slug: "typing-defense",
     tag: { ko: "타자 연습", en: "Typing", ja: "タイピング", zh: "打字", fr: "Frappe", es: "Mecanografía" },

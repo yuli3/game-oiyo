@@ -140,7 +140,23 @@ function spiderCards() {
   );
 }
 
-const jobs = { "bubble-garden": bubbleGarden, "picture-logic": pictureLogic, "ice-penguin": icePenguin, "mirror-lanterns": mirrorLanterns, "typing-defense": typingDefense, "spin-sumo": spinSumo, "spider-cards": spiderCards };
+function marketMercenaries() {
+  const unit = (x, y, e, ring) => `<circle cx="${x}" cy="${y}" r="52" fill="#fff9db" stroke="${ring}" stroke-width="7"/><text x="${x}" y="${y + 20}" text-anchor="middle" font-size="58">${e}</text>`;
+  let flags = "";
+  for (let i = 0; i < 14; i++) flags += `<path d="M${i * 90} 20 L${i * 90 + 90} 20 L${i * 90 + 45} 70 Z" fill="${["#e03131", "#f59f00", "#1c7ed6", "#2f9e44"][i % 4]}"/>`;
+  return svg(
+    `<rect width="${W}" height="${H}" fill="#ffe8cc"/><rect y="20" width="${W}" height="6" fill="#7f5539"/>${flags}` +
+      `<rect x="60" y="250" width="380" height="300" rx="20" fill="#d9480f"/><rect x="60" y="230" width="380" height="50" rx="14" fill="#a61e4d"/>` +
+      `<text x="250" y="268" text-anchor="middle" font-family="sans-serif" font-size="30" font-weight="800" fill="#fff">MARKET</text>` +
+      unit(160, 360, "🗡️", "#adb5bd") + unit(340, 360, "🏹", "#4dabf7") + unit(250, 470, "🧙", "#f59f00") +
+      unit(620, 420, "🛡️", "#1c7ed6") + unit(760, 420, "⚔️", "#1c7ed6") + unit(690, 540, "🌿", "#1c7ed6") +
+      `<text x="890" y="455" font-family="sans-serif" font-size="70" font-weight="900" fill="#e8590c">VS</text>` +
+      unit(1080, 420, "👹", "#e8590c") +
+      title("장터 용병단 · Market Mercenaries", "사고, 합치고, 싸운다 — Buy, merge, battle", 600, "#7f2704", 150),
+  );
+}
+
+const jobs = { "bubble-garden": bubbleGarden, "picture-logic": pictureLogic, "ice-penguin": icePenguin, "mirror-lanterns": mirrorLanterns, "typing-defense": typingDefense, "spin-sumo": spinSumo, "spider-cards": spiderCards, "market-mercenaries": marketMercenaries };
 const only = process.argv.slice(2);
 for (const [slug, make] of Object.entries(jobs)) {
   if (only.length && !only.includes(slug)) continue;
