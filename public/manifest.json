@@ -1,36 +1,114 @@
 {
-  "name": "OIYO Arcade Games",
-  "short_name": "OIYO Arcade",
-  "description": "100+ Free Online Arcade, Strategy, and Puzzle Games. Play instantly with no installs.",
-  "start_url": "/ko/",
+  "id": "/ko/",
+  "name": "OIYO 아케이드 — 무료 게임",
+  "short_name": "OIYO 아케이드",
+  "description": "설치 없이 바로 하는 무료 게임. 한 번 연 게임은 오프라인에서도 열려요.",
+  "lang": "ko-KR",
+  "dir": "ltr",
+  "start_url": "/ko/?source=pwa",
   "scope": "/",
   "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "any",
-  "background_color": "#020617",
-  "theme_color": "#020617",
-  "categories": ["games", "entertainment", "arcade", "puzzle"],
+  "background_color": "#edf0e8",
+  "theme_color": "#65a30d",
+  "categories": [
+    "games",
+    "entertainment"
+  ],
+  "prefer_related_applications": false,
   "icons": [
-    {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
-    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png"
+      "src": "/pwa/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/pwa/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/pwa/screenshot-wide.webp",
+      "sizes": "1280x720",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "OIYO 아케이드 — 무료 게임"
+    },
+    {
+      "src": "/pwa/screenshot-narrow.webp",
+      "sizes": "540x1170",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "OIYO 아케이드 — 무료 게임"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "체스",
+      "url": "/ko/chess/?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "스도쿠",
+      "url": "/ko/sudoku/?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "2048",
+      "url": "/ko/game-2048/?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "내 기록",
+      "url": "/ko/achievements/?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

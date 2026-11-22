@@ -48,6 +48,14 @@
   Cache-Control: public, max-age=3600, s-maxage=86400
   Access-Control-Allow-Origin: *
 
+# PWA: the worker must be re-checked on every load or fixes reach players days late.
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+  Service-Worker-Allowed: /
+
+/*.webmanifest
+  Cache-Control: public, max-age=3600, s-maxage=86400
+
 /robots.txt
   Cache-Control: public, max-age=86400
 
