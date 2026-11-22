@@ -1,0 +1,188 @@
+/**
+ * 펭귄 얼음 배달 (Penguin Ice Post) — an OIYO original sliding-ice puzzle.
+ * The penguin slides until something stops it. Pick up every fish, then stop on the
+ * igloo door. Snow stops you, cracked ice breaks behind you, arrows turn you, water sinks you.
+ * 30 stages; each one is checked by a breadth-first solver that also gives the par.
+ */
+
+export const PENGUIN_SLUG = "ice-penguin";
+
+export type Dir = "up" | "down" | "left" | "right";
+export const DIRS: readonly Dir[] = ["up", "down", "left", "right"];
+export const DELTA: Record<Dir, readonly [number, number]> = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+
+/**
+ * Tiles: `.` ice, `#` rock, `o` snow (stops you), `~` water, `F` fish on ice,
+ * `H` igloo door (stops you), `c` cracked ice (turns to water after you leave it),
+ * `>` `<` `^` `v` arrows, `P` start (ice).
+ */
+export interface Level {
+  rows: readonly string[];
+  par: number;
+}
+
+export interface PState {
+  x: number;
+  y: number;
+  fish: number; // bitmask of fish still on the ice
+  broken: number; // bitmask of cracked tiles that are now water
+}
+
+export interface Parsed {
+  w: number;
+  h: number;
+  tiles: string[][];
+  start: [number, number];
+  fishIndex: Map<string, number>;
+  crackIndex: Map<string, number>;
+  fishCount: number;
+}
+
+export interface MoveResult {
+  state: PState;
+  path: Array<[number, number]>;
+  sank: boolean;
+  won: boolean;
+  moved: boolean;
+}
+
+export function parse(level: Level): Parsed {
+  const tiles = level.rows.map((r) => [...r]);
+  let start: [number, number] = [0, 0];
+  const fishIndex = new Map<string, number>();
+  const crackIndex = new Map<string, number>();
+  tiles.forEach((row, y) => row.forEach((t, x) => {
+    if (t === "P") { start = [x, y]; row[x] = "."; }
+    if (t === "F") fishIndex.set(`${x},${y}`, fishIndex.size);
+    if (t === "c") crackIndex.set(`${x},${y}`, crackIndex.size);
+  }));
+  return { w: tiles[0].length, h: tiles.length, tiles, start, fishIndex, crackIndex, fishCount: fishIndex.size };
+}
+
+export function initial(p: Parsed): PState {
+  return { x: p.start[0], y: p.start[1], fish: (1 << p.fishCount) - 1, broken: 0 };
+}
+
+function tileAt(p: Parsed, s: { broken: number }, x: number, y: number): string {
+  if (x < 0 || y < 0 || x >= p.w || y >= p.h) return "#";
+  const t = p.tiles[y][x];
+  if (t === "c") {
+    const i = p.crackIndex.get(`${x},${y}`)!;
+    return s.broken & (1 << i) ? "~" : "c";
+  }
+  return t;
+}
+
+const ARROW: Record<string, Dir> = { ">": "right", "<": "left", "^": "up", v: "down" };
+
+/** Slides the penguin one move. Water ends the run (sank). */
+export function slide(p: Parsed, s: PState, dir: Dir): MoveResult {
+  let { x, y, fish, broken } = s;
+  let d = dir;
+  const path: Array<[number, number]> = [[x, y]];
+  const leave = (lx: number, ly: number) => {
+    if (p.tiles[ly][lx] === "c") broken |= 1 << p.crackIndex.get(`${lx},${ly}`)!;
+  };
+  for (let guard = 0; guard < 400; guard++) {
+    const [dx, dy] = DELTA[d];
+    const nx = x + dx;
+    const ny = y + dy;
+    const t = tileAt(p, { broken }, nx, ny);
+    if (t === "#") break;
+    leave(x, y);
+    x = nx;
+    y = ny;
+    path.push([x, y]);
+    if (t === "~") return { state: { x, y, fish, broken }, path, sank: true, won: false, moved: true };
+    if (t === "F") {
+      const i = p.fishIndex.get(`${x},${y}`)!;
+      fish &= ~(1 << i);
+    }
+    if (t === "o") break;
+    if (t === "H") break;
+    if (ARROW[t]) d = ARROW[t];
+  }
+  const moved = path.length > 1;
+  const won = p.tiles[y][x] === "H" && fish === 0;
+  return { state: { x, y, fish, broken }, path, sank: false, won, moved };
+}
+
+function key(s: PState): string {
+  return `${s.x},${s.y},${s.fish},${s.broken}`;
+}
+
+/** Breadth-first search. Returns the shortest solution (as directions) or null. */
+export function solve(level: Level, limit = 200000): Dir[] | null {
+  const p = parse(level);
+  const start = initial(p);
+  const prev = new Map<string, { from: string; dir: Dir } | null>([[key(start), null]]);
+  let frontier: PState[] = [start];
+  while (frontier.length && prev.size < limit) {
+    const next: PState[] = [];
+    for (const s of frontier) {
+      for (const dir of DIRS) {
+        const r = slide(p, s, dir);
+        if (!r.moved || r.sank) continue;
+        const k = key(r.state);
+        if (prev.has(k)) continue;
+        prev.set(k, { from: key(s), dir });
+        if (r.won) {
+          const out: Dir[] = [];
+          let cur: string | undefined = k;
+          while (cur) {
+            const e = prev.get(cur);
+            if (!e) break;
+            out.unshift(e.dir);
+            cur = e.from;
+          }
+          return out;
+        }
+        next.push(r.state);
+      }
+    }
+    frontier = next;
+  }
+  return null;
+}
+
+export function starsFor(moves: number, par: number): number {
+  if (moves <= par) return 3;
+  if (moves <= par + 3) return 2;
+  return 1;
+}
+
+export const LEVELS: readonly Level[] = [
+  // Generated by a seeded search (par 3 → 15); every level is re-solved in tests.
+  { par: 3, rows: ["...#.#.", ".......", "##.....", "#......", ".....H.", "......#", ".P..#..", "......."] },
+  { par: 3, rows: [".#.....", "......#", "#P.....", "..#....", "....###", "H..#..#", ".......", "......."] },
+  { par: 4, rows: [".......", "..#....", ".#.P.#.", "....#..", "....#..", ".#.....", ".....H.", "##....."] },
+  { par: 4, rows: ["......F", "...#..#", ".......", "..#....", "H......", ".......", ".F#....", "#P..#.."] },
+  { par: 5, rows: [".......", "....#..", "##...#.", "F......", "....P..", "..##H..", ".#..#.#", "......."] },
+  { par: 5, rows: [".....o.", "o..H...", "F....##", ".....F#", "...P..#", ".o..#..", "....#..", ".o....#"] },
+  { par: 7, rows: [".......", "....##.", "...#.F.", ".....o.", ".#....o", ".#H...#", ".#.....", "...P..."] },
+  { par: 7, rows: ["...#..P", ".F.Fooo", "...#.#.", "......#", ".......", "...##..", ".#....H", ".#....."] },
+  { par: 5, rows: ["#...#.#", ".#.....", "#.#~o#.", ".~o.#o#", ".#.....", "H..oP#.", "..F#...", ".....~."] },
+  { par: 5, rows: [".H....o", "..#....", ".#.....", ".....#.", "..F#...", "..F....", "o..~...", "#P.##.#"] },
+  { par: 7, rows: [".F...#oo", ".P......", ".......#", ".#o.....", "#......#", "#...H...", ".......F", ".#..##..", ".....#~~"] },
+  { par: 8, rows: ["o#...#H.", "F...P...", "........", ".....#..", "o##...o.", "~......F", "........", "#~...o..", "~...#.F#"] },
+  { par: 6, rows: ["....F...", "...#....", "......c.", "...P.#..", "F.....~.", ".o.#....", ".....c#.", "........", "o#.H...."] },
+  { par: 9, rows: ["~....o#.", ".#.#...#", "o.....~#", ".#F..#..", "F.......", "#F....c.", ".PH##...", "...o....", ".c.....c"] },
+  { par: 8, rows: [".F.##...", ".......#", ".o.o.c..", "....P.c.", "..~F.o..", "...H#.#.", "...#c...", "...~o~..", ".c......"] },
+  { par: 9, rows: ["o....~..", "..#....#", "..F...F#", "#o.#....", "#...c#..", "#.P.#...", "....#...", ".F....#.", "c....H.."] },
+  { par: 9, rows: ["...#.o.H", "........", "o.P..#.c", ".......F", "c.#....#", "..~#...#", "....F.~c", "..o....#", "#####.#."] },
+  { par: 8, rows: [".#..F...", "...#..#.", ".#.#F#.P", "o..#.~..", "o.oF..#.", "...#..##", "~.c~.#..", ".c#oH...", "..#..c.c"] },
+  { par: 8, rows: ["........", ".~o.#...", "##..c>#.", "o......#", "......#.", "....#.P.", "#...cF#.", "...H....", "....#..F"] },
+  { par: 9, rows: ["........", ">...#..o", ".F....#.", "...#.~..", "o#..FFP.", "oH.c..c.", "....#...", ".#..#.##", "~...^.c."] },
+  { par: 12, rows: ["c..#.H..c", "F....~..#", "F...#....", ".........", ".....o.o#", "#F...c..#", ".<#v#.<o.", ".c....~..", ".....##P.", "......o.~"] },
+  { par: 10, rows: [".....#..P", ".Fo....#F", "...#..##.", "......#..", ".c...H..#", "#.....o~.", "....#...#", "......#..", "#.F#..c..", "....F.#.^"] },
+  { par: 11, rows: ["..#......", ".....o.c#", "...F.#..c", "#.....~..", "o..F#..vP", ".#.......", ".>.....#.", "o.#.#..~.", "...Fc....", "....#H..."] },
+  { par: 11, rows: [".....o.#~", "o.F.#....", "#...P....", ".....#.~.", "...co.c..", "F.>...#<.", ".~..H##>.", "F.o...#..", ".....#..c", ".F.c...#."] },
+  { par: 12, rows: ["#c.....#F", "H.##....F", "..P..##..", "#.o....#.", "#........", "F........", "..~.#.c..", "......#.#", "#....o...", "......#.^"] },
+  { par: 11, rows: ["#........", ".#...~..#", "...#.....", "o....P...", "...>#.#.c", "..c.....#", ".......H#", "Fo..#o..#", ".#.~.^#.c", "F..F#.#F#"] },
+  { par: 11, rows: ["o.#..##^c", ".c.#.>...", "#...P..~#", "..~..~...", ".........", "F.....H.#", "F....#.o.", ".#....#.c", ".c#..<.Fo", ".#.....o."] },
+  { par: 12, rows: ["...o..H.#", "..F#o....", ".....#...", ".#..F.#c.", ".#.P.....", ".......c.", "#v...#..#", "#.~..##..", "F....#...", ".F......."] },
+  { par: 15, rows: [".o..#....", "..#...~.c", "##.#.....", "#c.H....F", "....#o.F.", ".P##.....", ".c.....#.", "......v..", ".~..#..#F", "....o.>#."] },
+  { par: 13, rows: [".c.c.~>..", ".#...Ho.#", "........F", ".F#.~....", ".........", "<.o.#.F.^", "...#.....", "o....~F..", "Pco......", "..##.#.c."] },
+];
+
+export const LEVEL_COUNT = LEVELS.length;

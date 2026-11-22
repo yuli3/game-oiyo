@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BubbleGarden from "../../components/games/BubbleGarden";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "비눗방울 정원 — 같은 색 방울을 맞춰 터뜨리는 무료 버블 슈터 30단계",
+    description: "끌어서 겨누고 쏘세요. 같은 색 3개를 붙이면 펑, 매달린 방울은 우수수. 폭탄 방울·돌·무지개 방울이 나오는 30개 화단, 설치 없이 바로.",
+  },
+  en: {
+    title: "Bubble Garden — Free bubble shooter with 30 garden stages",
+    description: "Drag to aim and shoot. Match three of a colour to pop them and drop everything hanging below. Bombs, stones and rainbow bubbles across 30 garden beds, no install.",
+  },
+  ja: {
+    title: "しゃぼん玉ガーデン — 同じ色をそろえて割る無料バブルシューター30ステージ",
+    description: "ドラッグで狙って発射。同じ色を3つつなげて割り、ぶら下がった玉をまとめて落とそう。爆弾・石・虹の玉が出る30の花壇。",
+  },
+  zh: {
+    title: "泡泡花园 — 免费泡泡龙式射击消除，30个花圃关卡",
+    description: "拖动瞄准并发射。三个同色泡泡相连就会破，悬着的泡泡一起掉落。炸弹泡泡、石头和彩虹泡泡，30个花圃，无需安装。",
+  },
+  fr: {
+    title: "Le Jardin de bulles — Jeu de tir de bulles gratuit en 30 niveaux",
+    description: "Glissez pour viser et tirez. Trois bulles d'une couleur éclatent et tout ce qui pend dessous tombe. Bombes, pierres et bulles arc-en-ciel sur 30 parterres.",
+  },
+  es: {
+    title: "El Jardín de Burbujas — Lanzador de burbujas gratis con 30 niveles",
+    description: "Arrastra para apuntar y dispara. Junta tres de un color para explotarlas y que caiga todo lo que cuelga. Bombas, piedras y burbujas arcoíris en 30 parterres.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["bubble-garden"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <BubbleGarden client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="bubble-garden" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

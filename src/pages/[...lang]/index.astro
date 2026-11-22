@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 173종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 173종." },
-  en: { title: "OIYO Arcade — 173 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 173 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム173種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム173種。" },
-  zh: { title: "OIYO 街机 — 无需安装的173款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，173款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 173 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 173 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 173 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 173 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 177종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 177종." },
+  en: { title: "OIYO Arcade — 177 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 177 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム177種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム177種。" },
+  zh: { title: "OIYO 街机 — 无需安装的177款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，177款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 177 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 177 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 177 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 177 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 173종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "173 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム173種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的173款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "173 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "173 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 177종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "177 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム177種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的177款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "177 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "177 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -232,6 +232,10 @@ const GAMES: Game[] = [
   { slug: "cat-expedition", emoji: "🐈", cat: "arcade", name: { ko: "고양이 원정대", en: "Cat Expedition", ja: "ねこ遠征隊", zh: "猫咪远征队", fr: "L'Expédition des chats", es: "La Expedición Gatuna" } },
   { slug: "trap-stairs", emoji: "🪜", cat: "arcade", name: { ko: "함정 계단", en: "Trap Stairs", ja: "罠の階段", zh: "陷阱台阶", fr: "L'Escalier piégé", es: "La Escalera Trampa" } },
   { slug: "alley-appraiser", emoji: "🔍", cat: "puzzle", name: { ko: "골목 감정소", en: "Alley Appraiser", ja: "路地裏鑑定所", zh: "胡同鉴定铺", fr: "L'Expert de la ruelle", es: "El Tasador del Callejón" } },
+  { slug: "bubble-garden", emoji: "🫧", cat: "arcade", name: { ko: "비눗방울 정원", en: "Bubble Garden", ja: "しゃぼん玉ガーデン", zh: "泡泡花园", fr: "Le Jardin de bulles", es: "El Jardín de Burbujas" } },
+  { slug: "picture-logic", emoji: "🖼️", cat: "puzzle", name: { ko: "그림 로직", en: "Picture Logic", ja: "お絵かきロジック", zh: "数字画谜", fr: "Logique en images", es: "Lógica de dibujos" } },
+  { slug: "ice-penguin", emoji: "🐧", cat: "puzzle", name: { ko: "펭귄 얼음 배달", en: "Penguin Ice Post", ja: "ペンギン氷上便", zh: "企鹅冰上快递", fr: "Le Manchot postier", es: "El Pingüino Cartero" } },
+  { slug: "mirror-lanterns", emoji: "🪞", cat: "puzzle", name: { ko: "등불 거울 정원", en: "Lantern Mirror Garden", ja: "灯籠と鏡の庭", zh: "灯笼镜子花园", fr: "Le Jardin des lanternes", es: "El Jardín de Farolillos" } },
   { slug: "rampart-keeper", emoji: "🏯", cat: "arcade", name: { ko: "성벽 지기", en: "Rampart Keeper", ja: "城壁の守り手", zh: "城墙守卫", fr: "Gardien du rempart", es: "Guardián de la muralla" } },
   { slug: "link-duel", emoji: "⚔️", cat: "puzzle", name: { ko: "링크 대결", en: "Link Duel", ja: "リンク対決", zh: "链接对决", fr: "Duel par lien", es: "Duelo por enlace" } },
   { slug: "season-workshop", emoji: "🥣", cat: "arcade", name: { ko: "절기 공방", en: "Season Workshop", ja: "節気工房", zh: "节气工坊", fr: "L'Atelier des saisons", es: "El Taller de las Estaciones" } },
@@ -291,6 +295,54 @@ const newReleasesLabel: Record<Locale, { sectionTitle: string; badge: string; su
 const newReleaseLabels = newReleasesLabel[locale] ?? newReleasesLabel.en;
 
 const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; desc: Record<Locale, string> }> = [
+  {
+    slug: "bubble-garden",
+    tag: { ko: "버블 슈터", en: "Bubble shooter", ja: "バブルシューター", zh: "泡泡射击", fr: "Tir de bulles", es: "Lanzador de burbujas" },
+    desc: {
+      ko: "30개 화단, 벽 튕기기·폭탄 방울·무지개 방울",
+      en: "30 garden beds: bank shots, bomb bubbles, rainbow bubbles",
+      ja: "30の花壇、壁バウンド・爆弾玉・虹の玉",
+      zh: "30个花圃：反弹射击、炸弹泡泡、彩虹泡泡",
+      fr: "30 parterres : rebonds, bulles bombes, bulles arc-en-ciel",
+      es: "30 parterres: rebotes, burbujas bomba y arcoíris",
+    },
+  },
+  {
+    slug: "picture-logic",
+    tag: { ko: "네모 칠하기 로직", en: "Nonogram", ja: "ノノグラム", zh: "数织", fr: "Nonogramme", es: "Nonograma" },
+    desc: {
+      ko: "30장, 숫자대로 칠하면 홍시·방패연·등대가 나타나요",
+      en: "30 puzzles: fill by the numbers to reveal a persimmon, a kite, a lighthouse",
+      ja: "30問、数字どおり塗ると柿・凧・灯台が現れる",
+      zh: "30题：按数字涂色，柿子、风筝、灯塔逐一现身",
+      fr: "30 grilles : un kaki, un cerf-volant, un phare à révéler",
+      es: "30 puzles: revela un caqui, una cometa, un faro",
+    },
+  },
+  {
+    slug: "ice-penguin",
+    tag: { ko: "얼음 미끄럼 퍼즐", en: "Sliding ice puzzle", ja: "氷すべりパズル", zh: "冰面滑行解谜", fr: "Puzzle de glisse", es: "Puzle de hielo" },
+    desc: {
+      ko: "30단계, 한 번 밀면 끝까지 미끄러지는 펭귄",
+      en: "30 stages: one push and the penguin slides all the way",
+      ja: "30ステージ、一押しで端まで滑るペンギン",
+      zh: "30关：推一下就一路滑到底的企鹅",
+      fr: "30 niveaux : une poussée et il glisse jusqu'au bout",
+      es: "30 niveles: un empujón y resbala hasta el final",
+    },
+  },
+  {
+    slug: "mirror-lanterns",
+    tag: { ko: "빛 반사 퍼즐", en: "Light-beam puzzle", ja: "光の反射パズル", zh: "光线反射解谜", fr: "Puzzle de rayons", es: "Puzle de rayos" },
+    desc: {
+      ko: "30단계, 거울을 돌려 등불을 밝히는 밤의 정원",
+      en: "30 stages: turn mirrors to light a night garden",
+      ja: "30ステージ、鏡を回して夜の庭を灯す",
+      zh: "30关：转动镜子点亮夜晚的花园",
+      fr: "30 niveaux : tournez les miroirs pour éclairer le jardin",
+      es: "30 niveles: gira espejos para iluminar el jardín",
+    },
+  },
   {
     slug: "rampart-keeper",
     tag: { ko: "물리 성벽 디펜스", en: "Physics wall defense", ja: "物理城壁ディフェンス", zh: "物理城墙防守", fr: "Défense physique", es: "Defensa con física" },

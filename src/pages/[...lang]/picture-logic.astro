@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PictureLogic from "../../components/games/PictureLogic";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "그림 로직 — 숫자 힌트로 칸을 칠해 그림을 완성하는 무료 네모 로직 30장",
+    description: "줄마다 적힌 숫자만큼 칸을 칠하면 숨은 그림이 나타납니다. 8×8부터 12×12까지 30장, 모두 추측 없이 논리로만 풀리는 노노그램.",
+  },
+  en: {
+    title: "Picture Logic — Free nonogram puzzles: 30 hidden pictures",
+    description: "Fill cells to match the numbers on each row and column and a hidden picture appears. 30 puzzles from 8×8 to 12×12, every one solvable by logic alone, no guessing.",
+  },
+  ja: {
+    title: "お絵かきロジック — 数字のヒントで塗って絵を完成させる無料ノノグラム30問",
+    description: "各列の数字どおりにマスを塗ると隠れた絵が現れます。8×8から12×12まで30問、すべて推測なしで論理だけで解けます。",
+  },
+  zh: {
+    title: "数字画谜 — 按数字提示涂格子完成图画的免费数织30题",
+    description: "按每行每列的数字涂色，隐藏的图画就会出现。从8×8到12×12共30题，全部只靠逻辑就能解开，不用猜。",
+  },
+  fr: {
+    title: "Logique en images — 30 nonogrammes gratuits à dessin caché",
+    description: "Remplissez les cases selon les nombres de chaque ligne et colonne pour révéler un dessin. 30 grilles de 8×8 à 12×12, toutes solubles par la seule logique.",
+  },
+  es: {
+    title: "Lógica de dibujos — 30 nonogramas gratis con dibujo oculto",
+    description: "Rellena las casillas según los números de cada fila y columna y aparecerá un dibujo. 30 puzles de 8×8 a 12×12, todos resolubles solo con lógica.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["picture-logic"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <PictureLogic client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="picture-logic" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

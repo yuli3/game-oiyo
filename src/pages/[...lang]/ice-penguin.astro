@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import IcePenguin from "../../components/games/IcePenguin";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "펭귄 얼음 배달 — 미끄러지는 펭귄으로 생선을 모으는 무료 얼음 퍼즐 30단계",
+    description: "한 번 밀면 부딪칠 때까지 쭉 미끄러지는 펭귄. 생선을 모두 주워 이글루로 배달하세요. 눈밭·금 간 얼음·화살표 얼음·물웅덩이가 나오는 30단계.",
+  },
+  en: {
+    title: "Penguin Ice Post — Free sliding ice puzzle in 30 deliveries",
+    description: "Push once and the penguin slides until it hits something. Collect every fish and deliver it to the igloo. Snow, cracked ice, arrow ice and water holes across 30 stages.",
+  },
+  ja: {
+    title: "ペンギン氷上便 — 滑るペンギンで魚を集める無料氷パズル30ステージ",
+    description: "一度押すとぶつかるまで滑り続けるペンギン。魚を全部拾ってかまくらへ届けよう。雪・ひびの氷・矢印の氷・水たまりが出る30ステージ。",
+  },
+  zh: {
+    title: "企鹅冰上快递 — 滑行企鹅收集鱼的免费冰面解谜30关",
+    description: "推一下，企鹅就会一直滑到撞上东西为止。捡起所有的鱼送到冰屋。雪地、裂冰、箭头冰面和水洞，共30关。",
+  },
+  fr: {
+    title: "Le Manchot postier — Puzzle de glisse sur glace gratuit en 30 livraisons",
+    description: "Une poussée et le manchot glisse jusqu'à heurter quelque chose. Ramassez tous les poissons et livrez-les à l'igloo. Neige, glace fêlée, flèches et trous d'eau sur 30 niveaux.",
+  },
+  es: {
+    title: "El Pingüino Cartero — Puzle de hielo deslizante gratis con 30 entregas",
+    description: "Un empujón y el pingüino resbala hasta chocar. Recoge todos los peces y llévalos al iglú. Nieve, hielo agrietado, flechas y agujeros en 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["ice-penguin"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <IcePenguin client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="ice-penguin" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
