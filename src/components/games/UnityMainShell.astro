@@ -24,9 +24,11 @@ interface Props {
   locale: Locale;
   name: string;
   poster?: string;
+  /** Open quick play first for visitors arriving from a search results page. */
+  quickFirstFromSearch?: boolean;
 }
 
-const { slug, build, locale, name } = Astro.props as Props;
+const { slug, build, locale, name, quickFirstFromSearch } = Astro.props as Props;
 const poster = Astro.props.poster ?? (gameArtDocument.games as Record<string, string>)[slug];
 
 type Labels = {
@@ -86,7 +88,7 @@ const chip = "inline-flex min-h-8 items-center rounded-full border border-white/
 const toolButton = "inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 font-bold text-foreground cursor-pointer";
 ---
 
-<section class="mx-auto max-w-7xl px-2" data-unity-main={slug} data-build={build} data-src={src} data-locale={locale} data-name={name} data-labels={JSON.stringify(ui)}>
+<section class="mx-auto max-w-7xl px-2" data-unity-main={slug} data-build={build} data-src={src} data-locale={locale} data-name={name} data-labels={JSON.stringify(ui)} data-quick-first-from-search={quickFirstFromSearch ? "1" : undefined}>
   <div class="mb-3 flex flex-wrap items-center gap-2" role="tablist" aria-label={name}>
     <button type="button" role="tab" id={`${slug}-tab-main`} aria-controls={`${slug}-panel-main`} aria-selected="true" data-tab="main" class="min-h-11 rounded-full border border-border bg-card px-4 py-2 font-bold text-foreground cursor-pointer aria-selected:border-primary aria-selected:bg-primary aria-selected:text-primary-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary">{ui.main}</button>
     <button type="button" role="tab" id={`${slug}-tab-quick`} aria-controls={`${slug}-panel-quick`} aria-selected="false" tabindex="-1" data-tab="quick" class="min-h-11 rounded-full border border-border bg-card px-4 py-2 font-bold text-foreground cursor-pointer aria-selected:border-primary aria-selected:bg-primary aria-selected:text-primary-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary">{ui.quick}</button>

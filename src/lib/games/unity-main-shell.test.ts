@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fill, parseShellMessage, parseShellResult } from "./unity-main-shell";
+import { fill, fromSearch, parseShellMessage, parseShellResult } from "./unity-main-shell";
 
 describe("parseShellMessage", () => {
   it("reads progress and clamps it", () => {
@@ -51,5 +51,14 @@ describe("saveUnityResult", () => {
     expect(records.getBest("grid-clear")?.value).toBe(50);
     expect(records.getBestForConditions("grid-clear", UNITY_BEST_CONDITIONS)?.value).toBe(900);
     expect(records.getRecord("grid-clear")).toEqual({ w: 1, l: 1, d: 0 });
+  });
+});
+
+describe("fromSearch", () => {
+  it("recognises search result referrers", () => {
+    for (const r of ["https://www.bing.com/search?q=aim", "https://www.google.co.kr/", "https://search.naver.com/search.naver?query=x", "https://m.search.naver.com/", "https://duckduckgo.com/"]) expect(fromSearch(r)).toBe(true);
+  });
+  it("ignores other sites and empty referrers", () => {
+    for (const r of ["", "https://game.oiyo.net/ko/", "https://blog.naver.com/x", "https://notgoogle.com.evil.io/", "not a url"]) expect(fromSearch(r)).toBe(false);
   });
 });
