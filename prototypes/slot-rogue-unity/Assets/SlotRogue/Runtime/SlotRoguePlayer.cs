@@ -121,6 +121,7 @@ public class SlotRoguePlayer : MonoBehaviour
     Material cabinetMat;
     Material frameMat;
     Material[] symbolMats = new Material[SymbolCatalog.Length];
+    Material knobMat;
 
     void Awake()
     {
@@ -160,10 +161,17 @@ public class SlotRoguePlayer : MonoBehaviour
         cabinetMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.2f, 0.12f, 0.28f) };
         frameMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.95f, 0.75f, 0.2f) };
 
+        // Painted symbol tokens (scripts/make_art.py -> Resources/SR/Art; the WebGL font has no emoji)
+        var cut = Shader.Find("OIYO/UnlitCutout");
         for (int i = 0; i < SymbolCatalog.Length; i++)
         {
-            symbolMats[i] = new Material(OiyoShaders.Safe(diffuse)) { color = SymbolCatalog[i].color };
+            symbolMats[i] = new Material(cut != null ? cut : Shader.Find("Sprites/Default"));
+            symbolMats[i].mainTexture = Resources.Load<Texture2D>("SR/Art/sym_" + i);
+            symbolMats[i].color = Color.white;
         }
+        cabinetMat.mainTexture = Resources.Load<Texture2D>("SR/Art/cabinet");
+        cabinetMat.color = Color.white;
+        knobMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.85f, 0.15f, 0.2f) };
     }
 
     void BuildCabinet()
@@ -180,7 +188,9 @@ public class SlotRoguePlayer : MonoBehaviour
         rim.name = "GoldenRim";
         rim.transform.position = new Vector3(0, 0, 0.1f);
         rim.transform.localScale = new Vector3(5.8f, 5.8f, 0.1f);
-        rim.GetComponent<MeshRenderer>().sharedMaterial = frameMat;
+        var rimMat = new Material(frameMat) { color = Color.white };
+        rimMat.mainTexture = Resources.Load<Texture2D>("SR/Art/frame");
+        rim.GetComponent<MeshRenderer>().sharedMaterial = rimMat;
 
         // Lever Base & Arm
         var leverBase = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -198,7 +208,7 @@ public class SlotRoguePlayer : MonoBehaviour
         knob.transform.SetParent(leverArm.transform);
         knob.transform.localPosition = new Vector3(0, 1.0f, 0);
         knob.transform.localScale = new Vector3(2.5f, 0.4f, 2.5f);
-        knob.GetComponent<MeshRenderer>().sharedMaterial = symbolMats[(int)SymbolType.Sun];
+        knob.GetComponent<MeshRenderer>().sharedMaterial = knobMat;
 
         // 4x4 Slot Tumbler Meshes
         float startX = -(GridCols - 1) * SlotSpacingX * 0.5f;
@@ -208,11 +218,11 @@ public class SlotRoguePlayer : MonoBehaviour
         {
             for (int c = 0; c < GridCols; c++)
             {
-                var slot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                var slot = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 slot.name = "Slot_" + r + "_" + c;
-                slot.transform.position = new Vector3(startX + c * SlotSpacingX, startY - r * SlotSpacingY, 0);
-                slot.transform.localScale = new Vector3(0.95f, 0.2f, 0.95f);
-                slot.transform.rotation = Quaternion.Euler(90f, 0, 0);
+                Destroy(slot.GetComponent<Collider>());
+                slot.transform.position = new Vector3(startX + c * SlotSpacingX, startY - r * SlotSpacingY, -0.05f);
+                slot.transform.localScale = new Vector3(1.15f, 1.15f, 1f);
                 slot.GetComponent<MeshRenderer>().sharedMaterial = symbolMats[(int)SymbolType.Coin];
                 slotMeshes[r, c] = slot;
             }
@@ -323,7 +333,7 @@ public class SlotRoguePlayer : MonoBehaviour
                 // Rapid spinning rotation
                 for (int r = 0; r < GridRows; r++)
                 {
-                    slotMeshes[r, c].transform.Rotate(Vector3.up, 1200f * Time.deltaTime, Space.Self);
+                    slotMeshes[r, c].transform.Rotate(Vector3.right, 1200f * Time.deltaTime, Space.Self); // tokens flip like a reel
                 }
 
                 // Check stop time
@@ -334,7 +344,7 @@ public class SlotRoguePlayer : MonoBehaviour
                     for (int r = 0; r < GridRows; r++)
                     {
                         gridSymbols[r, c] = playerDeck[UnityEngine.Random.Range(0, playerDeck.Count)];
-                        slotMeshes[r, c].transform.rotation = Quaternion.Euler(90f, 0, 0);
+                        slotMeshes[r, c].transform.rotation = Quaternion.identity;
                         slotMeshes[r, c].GetComponent<MeshRenderer>().sharedMaterial = symbolMats[(int)gridSymbols[r, c]];
                     }
                     PlaySound(520f + c * 90f, 0.1f);
@@ -356,7 +366,7 @@ public class SlotRoguePlayer : MonoBehaviour
         {
             for (int c = 0; c < GridCols; c++)
             {
-                slotMeshes[r, c].transform.rotation = Quaternion.Euler(90f, 0, 0);
+                slotMeshes[r, c].transform.rotation = Quaternion.identity;
                 slotMeshes[r, c].GetComponent<MeshRenderer>().sharedMaterial = symbolMats[(int)gridSymbols[r, c]];
             }
         }
@@ -662,7 +672,8 @@ public class SlotRoguePlayer : MonoBehaviour
 
     void DrawSymbolsOverlay()
     {
-        if (mainCam == null || isSpinning) return;
+        // Symbols are painted on the tokens now; the emoji labels rendered blank in WebGL.
+        return;
 
         GUIStyle iconStyle = new GUIStyle(GUI.skin.label)
         {

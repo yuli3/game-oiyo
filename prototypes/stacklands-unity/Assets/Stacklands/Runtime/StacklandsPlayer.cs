@@ -74,6 +74,41 @@ public sealed class StacklandsPlayer : MonoBehaviour
         return m;
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/ST/Art) ----
+    readonly Dictionary<CardType, Material> _faceMats = new Dictionary<CardType, Material>();
+    Material _edgeMat;
+
+    static Material Painted(string tex, float tile = 1f)
+    {
+        var m = MakeMat(Color.white);
+        var t = Resources.Load<Texture2D>("ST/Art/" + tex);
+        if (t != null)
+        {
+            t.wrapMode = tile != 1f ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+            m.mainTexture = t;
+        }
+        m.mainTextureScale = new Vector2(tile, tile);
+        if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.1f);
+        return m;
+    }
+
+    // Painted card face lying on top of the card box (texture top = far edge, where the name label sits).
+    void ApplyCardArt(Card c)
+    {
+        var face = c.Go.transform.Find("Face");
+        if (face == null)
+        {
+            var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            q.name = "Face";
+            Destroy(q.GetComponent<Collider>());
+            q.transform.SetParent(c.Go.transform, false);
+            q.transform.localPosition = new Vector3(0f, 0.51f, 0f);
+            q.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            face = q.transform;
+        }
+        face.GetComponent<Renderer>().material = _faceMats[c.Type];
+    }
+
     void CreateMaterials()
     {
         _tableMat = MakeMat(new Color(0.16f, 0.24f, 0.18f));
@@ -90,6 +125,17 @@ public sealed class StacklandsPlayer : MonoBehaviour
         _mats[CardType.Stone] = MakeMat(new Color(0.66f, 0.68f, 0.72f));
         _mats[CardType.House] = MakeMat(new Color(0.84f, 0.62f, 0.34f));
         _mats[CardType.Goblin] = MakeMat(new Color(0.68f, 0.22f, 0.18f));
+
+        foreach (CardType t in System.Enum.GetValues(typeof(CardType)))
+        {
+            _faceMats[t] = Painted("card_" + t.ToString().ToLowerInvariant());
+            _faceMats[t].color = new Color(0.72f, 0.72f, 0.72f); // the sun washes pale paper out; keeps the name label readable
+        }
+        _edgeMat = MakeMat(new Color(0.78f, 0.7f, 0.56f));
+        _tableMat = Painted("felt", 6f);
+        _tableMat.color = new Color(0.7f, 0.7f, 0.7f);
+        _sellMat = Painted("pad_sell");
+        _packMat = Painted("pad_pack");
     }
 
     void SetupCameraAndLight()
@@ -157,7 +203,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
         go.name = type.ToString();
         go.transform.position = pos;
         go.transform.localScale = new Vector3(1.35f, 0.16f, 1.85f);
-        go.GetComponent<Renderer>().material = _mats[type];
+        go.GetComponent<Renderer>().material = _edgeMat;
 
         int hp = type == CardType.Villager ? 8 : (type == CardType.Militia ? 15 : (type == CardType.Goblin ? 7 + _moon * 2 : 99));
         var c = new Card
@@ -170,6 +216,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
             Hp = hp,
             MaxHp = hp
         };
+        ApplyCardArt(c);
         _cards.Add(c);
         return c;
     }
@@ -444,7 +491,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
                     v.Type = CardType.Militia;
                     v.Hp = 15;
                     v.MaxHp = 15;
-                    v.Go.GetComponent<Renderer>().material = _mats[CardType.Militia];
+                    ApplyCardArt(v); // repaint the card as a Militia
                     RemoveCard(s);
                     SetBanner("Trained a Militia Defender!");
                 }
