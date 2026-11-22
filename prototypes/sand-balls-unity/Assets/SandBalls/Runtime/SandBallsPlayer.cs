@@ -8,6 +8,11 @@ public class SandBallsPlayer : MonoBehaviour
     public enum Language { KO, EN, JA, ES }
     private Language currentLang = Language.KO;
 
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => currentLang == Language.EN ? OiyoI18n.ForEnglish : currentLang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
+
     public class LocalizedText
     {
         public string ko;
@@ -28,7 +33,7 @@ public class SandBallsPlayer : MonoBehaviour
             switch (lang)
             {
                 case Language.KO: return ko;
-                case Language.EN: return en;
+                case Language.EN: return OiyoI18n.En(en);
                 case Language.JA: return ja;
                 case Language.ES: return es;
                 default: return en;
@@ -838,7 +843,7 @@ public class SandBallsPlayer : MonoBehaviour
                                 b.color = other.color;
                                 b.go.GetComponent<MeshRenderer>().material.color = b.color;
                                 PlayClip(sndInfect, 0.7f);
-                                SpawnFloatText("AWAKENED!", b.pos, b.color);
+                                SpawnFloatText(U("AWAKENED!"), b.pos, b.color);
                                 break;
                             }
                         }
@@ -886,7 +891,7 @@ public class SandBallsPlayer : MonoBehaviour
                             g.passedBallIds.Add(b.id);
                             PlayClip(sndMultiplier, 1.0f);
                             cameraTrauma = Mathf.Clamp01(cameraTrauma + 0.2f);
-                            SpawnFloatText("x" + g.multiplier + " DUPLICATED!", g.pos, Color.cyan);
+                            SpawnFloatText(F("x{0} DUPLICATED!", g.multiplier), g.pos, Color.cyan);
 
                             // Duplicate ball
                             for (int m = 1; m < g.multiplier; m++)
@@ -1001,7 +1006,7 @@ public class SandBallsPlayer : MonoBehaviour
 
         // Stage Title & Cargo Progress
         GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(250));
-        GUILayout.Label("<color=#fbbf24><b>STAGE " + s.stageNum + "/12</b></color>: " + s.title.Get(currentLang));
+        GUILayout.Label("<color=#fbbf24><b>" + F("STAGE {0}/12", s.stageNum) + "</b></color>: " + s.title.Get(currentLang));
         float pct = Mathf.Clamp01((float)collectedCount / currentQuota);
         GUILayout.Label("🚛 " + GetLocalizedCargoLabel() + ": <b>" + collectedCount + " / " + currentQuota + " (" + Mathf.RoundToInt(pct * 100f) + "%)</b>");
         DrawProgressBar(pct, new Color(0.15f, 0.75f, 0.95f), 10);
@@ -1017,19 +1022,19 @@ public class SandBallsPlayer : MonoBehaviour
         GUILayout.FlexibleSpace();
 
         // Reset Stage Button
-        if (GUILayout.Button("🔄 RESTART\nSTAGE", GUILayout.Width(85), GUILayout.Height(50)))
+        if (GUILayout.Button("🔄 " + U("RESTART\nSTAGE"), GUILayout.Width(85), GUILayout.Height(50)))
         {
             LoadStage(currentStageIdx);
         }
 
         // Stage Selector Button
-        if (GUILayout.Button("🗺️ STAGES\n(1~12)", GUILayout.Width(85), GUILayout.Height(50)))
+        if (GUILayout.Button("🗺️ " + U("STAGES\n(1~12)"), GUILayout.Width(85), GUILayout.Height(50)))
         {
             showStageSelect = !showStageSelect;
         }
 
         // Language Switcher Toggle Button (User Rule: 언어 현지화)
-        if (GUILayout.Button("🌐 " + currentLang.ToString(), GUILayout.Width(60), GUILayout.Height(50)))
+        if (GUILayout.Button("🌐 " + LangCode().ToUpperInvariant(), GUILayout.Width(60), GUILayout.Height(50)))
         {
             currentLang = (Language)(((int)currentLang + 1) % 4);
         }
@@ -1057,14 +1062,14 @@ public class SandBallsPlayer : MonoBehaviour
             GUI.Box(winRect, "");
             GUILayout.BeginArea(winRect);
             GUILayout.Space(15);
-            GUILayout.Label("<size=18><color=#4ade80><b>★ TRUCK FULLY LOADED! ★</b></color></size>", GetCenterStyle(Color.green));
+            GUILayout.Label("<size=18><color=#4ade80><b>★ " + U("TRUCK FULLY LOADED!") + " ★</b></color></size>", GetCenterStyle(Color.green));
             GUILayout.Space(8);
-            GUILayout.Label(s.title.Get(currentLang) + " Cleared! Quota: " + collectedCount + "/" + currentQuota, GetCenterStyle(Color.white));
-            GUILayout.Label("The dump truck honks and drives away with full cargo!", GetCenterStyle(Color.yellow));
+            GUILayout.Label(F("{0} Cleared! Quota: {1}/{2}", s.title.Get(currentLang), collectedCount, currentQuota), GetCenterStyle(Color.white));
+            GUILayout.Label(U("The dump truck honks and drives away with full cargo!"), GetCenterStyle(Color.yellow));
             GUILayout.Space(12);
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button(currentStageIdx < 11 ? "▶ NEXT STAGE (" + (currentStageIdx + 2) + ")" : "🏆 PLAY AGAIN", GUILayout.Width(180), GUILayout.Height(40)))
+            if (GUILayout.Button(currentStageIdx < 11 ? "▶ " + F("NEXT STAGE ({0})", currentStageIdx + 2) : "🏆 " + U("PLAY AGAIN"), GUILayout.Width(180), GUILayout.Height(40)))
             {
                 NextStage();
             }
@@ -1077,7 +1082,7 @@ public class SandBallsPlayer : MonoBehaviour
         if (showStageSelect)
         {
             Rect modalRect = new Rect(Screen.width * 0.5f - 260, 105, 520, 420);
-            GUI.Box(modalRect, "<b>SELECT SAND STAGE (1~12)</b>");
+            GUI.Box(modalRect, "<b>" + U("SELECT SAND STAGE (1~12)") + "</b>");
             GUILayout.BeginArea(new Rect(modalRect.x + 15, modalRect.y + 35, modalRect.width - 30, modalRect.height - 45));
 
             int colsCount = 2;
@@ -1090,7 +1095,7 @@ public class SandBallsPlayer : MonoBehaviour
                     if (idx < stages.Length)
                     {
                         var st = stages[idx];
-                        string btnText = "<b>Stage " + st.stageNum + "</b>: " + st.title.Get(currentLang) + "\n(Quota: " + st.truckQuota + " balls)";
+                        string btnText = "<b>" + F("Stage {0}", st.stageNum) + "</b>: " + st.title.Get(currentLang) + "\n(" + F("Quota: {0} balls", st.truckQuota) + ")";
                         if (GUILayout.Button(btnText, GUILayout.Height(50)))
                         {
                             showStageSelect = false;
@@ -1103,7 +1108,7 @@ public class SandBallsPlayer : MonoBehaviour
             }
 
             GUILayout.Space(6);
-            if (GUILayout.Button("× CLOSE", GUILayout.Height(28)))
+            if (GUILayout.Button("× " + U("CLOSE"), GUILayout.Height(28)))
             {
                 showStageSelect = false;
             }
@@ -1116,7 +1121,7 @@ public class SandBallsPlayer : MonoBehaviour
         switch (currentLang)
         {
             case Language.KO: return "트럭 적재량";
-            case Language.EN: return "Truck Cargo";
+            case Language.EN: return OiyoI18n.En("Truck Cargo");
             case Language.JA: return "トラック積載";
             case Language.ES: return "Carga del Camión";
             default: return "Cargo";

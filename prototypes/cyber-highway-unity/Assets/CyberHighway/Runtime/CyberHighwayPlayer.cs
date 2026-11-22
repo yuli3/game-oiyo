@@ -74,6 +74,11 @@ public class CyberHighwayPlayer : MonoBehaviour
     // Game state
     private GameState state = GameState.Ready;
     private CyberLanguage lang = CyberLanguage.KO;
+
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => lang == CyberLanguage.EN ? OiyoI18n.ForEnglish : lang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
     private int currentStageIndex = 0;
     private bool isEndless = false;
     private bool showStageSelect = false;
@@ -869,7 +874,7 @@ public class CyberHighwayPlayer : MonoBehaviour
                     t.nearMissScored = true;
                     score += 500;
                     PlaySound(nearMissClip, 0.6f);
-                    ShowNearMiss("+500 NEAR MISS!");
+                    ShowNearMiss(U("+500 NEAR MISS!"));
                 }
             }
 
@@ -1099,7 +1104,7 @@ public class CyberHighwayPlayer : MonoBehaviour
         GUI.color = lang == CyberLanguage.KO ? Color.cyan : Color.white;
         if (GUILayout.Button("KO", GUILayout.Width(45), GUILayout.Height(28))) lang = CyberLanguage.KO;
         GUI.color = lang == CyberLanguage.EN ? Color.cyan : Color.white;
-        if (GUILayout.Button("EN", GUILayout.Width(45), GUILayout.Height(28))) lang = CyberLanguage.EN;
+        if (GUILayout.Button(OiyoI18n.ForEnglish.ToUpperInvariant(), GUILayout.Width(45), GUILayout.Height(28))) lang = CyberLanguage.EN;
         GUI.color = lang == CyberLanguage.JA ? Color.cyan : Color.white;
         if (GUILayout.Button("JA", GUILayout.Width(45), GUILayout.Height(28))) lang = CyberLanguage.JA;
         GUI.color = lang == CyberLanguage.ES ? Color.cyan : Color.white;
@@ -1145,7 +1150,7 @@ public class CyberHighwayPlayer : MonoBehaviour
 
             GUI.color = Color.white;
             string stageTitle = isEndless ? GetText("무한 사이버웨이", "Endless Cyberway", "エンドレス・サイバーウェイ", "Autopista Infinita")
-                                          : $"Sector {stg.id}: {GetStageName(stg)}";
+                                          : $"{U("Sector")} {stg.id}: {GetStageName(stg)}";
             GUILayout.Label($"<size=17><b>{stageTitle}</b></size>");
 
             GUILayout.Space(4);
@@ -1157,7 +1162,7 @@ public class CyberHighwayPlayer : MonoBehaviour
             GUILayout.Label($"{speedLabel}: <size=18><b>{currentSpeedKmh:0} KM/H</b></size>");
 
             string creditsLabel = GetText("크레딧", "Credits", "クレジット", "Créditos");
-            GUILayout.Label($"{creditsLabel}: <b>🪙 {credits}</b> | Score: <b>{score}</b> (Best: {bestScore})");
+            GUILayout.Label($"{creditsLabel}: <b>🪙 {credits}</b> | {U("Score")}: <b>{score}</b> ({U("Best")}: {bestScore})");
 
             string shieldLabel = GetText("쉴드", "Shields", "シールド", "Escudos");
             string shieldIcons = shields > 0 ? "🛡️".Repeat(shields) : GetText("없음", "None", "なし", "Ninguno");
@@ -1177,7 +1182,7 @@ public class CyberHighwayPlayer : MonoBehaviour
             // Mobile Nitro Boost Button
             Rect nitroBtnRect = new Rect(w - 120, h - 90, 100, 70);
             GUI.color = isNitroActive ? Color.yellow : new Color(0f, 0.9f, 1f, 0.85f);
-            if (GUI.RepeatButton(nitroBtnRect, $"<b>🔥 NITRO\n[SPACE]</b>"))
+            if (GUI.RepeatButton(nitroBtnRect, $"<b>🔥 {U("NITRO")}\n[SPACE]</b>"))
             {
                 // touch nitro
                 isNitroActive = nitroFuel > 0f;
@@ -1203,7 +1208,7 @@ public class CyberHighwayPlayer : MonoBehaviour
 
         GUILayout.BeginArea(new Rect(r.x + 20, r.y + 15, r.width - 40, r.height - 30));
         GUI.color = Color.cyan;
-        GUILayout.Label($"<size=22><b>SECTOR {stg.id}: {GetStageName(stg)}</b></size>", GUILayout.Height(32));
+        GUILayout.Label($"<size=22><b>{U("SECTOR")} {stg.id}: {GetStageName(stg)}</b></size>", GUILayout.Height(32));
         GUI.color = Color.white;
 
         GUILayout.Space(8);
@@ -1251,7 +1256,7 @@ public class CyberHighwayPlayer : MonoBehaviour
         GUILayout.Space(8);
         GUILayout.Label($"{GetText("주행 거리", "Distance Traveled", "走行距離", "Distancia")}: <b>{distanceTraveled:0.0}m</b>");
         GUILayout.Label($"{GetText("획득 크레딧", "Credits Collected", "獲得クレジット", "Créditos")}: <b>🪙 +{credits}</b>");
-        GUILayout.Label($"Score: <b>{score}</b> (Best: {bestScore})");
+        GUILayout.Label($"{U("Score")}: <b>{score}</b> ({U("Best")}: {bestScore})");
 
         GUILayout.FlexibleSpace();
         GUI.color = Color.green;
@@ -1283,7 +1288,7 @@ public class CyberHighwayPlayer : MonoBehaviour
 
         GUILayout.Space(8);
         GUILayout.Label($"{GetText("최종 주행 거리", "Final Distance", "最終走行距離", "Distancia Final")}: <b>{distanceTraveled:0.0}m</b>");
-        GUILayout.Label($"Score: <b>{score}</b> (Best: {bestScore})");
+        GUILayout.Label($"{U("Score")}: <b>{score}</b> ({U("Best")}: {bestScore})");
 
         GUILayout.FlexibleSpace();
         GUILayout.BeginHorizontal();
@@ -1329,7 +1334,7 @@ public class CyberHighwayPlayer : MonoBehaviour
                                 "¡Conducción magistral! Has conquistado el Cyber Zenith a 300 km/h como Conductor Supremo."));
 
         GUILayout.Space(8);
-        GUILayout.Label($"Final Score: <b>{score}</b> | Distance: <b>{distanceTraveled:0.0}m</b>");
+        GUILayout.Label($"{U("Final Score")}: <b>{score}</b> | {U("Distance")}: <b>{distanceTraveled:0.0}m</b>");
 
         GUILayout.FlexibleSpace();
         GUI.color = Color.green;
@@ -1380,7 +1385,7 @@ public class CyberHighwayPlayer : MonoBehaviour
                     var stg = stages[idx];
                     GUI.color = idx == currentStageIndex ? Color.cyan : Color.white;
 
-                    string btnText = $"<b>Sector {stg.id}</b>\n<size=11>{GetStageName(stg)}</size>\n<size=10>{stg.targetDistance:0}m</size>";
+                    string btnText = $"<b>{U("Sector")} {stg.id}</b>\n<size=11>{GetStageName(stg)}</size>\n<size=10>{stg.targetDistance:0}m</size>";
                     if (GUILayout.Button(btnText, GUILayout.Height(85), GUILayout.Width((r.width - 50) / 4f)))
                     {
                         showStageSelect = false;
@@ -1403,7 +1408,7 @@ public class CyberHighwayPlayer : MonoBehaviour
         switch (lang)
         {
             case CyberLanguage.KO: return ko;
-            case CyberLanguage.EN: return en;
+            case CyberLanguage.EN: return OiyoI18n.En(en);
             case CyberLanguage.JA: return ja;
             case CyberLanguage.ES: return es;
             default: return en;
@@ -1415,7 +1420,7 @@ public class CyberHighwayPlayer : MonoBehaviour
         switch (lang)
         {
             case CyberLanguage.KO: return s.nameKo;
-            case CyberLanguage.EN: return s.nameEn;
+            case CyberLanguage.EN: return OiyoI18n.En(s.nameEn);
             case CyberLanguage.JA: return s.nameJa;
             case CyberLanguage.ES: return s.nameEs;
             default: return s.nameEn;
@@ -1427,7 +1432,7 @@ public class CyberHighwayPlayer : MonoBehaviour
         switch (lang)
         {
             case CyberLanguage.KO: return s.descKo;
-            case CyberLanguage.EN: return s.descEn;
+            case CyberLanguage.EN: return OiyoI18n.En(s.descEn);
             case CyberLanguage.JA: return s.descJa;
             case CyberLanguage.ES: return s.descEs;
             default: return s.descEn;

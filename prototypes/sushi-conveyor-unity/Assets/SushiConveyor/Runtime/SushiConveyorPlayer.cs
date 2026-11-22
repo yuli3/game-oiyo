@@ -3,6 +3,9 @@ using UnityEngine;
 
 public sealed class SushiConveyorPlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
+    static string F(string en, params object[] args) => string.Format(OiyoI18n.Ui(en, OiyoI18n.Page), args);
     enum Topping
     {
         None,
@@ -73,7 +76,7 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
     bool _stageCleared;
     bool _stageFailed;
     bool _showStageMap;
-    string _banner = "Prep: 1 Rice → 2-6 Fish → Space/Click Belt to Launch!";
+    string _banner = U("Prep: 1 Rice → 2-6 Fish → Space/Click Belt to Launch!");
     float _bannerTimer = 4.5f;
 
     Material _woodMat;
@@ -252,7 +255,7 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
             d.Wanted = Topping.None;
             d.Cooldown = 0.6f + i * 0.9f;
         }
-        SetBanner($"Stage {_stage}/12 ({_stageNames[_stage - 1]}): Goal ¥{_goalCash}");
+        SetBanner(F("Stage {0}/12 ({1}): Goal ¥{2}", _stage, U(_stageNames[_stage - 1]), _goalCash));
     }
 
     void SetBanner(string msg)
@@ -286,12 +289,12 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
     {
         if (!_hasRice)
         {
-            SetBanner("Place Rice (1) on the board first!");
+            SetBanner(U("Place Rice (1) on the board first!"));
             return;
         }
         if (_prepTopping != Topping.None)
         {
-            SetBanner("Topping already added! Press Space to launch onto belt.");
+            SetBanner(U("Topping already added! Press Space to launch onto belt."));
             return;
         }
         _prepTopping = top;
@@ -305,7 +308,7 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
     {
         if (!_hasRice || _prepTopping == Topping.None)
         {
-            SetBanner("Assemble Rice + Fish before launching onto conveyor!");
+            SetBanner(U("Assemble Rice + Fish before launching onto conveyor!"));
             return;
         }
 
@@ -372,13 +375,13 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         if (_cash >= _goalCash)
         {
             _stageCleared = true;
-            SetBanner($"STAGE {_stage} CLEARED! ¥{_cash} earned!");
+            SetBanner(F("STAGE {0} CLEARED! ¥{1} earned!", _stage, _cash));
             return;
         }
         if (_stageTimeLeft <= 0f || _missedOrders >= MaxMissed)
         {
             _stageFailed = true;
-            SetBanner(_missedOrders >= MaxMissed ? "Too many Angry Diners walked out!" : "Shift time expired!");
+            SetBanner(_missedOrders >= MaxMissed ? U("Too many Angry Diners walked out!") : U("Shift time expired!"));
         }
     }
 
@@ -416,7 +419,7 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
                             }
                             else
                             {
-                                SetBanner($"Wrong order! Seat {d.SeatIdx + 1} wants {d.Wanted}.");
+                                SetBanner(F("Wrong order! Seat {0} wants {1}.", d.SeatIdx + 1, d.Wanted));
                             }
                             return;
                         }
@@ -468,7 +471,7 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         _cash += total;
         d.Wanted = Topping.None;
         d.Cooldown = Random.Range(1.6f, 3.0f);
-        SetBanner($"Served Seat {d.SeatIdx + 1}! +¥{total} (Streak x{_streak})");
+        SetBanner(F("Served Seat {0}! +¥{1} (Streak x{2})", d.SeatIdx + 1, total, _streak));
     }
 
     void UpdateDiners(float dt)
@@ -494,7 +497,7 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
                 {
                     _streak = 0;
                     _missedOrders++;
-                    SetBanner($"Seat {d.SeatIdx + 1} walked out! ({_missedOrders}/{MaxMissed})");
+                    SetBanner(F("Seat {0} walked out! ({1}/{2})", d.SeatIdx + 1, _missedOrders, MaxMissed));
                     d.Wanted = Topping.None;
                     d.Cooldown = 2.0f;
                 }
@@ -504,14 +507,15 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         var bold = new GUIStyle(GUI.skin.box) { fontSize = 14, fontStyle = FontStyle.Bold };
         GUI.Box(new Rect(14, 10, Screen.width - 28, 56), "");
         GUI.Label(new Rect(26, 16, 620, 24),
-            $"SUSHI CONVEYOR UNITY  |  STAGE {_stage}/{TotalStages} ({_stageNames[_stage - 1]})  |  ¥{_cash} / ¥{_goalCash}", bold);
+            F("SUSHI CONVEYOR UNITY  |  STAGE {0}/{1} ({2})  |  ¥{3} / ¥{4}", _stage, TotalStages, U(_stageNames[_stage - 1]), _cash, _goalCash), bold);
         GUI.Label(new Rect(26, 38, 620, 20),
-            $"Time Left: {Mathf.CeilToInt(_stageTimeLeft)}s  •  Streak: x{_streak}  •  Missed: {_missedOrders}/{MaxMissed}  •  Board: {(_hasRice ? "Rice✓" : "Empty")} {(_prepTopping != Topping.None ? $"+ {_prepTopping}" : "")}");
+            F("Time Left: {0}s  •  Streak: x{1}  •  Missed: {2}/{3}  •  Board: {4} {5}", Mathf.CeilToInt(_stageTimeLeft), _streak, _missedOrders, MaxMissed, _hasRice ? U("Rice✓") : U("Empty"), _prepTopping != Topping.None ? "+ " + _prepTopping : ""));
 
-        if (GUI.Button(new Rect(Screen.width - 170, 16, 144, 38), _showStageMap ? "Close Stages" : "12 Stages Map"))
+        if (GUI.Button(new Rect(Screen.width - 170, 16, 144, 38), _showStageMap ? U("Close Stages") : U("12 Stages Map")))
         {
             _showStageMap = !_showStageMap;
         }
@@ -519,14 +523,14 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         if (_showStageMap)
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 280, 90, 560, 320), "");
-            GUI.Label(new Rect(Screen.width * 0.5f - 260, 100, 520, 26), "SELECT SUSHI BAR STAGE (STAGES 1 - 12)", bold);
+            GUI.Label(new Rect(Screen.width * 0.5f - 260, 100, 520, 26), U("SELECT SUSHI BAR STAGE (STAGES 1 - 12)"), bold);
             for (int i = 0; i < TotalStages; i++)
             {
                 int col = i % 3;
                 int row = i / 3;
                 float bx = Screen.width * 0.5f - 260 + col * 176;
                 float by = 138 + row * 64;
-                if (GUI.Button(new Rect(bx, by, 166, 54), $"{_stageNames[i]}\nGoal ¥{300 + i * 200}"))
+                if (GUI.Button(new Rect(bx, by, 166, 54), F("{0}\nGoal ¥{1}", U(_stageNames[i]), 300 + i * 200)))
                 {
                     StartStage(i + 1);
                 }
@@ -547,14 +551,14 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         }
 
         // Prep Ingredient Bar at bottom
-        if (GUI.Button(new Rect(14, Screen.height - 56, 98, 42), "1: Rice")) AddRice();
-        if (GUI.Button(new Rect(118, Screen.height - 56, 98, 42), "2: Salmon")) AddTopping(Topping.Salmon);
-        if (GUI.Button(new Rect(222, Screen.height - 56, 98, 42), "3: Tuna")) AddTopping(Topping.Tuna);
-        if (_stage >= 1 && GUI.Button(new Rect(326, Screen.height - 56, 98, 42), "4: Tamago")) AddTopping(Topping.Tamago);
-        if (_stage >= 6 && GUI.Button(new Rect(430, Screen.height - 56, 92, 42), "5: Ebi")) AddTopping(Topping.Ebi);
-        if (_stage >= 3 && GUI.Button(new Rect(528, Screen.height - 56, 92, 42), "6: Ikura")) AddTopping(Topping.Ikura);
-        if (GUI.Button(new Rect(Screen.width - 210, Screen.height - 56, 128, 42), "LAUNCH (Space)")) LaunchToBelt();
-        if (GUI.Button(new Rect(Screen.width - 76, Screen.height - 56, 62, 42), "Trash (X)")) ClearPrepBoard();
+        if (GUI.Button(new Rect(14, Screen.height - 56, 98, 42), U("1: Rice"))) AddRice();
+        if (GUI.Button(new Rect(118, Screen.height - 56, 98, 42), U("2: Salmon"))) AddTopping(Topping.Salmon);
+        if (GUI.Button(new Rect(222, Screen.height - 56, 98, 42), U("3: Tuna"))) AddTopping(Topping.Tuna);
+        if (_stage >= 1 && GUI.Button(new Rect(326, Screen.height - 56, 98, 42), U("4: Tamago"))) AddTopping(Topping.Tamago);
+        if (_stage >= 6 && GUI.Button(new Rect(430, Screen.height - 56, 92, 42), U("5: Ebi"))) AddTopping(Topping.Ebi);
+        if (_stage >= 3 && GUI.Button(new Rect(528, Screen.height - 56, 92, 42), U("6: Ikura"))) AddTopping(Topping.Ikura);
+        if (GUI.Button(new Rect(Screen.width - 210, Screen.height - 56, 128, 42), U("LAUNCH (Space)"))) LaunchToBelt();
+        if (GUI.Button(new Rect(Screen.width - 76, Screen.height - 56, 62, 42), U("Trash (X)"))) ClearPrepBoard();
 
         if (_bannerTimer > 0f)
         {
@@ -565,23 +569,23 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 180, Screen.height * 0.5f - 65, 360, 130), "");
             GUI.Label(new Rect(Screen.width * 0.5f - 155, Screen.height * 0.5f - 48, 310, 28),
-                _stageCleared ? $"STAGE {_stage} SERVICE CLEARED!" : $"STAGE {_stage} SERVICE FAILED", bold);
+                _stageCleared ? F("STAGE {0} SERVICE CLEARED!", _stage) : F("STAGE {0} SERVICE FAILED", _stage), bold);
             GUI.Label(new Rect(Screen.width * 0.5f - 155, Screen.height * 0.5f - 20, 310, 24),
-                $"Sales: ¥{_cash} / ¥{_goalCash} • Stage {_stage}/{TotalStages}");
+                F("Sales: ¥{0} / ¥{1} • Stage {2}/{3}", _cash, _goalCash, _stage, TotalStages));
             if (_stageCleared && _stage < TotalStages)
             {
-                if (GUI.Button(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f + 16, 140, 34), $"Next: Stage {_stage + 1}"))
+                if (GUI.Button(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f + 16, 140, 34), F("Next: Stage {0}", _stage + 1)))
                 {
                     StartStage(_stage + 1);
                 }
-                if (GUI.Button(new Rect(Screen.width * 0.5f + 10, Screen.height * 0.5f + 16, 140, 34), "12 Stages Map"))
+                if (GUI.Button(new Rect(Screen.width * 0.5f + 10, Screen.height * 0.5f + 16, 140, 34), U("12 Stages Map")))
                 {
                     _showStageMap = true;
                 }
             }
             else
             {
-                if (GUI.Button(new Rect(Screen.width * 0.5f - 70, Screen.height * 0.5f + 16, 140, 34), "Retry Shift (R)"))
+                if (GUI.Button(new Rect(Screen.width * 0.5f - 70, Screen.height * 0.5f + 16, 140, 34), U("Retry Shift (R)")))
                 {
                     StartStage(_stage);
                 }

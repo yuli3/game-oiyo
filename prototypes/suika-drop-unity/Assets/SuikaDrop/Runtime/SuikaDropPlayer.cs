@@ -28,7 +28,7 @@ public class SuikaDropPlayer : MonoBehaviour
             switch (lang)
             {
                 case Language.KO: return ko;
-                case Language.EN: return en;
+                case Language.EN: return OiyoI18n.En(en);
                 case Language.JA: return ja;
                 case Language.ES: return es;
                 default: return en;
@@ -779,7 +779,7 @@ public class SuikaDropPlayer : MonoBehaviour
         PlayClip(sndMergeChimes[chimeIdx], 0.85f);
         cameraTrauma = Mathf.Clamp01(cameraTrauma + 0.18f);
 
-        SpawnFloatText("+" + (nextDef.score * comboChain) + (comboChain > 1 ? " COMBO x" + comboChain : ""), midPos, nextDef.color);
+        SpawnFloatText("+" + (nextDef.score * comboChain) + (comboChain > 1 ? " " + F("COMBO x{0}", comboChain) : ""), midPos, nextDef.color);
 
         // Spawn burst confetti particles
         for (int p = 0; p < 8; p++)
@@ -804,7 +804,7 @@ public class SuikaDropPlayer : MonoBehaviour
         {
             PlayClip(sndWatermelon, 1.0f);
             cameraTrauma = 0.5f;
-            SpawnFloatText("★ WATERMELON! ★", midPos, Color.green);
+            SpawnFloatText("★ " + U("WATERMELON!") + " ★", midPos, Color.green);
         }
 
         // Check Stage Clear Target
@@ -926,16 +926,16 @@ public class SuikaDropPlayer : MonoBehaviour
 
         // Stage Title & Target
         GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(250));
-        GUILayout.Label("<color=#22c55e><b>STAGE " + s.stageNum + "/12</b></color>: " + s.title.Get(currentLang));
+        GUILayout.Label("<color=#22c55e><b>" + F("STAGE {0}/12", s.stageNum) + "</b></color>: " + s.title.Get(currentLang));
         var targetDef = fruitTiers[s.targetTier];
-        GUILayout.Label("🎯 " + GetLocalizedTargetLabel() + ": <b>" + targetDef.name.Get(currentLang) + " " + targetDef.emoji + "</b> (or " + s.targetScore + " pts)");
+        GUILayout.Label("🎯 " + GetLocalizedTargetLabel() + ": <b>" + targetDef.name.Get(currentLang) + " " + targetDef.emoji + "</b> " + F("(or {0} pts)", s.targetScore));
         GUILayout.EndVertical();
 
         GUILayout.FlexibleSpace();
 
         // Current Score & Next Fruit Preview
         GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(230));
-        GUILayout.Label("🏆 Score: <b>" + score + "</b>" + (comboChain > 1 ? " <color=#fde047>[x" + comboChain + "!]</color>" : ""));
+        GUILayout.Label("🏆 " + U("Score") + ": <b>" + score + "</b>" + (comboChain > 1 ? " <color=#fde047>[x" + comboChain + "!]</color>" : ""));
         var nextDef = fruitTiers[nextDropTier];
         GUILayout.Label("🔮 " + GetLocalizedNextLabel() + ": <b>" + nextDef.name.Get(currentLang) + " " + nextDef.emoji + "</b>");
         GUILayout.EndVertical();
@@ -943,25 +943,25 @@ public class SuikaDropPlayer : MonoBehaviour
         GUILayout.FlexibleSpace();
 
         // Shake Button
-        if (GUILayout.Button("📳 SHAKE\nNUDGE", GUILayout.Width(75), GUILayout.Height(50)))
+        if (GUILayout.Button("📳 " + U("SHAKE\nNUDGE"), GUILayout.Width(75), GUILayout.Height(50)))
         {
             NudgeContainerShake();
         }
 
         // Restart Stage Button
-        if (GUILayout.Button("🔄 RESTART\nSTAGE", GUILayout.Width(80), GUILayout.Height(50)))
+        if (GUILayout.Button("🔄 " + U("RESTART\nSTAGE"), GUILayout.Width(80), GUILayout.Height(50)))
         {
             LoadStage(currentStageIdx);
         }
 
         // Stage Selector Button
-        if (GUILayout.Button("🗺️ STAGES\n(1~12)", GUILayout.Width(80), GUILayout.Height(50)))
+        if (GUILayout.Button("🗺️ " + U("STAGES\n(1~12)"), GUILayout.Width(80), GUILayout.Height(50)))
         {
             showStageSelect = !showStageSelect;
         }
 
         // Language Switcher Toggle Button (User Rule: 언어 현지화)
-        if (GUILayout.Button("🌐 " + currentLang.ToString(), GUILayout.Width(60), GUILayout.Height(50)))
+        if (GUILayout.Button("🌐 " + LangCode().ToUpperInvariant(), GUILayout.Width(60), GUILayout.Height(50)))
         {
             currentLang = (Language)(((int)currentLang + 1) % 4);
         }
@@ -976,7 +976,7 @@ public class SuikaDropPlayer : MonoBehaviour
             GUI.color = new Color(1f, 0.2f, 0.2f, warnAlpha);
             Rect warnRect = new Rect(Screen.width * 0.5f - 160, 115, 320, 32);
             GUI.Box(warnRect, "");
-            GUI.Label(warnRect, "<b>⚠️ OVERFILL WARNING! " + (3.2f - overfillTimer).ToString("F1") + "s ⚠️</b>", GetCenterStyle(Color.red));
+            GUI.Label(warnRect, "<b>⚠️ " + F("OVERFILL WARNING! {0}s", (3.2f - overfillTimer).ToString("F1")) + " ⚠️</b>", GetCenterStyle(Color.red));
             GUI.color = Color.white;
         }
 
@@ -1000,14 +1000,14 @@ public class SuikaDropPlayer : MonoBehaviour
             GUI.Box(winRect, "");
             GUILayout.BeginArea(winRect);
             GUILayout.Space(15);
-            GUILayout.Label("<size=18><color=#4ade80><b>★ STAGE CLEARED! ★</b></color></size>", GetCenterStyle(Color.green));
+            GUILayout.Label("<size=18><color=#4ade80><b>★ " + U("STAGE CLEARED!") + " ★</b></color></size>", GetCenterStyle(Color.green));
             GUILayout.Space(8);
-            GUILayout.Label(s.title.Get(currentLang) + " Target Achieved! Score: " + score, GetCenterStyle(Color.white));
-            GUILayout.Label("Congratulations! Evolved fruit target accomplished.", GetCenterStyle(Color.yellow));
+            GUILayout.Label(F("{0} Target Achieved! Score: {1}", s.title.Get(currentLang), score), GetCenterStyle(Color.white));
+            GUILayout.Label(U("Congratulations! Evolved fruit target accomplished."), GetCenterStyle(Color.yellow));
             GUILayout.Space(12);
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button(currentStageIdx < 11 ? "▶ NEXT STAGE (" + (currentStageIdx + 2) + ")" : "🏆 PLAY AGAIN", GUILayout.Width(180), GUILayout.Height(40)))
+            if (GUILayout.Button(currentStageIdx < 11 ? "▶ " + F("NEXT STAGE ({0})", currentStageIdx + 2) : "🏆 " + U("PLAY AGAIN"), GUILayout.Width(180), GUILayout.Height(40)))
             {
                 NextStage();
             }
@@ -1023,13 +1023,13 @@ public class SuikaDropPlayer : MonoBehaviour
             GUI.Box(failRect, "");
             GUILayout.BeginArea(failRect);
             GUILayout.Space(15);
-            GUILayout.Label("<size=18><color=#ef4444><b>☠️ OVERFLOW GAME OVER ☠️</b></color></size>", GetCenterStyle(Color.red));
+            GUILayout.Label("<size=18><color=#ef4444><b>☠️ " + U("OVERFLOW GAME OVER") + " ☠️</b></color></size>", GetCenterStyle(Color.red));
             GUILayout.Space(8);
-            GUILayout.Label("Fruit exceeded top deadline in " + s.title.Get(currentLang), GetCenterStyle(Color.white));
+            GUILayout.Label(F("Fruit exceeded top deadline in {0}", s.title.Get(currentLang)), GetCenterStyle(Color.white));
             GUILayout.Space(12);
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button("🔄 RETRY STAGE", GUILayout.Width(170), GUILayout.Height(40)))
+            if (GUILayout.Button("🔄 " + U("RETRY STAGE"), GUILayout.Width(170), GUILayout.Height(40)))
             {
                 LoadStage(currentStageIdx);
             }
@@ -1042,7 +1042,7 @@ public class SuikaDropPlayer : MonoBehaviour
         if (showStageSelect)
         {
             Rect modalRect = new Rect(Screen.width * 0.5f - 260, 105, 520, 420);
-            GUI.Box(modalRect, "<b>SELECT STAGE (1~12)</b>");
+            GUI.Box(modalRect, "<b>" + U("SELECT STAGE (1~12)") + "</b>");
             GUILayout.BeginArea(new Rect(modalRect.x + 15, modalRect.y + 35, modalRect.width - 30, modalRect.height - 45));
 
             int colsCount = 2;
@@ -1056,7 +1056,7 @@ public class SuikaDropPlayer : MonoBehaviour
                     {
                         var st = stages[idx];
                         var tgDef = fruitTiers[st.targetTier];
-                        string btnText = "<b>Stage " + st.stageNum + "</b>: " + st.title.Get(currentLang) + "\n(Target: " + tgDef.name.Get(currentLang) + " " + tgDef.emoji + ")";
+                        string btnText = "<b>" + F("Stage {0}", st.stageNum) + "</b>: " + st.title.Get(currentLang) + "\n(" + U("Target") + ": " + tgDef.name.Get(currentLang) + " " + tgDef.emoji + ")";
                         if (GUILayout.Button(btnText, GUILayout.Height(50)))
                         {
                             showStageSelect = false;
@@ -1069,7 +1069,7 @@ public class SuikaDropPlayer : MonoBehaviour
             }
 
             GUILayout.Space(6);
-            if (GUILayout.Button("× CLOSE", GUILayout.Height(28)))
+            if (GUILayout.Button("× " + U("CLOSE"), GUILayout.Height(28)))
             {
                 showStageSelect = false;
             }
@@ -1082,7 +1082,7 @@ public class SuikaDropPlayer : MonoBehaviour
         switch (currentLang)
         {
             case Language.KO: return "합성 목표";
-            case Language.EN: return "Target Fruit";
+            case Language.EN: return OiyoI18n.En("Target Fruit");
             case Language.JA: return "合成目標";
             case Language.ES: return "Objetivo";
             default: return "Target";
@@ -1094,12 +1094,17 @@ public class SuikaDropPlayer : MonoBehaviour
         switch (currentLang)
         {
             case Language.KO: return "다음 과일";
-            case Language.EN: return "Next Fruit";
+            case Language.EN: return OiyoI18n.En("Next Fruit");
             case Language.JA: return "次の果物";
             case Language.ES: return "Siguiente";
             default: return "Next";
         }
     }
+
+    // Page language support beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => currentLang == Language.EN ? OiyoI18n.ForEnglish : currentLang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
 
     GUIStyle GetCenterStyle(Color c)
     {

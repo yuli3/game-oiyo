@@ -3,6 +3,9 @@ using UnityEngine;
 
 public sealed class StacklandsPlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
+    static string F(string en, params object[] args) => string.Format(OiyoI18n.Ui(en, OiyoI18n.Page), args);
     enum CardType
     {
         Villager,
@@ -194,7 +197,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
         SpawnCard(CardType.Rock, new Vector3(3.0f, 0.15f, 1.2f));
         SpawnCard(CardType.Berry, new Vector3(2.0f, 0.15f, -1.8f));
         SpawnCard(CardType.Berry, new Vector3(3.2f, 0.15f, -1.8f));
-        SetBanner("Stack Villagers on resources! Sell extras on the Gold Pad.");
+        SetBanner(U("Stack Villagers on resources! Sell extras on the Gold Pad."));
     }
 
     Card SpawnCard(CardType type, Vector3 pos)
@@ -318,13 +321,13 @@ public sealed class StacklandsPlayer : MonoBehaviour
                 {
                     int val = SellValue(dropped.Type);
                     _coins += val;
-                    SetBanner($"Sold {dropped.Type} for +{val} Coins!");
+                    SetBanner(F("Sold {0} for +{1} Coins!", dropped.Type, val));
                     RemoveCard(dropped);
                     return;
                 }
                 else
                 {
-                    SetBanner("Cannot sell Villagers!");
+                    SetBanner(U("Cannot sell Villagers!"));
                 }
             }
 
@@ -341,7 +344,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
     {
         if (_coins < 3)
         {
-            SetBanner("Need 3 Coins to open a Booster Pack!");
+            SetBanner(U("Need 3 Coins to open a Booster Pack!"));
             return;
         }
         _coins -= 3;
@@ -352,7 +355,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
             var c = SpawnCard(t, new Vector3(-5.0f + i * 1.6f, 0.3f, 2.2f));
             c.Vel = new Vector3(Random.Range(-1.5f, 1.5f), 0f, Random.Range(-1.5f, 1.5f));
         }
-        SetBanner("Opened Booster Pack! +3 Cards");
+        SetBanner(U("Opened Booster Pack! +3 Cards"));
     }
 
     int SellValue(CardType t)
@@ -495,7 +498,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
                     v.MaxHp = 15;
                     ApplyCardArt(v); // repaint the card as a Militia
                     RemoveCard(s);
-                    SetBanner("Trained a Militia Defender!");
+                    SetBanner(U("Trained a Militia Defender!"));
                 }
                 else if (consumeBottom && consumeTop)
                 {
@@ -507,7 +510,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
                     if (result == CardType.House)
                     {
                         SpawnCard(CardType.Villager, spawnPos + new Vector3(1.5f, 0f, 0f));
-                        SetBanner("Built a House! +1 Villager joined!");
+                        SetBanner(U("Built a House! +1 Villager joined!"));
                     }
                 }
                 else
@@ -566,7 +569,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
                         if (g.Hp <= 0)
                         {
                             _coins += 3;
-                            SetBanner("Goblin defeated! +3 Coins");
+                            SetBanner(U("Goblin defeated! +3 Coins"));
                             RemoveCard(g);
                             continue;
                         }
@@ -640,7 +643,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
 
         if (fed < foodNeeded)
         {
-            SetBanner("Starvation! Not enough Berries for all Villagers!");
+            SetBanner(U("Starvation! Not enough Berries for all Villagers!"));
             _gameOver = true;
             return;
         }
@@ -658,7 +661,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
         {
             SpawnCard(CardType.Goblin, new Vector3(Random.Range(-5f, 5f), 0.12f, 4.4f));
         }
-        SetBanner($"Moon {_moon} dawned! {(goblins > 0 ? $"Goblin raid ({goblins})!" : "Peaceful sunrise.")}");
+        SetBanner(F("Moon {0} dawned! {1}", _moon, goblins > 0 ? F("Goblin raid ({0})!", goblins) : U("Peaceful sunrise.")));
     }
 
     void RemoveCard(Card c)
@@ -675,6 +678,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         var bold = new GUIStyle(GUI.skin.box) { fontSize = 14, fontStyle = FontStyle.Bold };
         int berries = 0, villagers = 0;
         for (int i = 0; i < _cards.Count; i++)
@@ -684,8 +688,8 @@ public sealed class StacklandsPlayer : MonoBehaviour
         }
 
         GUI.Box(new Rect(14, 12, 430, 62), "");
-        GUI.Label(new Rect(24, 18, 410, 24), $"CARD VILLAGE  |  MOON {_moon}/{MaxMoons}  |  COINS: {_coins}  |  FOOD: {berries}", bold);
-        GUI.Label(new Rect(24, 44, 410, 22), $"Villagers: {villagers}  •  Next Moon: {Mathf.CeilToInt(MoonDuration - _moonTimer)}s  •  Click Purple Pad (3c) for Pack");
+        GUI.Label(new Rect(24, 18, 410, 24), F("CARD VILLAGE  |  MOON {0}/{1}  |  COINS: {2}  |  FOOD: {3}", _moon, MaxMoons, _coins, berries), bold);
+        GUI.Label(new Rect(24, 44, 410, 22), F("Villagers: {0}  •  Next Moon: {1}s  •  Click Purple Pad (3c) for Pack", villagers, Mathf.CeilToInt(MoonDuration - _moonTimer)));
 
         if (_bannerTimer > 0f)
         {
@@ -719,8 +723,8 @@ public sealed class StacklandsPlayer : MonoBehaviour
         if (_gameOver || _victory)
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 160, Screen.height * 0.5f - 50, 320, 100), "");
-            GUI.Label(new Rect(Screen.width * 0.5f - 140, Screen.height * 0.5f - 32, 280, 28), _victory ? $"VILLAGE SURVIVED ALL {MaxMoons} MOONS!" : "VILLAGE FELL", bold);
-            if (GUI.Button(new Rect(Screen.width * 0.5f - 65, Screen.height * 0.5f + 8, 130, 28), "Play Again (R)"))
+            GUI.Label(new Rect(Screen.width * 0.5f - 140, Screen.height * 0.5f - 32, 280, 28), _victory ? F("VILLAGE SURVIVED ALL {0} MOONS!", MaxMoons) : U("VILLAGE FELL"), bold);
+            if (GUI.Button(new Rect(Screen.width * 0.5f - 65, Screen.height * 0.5f + 8, 130, 28), U("Play Again (R)")))
             {
                 ResetVillage();
             }

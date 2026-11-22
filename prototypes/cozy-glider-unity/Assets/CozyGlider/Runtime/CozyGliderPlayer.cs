@@ -3,6 +3,9 @@ using UnityEngine;
 
 public sealed class CozyGliderPlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
+    static string F(string en, params object[] args) => string.Format(OiyoI18n.Ui(en, OiyoI18n.Page), args);
     struct StageCourse
     {
         public string Name;
@@ -71,7 +74,7 @@ public sealed class CozyGliderPlayer : MonoBehaviour
     bool _stageCleared;
     bool _stageFailed;
     bool _showStageMap;
-    string _banner = "W/S: Pitch (Dive/Climb) • A/D: Turn • Space: Feather Flap!";
+    string _banner = U("W/S: Pitch (Dive/Climb) • A/D: Turn • Space: Feather Flap!");
     float _bannerTimer = 4.5f;
 
     Material _gliderMat;
@@ -263,7 +266,7 @@ public sealed class CozyGliderPlayer : MonoBehaviour
         _showStageMap = false;
 
         GenerateCourseForStage(_stage);
-        SetBanner($"Stage {_stage}/12: {_stageNames[_stage - 1]}");
+        SetBanner(F("Stage {0}/12: {1}", _stage, U(_stageNames[_stage - 1])));
     }
 
     void GenerateCourseForStage(int st)
@@ -354,12 +357,12 @@ public sealed class CozyGliderPlayer : MonoBehaviour
             {
                 _stageCleared = true;
                 _shells += 50 + _stage * 15;
-                SetBanner($"TOUCHDOWN! Stage {_stage} Complete! +Shells!");
+                SetBanner(F("TOUCHDOWN! Stage {0} Complete! +Shells!", _stage));
             }
             else
             {
                 _stageFailed = true;
-                SetBanner("Glider stalled or crash-landed! Press R to relaunch.");
+                SetBanner(U("Glider stalled or crash-landed! Press R to relaunch."));
             }
         }
     }
@@ -380,7 +383,7 @@ public sealed class CozyGliderPlayer : MonoBehaviour
             _feathers--;
             _speed = Mathf.Min(32f, _speed + 7.5f);
             _gliderPos += Vector3.up * 4.2f;
-            SetBanner($"🪶 Feather Flap! Speed {_speed:0} m/s (Feathers: {_feathers}/{_maxFeathers})");
+            SetBanner(F("🪶 Feather Flap! Speed {0:0} m/s (Feathers: {1}/{2})", _speed, _feathers, _maxFeathers));
         }
 
         // Smooth pitch and roll responses
@@ -425,7 +428,7 @@ public sealed class CozyGliderPlayer : MonoBehaviour
                 _ringsCleared++;
                 _shells += 25;
                 _speed = Mathf.Min(32f, _speed + 4f); // Speed ring boost
-                SetBanner($"Ring Passed! ({_ringsCleared}/{_rings.Count}) +25 Shells 🐚");
+                SetBanner(F("Ring Passed! ({0}/{1}) +25 Shells 🐚", _ringsCleared, _rings.Count));
             }
         }
 
@@ -437,7 +440,7 @@ public sealed class CozyGliderPlayer : MonoBehaviour
             if (horizDist < th.Radius && _gliderPos.y < 46f)
             {
                 _gliderPos += Vector3.up * (14.5f * Time.deltaTime);
-                SetBanner("♨️ Inside Thermal Column! Soaring upwards!");
+                SetBanner(U("♨️ Inside Thermal Column! Soaring upwards!"));
             }
         }
 
@@ -450,7 +453,7 @@ public sealed class CozyGliderPlayer : MonoBehaviour
             {
                 _stageCleared = true;
                 _shells += 60 + _stage * 20;
-                SetBanner($"STAGE {_stage} CLEARED! Perfect Hawk Landing!");
+                SetBanner(F("STAGE {0} CLEARED! Perfect Hawk Landing!", _stage));
             }
         }
     }
@@ -465,14 +468,15 @@ public sealed class CozyGliderPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         var bold = new GUIStyle(GUI.skin.box) { fontSize = 14, fontStyle = FontStyle.Bold };
         GUI.Box(new Rect(14, 10, Screen.width - 28, 58), "");
         GUI.Label(new Rect(26, 16, 620, 24),
-            $"COZY GLIDER 3D UNITY  |  STAGE {_stage}/{TotalStages} ({_stageNames[_stage - 1]})  |  RINGS: {_ringsCleared}/{_rings.Count}  |  SHELLS: {_shells} 🐚", bold);
+            F("COZY GLIDER 3D UNITY  |  STAGE {0}/{1} ({2})  |  RINGS: {3}/{4}  |  SHELLS: {5} 🐚", _stage, TotalStages, U(_stageNames[_stage - 1]), _ringsCleared, _rings.Count, _shells), bold);
         GUI.Label(new Rect(26, 38, 620, 20),
-            $"Speed: {_speed:0.0} m/s  •  Alt: {_gliderPos.y:0} m  •  Feathers: 🪶 {_feathers}/{_maxFeathers}  •  Time: {_stageTimer:0.0}s");
+            F("Speed: {0:0.0} m/s  •  Alt: {1:0} m  •  Feathers: 🪶 {2}/{3}  •  Time: {4:0.0}s", _speed, _gliderPos.y, _feathers, _maxFeathers, _stageTimer));
 
-        if (GUI.Button(new Rect(Screen.width - 170, 16, 144, 38), _showStageMap ? "Close Stages" : "12 Stages Map"))
+        if (GUI.Button(new Rect(Screen.width - 170, 16, 144, 38), _showStageMap ? U("Close Stages") : U("12 Stages Map")))
         {
             _showStageMap = !_showStageMap;
         }
@@ -480,14 +484,14 @@ public sealed class CozyGliderPlayer : MonoBehaviour
         if (_showStageMap)
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 280, 80, 560, 330), "");
-            GUI.Label(new Rect(Screen.width * 0.5f - 260, 90, 520, 26), "SELECT GLIDER EXPEDITION (STAGES 1 - 12)", bold);
+            GUI.Label(new Rect(Screen.width * 0.5f - 260, 90, 520, 26), U("SELECT GLIDER EXPEDITION (STAGES 1 - 12)"), bold);
             for (int i = 0; i < TotalStages; i++)
             {
                 int col = i % 3;
                 int row = i / 3;
                 float bx = Screen.width * 0.5f - 260 + col * 176;
                 float by = 126 + row * 64;
-                if (GUI.Button(new Rect(bx, by, 166, 54), $"{_stageNames[i]}\nFeathers: {3 + (i / 4)}"))
+                if (GUI.Button(new Rect(bx, by, 166, 54), F("{0}\nFeathers: {1}", U(_stageNames[i]), 3 + (i / 4))))
                 {
                     StartStage(i + 1);
                 }
@@ -504,24 +508,24 @@ public sealed class CozyGliderPlayer : MonoBehaviour
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 180, Screen.height * 0.5f - 65, 360, 130), "");
             GUI.Label(new Rect(Screen.width * 0.5f - 155, Screen.height * 0.5f - 48, 310, 28),
-                _stageCleared ? $"STAGE {_stage} EXPEDITION COMPLETE!" : $"STAGE {_stage} CRASH-LANDED!", bold);
+                _stageCleared ? F("STAGE {0} EXPEDITION COMPLETE!", _stage) : F("STAGE {0} CRASH-LANDED!", _stage), bold);
             GUI.Label(new Rect(Screen.width * 0.5f - 155, Screen.height * 0.5f - 20, 310, 24),
-                $"Rings: {_ringsCleared}/{_rings.Count} • Time: {_stageTimer:0.0}s • Shells: {_shells} 🐚");
+                F("Rings: {0}/{1} • Time: {2:0.0}s • Shells: {3} 🐚", _ringsCleared, _rings.Count, _stageTimer, _shells));
 
             if (_stageCleared && _stage < TotalStages)
             {
-                if (GUI.Button(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f + 16, 140, 34), $"Next: Stage {_stage + 1}"))
+                if (GUI.Button(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f + 16, 140, 34), F("Next: Stage {0}", _stage + 1)))
                 {
                     StartStage(_stage + 1);
                 }
-                if (GUI.Button(new Rect(Screen.width * 0.5f + 10, Screen.height * 0.5f + 16, 140, 34), "12 Stages Map"))
+                if (GUI.Button(new Rect(Screen.width * 0.5f + 10, Screen.height * 0.5f + 16, 140, 34), U("12 Stages Map")))
                 {
                     _showStageMap = true;
                 }
             }
             else
             {
-                if (GUI.Button(new Rect(Screen.width * 0.5f - 70, Screen.height * 0.5f + 16, 140, 34), "Relaunch (R)"))
+                if (GUI.Button(new Rect(Screen.width * 0.5f - 70, Screen.height * 0.5f + 16, 140, 34), U("Relaunch (R)")))
                 {
                     StartStage(_stage);
                 }

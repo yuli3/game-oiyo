@@ -1,0 +1,23 @@
+{
+  "_order": ["ko", "ja", "es", "zh", "fr"],
+  "ore_iron": [null, null, null, null, null],
+  "ore_cobalt": [null, null, null, null, null],
+  "ore_water": [null, null, null, null, null],
+  "flyer": [null, null, null, null, null],
+  "crawler": [null, null, null, null, null],
+  "DRILL DOME DEFENSE": ["드릴 돔 방어전", "ドリルドーム防衛", "DEFENSA DE LA CÚPULA", "钻探穹顶防御", "DÉFENSE DU DÔME FOREUR"],
+  "START EXPEDITION": ["탐사 시작", "探検開始", "EMPEZAR EXPEDICIÓN", "开始探险", "LANCER L'EXPÉDITION"],
+  "DOME HELD — ALL WAVES CLEARED": ["돔 방어 성공 — 모든 웨이브 클리어", "ドーム防衛成功 — 全ウェーブ突破", "CÚPULA RESISTIÓ — TODAS LAS OLEADAS SUPERADAS", "穹顶守住了 — 所有波次已清除", "DÔME TENU — TOUTES LES VAGUES VAINCUES"],
+  "DOME BREACHED": ["돔이 뚫렸다", "ドーム突破された", "CÚPULA ROTA", "穹顶被攻破", "DÔME PERCÉ"],
+  "PLAY AGAIN": ["다시 하기", "もう一度", "JUGAR DE NUEVO", "再玩一次", "REJOUER"],
+  "WASD / Drag: Jetpack Drill & Tether Ore back to Center Shaft\nMouse Aim + Click/Space: Fire Dome Laser during Wave Defense\n1-4 Keys: Live Upgrades (Drill / Jetpack / Laser / Armor)": ["WASD / 드래그: 제트팩 드릴로 파고 광석을 중앙 갱도로 끌어오기\n마우스 조준 + 클릭/Space: 웨이브 방어 중 돔 레이저 발사\n1-4 키: 즉시 업그레이드 (드릴 / 제트팩 / 레이저 / 장갑)", "WASD / ドラッグ: ジェットパックで掘り、鉱石を中央坑へ運ぶ\nマウスで狙い + クリック/Space: 防衛中にドームレーザー発射\n1-4 キー: 即時強化 (ドリル / ジェット / レーザー / 装甲)", "WASD / Arrastrar: perfora con el jetpack y lleva el mineral al pozo central\nApunta con el ratón + clic/Espacio: dispara el láser durante la defensa\nTeclas 1-4: mejoras (taladro / jetpack / láser / blindaje)", "WASD / 拖动：喷气背包钻探，把矿石拖回中央竖井\n鼠标瞄准 + 点击/空格：防御波次中发射穹顶激光\n1-4 键：即时升级 (钻头 / 喷气背包 / 激光 / 装甲)", "ZQSD / Glisser : forez au jetpack et ramenez le minerai au puits central\nVisée souris + clic/Espace : tirez au laser pendant la défense\nTouches 1-4 : améliorations (foreuse / jetpack / laser / blindage)"],
+  "SCORE {0}": ["점수 {0}", "スコア {0}", "PUNTOS {0}", "分数 {0}", "SCORE {0}"],
+  "[1] Drill Lv.{0} ({1} Fe)": ["[1] 드릴 Lv.{0} ({1} 철)", "[1] ドリル Lv.{0} ({1} 鉄)", "[1] Taladro Nv.{0} ({1} Fe)", "[1] 钻头 Lv.{0} ({1} 铁)", "[1] Foreuse Niv.{0} ({1} Fe)"],
+  "[2] Jet Lv.{0} ({1} Fe,1 W)": ["[2] 제트 Lv.{0} ({1} 철, 물 1)", "[2] ジェット Lv.{0} ({1} 鉄, 水 1)", "[2] Jet Nv.{0} ({1} Fe, 1 agua)", "[2] 喷气 Lv.{0} ({1} 铁, 1 水)", "[2] Jet Niv.{0} ({1} Fe, 1 eau)"],
+  "[3] Laser Lv.{0} ({1} Co)": ["[3] 레이저 Lv.{0} ({1} 코발트)", "[3] レーザー Lv.{0} ({1} コバルト)", "[3] Láser Nv.{0} ({1} Co)", "[3] 激光 Lv.{0} ({1} 钴)", "[3] Laser Niv.{0} ({1} Co)"],
+  "[4] Armor Lv.{0} (2 Fe,1 Co)": ["[4] 장갑 Lv.{0} (철 2, 코발트 1)", "[4] 装甲 Lv.{0} (鉄 2, コバルト 1)", "[4] Blindaje Nv.{0} (2 Fe, 1 Co)", "[4] 装甲 Lv.{0} (2 铁, 1 钴)", "[4] Blindage Niv.{0} (2 Fe, 1 Co)"],
+  "DOME HP {0}/{1}   IRON {2}   COBALT {3}   WATER {4}": ["돔 HP {0}/{1}   철 {2}   코발트 {3}   물 {4}", "ドーム HP {0}/{1}   鉄 {2}   コバルト {3}   水 {4}", "CÚPULA PV {0}/{1}   HIERRO {2}   COBALTO {3}   AGUA {4}", "穹顶 HP {0}/{1}   铁 {2}   钴 {3}   水 {4}", "DÔME PV {0}/{1}   FER {2}   COBALT {3}   EAU {4}"],
+  "Reached Wave {0} · Ores Delivered: {1}\nFinal Score: {2}": ["도달 웨이브 {0} · 운반한 광석: {1}\n최종 점수: {2}", "到達ウェーブ {0} · 運んだ鉱石: {1}\n最終スコア: {2}", "Oleada alcanzada {0} · Minerales entregados: {1}\nPuntuación final: {2}", "到达第 {0} 波 · 运回矿石：{1}\n最终分数：{2}", "Vague atteinte {0} · Minerai livré : {1}\nScore final : {2}"],
+  "WAVE {0}/{1} DEFENSE! ({2} Hostiles)": ["웨이브 {0}/{1} 방어! (적 {2})", "ウェーブ {0}/{1} 防衛！(敵 {2})", "¡DEFENSA OLEADA {0}/{1}! ({2} enemigos)", "第 {0}/{1} 波防御！(敌人 {2})", "DÉFENSE VAGUE {0}/{1} ! ({2} ennemis)"],
+  "WAVE {0}/{1} MINING · NEXT WAVE IN {2}s": ["웨이브 {0}/{1} 채굴 · 다음 웨이브까지 {2}초", "ウェーブ {0}/{1} 採掘 · 次まで {2}秒", "OLEADA {0}/{1} MINERÍA · SIGUIENTE EN {2}s", "第 {0}/{1} 波 采矿 · 下一波 {2} 秒后", "VAGUE {0}/{1} FORAGE · PROCHAINE DANS {2}s"]
+}

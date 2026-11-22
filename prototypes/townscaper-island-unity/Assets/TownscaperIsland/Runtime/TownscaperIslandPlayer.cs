@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class TownscaperIslandPlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
     // Page language (?lang=): Korean when ko, English for every other locale.
     static bool _isKoInit, _isKo;
     static bool IsKo { get { if (!_isKoInit) { _isKo = OiyoLang.Pick("ko", "en") == "ko"; _isKoInit = true; } return _isKo; } }
-    static string T(string ko, string en) => IsKo ? ko : en;
+    static string T(string ko, string en) => IsKo ? ko : OiyoI18n.Ui(en, OiyoI18n.Page);
     const int GridSize = 8;
     const int MaxHeight = 6;
     const float BlockWidth = 1.0f;
@@ -791,7 +793,7 @@ public class TownscaperIslandPlayer : MonoBehaviour
         };
 
         string stageTitle = currentStageIndex >= 0
-            ? "Stage " + (currentStageIndex + 1) + ". " + (IsKo ? Stages[currentStageIndex].titleKo + " (" + Stages[currentStageIndex].titleEn + ")" : Stages[currentStageIndex].titleEn)
+            ? U("Stage ") + (currentStageIndex + 1) + ". " + (IsKo ? Stages[currentStageIndex].titleKo + " (" + Stages[currentStageIndex].titleEn + ")" : U(Stages[currentStageIndex].titleEn))
             : T("자유 창작 샌드박스 (Free Sandbox)", "Free Sandbox");
 
         string objective = currentStageIndex >= 0
@@ -873,7 +875,7 @@ public class TownscaperIslandPlayer : MonoBehaviour
             normal = { textColor = Color.white }
         };
 
-        GUI.Label(new Rect(bannerRect.x, bannerRect.y + 15, bannerRect.width, 35), "★ STAGE CLEAR! ★", clearStyle);
+        GUI.Label(new Rect(bannerRect.x, bannerRect.y + 15, bannerRect.width, 35), U("★ STAGE CLEAR! ★"), clearStyle);
         GUI.Label(new Rect(bannerRect.x, bannerRect.y + 55, bannerRect.width, 25), T("지중해 섬마을 과제를 완벽히 달성했습니다!", "Island town goal complete!"), msgStyle);
 
         if (currentStageIndex < Stages.Length - 1)

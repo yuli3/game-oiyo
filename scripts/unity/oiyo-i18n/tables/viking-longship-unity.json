@@ -1,0 +1,11 @@
+{
+  "_order": ["ko", "ja", "es", "zh", "fr"],
+  "READY (SHIFT / E)": ["준비 완료 (SHIFT / E)", "準備完了 (SHIFT / E)", "LISTO (SHIFT / E)", "就绪 (SHIFT / E)", "PRÊT (SHIFT / E)"],
+  "SHIPWRECKED IN VALHALLA SEAS": ["발할라 바다에서 난파했다", "ヴァルハラの海で難破した", "NAUFRAGIO EN LOS MARES DE VALHALLA", "在瓦尔哈拉之海沉没", "NAUFRAGE DANS LES MERS DU VALHALLA"],
+  "Sail Again (R)": ["다시 출항 (R)", "再出航 (R)", "Zarpar de nuevo (R)", "再次出航 (R)", "Repartir (R)"],
+  "VIKING LONGSHIP  |  WAVE {0}/{1}  |  SILVER {2}": ["바이킹 롱십  |  웨이브 {0}/{1}  |  은 {2}", "ヴァイキング船  |  ウェーブ {0}/{1}  |  銀 {2}", "DRAKKAR VIKINGO  |  OLEADA {0}/{1}  |  PLATA {2}", "维京长船  |  第 {0}/{1} 波  |  白银 {2}", "DRAKKAR VIKING  |  VAGUE {0}/{1}  |  ARGENT {2}"],
+  "HULL: {0}/{1}   SUNK: {2}   WIND: {3}°": ["선체: {0}/{1}   격침: {2}   바람: {3}°", "船体: {0}/{1}   撃沈: {2}   風: {3}°", "CASCO: {0}/{1}   HUNDIDOS: {2}   VIENTO: {3}°", "船体：{0}/{1}   击沉：{2}   风向：{3}°", "COQUE : {0}/{1}   COULÉS : {2}   VENT : {3}°"],
+  "WASD/Click Steer • Space/Click Fire • Surge: {0}": ["WASD/클릭 조타 • Space/클릭 발사 • 돌진: {0}", "WASD/クリックで操舵 • Space/クリックで射撃 • 突進: {0}", "WASD/clic timón • Espacio/clic disparar • Embestida: {0}", "WASD/点击转向 • 空格/点击开火 • 冲刺：{0}", "ZQSD/clic barre • Espace/clic tir • Élan : {0}"],
+  "ALL {0} WAVES CLEARED!": ["{0}개 웨이브 모두 클리어!", "全 {0} ウェーブ突破！", "¡LAS {0} OLEADAS SUPERADAS!", "全部 {0} 波已清除！", "LES {0} VAGUES VAINCUES !"],
+  "Wave {0} • Silver {1} • Ships Sunk {2}": ["웨이브 {0} • 은 {1} • 격침 {2}", "ウェーブ {0} • 銀 {1} • 撃沈 {2}", "Oleada {0} • Plata {1} • Hundidos {2}", "第 {0} 波 • 白银 {1} • 击沉 {2}", "Vague {0} • Argent {1} • Coulés {2}"]
+}

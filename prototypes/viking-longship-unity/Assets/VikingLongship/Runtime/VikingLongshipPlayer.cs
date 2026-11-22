@@ -3,6 +3,9 @@ using UnityEngine;
 
 public sealed class VikingLongshipPlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
+    static string F(string en, params object[] args) => string.Format(OiyoI18n.Ui(en, OiyoI18n.Page), args);
     struct WakeParticle
     {
         public GameObject Go;
@@ -671,19 +674,20 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         var boxStyle = new GUIStyle(GUI.skin.box) { fontSize = 15, fontStyle = FontStyle.Bold };
         GUI.Box(new Rect(14, 14, 440, 92), "");
-        GUI.Label(new Rect(26, 22, 420, 24), $"VIKING LONGSHIP  |  WAVE {_wave}/{FinalWave}  |  SILVER {_silver}", boxStyle);
-        GUI.Label(new Rect(26, 48, 320, 22), $"HULL: {_hull}/{MaxHull}   SUNK: {_sunkCount}   WIND: {Mathf.RoundToInt(_windAngleDeg)}°");
-        string boostTxt = _boostCooldown <= 0f ? "READY (SHIFT / E)" : $"{_boostCooldown:0.0}s";
-        GUI.Label(new Rect(26, 72, 320, 22), $"WASD/Click Steer • Space/Click Fire • Surge: {boostTxt}");
+        GUI.Label(new Rect(26, 22, 420, 24), F("VIKING LONGSHIP  |  WAVE {0}/{1}  |  SILVER {2}", _wave, FinalWave, _silver), boxStyle);
+        GUI.Label(new Rect(26, 48, 320, 22), F("HULL: {0}/{1}   SUNK: {2}   WIND: {3}°", _hull, MaxHull, _sunkCount, Mathf.RoundToInt(_windAngleDeg)));
+        string boostTxt = _boostCooldown <= 0f ? U("READY (SHIFT / E)") : $"{_boostCooldown:0.0}s";
+        GUI.Label(new Rect(26, 72, 320, 22), F("WASD/Click Steer • Space/Click Fire • Surge: {0}", boostTxt));
 
         if (_gameOver)
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 170, Screen.height * 0.5f - 55, 340, 110), "");
-            GUI.Label(new Rect(Screen.width * 0.5f - 140, Screen.height * 0.5f - 35, 280, 30), (_victory ? $"ALL {FinalWave} WAVES CLEARED!" : "SHIPWRECKED IN VALHALLA SEAS"), boxStyle);
-            GUI.Label(new Rect(Screen.width * 0.5f - 140, Screen.height * 0.5f - 5, 280, 24), $"Wave {_wave} • Silver {_silver} • Ships Sunk {_sunkCount}");
-            if (GUI.Button(new Rect(Screen.width * 0.5f - 70, Screen.height * 0.5f + 22, 140, 28), "Sail Again (R)"))
+            GUI.Label(new Rect(Screen.width * 0.5f - 140, Screen.height * 0.5f - 35, 280, 30), (_victory ? F("ALL {0} WAVES CLEARED!", FinalWave) : U("SHIPWRECKED IN VALHALLA SEAS")), boxStyle);
+            GUI.Label(new Rect(Screen.width * 0.5f - 140, Screen.height * 0.5f - 5, 280, 24), F("Wave {0} • Silver {1} • Ships Sunk {2}", _wave, _silver, _sunkCount));
+            if (GUI.Button(new Rect(Screen.width * 0.5f - 70, Screen.height * 0.5f + 22, 140, 28), U("Sail Again (R)")))
             {
                 Restart();
             }

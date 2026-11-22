@@ -8,6 +8,11 @@ public class WhackAMolePlayer : MonoBehaviour
     public enum Language { KO, EN, JA, ES }
     private Language currentLang = Language.KO;
 
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => currentLang == Language.EN ? OiyoI18n.ForEnglish : currentLang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
+
     public class LocalizedText
     {
         public string ko;
@@ -28,7 +33,7 @@ public class WhackAMolePlayer : MonoBehaviour
             switch (lang)
             {
                 case Language.KO: return ko;
-                case Language.EN: return en;
+                case Language.EN: return OiyoI18n.En(en);
                 case Language.JA: return ja;
                 case Language.ES: return es;
                 default: return en;
@@ -689,7 +694,7 @@ public class WhackAMolePlayer : MonoBehaviour
                 currentCombo = 0;
                 shakeTrauma = 0.65f;
                 PlayExplosionSound();
-                SpawnFloatingFeedback("-200 BOOM!", holePositions[holeIdx], Color.red);
+                SpawnFloatingFeedback(U("-200 BOOM!"), holePositions[holeIdx], Color.red);
                 SpawnStars(holePositions[holeIdx], Color.red);
             }
             else if (critter.type == CritterType.HardHat && critter.hp > 0)
@@ -698,7 +703,7 @@ public class WhackAMolePlayer : MonoBehaviour
                 PlayTone(880f, 0.12f, "square");
                 if (critter.accessoryGo != null) Destroy(critter.accessoryGo);
                 if (critter.headGo != null) critter.headGo.GetComponent<Renderer>().material.mainTexture = ArtTex("critter_HardHat_cracked");
-                SpawnFloatingFeedback("CRACK!", holePositions[holeIdx], Color.yellow);
+                SpawnFloatingFeedback(U("CRACK!"), holePositions[holeIdx], Color.yellow);
             }
             else
             {
@@ -999,18 +1004,18 @@ public class WhackAMolePlayer : MonoBehaviour
         GUILayout.BeginHorizontal();
 
         StageDef def = stages[currentStageIdx];
-        string title = isEndlessMode ? (currentLang == Language.KO ? "무한 아케이드 모드" : "Endless Mode") : def.name.Get(currentLang);
+        string title = isEndlessMode ? (U("Endless Mode")) : def.name.Get(currentLang);
         GUILayout.Label(string.Format("<b><color=#00f0ff>{0}</color></b>", title), GUILayout.Width(280));
 
         // Score
-        string scoreLabel = currentLang == Language.KO ? "점수" : currentLang == Language.JA ? "スコア" : currentLang == Language.ES ? "Puntos" : "Score";
-        string goalLabel = currentLang == Language.KO ? "목표" : currentLang == Language.JA ? "目標" : currentLang == Language.ES ? "Meta" : "Goal";
+        string scoreLabel = U("Score");
+        string goalLabel = U("Goal");
         GUILayout.Label(string.Format("🔨 {0}: <b><color=#ffd700>{1}</color></b> ({2}: {3})", scoreLabel, score, goalLabel, def.targetScore), GUILayout.Width(240));
 
         // Combo & Timer
         if (currentCombo > 1)
         {
-            GUILayout.Label(string.Format("🔥 COMBO x{0}!", currentCombo), GUILayout.Width(110));
+            GUILayout.Label("🔥 " + F("COMBO x{0}!", currentCombo), GUILayout.Width(110));
         }
 
         string timeStr = isEndlessMode ? "∞" : string.Format("⏱️ {0:F0}s", roundTimeRemaining);
@@ -1019,7 +1024,7 @@ public class WhackAMolePlayer : MonoBehaviour
         GUILayout.FlexibleSpace();
 
         // Stage Select Button
-        string stageBtn = currentLang == Language.KO ? "📑 스테이지" : currentLang == Language.JA ? "📑 ステージ" : currentLang == Language.ES ? "📑 Etapas" : "📑 Stages";
+        string stageBtn = U("📑 Stages");
         if (GUILayout.Button(stageBtn, GUILayout.Width(110), GUILayout.Height(34)))
         {
             showStageSelect = !showStageSelect;
@@ -1075,7 +1080,7 @@ public class WhackAMolePlayer : MonoBehaviour
         GUI.Box(new Rect(Screen.width * 0.5f - 240, Screen.height * 0.5f - 230, 480, 460), "");
         GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 220, Screen.height * 0.5f - 210, 440, 420));
 
-        string mapHeader = currentLang == Language.KO ? "<b><color=#00f0ff>아케이드 스테이지 선택 (12 Stages)</color></b>" : "<b><color=#00f0ff>Select Stage (12 Stages)</color></b>";
+        string mapHeader = U("<b><color=#00f0ff>Select Stage (12 Stages)</color></b>");
         GUILayout.Label(mapHeader, GUILayout.Height(30));
 
         for (int i = 0; i < stages.Count; i++)
@@ -1096,14 +1101,14 @@ public class WhackAMolePlayer : MonoBehaviour
         GUILayout.Space(8);
 
         // Endless Mode Toggle
-        string endlessTxt = isEndlessMode ? (currentLang == Language.KO ? "★ 무한 모드 플레이 중 ★" : "★ Playing Endless Mode ★") : (currentLang == Language.KO ? "무한 자유 아케이드 전환" : "Switch to Endless Mode");
+        string endlessTxt = isEndlessMode ? (U("★ Playing Endless Mode ★")) : (U("Switch to Endless Mode"));
         if (GUILayout.Button(endlessTxt, GUILayout.Height(38)))
         {
             isEndlessMode = true;
             LoadStage(0);
         }
 
-        if (GUILayout.Button(currentLang == Language.KO ? "닫기" : "Close", GUILayout.Height(36)))
+        if (GUILayout.Button(U("Close"), GUILayout.Height(36)))
         {
             showStageSelect = false;
         }
@@ -1116,20 +1121,20 @@ public class WhackAMolePlayer : MonoBehaviour
         GUI.Box(new Rect(Screen.width * 0.5f - 190, Screen.height * 0.5f - 140, 380, 280), "");
         GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 170, Screen.height * 0.5f - 120, 340, 240));
 
-        GUILayout.Label("<b><color=#ef4444>TIME'S UP! GAME OVER</color></b>", GUILayout.Height(30));
-        GUILayout.Label(string.Format("Score: <b><color=#ffd700>{0}</color></b>", score));
-        GUILayout.Label(string.Format("Moles Whacked: <b><color=#38bdf8>{0}</color></b>", molesWhacked));
-        GUILayout.Label(string.Format("Max Combo: <b><color=#f59e0b>{0}</color></b>", maxComboAchieved));
+        GUILayout.Label("<b><color=#ef4444>" + U("TIME'S UP! GAME OVER") + "</color></b>", GUILayout.Height(30));
+        GUILayout.Label(U("Score") + string.Format(": <b><color=#ffd700>{0}</color></b>", score));
+        GUILayout.Label(U("Moles Whacked") + string.Format(": <b><color=#38bdf8>{0}</color></b>", molesWhacked));
+        GUILayout.Label(U("Max Combo") + string.Format(": <b><color=#f59e0b>{0}</color></b>", maxComboAchieved));
 
         GUILayout.Space(12);
 
-        string retryTxt = currentLang == Language.KO ? "다시 도전" : "Retry";
+        string retryTxt = U("Retry");
         if (GUILayout.Button(retryTxt, GUILayout.Height(40)))
         {
             LoadStage(currentStageIdx);
         }
 
-        string stageTxt = currentLang == Language.KO ? "스테이지 목록" : "Stage Select";
+        string stageTxt = U("Stage Select");
         if (GUILayout.Button(stageTxt, GUILayout.Height(36)))
         {
             showStageSelect = true;
@@ -1143,16 +1148,16 @@ public class WhackAMolePlayer : MonoBehaviour
         GUI.Box(new Rect(Screen.width * 0.5f - 190, Screen.height * 0.5f - 140, 380, 280), "");
         GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 170, Screen.height * 0.5f - 120, 340, 240));
 
-        GUILayout.Label("<b><color=#22c55e>★ STAGE CLEARED! ★</color></b>", GUILayout.Height(30));
-        GUILayout.Label(string.Format("Final Score: <b><color=#ffd700>{0}</color></b>", score));
-        GUILayout.Label(string.Format("Moles Whacked: <b><color=#38bdf8>{0}</color></b>", molesWhacked));
-        GUILayout.Label(string.Format("Max Combo: <b><color=#f59e0b>{0}</color></b>", maxComboAchieved));
+        GUILayout.Label("<b><color=#22c55e>★ " + U("STAGE CLEARED!") + " ★</color></b>", GUILayout.Height(30));
+        GUILayout.Label(U("Final Score") + string.Format(": <b><color=#ffd700>{0}</color></b>", score));
+        GUILayout.Label(U("Moles Whacked") + string.Format(": <b><color=#38bdf8>{0}</color></b>", molesWhacked));
+        GUILayout.Label(U("Max Combo") + string.Format(": <b><color=#f59e0b>{0}</color></b>", maxComboAchieved));
 
         GUILayout.Space(12);
 
         if (currentStageIdx < stages.Count - 1)
         {
-            string nextTxt = currentLang == Language.KO ? "다음 스테이지 →" : "Next Stage →";
+            string nextTxt = U("Next Stage →");
             if (GUILayout.Button(nextTxt, GUILayout.Height(42)))
             {
                 LoadStage(currentStageIdx + 1);
@@ -1160,11 +1165,11 @@ public class WhackAMolePlayer : MonoBehaviour
         }
         else
         {
-            string masterTxt = currentLang == Language.KO ? "★ 12개 전 스테이지 완결! 해머 마스터 달성! ★" : "★ All 12 Stages Mastered! ★";
+            string masterTxt = U("★ All 12 Stages Mastered! ★");
             GUILayout.Label(masterTxt, GUILayout.Height(36));
         }
 
-        string replayTxt = currentLang == Language.KO ? "현재 스테이지 다시하기" : "Replay Stage";
+        string replayTxt = U("Replay Stage");
         if (GUILayout.Button(replayTxt, GUILayout.Height(36)))
         {
             LoadStage(currentStageIdx);

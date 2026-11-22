@@ -7,6 +7,11 @@ public class TwoHandsPlayer : MonoBehaviour
     public enum Language { KO, EN, JA, ES }
     private Language currentLang = Language.KO;
 
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => currentLang == Language.EN ? OiyoI18n.ForEnglish : currentLang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
+
     public enum ObstacleType { Spike, SyncRing, ShieldOrb, BossLaser }
 
     public class TrackObstacle
@@ -411,7 +416,7 @@ public class TwoHandsPlayer : MonoBehaviour
         st.generatePattern(obstacles, transform);
 
         UpdateOrbPositions(true);
-        ShowToast($"{GetLocalizedStageTitle(st)} - START!");
+        ShowToast($"{GetLocalizedStageTitle(st)} - {U("START!")}");
         PlayTone(523.25f, 0.15f, 0f); // Center C5
     }
 
@@ -754,7 +759,7 @@ public class TwoHandsPlayer : MonoBehaviour
             {
                 hasLeftShield = false;
                 shakeTrauma = 0.25f;
-                ShowToast("LEFT SHIELD BROKEN!");
+                ShowToast(U("LEFT SHIELD BROKEN!"));
                 PlayTone(220f, 0.1f, -0.6f);
                 SpawnSparks(leftOrbPos, Color.cyan, 12);
                 return;
@@ -763,7 +768,7 @@ public class TwoHandsPlayer : MonoBehaviour
             {
                 hasRightShield = false;
                 shakeTrauma = 0.25f;
-                ShowToast("RIGHT SHIELD BROKEN!");
+                ShowToast(U("RIGHT SHIELD BROKEN!"));
                 PlayTone(220f, 0.1f, 0.6f);
                 SpawnSparks(rightOrbPos, Color.magenta, 12);
                 return;
@@ -784,7 +789,7 @@ public class TwoHandsPlayer : MonoBehaviour
             }
             else
             {
-                ShowToast($"CRASH! -1 LIFE ({lives} LEFT)");
+                ShowToast(F("CRASH! -1 LIFE ({0} LEFT)", lives));
             }
         }
         else if (ob.type == ObstacleType.SyncRing)
@@ -800,7 +805,7 @@ public class TwoHandsPlayer : MonoBehaviour
                 combo++;
                 score += 500 * combo;
                 shakeTrauma = 0.2f;
-                ShowToast($"★ DUAL SYNC x{combo}! +{500 * combo} ★");
+                ShowToast("★ " + F("DUAL SYNC x{0}! +{1}", combo, 500 * combo) + " ★");
                 PlayTone(880f, 0.15f, 0f);
                 SpawnSparks((leftOrbPos + rightOrbPos) * 0.5f, Color.yellow, 20);
             }
@@ -817,7 +822,7 @@ public class TwoHandsPlayer : MonoBehaviour
             else hasLeftShield = true;
 
             shakeTrauma = 0.15f;
-            ShowToast(ob.isRightTrack ? "RIGHT SHIELD ACQUIRED!" : "LEFT SHIELD ACQUIRED!");
+            ShowToast(ob.isRightTrack ? U("RIGHT SHIELD ACQUIRED!") : U("LEFT SHIELD ACQUIRED!"));
             PlayTone(784f, 0.15f, ob.isRightTrack ? 0.7f : -0.7f);
         }
     }
@@ -942,7 +947,7 @@ public class TwoHandsPlayer : MonoBehaviour
 
         // Title and Stage
         GUILayout.BeginVertical();
-        GUILayout.Label($"<b>TWO HANDS 3D</b> · STAGE {currentStageIndex + 1}/{stages.Count}", GetLabelStyle(16, Color.cyan));
+        GUILayout.Label($"<b>TWO HANDS 3D</b> · {U("STAGE")} {currentStageIndex + 1}/{stages.Count}", GetLabelStyle(16, Color.cyan));
         var st = stages[currentStageIndex];
         GUILayout.Label(GetLocalizedStageTitle(st), GetLabelStyle(12, Color.white));
         GUILayout.EndVertical();
@@ -987,13 +992,13 @@ public class TwoHandsPlayer : MonoBehaviour
         float y = Screen.height - h - 40;
         float w = Screen.width * 0.22f;
 
-        if (GUI.Button(new Rect(20, y, w, h), "◀ LEFT [A]")) SetLeftLane(0);
-        if (GUI.Button(new Rect(25 + w, y, w, h), "LEFT [D] ▶")) SetLeftLane(1);
+        if (GUI.Button(new Rect(20, y, w, h), "◀ " + U("LEFT") + " [A]")) SetLeftLane(0);
+        if (GUI.Button(new Rect(25 + w, y, w, h), U("LEFT") + " [D] ▶")) SetLeftLane(1);
 
         float rStart = Screen.width - w * 2 - 25;
         var st = stages[currentStageIndex];
-        if (GUI.Button(new Rect(rStart, y, w, h), "◀ RIGHT [◀]")) SetRightLane(st.isQuantumInvert ? 1 : 0);
-        if (GUI.Button(new Rect(rStart + w + 5, y, w, h), "RIGHT [▶] ▶")) SetRightLane(st.isQuantumInvert ? 0 : 1);
+        if (GUI.Button(new Rect(rStart, y, w, h), "◀ " + U("RIGHT") + " [◀]")) SetRightLane(st.isQuantumInvert ? 1 : 0);
+        if (GUI.Button(new Rect(rStart + w + 5, y, w, h), U("RIGHT") + " [▶] ▶")) SetRightLane(st.isQuantumInvert ? 0 : 1);
     }
 
     private void DrawStageSelectModal()
@@ -1019,7 +1024,7 @@ public class TwoHandsPlayer : MonoBehaviour
                 if (sIdx < stages.Count)
                 {
                     var st = stages[sIdx];
-                    string btnTxt = $"Stage {sIdx + 1}\n{GetLocalizedStageTitle(st)}";
+                    string btnTxt = $"{U("Stage")} {sIdx + 1}\n{GetLocalizedStageTitle(st)}";
                     if (GUILayout.Button(btnTxt, GUILayout.Height(48)))
                     {
                         showStageSelect = false;
@@ -1112,7 +1117,7 @@ public class TwoHandsPlayer : MonoBehaviour
         switch (currentLang)
         {
             case Language.KO: return stage.titleKo;
-            case Language.EN: return stage.titleEn;
+            case Language.EN: return OiyoI18n.En(stage.titleEn);
             case Language.JA: return stage.titleJa;
             case Language.ES: return stage.titleEs;
             default: return stage.titleKo;
@@ -1124,7 +1129,7 @@ public class TwoHandsPlayer : MonoBehaviour
         switch (currentLang)
         {
             case Language.KO: return ko;
-            case Language.EN: return en;
+            case Language.EN: return OiyoI18n.En(en);
             case Language.JA: return ja;
             case Language.ES: return es;
             default: return ko;

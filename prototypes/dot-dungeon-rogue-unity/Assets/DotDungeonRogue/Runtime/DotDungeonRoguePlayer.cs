@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class DotDungeonRoguePlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
     // Page language (?lang=): Korean when ko, English for every other locale.
     static bool _isKoInit, _isKo;
     static bool IsKo { get { if (!_isKoInit) { _isKo = OiyoLang.Pick("ko", "en") == "ko"; _isKoInit = true; } return _isKo; } }
-    static string T(string ko, string en) => IsKo ? ko : en;
+    static string T(string ko, string en) => IsKo ? ko : OiyoI18n.Ui(en, OiyoI18n.Page);
     const int MapW = 22;
     const int MapH = 16;
     const int MaxFloors = 10;
@@ -339,7 +341,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         BuildMapVisuals();
         ComputeFOV();
 
-        lastCombatLog = IsKo ? "B" + currentFloor + "F: " + def.nameKo + " (" + def.nameEn + ")에 도착했습니다." : "Reached B" + currentFloor + "F: " + def.nameEn + ".";
+        lastCombatLog = IsKo ? "B" + currentFloor + "F: " + def.nameKo + " (" + def.nameEn + ")에 도착했습니다." : U("Reached B") + currentFloor + "F: " + U(def.nameEn) + ".";
         PlaySound(440f, 0.15f);
     }
 
@@ -643,7 +645,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         playerGold += goldGain;
         playerExp += expGain;
 
-        SpawnFloatingText("+" + goldGain + " Gold", playerRenderPos + Vector3.up * 1.5f, new Color(1f, 0.85f, 0.2f));
+        SpawnFloatingText("+" + goldGain + U(" Gold"), playerRenderPos + Vector3.up * 1.5f, new Color(1f, 0.85f, 0.2f));
         PlaySound(880f, 0.18f);
 
         // Level Up check
@@ -655,7 +657,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
             playerHp = playerMaxHp;
             playerAtk += 3;
             playerDef += 1;
-            SpawnFloatingText("LEVEL UP! (Lv." + playerLevel + ")", playerRenderPos + Vector3.up * 2f, Color.cyan);
+            SpawnFloatingText(U("LEVEL UP! (Lv.") + playerLevel + ")", playerRenderPos + Vector3.up * 2f, Color.cyan);
             PlaySound(1046f, 0.3f);
         }
 
@@ -679,20 +681,20 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         {
             potionCount++;
             lastCombatLog = T("보물상자를 열어 [생명력 회복 포션]을 획득했습니다!", "Opened a chest: got a [Healing Potion]!");
-            SpawnFloatingText("+1 Potion", playerRenderPos + Vector3.up * 1.5f, Color.green);
+            SpawnFloatingText(U("+1 Potion"), playerRenderPos + Vector3.up * 1.5f, Color.green);
         }
         else if (rewardType == 1)
         {
             elixirCount++;
             lastCombatLog = T("보물상자를 열어 [힘의 엘릭서]를 획득했습니다!", "Opened a chest: got an [Elixir of Strength]!");
-            SpawnFloatingText("+1 Elixir", playerRenderPos + Vector3.up * 1.5f, new Color(0.8f, 0.4f, 1f));
+            SpawnFloatingText(U("+1 Elixir"), playerRenderPos + Vector3.up * 1.5f, new Color(0.8f, 0.4f, 1f));
         }
         else
         {
             int gold = UnityEngine.Random.Range(20, 45);
             playerGold += gold;
             lastCombatLog = T("보물상자를 열어 ", "Opened a chest: got ") + gold + T(" 골드를 획득했습니다!", " gold!");
-            SpawnFloatingText("+" + gold + " Gold", playerRenderPos + Vector3.up * 1.5f, Color.yellow);
+            SpawnFloatingText("+" + gold + U(" Gold"), playerRenderPos + Vector3.up * 1.5f, Color.yellow);
         }
         PlaySound(784f, 0.2f);
     }
@@ -782,7 +784,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         if (elixirCount <= 0) return;
         elixirCount--;
         playerAtk += 4;
-        SpawnFloatingText("+4 ATK!", playerRenderPos + Vector3.up * 1.5f, Color.magenta);
+        SpawnFloatingText(U("+4 ATK!"), playerRenderPos + Vector3.up * 1.5f, Color.magenta);
         PlaySound(659f, 0.25f);
         AdvanceTurn(T("힘의 엘릭서를 마셔 영구 공격력이 +4 증가했습니다!", "Drank the Elixir of Strength: attack permanently +4!"));
     }
@@ -872,8 +874,8 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         };
 
         FloorDef def = FloorDefs[currentFloor - 1];
-        GUI.Label(new Rect(20, 12, 380, 24), (IsKo ? "B" + currentFloor + "F: " + def.nameKo + " (" + def.nameEn + ")" : "B" + currentFloor + "F: " + def.nameEn), floorStyle);
-        GUI.Label(new Rect(20, 34, 380, 22), "HP: " + playerHp + "/" + playerMaxHp + " | ATK: " + playerAtk + " | DEF: " + playerDef + " | Lv." + playerLevel + " | 💰 " + playerGold + "G", subStyle);
+        GUI.Label(new Rect(20, 12, 380, 24), (IsKo ? "B" + currentFloor + "F: " + def.nameKo + " (" + def.nameEn + ")" : "B" + currentFloor + "F: " + U(def.nameEn)), floorStyle);
+        GUI.Label(new Rect(20, 34, 380, 22), "HP: " + playerHp + "/" + playerMaxHp + U(" | ATK: ") + playerAtk + U(" | DEF: ") + playerDef + " | Lv." + playerLevel + " | 💰 " + playerGold + "G", subStyle);
 
         // Quick Stage Select button
         if (GUI.Button(new Rect(w - 180, 15, 75, 40), T("🗺️ 층 선택", "🗺️ Floors")))
@@ -1012,7 +1014,7 @@ public class DotDungeonRoguePlayer : MonoBehaviour
             Rect btnRect = new Rect(45 + col * (itemW + 10), 105 + row * (itemH + 8), itemW, itemH);
 
             FloorDef f = FloorDefs[i];
-            string bossTag = f.isBossFloor ? " [BOSS!]" : "";
+            string bossTag = f.isBossFloor ? U(" [BOSS!]") : "";
             string text = "B" + f.floor + "F: " + T(f.nameKo, f.nameEn) + bossTag + " (" + T(f.enemyNameKo, f.enemyNameEn) + ")";
 
             if (GUI.Button(btnRect, text))

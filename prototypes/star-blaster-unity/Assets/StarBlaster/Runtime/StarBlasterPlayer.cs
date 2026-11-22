@@ -91,6 +91,11 @@ public class StarBlasterPlayer : MonoBehaviour
     // Game state
     private GameState state = GameState.Ready;
     private BlasterLanguage lang = BlasterLanguage.KO;
+
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => lang == BlasterLanguage.EN ? OiyoI18n.ForEnglish : lang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
     private int currentStageIndex = 0;
     private bool isEndless = false;
     private bool showStageSelect = false;
@@ -1190,7 +1195,7 @@ public class StarBlasterPlayer : MonoBehaviour
         GUI.color = lang == BlasterLanguage.KO ? Color.cyan : Color.white;
         if (GUILayout.Button("KO", GUILayout.Width(45), GUILayout.Height(28))) lang = BlasterLanguage.KO;
         GUI.color = lang == BlasterLanguage.EN ? Color.cyan : Color.white;
-        if (GUILayout.Button("EN", GUILayout.Width(45), GUILayout.Height(28))) lang = BlasterLanguage.EN;
+        if (GUILayout.Button(OiyoI18n.ForEnglish.ToUpperInvariant(), GUILayout.Width(45), GUILayout.Height(28))) lang = BlasterLanguage.EN;
         GUI.color = lang == BlasterLanguage.JA ? Color.cyan : Color.white;
         if (GUILayout.Button("JA", GUILayout.Width(45), GUILayout.Height(28))) lang = BlasterLanguage.JA;
         GUI.color = lang == BlasterLanguage.ES ? Color.cyan : Color.white;
@@ -1226,7 +1231,7 @@ public class StarBlasterPlayer : MonoBehaviour
 
             GUI.color = Color.white;
             string stageTitle = isEndless ? GetText("무한 성간 전투", "Endless Star War", "無限星間戦闘", "Guerra Estelar Infinita")
-                                          : $"Stage {stg.id}: {GetStageName(stg)}";
+                                          : $"{U("Stage")} {stg.id}: {GetStageName(stg)}";
             GUILayout.Label($"<size=17><b>{stageTitle}</b></size>");
 
             GUILayout.Space(4);
@@ -1234,7 +1239,7 @@ public class StarBlasterPlayer : MonoBehaviour
             string targetLabel = isEndless ? "∞" : $"{stg.targetKills}";
             GUILayout.Label($"{killsLabel}: <b>{stageKills} / {targetLabel}</b>");
 
-            GUILayout.Label($"Score: <b>{score}</b> (Best: {bestScore})");
+            GUILayout.Label($"{U("Score")}: <b>{score}</b> ({U("Best")}: {bestScore})");
 
             string shieldLabel = GetText("쉴드", "Shields", "シールド", "Escudos");
             string shieldIcons = shields > 0 ? "🛡️".Repeat(shields) : GetText("없음", "None", "なし", "Ninguno");
@@ -1252,7 +1257,7 @@ public class StarBlasterPlayer : MonoBehaviour
             {
                 GUILayout.Space(6);
                 GUI.color = Color.red;
-                GUILayout.Label($"<b>⚠️ BOSS HP: {bossHp:0} / {bossMaxHp:0}</b>");
+                GUILayout.Label($"<b>⚠️ {U("BOSS HP")}: {bossHp:0} / {bossMaxHp:0}</b>");
                 Rect barRect = GUILayoutUtility.GetRect(220, 10);
                 GUI.Box(barRect, "");
                 GUI.Box(new Rect(barRect.x, barRect.y, barRect.width * (bossHp / bossMaxHp), barRect.height), "");
@@ -1266,7 +1271,7 @@ public class StarBlasterPlayer : MonoBehaviour
             {
                 Rect bombBtnRect = new Rect(w - 110, h - 85, 95, 65);
                 GUI.color = Color.red;
-                if (GUI.Button(bombBtnRect, $"<b>💣 BOMB\n({bombs})</b>"))
+                if (GUI.Button(bombBtnRect, $"<b>💣 {U("BOMB")}\n({bombs})</b>"))
                 {
                     TriggerNovaBomb();
                 }
@@ -1292,7 +1297,7 @@ public class StarBlasterPlayer : MonoBehaviour
 
         GUILayout.BeginArea(new Rect(r.x + 20, r.y + 15, r.width - 40, r.height - 30));
         GUI.color = Color.cyan;
-        GUILayout.Label($"<size=22><b>STAGE {stg.id}: {GetStageName(stg)}</b></size>", GUILayout.Height(32));
+        GUILayout.Label($"<size=22><b>{U("STAGE")} {stg.id}: {GetStageName(stg)}</b></size>", GUILayout.Height(32));
         GUI.color = Color.white;
 
         GUILayout.Space(8);
@@ -1336,7 +1341,7 @@ public class StarBlasterPlayer : MonoBehaviour
 
         GUILayout.Space(8);
         GUILayout.Label($"{GetText("적기 격추수", "Enemies Destroyed", "撃墜数", "Enemigos Destruidos")}: <b>{stageKills}</b>");
-        GUILayout.Label($"Score: <b>{score}</b> (Best: {bestScore})");
+        GUILayout.Label($"{U("Score")}: <b>{score}</b> ({U("Best")}: {bestScore})");
 
         GUILayout.FlexibleSpace();
         GUI.color = Color.green;
@@ -1365,7 +1370,7 @@ public class StarBlasterPlayer : MonoBehaviour
 
         GUILayout.Space(8);
         GUILayout.Label($"{GetText("최종 격추수", "Final Kills", "最終撃墜数", "Bajas Finales")}: <b>{stageKills}</b>");
-        GUILayout.Label($"Score: <b>{score}</b> (Best: {bestScore})");
+        GUILayout.Label($"{U("Score")}: <b>{score}</b> ({U("Best")}: {bestScore})");
 
         GUILayout.FlexibleSpace();
         GUILayout.BeginHorizontal();
@@ -1408,7 +1413,7 @@ public class StarBlasterPlayer : MonoBehaviour
                                 "¡Victoria suprema! Has destruido la nave insignia del Vacío y liberado la galaxia."));
 
         GUILayout.Space(8);
-        GUILayout.Label($"Final Score: <b>{score}</b>");
+        GUILayout.Label($"{U("Final Score")}: <b>{score}</b>");
 
         GUILayout.FlexibleSpace();
         GUI.color = Color.green;
@@ -1456,7 +1461,7 @@ public class StarBlasterPlayer : MonoBehaviour
                     var stg = stages[idx];
                     GUI.color = idx == currentStageIndex ? Color.cyan : Color.white;
 
-                    string btnText = $"<b>Stage {stg.id}</b>\n<size=11>{GetStageName(stg)}</size>";
+                    string btnText = $"<b>{U("Stage")} {stg.id}</b>\n<size=11>{GetStageName(stg)}</size>";
                     if (GUILayout.Button(btnText, GUILayout.Height(85), GUILayout.Width((r.width - 50) / 4f)))
                     {
                         showStageSelect = false;
@@ -1479,7 +1484,7 @@ public class StarBlasterPlayer : MonoBehaviour
         switch (lang)
         {
             case BlasterLanguage.KO: return ko;
-            case BlasterLanguage.EN: return en;
+            case BlasterLanguage.EN: return OiyoI18n.En(en);
             case BlasterLanguage.JA: return ja;
             case BlasterLanguage.ES: return es;
             default: return en;
@@ -1491,7 +1496,7 @@ public class StarBlasterPlayer : MonoBehaviour
         switch (lang)
         {
             case BlasterLanguage.KO: return s.nameKo;
-            case BlasterLanguage.EN: return s.nameEn;
+            case BlasterLanguage.EN: return OiyoI18n.En(s.nameEn);
             case BlasterLanguage.JA: return s.nameJa;
             case BlasterLanguage.ES: return s.nameEs;
             default: return s.nameEn;
@@ -1503,7 +1508,7 @@ public class StarBlasterPlayer : MonoBehaviour
         switch (lang)
         {
             case BlasterLanguage.KO: return s.descKo;
-            case BlasterLanguage.EN: return s.descEn;
+            case BlasterLanguage.EN: return OiyoI18n.En(s.descEn);
             case BlasterLanguage.JA: return s.descJa;
             case BlasterLanguage.ES: return s.descEs;
             default: return s.descEn;

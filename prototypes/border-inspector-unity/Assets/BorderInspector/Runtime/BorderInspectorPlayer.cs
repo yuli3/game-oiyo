@@ -3,6 +3,9 @@ using UnityEngine;
 
 public sealed class BorderInspectorPlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
+    static string F(string en, params object[] args) => string.Format(OiyoI18n.Ui(en, OiyoI18n.Page), args);
     sealed class DeskDoc
     {
         public string Title;
@@ -75,7 +78,7 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
     bool _showStageMap;
     bool _stageComplete;
     bool _stageFailed;
-    string _feedback = "Drag documents across the desk, then click APPROVE or DENY stamp!";
+    string _feedback = U("Drag documents across the desk, then click APPROVE or DENY stamp!");
     float _feedbackTimer = 4f;
 
     Material _deskMat;
@@ -226,7 +229,7 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
 
         BuildQueueForStage(_stage);
         LoadCurrentApplicantDocs();
-        SetFeedback($"Stage {_stage}/12 Started: {_stageTitles[_stage - 1]}");
+        SetFeedback(F("Stage {0}/12 Started: {1}", _stage, U(_stageTitles[_stage - 1])));
     }
 
     void BuildQueueForStage(int st)
@@ -263,51 +266,51 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
                 {
                     name = "Oren Vasko";
                     isWanted = true;
-                    reason = "Fugitive on Most-Wanted Poster!";
+                    reason = U("Fugitive on Most-Wanted Poster!");
                 }
                 else if (st >= 6 && country == "Zelkova")
                 {
-                    reason = "Zelkova nationals banned!";
+                    reason = U("Zelkova nationals banned!");
                 }
                 else if (rulePick == 1 || st == 2)
                 {
                     expiry = "2024-09-01";
-                    reason = "Expired Passport!";
+                    reason = U("Expired Passport!");
                 }
                 else if (rulePick == 2 || st == 3)
                 {
                     seal = false;
-                    reason = "Missing District Stamp Seal!";
+                    reason = U("Missing District Stamp Seal!");
                 }
                 else if ((rulePick == 3 || st == 4) && st >= 4)
                 {
                     permitName = "Fake Alias";
-                    reason = "Name mismatch on Entry Permit!";
+                    reason = U("Name mismatch on Entry Permit!");
                 }
                 else if ((rulePick == 4 || st == 5 || st == 8) && st >= 5)
                 {
                     boothW = passW + (st >= 9 ? 14 : 9);
-                    reason = st >= 9 ? "Weight Discrepancy (+Smuggler Contraband)!" : "Booth scale weight mismatch!";
+                    reason = st >= 9 ? U("Weight Discrepancy (+Smuggler Contraband)!") : U("Booth scale weight mismatch!");
                 }
                 else if (st >= 7 && purpose == "WORK")
                 {
                     hasWorkPass = false;
-                    reason = "Missing Work Pass for WORK purpose!";
+                    reason = U("Missing Work Pass for WORK purpose!");
                 }
                 else if (st >= 8)
                 {
                     hasVaccine = false;
-                    reason = "Missing Polio Vaccine Certificate!";
+                    reason = U("Missing Polio Vaccine Certificate!");
                 }
                 else if (st >= 11 && purpose == "DIPLOMAT")
                 {
                     hasDiplo = false;
-                    reason = "Invalid Diplomatic Seal!";
+                    reason = U("Invalid Diplomatic Seal!");
                 }
                 else
                 {
                     expiry = "2023-11-10";
-                    reason = "Expired Passport!";
+                    reason = U("Expired Passport!");
                 }
             }
             else
@@ -358,26 +361,26 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         _visitorMat.mainTexture = ArtTex("visitor" + (_caseIdx + _stage) % 5);
         // Rulebook Card on Left
         SpawnDoc("RULES (Stage " + _stage + ")",
-            StageRuleSummary(_stage) + ( _stage >= 10 ? "\nWANTED: Oren Vasko" : ""),
+            StageRuleSummary(_stage) + ( _stage >= 10 ? U("\nWANTED: Oren Vasko") : ""),
             new Vector3(-5.0f, 0.12f, -1.0f), new Vector2(2.6f, 3.2f), _ruleMat, false);
 
         // Passport in Center
         SpawnDoc("PASSPORT",
-            $"Name: {c.Name}\nNation: {c.Country}\nExp: {c.Expiry}\nWeight: {c.PassWeight}kg\nSeal: {(c.HasSeal ? "VALID" : "MISSING")}",
+            F("Name: {0}\nNation: {1}\nExp: {2}\nWeight: {3}kg\nSeal: {4}", c.Name, c.Country, c.Expiry, c.PassWeight, c.HasSeal ? U("VALID") : U("MISSING")),
             new Vector3(-1.4f, 0.14f, 0.4f), new Vector2(2.3f, 2.8f), _passportMat, true);
 
         if (c.HasPermit)
         {
             SpawnDoc("ENTRY PERMIT",
-                $"Holder: {c.PermitName}\nPurpose: {c.Purpose}\nAuthorized Entry",
+                F("Holder: {0}\nPurpose: {1}\nAuthorized Entry", c.PermitName, c.Purpose),
                 new Vector3(1.5f, 0.16f, 0.7f), new Vector2(2.2f, 2.6f), _permitMat, false);
         }
 
         if (c.HasWorkPass || c.HasVaccine || c.HasDiplomatSeal)
         {
-            string extra = c.HasWorkPass ? "WORK PASS: Validated" : (c.HasVaccine ? "POLIO VAX: Cleared" : "DIPLO SEAL: Active");
+            string extra = c.HasWorkPass ? U("WORK PASS: Validated") : (c.HasVaccine ? U("POLIO VAX: Cleared") : U("DIPLO SEAL: Active"));
             SpawnDoc("SUPPLEMENT",
-                $"Holder: {c.Name}\n{extra}\nScale Wt: {c.BoothWeight}kg",
+                F("Holder: {0}\n{1}\nScale Wt: {2}kg", c.Name, extra, c.BoothWeight),
                 new Vector3(1.6f, 0.18f, -2.1f), new Vector2(2.2f, 2.0f), _cardMat, false);
         }
     }
@@ -445,7 +448,7 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         if (_shiftTimer <= 0f)
         {
             _stageFailed = true;
-            SetFeedback("Shift timed out before processing all entrants!");
+            SetFeedback(U("Shift timed out before processing all entrants!"));
             return;
         }
 
@@ -516,12 +519,12 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         if (approve == c.ShouldApprove)
         {
             _credits += 10;
-            SetFeedback(approve ? $"APPROVED {c.Name} (+10c)" : $"DENIED {c.Name} (+10c): {c.ViolationReason}");
+            SetFeedback(approve ? F("APPROVED {0} (+10c)", c.Name) : F("DENIED {0} (+10c): {1}", c.Name, U(c.ViolationReason)));
         }
         else
         {
             _citations++;
-            SetFeedback($"CITATION! Wrong call on {c.Name}: {(string.IsNullOrEmpty(c.ViolationReason) ? "Valid documents!" : c.ViolationReason)}");
+            SetFeedback(F("CITATION! Wrong call on {0}: {1}", c.Name, string.IsNullOrEmpty(c.ViolationReason) ? U("Valid documents!") : U(c.ViolationReason)));
             if (_citations >= MaxCitations)
             {
                 _stageFailed = true;
@@ -542,14 +545,15 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         var bold = new GUIStyle(GUI.skin.box) { fontSize = 14, fontStyle = FontStyle.Bold };
         GUI.Box(new Rect(14, 10, Screen.width - 28, 60), "");
         GUI.Label(new Rect(26, 16, 620, 24),
-            $"BORDER INSPECTOR UNITY  |  STAGE {_stage}/{TotalStages} ({_stageTitles[_stage - 1]})", bold);
+            F("BORDER INSPECTOR UNITY  |  STAGE {0}/{1} ({2})", _stage, TotalStages, U(_stageTitles[_stage - 1])), bold);
         GUI.Label(new Rect(26, 40, 620, 20),
-            $"Entrant {_caseIdx + 1}/{_queue.Count}  •  Credits: {_credits}₵  •  Citations: {_citations}/{MaxCitations}  •  Shift Left: {Mathf.CeilToInt(_shiftTimer)}s");
+            F("Entrant {0}/{1}  •  Credits: {2}₵  •  Citations: {3}/{4}  •  Shift Left: {5}s", _caseIdx + 1, _queue.Count, _credits, _citations, MaxCitations, Mathf.CeilToInt(_shiftTimer)));
 
-        if (GUI.Button(new Rect(Screen.width - 170, 18, 144, 38), _showStageMap ? "Close Stages" : "12 Stages Map"))
+        if (GUI.Button(new Rect(Screen.width - 170, 18, 144, 38), _showStageMap ? U("Close Stages") : U("12 Stages Map")))
         {
             _showStageMap = !_showStageMap;
         }
@@ -557,14 +561,14 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         if (_showStageMap)
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 280, 90, 560, 320), "");
-            GUI.Label(new Rect(Screen.width * 0.5f - 260, 100, 520, 26), "SELECT BORDER SHIFT (STAGES 1 - 12)", bold);
+            GUI.Label(new Rect(Screen.width * 0.5f - 260, 100, 520, 26), U("SELECT BORDER SHIFT (STAGES 1 - 12)"), bold);
             for (int i = 0; i < TotalStages; i++)
             {
                 int col = i % 3;
                 int row = i / 3;
                 float bx = Screen.width * 0.5f - 260 + col * 176;
                 float by = 138 + row * 64;
-                if (GUI.Button(new Rect(bx, by, 166, 54), $"Stage {i + 1}\n{_stageTitles[i].Replace($"Day {i + 1}: ", "")}"))
+                if (GUI.Button(new Rect(bx, by, 166, 54), F("Stage {0}", i + 1) + "\n" + U(_stageTitles[i])))
                 {
                     StartStage(i + 1);
                 }
@@ -581,21 +585,21 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
             if (sp.z <= 0f) continue;
             float sx = sp.x;
             float sy = Screen.height - sp.y;
-            GUI.Box(new Rect(sx - 85, sy - 54, 170, 108), $"{d.Title}\n{d.BodyText}", docStyle);
+            GUI.Box(new Rect(sx - 85, sy - 54, 170, 108), U(d.Title) + "\n" + d.BodyText, docStyle);
         }
 
         // Booth scale readout & Stamp buttons
         if (_caseIdx < _queue.Count)
         {
             var c = _queue[_caseIdx];
-            GUI.Box(new Rect(18, 80, 230, 52), $"BOOTH SCALE: {c.BoothWeight} kg\nTODAY: 2026-11-14", bold);
+            GUI.Box(new Rect(18, 80, 230, 52), F("BOOTH SCALE: {0} kg\nTODAY: 2026-11-14", c.BoothWeight), bold);
         }
 
-        if (GUI.Button(new Rect(Screen.width - 170, Screen.height - 110, 148, 42), "APPROVE (A)"))
+        if (GUI.Button(new Rect(Screen.width - 170, Screen.height - 110, 148, 42), U("APPROVE (A)")))
         {
             ApplyDecision(true);
         }
-        if (GUI.Button(new Rect(Screen.width - 170, Screen.height - 60, 148, 42), "DENY (D)"))
+        if (GUI.Button(new Rect(Screen.width - 170, Screen.height - 60, 148, 42), U("DENY (D)")))
         {
             ApplyDecision(false);
         }
@@ -609,24 +613,24 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 180, Screen.height * 0.5f - 65, 360, 130), "");
             GUI.Label(new Rect(Screen.width * 0.5f - 160, Screen.height * 0.5f - 48, 320, 28),
-                _stageComplete ? $"STAGE {_stage} SHIFT CLEARED!" : $"STAGE {_stage} FAILED ({_citations} CITATIONS)", bold);
+                _stageComplete ? F("STAGE {0} SHIFT CLEARED!", _stage) : F("STAGE {0} FAILED ({1} CITATIONS)", _stage, _citations), bold);
             GUI.Label(new Rect(Screen.width * 0.5f - 160, Screen.height * 0.5f - 20, 320, 24),
-                $"Credits: {_credits}₵ • Stage {_stage}/{TotalStages}");
+                F("Credits: {0}₵ • Stage {1}/{2}", _credits, _stage, TotalStages));
 
             if (_stageComplete && _stage < TotalStages)
             {
-                if (GUI.Button(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f + 16, 140, 34), $"Next: Stage {_stage + 1}"))
+                if (GUI.Button(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f + 16, 140, 34), F("Next: Stage {0}", _stage + 1)))
                 {
                     StartStage(_stage + 1);
                 }
-                if (GUI.Button(new Rect(Screen.width * 0.5f + 10, Screen.height * 0.5f + 16, 140, 34), "Stage Select"))
+                if (GUI.Button(new Rect(Screen.width * 0.5f + 10, Screen.height * 0.5f + 16, 140, 34), U("Stage Select")))
                 {
                     _showStageMap = true;
                 }
             }
             else
             {
-                if (GUI.Button(new Rect(Screen.width * 0.5f - 70, Screen.height * 0.5f + 16, 140, 34), "Retry Shift (R)"))
+                if (GUI.Button(new Rect(Screen.width * 0.5f - 70, Screen.height * 0.5f + 16, 140, 34), U("Retry Shift (R)")))
                 {
                     StartStage(_stage);
                 }

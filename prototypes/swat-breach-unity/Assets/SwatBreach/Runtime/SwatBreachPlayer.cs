@@ -8,6 +8,11 @@ public class SwatBreachPlayer : MonoBehaviour
     public enum Language { KO, EN, JA, ES }
     private Language currentLang = Language.KO;
 
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => currentLang == Language.EN ? OiyoI18n.ForEnglish : currentLang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
+
     public enum TileType { Floor, Wall, DoorClosed, DoorOpen, Cover }
     public enum SuspectType { Thug, Shotgunner, Sniper, JuggernautBoss, Bomber }
 
@@ -31,7 +36,7 @@ public class SwatBreachPlayer : MonoBehaviour
             switch (lang)
             {
                 case Language.KO: return ko;
-                case Language.EN: return en;
+                case Language.EN: return OiyoI18n.En(en);
                 case Language.JA: return ja;
                 case Language.ES: return es;
                 default: return en;
@@ -851,7 +856,7 @@ public class SwatBreachPlayer : MonoBehaviour
         alpha.waypointIdx = 0;
         bravo.waypointIdx = 0;
         PlayClip(sndRadio, 1f);
-        SpawnFloatText("3, 2, 1, EXECUTE BREACH!", Vector3.zero, Color.yellow);
+        SpawnFloatText(U("3, 2, 1, EXECUTE BREACH!"), Vector3.zero, Color.yellow);
     }
 
     void Update()
@@ -946,7 +951,7 @@ public class SwatBreachPlayer : MonoBehaviour
                     h.isRescued = true;
                     totalScore += 500;
                     PlayClip(sndHostageSafe, 1.0f);
-                    SpawnFloatText("HOSTAGE RESCUED! +500", h.pos, Color.green);
+                    SpawnFloatText(U("HOSTAGE RESCUED! +500"), h.pos, Color.green);
                     Destroy(h.go);
                 }
             }
@@ -961,7 +966,7 @@ public class SwatBreachPlayer : MonoBehaviour
                 currentBomb.isDefused = true;
                 totalScore += 1000;
                 PlayClip(sndHostageSafe, 1.0f);
-                SpawnFloatText("BOMB DEFUSED! +1000", bWorld, Color.yellow);
+                SpawnFloatText(U("BOMB DEFUSED! +1000"), bWorld, Color.yellow);
                 Destroy(currentBomb.go);
             }
         }
@@ -1041,7 +1046,7 @@ public class SwatBreachPlayer : MonoBehaviour
 
         PlayClip(sndDoorBreach, 1.0f);
         cameraTrauma = Mathf.Clamp01(cameraTrauma + 0.35f);
-        SpawnFloatText("DOOR BREACHED!", GridToWorld(x, y), new Color(1f, 0.7f, 0.2f));
+        SpawnFloatText(U("DOOR BREACHED!"), GridToWorld(x, y), new Color(1f, 0.7f, 0.2f));
 
         // Stun suspects within 1.8 units behind door
         Vector3 doorPos = GridToWorld(x, y);
@@ -1050,7 +1055,7 @@ public class SwatBreachPlayer : MonoBehaviour
             if (!s.isNeutralized && Vector2.Distance(s.pos, doorPos) < CellSize * 1.8f)
             {
                 s.stunTimer = 2.5f;
-                SpawnFloatText("STUNNED!", s.pos, Color.yellow);
+                SpawnFloatText(U("STUNNED!"), s.pos, Color.yellow);
             }
         }
     }
@@ -1066,14 +1071,14 @@ public class SwatBreachPlayer : MonoBehaviour
         PlayClip(sndFlashbang, 1.2f);
         flashWhiteout = 1.0f;
         cameraTrauma = Mathf.Clamp01(cameraTrauma + 0.5f);
-        SpawnFloatText("FLASHBANG DETONATED!", flashPos, Color.white);
+        SpawnFloatText(U("FLASHBANG DETONATED!"), flashPos, Color.white);
 
         foreach (var s in suspects)
         {
             if (!s.isNeutralized && Vector2.Distance(s.pos, flashPos) < CellSize * 3.5f)
             {
                 s.stunTimer = 4.5f;
-                SpawnFloatText("STUNNED x4s!", s.pos, Color.yellow);
+                SpawnFloatText(U("STUNNED x4s!"), s.pos, Color.yellow);
             }
         }
     }
@@ -1127,7 +1132,7 @@ public class SwatBreachPlayer : MonoBehaviour
                     if (target == alpha && alpha.hasShield)
                     {
                         dmg = Mathf.RoundToInt(dmg * 0.25f); // 75% shielded!
-                        SpawnFloatText("BLOCKED! -" + dmg, target.pos, Color.cyan);
+                        SpawnFloatText(F("BLOCKED! -{0}", dmg), target.pos, Color.cyan);
                     }
                     else
                     {
@@ -1173,7 +1178,7 @@ public class SwatBreachPlayer : MonoBehaviour
                 target.isNeutralized = true;
                 totalScore += 250;
                 PlayClip(sndSuspectDown, 1.0f);
-                SpawnFloatText("NEUTRALIZED! +250", target.pos, Color.red);
+                SpawnFloatText(U("NEUTRALIZED! +250"), target.pos, Color.red);
                 Destroy(target.go);
             }
             else
@@ -1274,16 +1279,16 @@ public class SwatBreachPlayer : MonoBehaviour
 
         // Mission Title & Score
         GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(240));
-        GUILayout.Label("<color=#38bdf8><b>MISSION " + m.missionNum + "/12</b></color>: " + m.title.Get(currentLang));
-        GUILayout.Label("🏆 Score: <b>" + totalScore + "</b> | Time: <b>" + missionTimer.ToString("F1") + "s</b>");
+        GUILayout.Label("<color=#38bdf8><b>" + F("MISSION {0}/12", m.missionNum) + "</b></color>: " + m.title.Get(currentLang));
+        GUILayout.Label("🏆 " + U("Score") + ": <b>" + totalScore + "</b> | " + U("Time") + ": <b>" + missionTimer.ToString("F1") + "s</b>");
         GUILayout.EndVertical();
 
         GUILayout.FlexibleSpace();
 
         // Operators Status
         GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(220));
-        GUILayout.Label("🛡️ Alpha (Shield): <b>" + alpha.hp + "/" + alpha.maxHp + "</b>");
-        GUILayout.Label("⚡ Bravo (Assault): <b>" + bravo.hp + "/" + bravo.maxHp + "</b>" + (bravo.hasFlashbang ? " [💥 Flash]" : ""));
+        GUILayout.Label("🛡️ " + U("Alpha (Shield)") + ": <b>" + alpha.hp + "/" + alpha.maxHp + "</b>");
+        GUILayout.Label("⚡ " + U("Bravo (Assault)") + ": <b>" + bravo.hp + "/" + bravo.maxHp + "</b>" + (bravo.hasFlashbang ? " [💥 " + U("Flash") + "]" : ""));
         GUILayout.EndVertical();
 
         GUILayout.FlexibleSpace();
@@ -1291,17 +1296,17 @@ public class SwatBreachPlayer : MonoBehaviour
         // Action Buttons
         if (phase == Phase.Planning)
         {
-            if (GUILayout.Button("⚡ AUTO\nPLAN", GUILayout.Width(75), GUILayout.Height(50)))
+            if (GUILayout.Button("⚡ " + U("AUTO\nPLAN"), GUILayout.Width(75), GUILayout.Height(50)))
             {
                 ApplyAutoPlan();
             }
 
-            if (GUILayout.Button("🗑️ CLEAR\nPATHS", GUILayout.Width(75), GUILayout.Height(50)))
+            if (GUILayout.Button("🗑️ " + U("CLEAR\nPATHS"), GUILayout.Width(75), GUILayout.Height(50)))
             {
                 ClearWaypoints();
             }
 
-            if (GUILayout.Button("<color=#4ade80><b>▶ EXECUTE\nBREACH</b></color>", GUILayout.Width(95), GUILayout.Height(50)))
+            if (GUILayout.Button("<color=#4ade80><b>▶ " + U("EXECUTE\nBREACH") + "</b></color>", GUILayout.Width(95), GUILayout.Height(50)))
             {
                 ExecuteBreach();
             }
@@ -1310,26 +1315,26 @@ public class SwatBreachPlayer : MonoBehaviour
         {
             if (bravo.hasFlashbang)
             {
-                if (GUILayout.Button("<color=#fde047><b>💥 THROW\nFLASHBANG</b></color>", GUILayout.Width(100), GUILayout.Height(50)))
+                if (GUILayout.Button("<color=#fde047><b>💥 " + U("THROW\nFLASHBANG") + "</b></color>", GUILayout.Width(100), GUILayout.Height(50)))
                 {
                     ThrowFlashbang();
                 }
             }
 
-            if (GUILayout.Button("🔄 RESTART\nMISSION", GUILayout.Width(85), GUILayout.Height(50)))
+            if (GUILayout.Button("🔄 " + U("RESTART\nMISSION"), GUILayout.Width(85), GUILayout.Height(50)))
             {
                 LoadMission(currentMissionIdx);
             }
         }
 
         // Mission Selector Button
-        if (GUILayout.Button("🗺️ MISSIONS\n(1~12)", GUILayout.Width(90), GUILayout.Height(50)))
+        if (GUILayout.Button("🗺️ " + U("MISSIONS\n(1~12)"), GUILayout.Width(90), GUILayout.Height(50)))
         {
             showMissionSelect = !showMissionSelect;
         }
 
         // Language Switcher Toggle Button (User Rule: 언어 현지화)
-        if (GUILayout.Button("🌐 " + currentLang.ToString(), GUILayout.Width(60), GUILayout.Height(50)))
+        if (GUILayout.Button("🌐 " + LangCode().ToUpperInvariant(), GUILayout.Width(60), GUILayout.Height(50)))
         {
             currentLang = (Language)(((int)currentLang + 1) % 4);
         }
@@ -1343,8 +1348,8 @@ public class SwatBreachPlayer : MonoBehaviour
             Rect selRect = new Rect(15, 110, 240, 45);
             GUILayout.BeginArea(selRect, GUI.skin.box);
             GUILayout.BeginHorizontal();
-            if (GUILayout.Toggle(selectedOperator == 0, "🛡️ Alpha (Shield)", "Button")) selectedOperator = 0;
-            if (GUILayout.Toggle(selectedOperator == 1, "⚡ Bravo (Assault)", "Button")) selectedOperator = 1;
+            if (GUILayout.Toggle(selectedOperator == 0, "🛡️ " + U("Alpha (Shield)"), "Button")) selectedOperator = 0;
+            if (GUILayout.Toggle(selectedOperator == 1, "⚡ " + U("Bravo (Assault)"), "Button")) selectedOperator = 1;
             GUILayout.EndHorizontal();
             GUILayout.EndArea();
         }
@@ -1377,14 +1382,14 @@ public class SwatBreachPlayer : MonoBehaviour
             GUI.Box(winRect, "");
             GUILayout.BeginArea(winRect);
             GUILayout.Space(15);
-            GUILayout.Label("<size=18><color=#4ade80><b>★ MISSION ACCOMPLISHED ★</b></color></size>", GetCenterStyle(Color.green));
+            GUILayout.Label("<size=18><color=#4ade80><b>★ " + U("MISSION ACCOMPLISHED") + " ★</b></color></size>", GetCenterStyle(Color.green));
             GUILayout.Space(8);
-            GUILayout.Label(m.title.Get(currentLang) + " Cleared in " + missionTimer.ToString("F1") + "s!", GetCenterStyle(Color.white));
-            GUILayout.Label("Hostages secured, armed threats neutralized.", GetCenterStyle(Color.cyan));
+            GUILayout.Label(F("{0} cleared in {1}s!", m.title.Get(currentLang), missionTimer.ToString("F1")), GetCenterStyle(Color.white));
+            GUILayout.Label(U("Hostages secured, armed threats neutralized."), GetCenterStyle(Color.cyan));
             GUILayout.Space(15);
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button(currentMissionIdx < 11 ? "▶ NEXT OPERATION (" + (currentMissionIdx + 2) + ")" : "🏆 PLAY AGAIN", GUILayout.Width(190), GUILayout.Height(40)))
+            if (GUILayout.Button(currentMissionIdx < 11 ? "▶ " + F("NEXT OPERATION ({0})", currentMissionIdx + 2) : "🏆 " + U("PLAY AGAIN"), GUILayout.Width(190), GUILayout.Height(40)))
             {
                 LoadMission(currentMissionIdx < 11 ? currentMissionIdx + 1 : 0);
             }
@@ -1400,13 +1405,13 @@ public class SwatBreachPlayer : MonoBehaviour
             GUI.Box(failRect, "");
             GUILayout.BeginArea(failRect);
             GUILayout.Space(15);
-            GUILayout.Label("<size=18><color=#ef4444><b>☠️ MISSION FAILED ☠️</b></color></size>", GetCenterStyle(Color.red));
+            GUILayout.Label("<size=18><color=#ef4444><b>☠️ " + U("MISSION FAILED") + " ☠️</b></color></size>", GetCenterStyle(Color.red));
             GUILayout.Space(8);
-            GUILayout.Label("Critical tactical casualty in " + m.title.Get(currentLang), GetCenterStyle(Color.white));
+            GUILayout.Label(F("Critical tactical casualty in {0}", m.title.Get(currentLang)), GetCenterStyle(Color.white));
             GUILayout.Space(15);
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button("🔄 RETRY MISSION", GUILayout.Width(170), GUILayout.Height(40)))
+            if (GUILayout.Button("🔄 " + U("RETRY MISSION"), GUILayout.Width(170), GUILayout.Height(40)))
             {
                 LoadMission(currentMissionIdx);
             }
@@ -1419,7 +1424,7 @@ public class SwatBreachPlayer : MonoBehaviour
         if (showMissionSelect)
         {
             Rect modalRect = new Rect(Screen.width * 0.5f - 270, 105, 540, 430);
-            GUI.Box(modalRect, "<b>TACTICAL OPERATIONS (1~12)</b>");
+            GUI.Box(modalRect, "<b>" + U("TACTICAL OPERATIONS (1~12)") + "</b>");
             GUILayout.BeginArea(new Rect(modalRect.x + 15, modalRect.y + 35, modalRect.width - 30, modalRect.height - 45));
 
             int colsCount = 2;
@@ -1432,7 +1437,7 @@ public class SwatBreachPlayer : MonoBehaviour
                     if (idx < missions.Length)
                     {
                         var mis = missions[idx];
-                        string bossTag = mis.isBossMission ? " ★ BOSS" : "";
+                        string bossTag = mis.isBossMission ? " ★ " + U("BOSS") : "";
                         string btnText = "<b>M" + mis.missionNum + "</b>: " + mis.title.Get(currentLang) + bossTag;
                         if (GUILayout.Button(btnText, GUILayout.Height(50)))
                         {
@@ -1446,7 +1451,7 @@ public class SwatBreachPlayer : MonoBehaviour
             }
 
             GUILayout.Space(6);
-            if (GUILayout.Button("× CLOSE", GUILayout.Height(28)))
+            if (GUILayout.Button("× " + U("CLOSE"), GUILayout.Height(28)))
             {
                 showMissionSelect = false;
             }

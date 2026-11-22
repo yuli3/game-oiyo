@@ -1,0 +1,20 @@
+{
+  "_order": ["ko", "ja", "es", "zh", "fr"],
+  "Stack Villagers on resources! Sell extras on the Gold Pad.": ["주민을 자원 위에 쌓으세요! 남는 카드는 금색 판에서 팔아요.", "村人を資源に重ねよう！余りは金のパッドで売却。", "¡Apila aldeanos sobre recursos! Vende lo que sobre en la placa dorada.", "把村民叠到资源上！多余的卡在金色板上卖掉。", "Empilez les villageois sur les ressources ! Vendez le surplus sur le socle doré."],
+  "Sold {0} for +{1} Coins!": ["{0} 판매! 동전 +{1}", "{0} を売却！コイン +{1}", "¡Vendido {0} por +{1} monedas!", "卖出 {0}！金币 +{1}", "{0} vendu pour +{1} pièces !"],
+  "Cannot sell Villagers!": ["주민은 팔 수 없습니다!", "村人は売れない！", "¡No puedes vender aldeanos!", "村民不能出售！", "Impossible de vendre des villageois !"],
+  "Need 3 Coins to open a Booster Pack!": ["카드 팩을 열려면 동전 3개가 필요합니다!", "パックを開けるにはコイン 3 枚が必要！", "¡Necesitas 3 monedas para abrir un sobre!", "打开卡包需要 3 枚金币！", "Il faut 3 pièces pour ouvrir un paquet !"],
+  "Opened Booster Pack! +3 Cards": ["카드 팩 개봉! 카드 +3", "パック開封！カード +3", "¡Sobre abierto! +3 cartas", "打开卡包！卡牌 +3", "Paquet ouvert ! +3 cartes"],
+  "Trained a Militia Defender!": ["민병대 수비병을 훈련했다!", "民兵を訓練した！", "¡Entrenaste a un miliciano!", "训练了一名民兵守卫！", "Un milicien est formé !"],
+  "Built a House! +1 Villager joined!": ["집 완성! 주민 +1", "家を建てた！村人 +1", "¡Casa construida! +1 aldeano", "建好房子！村民 +1", "Maison construite ! +1 villageois"],
+  "Goblin defeated! +3 Coins": ["고블린 격퇴! 동전 +3", "ゴブリン撃退！コイン +3", "¡Goblin derrotado! +3 monedas", "击败哥布林！金币 +3", "Gobelin vaincu ! +3 pièces"],
+  "Starvation! Not enough Berries for all Villagers!": ["굶주림! 모든 주민에게 줄 열매가 부족합니다!", "飢餓！村人全員分のベリーが足りない！", "¡Hambruna! ¡No hay bayas para todos!", "饥荒！浆果不够所有村民吃！", "Famine ! Pas assez de baies pour tous !"],
+  "CARD VILLAGE  |  MOON {0}/{1}  |  COINS: {2}  |  FOOD: {3}": ["카드 마을  |  달 {0}/{1}  |  동전: {2}  |  식량: {3}", "カード村  |  月 {0}/{1}  |  コイン: {2}  |  食料: {3}", "ALDEA DE CARTAS  |  LUNA {0}/{1}  |  MONEDAS: {2}  |  COMIDA: {3}", "卡牌村庄  |  月 {0}/{1}  |  金币：{2}  |  食物：{3}", "VILLAGE DE CARTES  |  LUNE {0}/{1}  |  PIÈCES : {2}  |  NOURRITURE : {3}"],
+  "Villagers: {0}  •  Next Moon: {1}s  •  Click Purple Pad (3c) for Pack": ["주민: {0}  •  다음 달까지: {1}초  •  보라색 판(동전 3) 클릭 시 팩", "村人: {0}  •  次の月まで: {1}秒  •  紫のパッド (3枚) でパック", "Aldeanos: {0}  •  Próxima luna: {1}s  •  Pulsa la placa morada (3m) para un sobre", "村民：{0}  •  下个月：{1} 秒  •  点击紫色板 (3 币) 开卡包", "Villageois : {0}  •  Prochaine lune : {1}s  •  Socle violet (3p) pour un paquet"],
+  "VILLAGE SURVIVED ALL {0} MOONS!": ["마을이 {0}번의 달을 모두 버텼다!", "村は {0} の月をすべて生き延びた！", "¡LA ALDEA SOBREVIVIÓ LAS {0} LUNAS!", "村庄熬过了全部 {0} 个月！", "LE VILLAGE A SURVÉCU AUX {0} LUNES !"],
+  "VILLAGE FELL": ["마을이 무너졌다", "村は滅びた", "LA ALDEA CAYÓ", "村庄陷落", "LE VILLAGE EST TOMBÉ"],
+  "Play Again (R)": ["다시 하기 (R)", "もう一度 (R)", "Jugar de nuevo (R)", "再玩一次 (R)", "Rejouer (R)"],
+  "Moon {0} dawned! {1}": ["{0}번째 달이 떴다! {1}", "{0} の月が昇った！{1}", "¡Amanece la luna {0}! {1}", "第 {0} 个月到来！{1}", "Lune {0} se lève ! {1}"],
+  "Goblin raid ({0})!": ["고블린 습격 ({0})!", "ゴブリン襲来 ({0})！", "¡Incursión goblin ({0})!", "哥布林袭击 ({0})！", "Raid gobelin ({0}) !"],
+  "Peaceful sunrise.": ["평화로운 아침.", "穏やかな夜明け。", "Amanecer tranquilo.", "宁静的日出。", "Lever de soleil paisible."]
+}
