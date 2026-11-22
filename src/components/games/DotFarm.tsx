@@ -1,6 +1,16 @@
 import ScoreStages from "./ScoreStages";
 import { useOutcomeRecord } from "../../lib/games/use-run-record";
-import { FARM_STAGE_GOLD } from "../../lib/games/dot-farm";
+import { FARM_STAGE_GOLD, continueFarmAfterVictory } from "../../lib/games/dot-farm";
+
+/** "Keep farming" after the $5,000 victory, toward gold stages 11-20 (2026-11-23). */
+const KEEP_FARMING: Record<string, string> = {
+  ko: "계속 농사짓기",
+  en: "Keep farming",
+  ja: "農場を続ける",
+  zh: "继续经营",
+  fr: "Continuer la ferme",
+  es: "Seguir cultivando",
+};
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Volume2,
@@ -637,14 +647,24 @@ export default function DotFarm({ locale = "en" }: { locale?: string }) {
                 {t.day}: <span className="font-bold text-primary">{gameState.day}</span>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={restartGame}
-              className="mt-2 flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-lg transition hover:bg-primary/90 sm:text-sm"
-            >
-              <RotateCcw className="size-4" />
-              {t.playAgain}
-            </button>
+            <div className="mt-2 flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setGameState((prev) => continueFarmAfterVictory(prev))}
+                className="flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-lg transition hover:bg-primary/90 sm:text-sm"
+                data-keep-farming
+              >
+                {KEEP_FARMING[locale] ?? KEEP_FARMING.en}
+              </button>
+              <button
+                type="button"
+                onClick={restartGame}
+                className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-card px-5 py-2.5 text-xs font-bold text-foreground transition hover:bg-muted sm:text-sm"
+              >
+                <RotateCcw className="size-4" />
+                {t.playAgain}
+              </button>
+            </div>
           </div>
         )}
       </div>

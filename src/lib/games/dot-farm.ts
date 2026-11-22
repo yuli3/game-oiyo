@@ -347,8 +347,9 @@ export function stepFarmAction(
       events.soldProduce = true;
       state.message = `Sold harvested crops to shipping market for +$${earned}!`;
 
-      // Check victory: $5,000 net worth
-      if (state.money >= 5000) {
+      // Check victory: the sale that first lifts the purse to $5,000. After "keep farming"
+      // the run goes on toward the later gold stages without the banner returning. 2026-11-23
+      if (state.money >= 5000 && state.money - earned < 5000) {
         state.status = "victory";
         events.victory = true;
         state.message = `★ VICTORY! Your flourishing farm reached $${state.money}! Master Farmer Title Achieved!`;
@@ -603,5 +604,16 @@ export function runDotFarmMonteCarloAudit(
 }
 
 
-/** Ten gold stages (stage range 10-50): stage N clears the first time the purse holds FARM_STAGE_GOLD[N]. Top crop sells for 1,500. */
-export const FARM_STAGE_GOLD = [300, 600, 1000, 1600, 2500, 4000, 6500, 10000, 16000, 25000] as const;
+/**
+ * Twenty gold stages (stage range 10-50): stage N clears the first time the purse holds FARM_STAGE_GOLD[N].
+ * Top crop sells for 1,500. Stages 11-20 (2026-11-23) are reached by farming on after the $5,000 victory.
+ */
+export const FARM_STAGE_GOLD = [
+  300, 600, 1000, 1600, 2500, 4000, 6500, 10000, 16000, 25000,
+  35000, 50000, 70000, 95000, 125000, 160000, 200000, 250000, 320000, 400000,
+] as const;
+
+/** Leaves the victory banner and keeps the same farm running. */
+export function continueFarmAfterVictory<T extends { status: "playing" | "victory" }>(state: T): T {
+  return state.status === "victory" ? { ...state, status: "playing" } : state;
+}

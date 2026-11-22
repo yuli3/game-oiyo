@@ -201,3 +201,23 @@ describe("DotFarm Engine", () => {
     });
   });
 });
+
+describe("dot farm gold stages after victory", () => {
+  it("raises the victory banner once and lets the same farm keep earning", async () => {
+    const { FARM_STAGE_GOLD, continueFarmAfterVictory } = await import("./dot-farm");
+    expect(FARM_STAGE_GOLD).toHaveLength(20);
+    for (let i = 1; i < FARM_STAGE_GOLD.length; i += 1) expect(FARM_STAGE_GOLD[i]).toBeGreaterThan(FARM_STAGE_GOLD[i - 1]);
+    const farm = createFarmGame(999);
+    farm.money = 4500;
+    farm.inventory.ancient_fruit.harvested = 1;
+    const won = stepFarmAction(farm, { type: "sell_all" }).state;
+    expect(won.status).toBe("victory");
+    const going = continueFarmAfterVictory(won);
+    expect(going.status).toBe("playing");
+    going.inventory.ancient_fruit.harvested = 2;
+    const later = stepFarmAction(going, { type: "sell_all" });
+    expect(later.events.victory).toBeFalsy();
+    expect(later.state.status).toBe("playing");
+    expect(later.state.money).toBe(9000);
+  });
+});
