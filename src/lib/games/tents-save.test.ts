@@ -14,6 +14,7 @@ import {
 } from "./tents-save";
 import { generateUniqueTents, validateTents } from "./tents";
 import { mulberry32 } from "./daily";
+import { tentsStagePuzzle } from "./tents-stages";
 import { CHAOS_SECONDS, chaosBoard, chaosEffects, type ChaosAugmentId } from "./tents-chaos";
 
 /** Mirrors dayIndexFromKey()'s formula (not exported) so the test can derive
@@ -64,6 +65,16 @@ describe("tents & trees save v1 parser", () => {
     const parsed = parseTentsSave(serializeTentsSave(save), TODAY, NOW);
     expect(parsed).not.toBeNull();
     expect(parsed?.seed).toBe(12345);
+  });
+
+  it("round-trips a stage board on any day and rejects a stage index outside 0-49", () => {
+    const stageSave = { mode: "stage" as const, dailyDate: "2026-08-01", seed: 30, marks: emptyMarks(tentsStagePuzzle(30).size), savedAtEpochMs: NOW - 1_000 };
+    const parsed = parseTentsSave(serializeTentsSave(stageSave), TODAY, NOW);
+    expect(parsed?.mode).toBe("stage");
+    expect(parsed?.seed).toBe(30);
+    expect(puzzleForTentsSave("stage", TODAY, 30)).toBe(tentsStagePuzzle(30));
+    expect(parseTentsSave(serializeTentsSave({ ...stageSave, seed: 50 }), TODAY, NOW)).toBeNull();
+    expect(parseTentsSave(serializeTentsSave({ ...stageSave, marks: emptyMarks(5) }), TODAY, NOW)).toBeNull();
   });
 
   it("rejects malformed, missing or future-dated payloads", () => {
