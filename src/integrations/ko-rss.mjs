@@ -59,7 +59,7 @@ async function htmlFiles(dir, depth = 0) {
   return out;
 }
 
-/** @param {{ title: string, description: string, maxItems?: number }} opts */
+/** @param {{ site: string, title: string, description: string, maxItems?: number }} opts */
 export default function koRss(opts) {
   return {
     name: "oiyo-ko-rss",
