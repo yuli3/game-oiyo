@@ -323,7 +323,7 @@ export default function IsometricCity({ locale }: { locale: Locale }) {
 
       {phase === "playing" ? (
         <Suspense fallback={<LoadingState label={copy.loading} />}>
-          <Scene copy={copy.scene} />
+          <Scene copy={copy.scene} locale={locale} />
         </Suspense>
       ) : (
         <div className="grid gap-8 p-5 sm:p-8 lg:grid-cols-[1.02fr_.98fr] lg:items-center lg:p-10">
