@@ -75,14 +75,19 @@ const navItems = [
 // The same 2026-09-24 decision keeps sister-site discovery in the footer.
 // news is a single-locale (ko) site — it has no /{locale}/ routes, so
 // appending the locale path would land on their 404 page.
+// 2026-11-22 UI·UX 대수선: 패밀리 목록을 여섯 사이트 공통 순서(tests·tools·game·wiki·blog·news)로
+// 통일했다. 사이트마다 목록이 달라 일부 푸터에는 tools·wiki 가 빠져 있었다. tools 는 한국어가
+// 루트(/)이고 /ko/ 는 301 이라 localePath "nonKo" 로 한국어만 루트로 보낸다.
 const FAMILY = [
   { host: "oiyo.net", name: "OIYO tests", localePath: true, tag: { ko: "심리테스트", en: "Psychology tests", ja: "心理テスト", zh: "心理测试", fr: "Tests psychologiques", es: "Tests psicológicos" } },
-  { host: "blog.oiyo.net", name: "OIYO blog", localePath: true, tag: { ko: "강의", en: "Courses", ja: "講座", zh: "课程", fr: "Cours", es: "Cursos" } },
+  { host: "tools.oiyo.net", name: "OIYO tools", localePath: "nonKo", tag: { ko: "계산기·도구", en: "Calculators", ja: "計算ツール", zh: "计算工具", fr: "Calculateurs", es: "Calculadoras" } },
   { host: "game.oiyo.net", name: "OIYO game", localePath: true, tag: { ko: "게임", en: "Games", ja: "ゲーム", zh: "游戏", fr: "Jeux", es: "Juegos" } },
+  { host: "wiki.oiyo.net", name: "OIYO wiki", localePath: true, tag: { ko: "지식백과", en: "Knowledge", ja: "知識百科", zh: "知识百科", fr: "Encyclopédie", es: "Enciclopedia" } },
+  { host: "blog.oiyo.net", name: "OIYO blog", localePath: true, tag: { ko: "강의", en: "Courses", ja: "講座", zh: "课程", fr: "Cours", es: "Cursos" } },
   { host: "news.oiyo.net", name: "OIYO news", localePath: false, tag: { ko: "뉴스·AI", en: "News & AI", ja: "ニュース・AI", zh: "新闻·AI", fr: "Actualités et IA", es: "Noticias e IA" } },
 ];
 const familyHref = (f: (typeof FAMILY)[number], medium: string) =>
-  `https://${f.host}/${f.localePath ? `${locale}/` : ""}?utm_source=game&utm_medium=${medium}&utm_campaign=family_nav`;
+  `https://${f.host}/${f.localePath === true || (f.localePath === "nonKo" && locale !== "ko") ? `${locale}/` : ""}?utm_source=game&utm_medium=${medium}&utm_campaign=family_nav`;
 
 // Flags + native names for the language switcher (family-wide convention:
 // flag emoji plus a visible text label so it is never icon-only).
