@@ -7,6 +7,11 @@ public class SubwayRunnerPlayer : MonoBehaviour
     public enum Language { KO, EN, JA, ES }
     private Language currentLang = Language.KO;
 
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => currentLang == Language.EN ? OiyoI18n.ForEnglish : currentLang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
+
     public enum ObstacleType { LowHurdle, HighBarrier, TrainCar, Coin, PowerupMagnet, PowerupJetpack, PowerupMultiplier }
 
     public class TrackItem
@@ -441,7 +446,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
         st.generateTrack(items, transform);
 
         UpdatePlayerVisuals();
-        ShowToast($"{GetLocalizedStageTitle(st)} - START!");
+        ShowToast($"{GetLocalizedStageTitle(st)} - {U("START!")}");
         PlayTone(523.25f, 0.15f); // C5 Start
     }
 
@@ -883,7 +888,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
         }
         else
         {
-            ShowToast($"CRASH! -1 LIFE ({lives} LEFT)");
+            ShowToast(F("CRASH! -1 LIFE ({0} LEFT)", lives));
         }
     }
 
@@ -1006,7 +1011,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
 
         // Title and Stage
         GUILayout.BeginVertical();
-        GUILayout.Label($"<b>SUBWAY RUNNER 3D</b> · STAGE {currentStageIndex + 1}/{stages.Count}", GetLabelStyle(16, Color.cyan));
+        GUILayout.Label($"<b>SUBWAY RUNNER 3D</b> · {U("STAGE")} {currentStageIndex + 1}/{stages.Count}", GetLabelStyle(16, Color.cyan));
         var st = stages[currentStageIndex];
         GUILayout.Label(GetLocalizedStageTitle(st), GetLabelStyle(12, Color.white));
         GUILayout.EndVertical();
@@ -1040,9 +1045,9 @@ public class SubwayRunnerPlayer : MonoBehaviour
         if (magnetTimer > 0f || jetpackTimer > 0f || multiplierTimer > 0f)
         {
             GUILayout.BeginArea(new Rect(10, 80, 200, 60));
-            if (magnetTimer > 0f) GUILayout.Label($"🧲 MAGNET: {magnetTimer:F1}s", GetLabelStyle(13, Color.red));
-            if (jetpackTimer > 0f) GUILayout.Label($"🚀 JETPACK: {jetpackTimer:F1}s", GetLabelStyle(13, Color.cyan));
-            if (multiplierTimer > 0f) GUILayout.Label($"★ 2X BOOST: {multiplierTimer:F1}s", GetLabelStyle(13, Color.yellow));
+            if (magnetTimer > 0f) GUILayout.Label($"🧲 {U("MAGNET")}: {magnetTimer:F1}s", GetLabelStyle(13, Color.red));
+            if (jetpackTimer > 0f) GUILayout.Label($"🚀 {U("JETPACK")}: {jetpackTimer:F1}s", GetLabelStyle(13, Color.cyan));
+            if (multiplierTimer > 0f) GUILayout.Label($"★ {U("2X BOOST")}: {multiplierTimer:F1}s", GetLabelStyle(13, Color.yellow));
             GUILayout.EndArea();
         }
 
@@ -1061,11 +1066,11 @@ public class SubwayRunnerPlayer : MonoBehaviour
         float y = Screen.height - h - 45;
         float w = 70;
 
-        if (GUI.Button(new Rect(20, y, w, h), "◀ LEFT")) ShiftLane(-1);
-        if (GUI.Button(new Rect(100, y, w, h), "RIGHT ▶")) ShiftLane(1);
+        if (GUI.Button(new Rect(20, y, w, h), "◀ " + U("LEFT"))) ShiftLane(-1);
+        if (GUI.Button(new Rect(100, y, w, h), U("RIGHT") + " ▶")) ShiftLane(1);
 
         float rX = Screen.width - w * 2 - 40;
-        if (GUI.Button(new Rect(rX, y, w, h), "▲ JUMP"))
+        if (GUI.Button(new Rect(rX, y, w, h), "▲ " + U("JUMP")))
         {
             if (isGrounded && jetpackTimer <= 0f)
             {
@@ -1074,7 +1079,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
                 PlayTone(587.33f, 0.08f);
             }
         }
-        if (GUI.Button(new Rect(rX + w + 15, y, w, h), "▼ SLIDE"))
+        if (GUI.Button(new Rect(rX + w + 15, y, w, h), "▼ " + U("SLIDE")))
         {
             if (jetpackTimer <= 0f)
             {
@@ -1109,7 +1114,8 @@ public class SubwayRunnerPlayer : MonoBehaviour
                 if (sIdx < stages.Count)
                 {
                     var st = stages[sIdx];
-                    string btnTxt = $"Stage {sIdx + 1}\n{GetLocalizedStageTitle(st)}";
+                    string btnTxt = $"{U("Stage")} {sIdx + 1}
+{GetLocalizedStageTitle(st)}";
                     if (GUILayout.Button(btnTxt, GUILayout.Height(48)))
                     {
                         showStageSelect = false;
@@ -1202,7 +1208,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
         switch (currentLang)
         {
             case Language.KO: return stage.titleKo;
-            case Language.EN: return stage.titleEn;
+            case Language.EN: return OiyoI18n.En(stage.titleEn);
             case Language.JA: return stage.titleJa;
             case Language.ES: return stage.titleEs;
             default: return stage.titleKo;
@@ -1214,7 +1220,7 @@ public class SubwayRunnerPlayer : MonoBehaviour
         switch (currentLang)
         {
             case Language.KO: return ko;
-            case Language.EN: return en;
+            case Language.EN: return OiyoI18n.En(en);
             case Language.JA: return ja;
             case Language.ES: return es;
             default: return ko;

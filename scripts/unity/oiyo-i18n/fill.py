@@ -29,6 +29,7 @@ def main(build, patches):
                 if v is not None and not row[i]: row[i] = v
     src = ''.join(Path(f).read_text(encoding='utf-8') for f in glob.glob(str(ROOT / 'prototypes' / build / 'Assets' / '*' / 'Runtime' / '*.cs')) if 'OiyoI18n' not in f)
     used = set(unescape(m) for m in re.findall(LIT, src))
+    used |= set(unescape(m) for m in re.findall(r'\b(?:U|F|OiyoI18n\.En)\(\s*' + LIT, src))
     table = {k: v for k, v in table.items() if k == '_order' or k in used}
     tpath.write_text('{\n' + ',\n'.join(f'  {json.dumps(k, ensure_ascii=False)}: {json.dumps(v, ensure_ascii=False)}' for k, v in table.items()) + '\n}\n', encoding='utf-8')
     todo = [k for k, v in table.items() if k != '_order' and (v[3] is None or v[4] is None)]

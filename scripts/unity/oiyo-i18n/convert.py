@@ -6,6 +6,7 @@
 Rewrites the build's player script in place:
   * `lang == Language.KO ? "가" : lang == Language.JA ? "あ" : "A"` chains become U("A"),
     and the Korean/Japanese/Spanish already in the chain are kept for the table;
+  * GetLocalizedText(en, ko, ja, es) strings are added to the table;
   * `case Language.EN: return x;` becomes `return OiyoI18n.En(x);` so zh/fr pages get
     their own text where the game falls back to English;
   * the language button shows the page language code;
@@ -63,6 +64,13 @@ def main(build):
             row_for(unescape(m.group(1)))
         for m in re.finditer(r'new\s+Localized\w*\(\s*' + LIT + r'\s*,\s*(' + LIT + r')', s):
             row_for(unescape(m.group(1)))
+        for fld in set(re.findall(r'OiyoI18n\.En\(\w+\.(\w+En)\)', s)):
+            for m in re.finditer(r'\b' + fld + r'\s*=\s*(' + LIT + r')', s):
+                row_for(unescape(m.group(1)))
+        for m in re.finditer(r'GetLocalizedText\(\s*(' + LIT + r')\s*,\s*(' + LIT + r')\s*,\s*(' + LIT + r')\s*,\s*(' + LIT + r')\s*\)', s):
+            row = row_for(unescape(m.group(1)))
+            for i, g in enumerate((2, 3, 4)):
+                row[i] = row[i] or unescape(m.group(g))
         if langvar and 'string LangCode()' not in s:
             enum, var = langvar.group(1), langvar.group(2)
             decl = langvar.group(0)

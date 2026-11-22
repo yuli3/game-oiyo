@@ -7,6 +7,11 @@ public class AimTrainerPlayer : MonoBehaviour
     public enum Language { KO, EN, JA, ES }
     private Language currentLang = Language.KO;
 
+    // Page language beyond the game's own four (scripts/unity/oiyo-i18n).
+    string LangCode() => currentLang == Language.EN ? OiyoI18n.ForEnglish : currentLang.ToString().ToLowerInvariant();
+    string U(string en) => OiyoI18n.Ui(en, LangCode());
+    string F(string en, params object[] args) => string.Format(U(en), args);
+
     public enum TargetType { Standard, Moving, Parabolic, Bomb, Gold, BossCore }
 
     public class AimTarget
@@ -105,13 +110,14 @@ public class AimTrainerPlayer : MonoBehaviour
 
     // WebGL has no system fonts, so IMGUI's built-in font shows Hangul/Kana as blanks.
     // Subset Noto Sans fonts live in Resources/AT/Fonts (see scripts/build-fonts.py).
-    private Font fontKo, fontJa;
+    private Font fontKo, fontJa, fontZh;
 
     private void Awake()
     {
         switch (OiyoLang.Pick("ko", "en", "ja", "es")) { case "en": currentLang = Language.EN; break; case "ja": currentLang = Language.JA; break; case "es": currentLang = Language.ES; break; default: currentLang = Language.KO; break; }
         fontKo = Resources.Load<Font>("AT/Fonts/AtKR");
         fontJa = Resources.Load<Font>("AT/Fonts/AtJP");
+        fontZh = Resources.Load<Font>("AT/Fonts/AtSC");
         if (fontJa == null) fontJa = fontKo;
         InitCamera();
         InitAudio();
@@ -456,7 +462,7 @@ public class AimTrainerPlayer : MonoBehaviour
             SpawnNewTarget();
         }
 
-        ShowToast($"{GetLocalizedStageTitle(st)} - START!");
+        ShowToast($"{GetLocalizedStageTitle(st)} - {U("START!")}");
         PlayTone(523.25f, 0.15f);
     }
 
@@ -615,7 +621,7 @@ public class AimTrainerPlayer : MonoBehaviour
             shakeTrauma = 0.5f;
             PlayTone(110f, 0.3f); // Boom
             SpawnDebris(t.position, Color.red, 18);
-            ShowToast("BOMB HIT! -500");
+            ShowToast(U("BOMB HIT! -500"));
             DestroyTarget(t);
             return;
         }
@@ -636,11 +642,11 @@ public class AimTrainerPlayer : MonoBehaviour
 
         if (isBullseye)
         {
-            ShowToast($"★ BULLSEYE! {reactionMs}ms (+{gainedPts}) ★");
+            ShowToast("★ " + F("BULLSEYE! {0}ms (+{1})", reactionMs, gainedPts) + " ★");
         }
         else
         {
-            ShowToast($"HIT! {reactionMs}ms (+{gainedPts})");
+            ShowToast(F("HIT! {0}ms (+{1})", reactionMs, gainedPts));
         }
 
         t.hp--;
@@ -872,7 +878,7 @@ public class AimTrainerPlayer : MonoBehaviour
     // --- OnGUI Real-Time Multi-Language HUD & Modals ---
     private void OnGUI()
     {
-        var uiFont = currentLang == Language.JA ? fontJa : fontKo;
+        var uiFont = currentLang == Language.JA ? fontJa : LangCode() == "zh" && fontZh != null ? fontZh : fontKo;
         if (uiFont != null) GUI.skin.font = uiFont;
         DrawHUD();
 
@@ -907,7 +913,7 @@ public class AimTrainerPlayer : MonoBehaviour
 
         // Title and Stage
         GUILayout.BeginVertical();
-        GUILayout.Label($"<b>AIM TRAINER 3D</b> · STAGE {currentStageIndex + 1}/{stages.Count}", GetLabelStyle(16, Color.cyan));
+        GUILayout.Label($"<b>AIM TRAINER 3D</b> · {U("STAGE")} {currentStageIndex + 1}/{stages.Count}", GetLabelStyle(16, Color.cyan));
         var st = stages[currentStageIndex];
         GUILayout.Label(GetLocalizedStageTitle(st), GetLabelStyle(12, Color.white));
         GUILayout.EndVertical();
@@ -919,9 +925,9 @@ public class AimTrainerPlayer : MonoBehaviour
         int avgReaction = reactionTimes.Count > 0 ? (int)(GetSum(reactionTimes) / reactionTimes.Count) : 0;
 
         GUILayout.BeginVertical();
-        GUILayout.Label($"{GetLocalizedText("SCORE", "점수", "スコア", "PUNTOS")}: <b>{score} / {st.targetScore}</b> · TIME: <b>{Mathf.Max(0, (int)stageTimer)}s</b>", GetLabelStyle(13, Color.yellow));
-        string comboStr = combo > 1 ? $" <color=#ff8800>({combo}x COMBO!)</color>" : "";
-        GUILayout.Label($"{GetLocalizedText("ACC", "정확도", "命中率", "PRECISIÓN")}: <b>{accuracy:F1}%</b> · REACTION: <b>{avgReaction}ms</b>{comboStr}", GetLabelStyle(12, Color.white));
+        GUILayout.Label($"{GetLocalizedText("SCORE", "점수", "スコア", "PUNTOS")}: <b>{score} / {st.targetScore}</b> · {U("TIME")}: <b>{Mathf.Max(0, (int)stageTimer)}s</b>", GetLabelStyle(13, Color.yellow));
+        string comboStr = combo > 1 ? $" <color=#ff8800>({combo}x {U("COMBO!")})</color>" : "";
+        GUILayout.Label($"{GetLocalizedText("ACC", "정확도", "命中率", "PRECISIÓN")}: <b>{accuracy:F1}%</b> · {U("REACTION")}: <b>{avgReaction}ms</b>{comboStr}", GetLabelStyle(12, Color.white));
         GUILayout.EndVertical();
 
         GUILayout.Space(15);
@@ -979,7 +985,8 @@ public class AimTrainerPlayer : MonoBehaviour
                 if (sIdx < stages.Count)
                 {
                     var st = stages[sIdx];
-                    string btnTxt = $"Stage {sIdx + 1}\n{GetLocalizedStageTitle(st)}";
+                    string btnTxt = $"{U("Stage")} {sIdx + 1}
+{GetLocalizedStageTitle(st)}";
                     if (GUILayout.Button(btnTxt, GUILayout.Height(48)))
                     {
                         showStageSelect = false;
@@ -1014,7 +1021,7 @@ public class AimTrainerPlayer : MonoBehaviour
         int avgReaction = reactionTimes.Count > 0 ? (int)(GetSum(reactionTimes) / reactionTimes.Count) : 0;
 
         GUILayout.Label($"{GetLocalizedText("Final Score", "최종 점수", "最終スコア", "Puntuación Final")}: <b>{score}</b>", GetLabelStyle(14, Color.white));
-        GUILayout.Label($"{GetLocalizedText("Accuracy", "사격 정확도", "命中率", "Precisión")}: <b>{accuracy:F1}%</b> · REACTION: <b>{avgReaction}ms</b>", GetLabelStyle(13, Color.yellow));
+        GUILayout.Label($"{GetLocalizedText("Accuracy", "사격 정확도", "命中率", "Precisión")}: <b>{accuracy:F1}%</b> · {U("REACTION")}: <b>{avgReaction}ms</b>", GetLabelStyle(13, Color.yellow));
         GUILayout.Label($"{GetLocalizedText("Max Combo", "최대 콤보", "最大コンボ", "Combo Máximo")}: <b>{maxCombo}x</b>", GetLabelStyle(13, Color.cyan));
 
         GUILayout.Space(15);
@@ -1073,7 +1080,7 @@ public class AimTrainerPlayer : MonoBehaviour
         switch (currentLang)
         {
             case Language.KO: return stage.titleKo;
-            case Language.EN: return stage.titleEn;
+            case Language.EN: return OiyoI18n.En(stage.titleEn);
             case Language.JA: return stage.titleJa;
             case Language.ES: return stage.titleEs;
             default: return stage.titleKo;
@@ -1085,7 +1092,7 @@ public class AimTrainerPlayer : MonoBehaviour
         switch (currentLang)
         {
             case Language.KO: return ko;
-            case Language.EN: return en;
+            case Language.EN: return OiyoI18n.En(en);
             case Language.JA: return ja;
             case Language.ES: return es;
             default: return ko;
