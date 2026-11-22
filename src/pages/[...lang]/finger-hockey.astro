@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import FingerHockey from "../../components/games/FingerHockey";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "손가락 에어하키 — 한 폰으로 둘이서 하는 무료 에어하키, 테이블 12종",
+    description: "폰 하나를 가운데 두고 친구와 마주 앉아 손가락으로 말렛을 밀어 퍽을 쳐 넣으세요. 컴퓨터와 하는 모드도 있습니다. 범퍼·움직이는 문·빙판·바람·퍽 2개까지 테이블 12종, 5점 먼저 넣으면 승리.",
+  },
+  en: {
+    title: "Finger Air Hockey — Free two-player air hockey on one phone, 12 tables",
+    description: "Put one phone between you and a friend and push your mallet with a finger to score. There is a CPU mode too. Twelve tables with bumpers, moving gates, ice, wind and two pucks. First to five goals wins.",
+  },
+  ja: {
+    title: "指先エアホッケー — スマホ1台で2人対戦できる無料エアホッケー、テーブル12種",
+    description: "スマホ1台を真ん中に置いて友だちと向かい合い、指でマレットを動かしてパックを打ち込もう。コンピューター対戦もあります。バンパー・動く門・氷・風・パック2個までテーブル12種、先に5点で勝ち。",
+  },
+  zh: {
+    title: "指尖桌上冰球 — 一部手机两人对战的免费桌上冰球，12种球台",
+    description: "把一部手机放在中间，和朋友面对面，用手指推动球拍把冰球打进对方球门。也可以和电脑对战。有缓冲柱、移动闸门、冰面、风和双冰球等12种球台，先进5球获胜。",
+  },
+  fr: {
+    title: "Air hockey du bout des doigts — Air hockey gratuit à deux sur un téléphone, 12 tables",
+    description: "Posez un téléphone entre vous et un ami et poussez votre maillet du doigt pour marquer. Un mode contre l'ordinateur existe aussi. Douze tables avec plots, portes mobiles, glace, vent et deux palets. Le premier à cinq buts gagne.",
+  },
+  es: {
+    title: "Air Hockey con el Dedo — Air hockey gratis para dos en un móvil, 12 mesas",
+    description: "Pon un móvil entre tú y un amigo y empuja tu mazo con el dedo para marcar. También hay modo contra la máquina. Doce mesas con topes, puertas móviles, hielo, viento y dos discos. Gana quien marque cinco goles primero.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["finger-hockey"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <FingerHockey client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="finger-hockey" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

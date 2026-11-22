@@ -156,7 +156,61 @@ function marketMercenaries() {
   );
 }
 
-const jobs = { "bubble-garden": bubbleGarden, "picture-logic": pictureLogic, "ice-penguin": icePenguin, "mirror-lanterns": mirrorLanterns, "typing-defense": typingDefense, "spin-sumo": spinSumo, "spider-cards": spiderCards, "market-mercenaries": marketMercenaries };
+function sunlitGlass() {
+  const cols = ["#e03131", "#1971c2", "#f59f00", "#2f9e44"];
+  let r = 7;
+  const rnd = () => ((r = (r * 16807) % 2147483647) / 2147483647);
+  const x0 = 170, x1 = 470, yTop = 90, yBot = 540, nx = 5, ny = 8;
+  const pts = [];
+  for (let j = 0; j <= ny; j++) {
+    pts.push([]);
+    for (let i = 0; i <= nx; i++) {
+      const edge = i === 0 || i === nx || j === 0 || j === ny;
+      pts[j].push([x0 + ((x1 - x0) * i) / nx + (edge ? 0 : (rnd() - 0.5) * 36), yTop + ((yBot - yTop) * j) / ny + (edge ? 0 : (rnd() - 0.5) * 36)]);
+    }
+  }
+  let panes = "";
+  for (let j = 0; j < ny; j++)
+    for (let i = 0; i < nx; i++) {
+      const [a, b, c, d] = [pts[j][i], pts[j][i + 1], pts[j + 1][i + 1], pts[j + 1][i]];
+      const k = (i + 2 * j) % 4;
+      const k2 = (i + 2 * j + 2) % 4;
+      panes += `<path d="M${a} L${b} L${c} Z" fill="${cols[k]}"/><path d="M${a} L${c} L${d} Z" fill="${cols[k2]}"/>`;
+    }
+  const arch = `M${x0} ${yBot} L${x0} 240 A150 150 0 0 1 ${x1} 240 L${x1} ${yBot} Z`;
+  let pools = "";
+  for (let i = 0; i < 4; i++) pools += `<path d="M${560 + i * 150} 560 L${700 + i * 150} 560 L${760 + i * 150} 630 L${590 + i * 150} 630 Z" fill="${cols[i]}" opacity=".55"/>`;
+  return svg(
+    `<rect width="${W}" height="${H}" fill="#2b2118"/>` +
+      `<g opacity=".18" stroke="#000" stroke-width="3">${Array.from({ length: 12 }, (_, i) => `<line x1="0" y1="${i * 52}" x2="${W}" y2="${i * 52}"/>`).join("")}</g>` +
+      `<rect y="550" width="${W}" height="80" fill="#4a3b2c"/>` +
+      `<path d="M${x1} 240 L${x1} ${yBot} L1200 630 L1200 560 Z" fill="url(#ray)"/>` + pools +
+      `<path d="${arch}" fill="#000" stroke="#8d7b68" stroke-width="22"/>` +
+      `<g clip-path="url(#arch)">${panes}<g stroke="#1a1410" stroke-width="5" fill="none">${panes.replace(/fill="[^"]+"/g, "")}</g><rect x="${x0}" y="${yTop}" width="300" height="460" fill="url(#shine)"/></g>` +
+      title("햇살 스테인드글라스", "Sunlit Glass — 맞닿은 조각은 다른 색", 830, "#fff3bf", 250) +
+      `<text x="830" y="390" text-anchor="middle" font-family="sans-serif" font-size="30" font-weight="600" fill="#ffd8a8">30 windows · one answer each</text>`,
+    `<clipPath id="arch"><path d="${arch}"/></clipPath>` +
+      `<linearGradient id="ray" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3bf" stop-opacity=".35"/><stop offset="1" stop-color="#fff3bf" stop-opacity="0"/></linearGradient>` +
+      `<radialGradient id="shine" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>`,
+  );
+}
+
+function fingerHockey() {
+  const mallet = (x, y, c) => `<circle cx="${x}" cy="${y}" r="58" fill="${c}" opacity=".25"/><circle cx="${x}" cy="${y}" r="44" fill="${c}"/><circle cx="${x}" cy="${y}" r="20" fill="#fff" opacity=".55"/>`;
+  return svg(
+    `<rect width="${W}" height="${H}" fill="#0b1026"/>` +
+      `<rect x="70" y="190" width="1060" height="400" rx="60" fill="#111a3d" stroke="#4dabf7" stroke-width="8"/>` +
+      `<line x1="600" y1="190" x2="600" y2="590" stroke="#4dabf7" stroke-width="4" opacity=".6"/><circle cx="600" cy="390" r="80" fill="none" stroke="#4dabf7" stroke-width="4" opacity=".6"/>` +
+      `<rect x="62" y="310" width="16" height="160" fill="#ff6b6b"/><rect x="1122" y="310" width="16" height="160" fill="#74c0fc"/>` +
+      `<path d="M300 430 Q520 360 760 330" stroke="#ffe066" stroke-width="18" stroke-linecap="round" opacity=".35" fill="none"/>` +
+      `<circle cx="770" cy="328" r="26" fill="#ffe066"/>` +
+      mallet(260, 440, "#ff6b6b") + mallet(960, 380, "#4dabf7") +
+      `<text x="330" y="560" text-anchor="middle" font-family="sans-serif" font-size="64" font-weight="900" fill="#ff6b6b" opacity=".8">3</text><text x="870" y="560" text-anchor="middle" font-family="sans-serif" font-size="64" font-weight="900" fill="#74c0fc" opacity=".8">2</text>` +
+      title("손가락 에어하키 · Finger Air Hockey", "폰 하나로 둘이서 — Two players, one phone", 600, "#fff", 90),
+  );
+}
+
+const jobs = { "bubble-garden": bubbleGarden, "picture-logic": pictureLogic, "ice-penguin": icePenguin, "mirror-lanterns": mirrorLanterns, "typing-defense": typingDefense, "spin-sumo": spinSumo, "spider-cards": spiderCards, "market-mercenaries": marketMercenaries, "sunlit-glass": sunlitGlass, "finger-hockey": fingerHockey };
 const only = process.argv.slice(2);
 for (const [slug, make] of Object.entries(jobs)) {
   if (only.length && !only.includes(slug)) continue;
