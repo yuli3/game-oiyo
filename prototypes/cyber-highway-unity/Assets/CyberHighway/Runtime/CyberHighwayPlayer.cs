@@ -614,6 +614,8 @@ public class CyberHighwayPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("cyber-highway-3d", state, score);
         float dt = Time.deltaTime;
 
         if (Input.GetKeyDown(KeyCode.Escape))

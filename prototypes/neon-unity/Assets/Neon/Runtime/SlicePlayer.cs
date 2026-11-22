@@ -436,6 +436,8 @@ public sealed class SlicePlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        if (run != null) OiyoResult.Track("neon-survivor", run.Phase, 0);
         ApplySafeArea();
         if (Input.GetKeyDown(KeyCode.Escape))
         {

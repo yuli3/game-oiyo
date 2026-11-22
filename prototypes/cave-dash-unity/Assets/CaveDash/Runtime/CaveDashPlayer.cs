@@ -621,6 +621,8 @@ public class CaveDashPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("cave-dash", state, score);
         float dt = Time.deltaTime;
 
         // Global inputs

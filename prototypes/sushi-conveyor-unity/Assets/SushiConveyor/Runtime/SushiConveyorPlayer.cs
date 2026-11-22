@@ -345,6 +345,8 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.TrackEnded("sushi-conveyor", _stageCleared || _stageFailed, _stageCleared, 0);
         float dt = Mathf.Min(Time.deltaTime, 0.05f);
         if (_bannerTimer > 0f) _bannerTimer -= dt;
 

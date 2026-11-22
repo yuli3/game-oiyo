@@ -717,6 +717,8 @@ public class CrossyRoadPlayer : MonoBehaviour
 
     private void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("hop-across-3d", state, score);
         HandlePlayerInput();
         UpdateHopAnimation();
         UpdateLanes();

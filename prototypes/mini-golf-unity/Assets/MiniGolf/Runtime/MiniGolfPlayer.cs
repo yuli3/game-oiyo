@@ -310,6 +310,8 @@ public class MiniGolfPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("mini-golf-3d", status, 0);
         HandleControls();
         SimulateBallPhysics();
         AnimateWindmill();

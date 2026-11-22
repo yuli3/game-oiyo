@@ -601,6 +601,8 @@ public class SubwayRunnerPlayer : MonoBehaviour
 
     private void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.TrackEnded("subway-runner", isGameOver || isVictory, isVictory, score);
         if (isGameOver || isVictory || showStageSelect) return;
 
         HandleInput();

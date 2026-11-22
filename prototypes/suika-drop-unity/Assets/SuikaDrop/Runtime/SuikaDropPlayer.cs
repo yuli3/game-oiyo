@@ -520,6 +520,8 @@ public class SuikaDropPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("fruit-merge-drop", state, score);
         HandleCameraTrauma();
         UpdateFloatingTexts();
         UpdateBurstParticles();

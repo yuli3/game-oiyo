@@ -856,6 +856,8 @@ public class SwatBreachPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("swat-breach", phase, totalScore);
         HandleCameraTrauma();
         UpdateFloatingTexts();
 

@@ -599,6 +599,8 @@ public class TwoHandsPlayer : MonoBehaviour
 
     private void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.TrackEnded("two-hands", isGameOver || isVictory, isVictory, score);
         if (isGameOver || isVictory || showStageSelect) return;
 
         HandleInput();

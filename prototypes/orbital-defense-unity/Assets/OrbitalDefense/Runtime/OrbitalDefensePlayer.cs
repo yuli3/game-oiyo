@@ -537,6 +537,8 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("orbital-defense-3d", state, score);
         float dt = Time.deltaTime;
 
         if (Input.GetKeyDown(KeyCode.Escape))

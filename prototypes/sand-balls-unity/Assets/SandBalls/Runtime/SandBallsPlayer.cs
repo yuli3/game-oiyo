@@ -674,6 +674,8 @@ public class SandBallsPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("sand-dig", state, 0);
         HandleCameraTrauma();
         UpdateFloatingTexts();
         UpdateDustParticles();

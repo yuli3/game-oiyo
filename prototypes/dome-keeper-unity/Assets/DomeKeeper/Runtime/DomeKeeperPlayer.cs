@@ -454,6 +454,8 @@ public class DomeKeeperPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("drill-dome", _mode, _score);
         float dt = Mathf.Min(0.05f, Time.deltaTime);
         UpdateParticles(dt);
 

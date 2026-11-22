@@ -307,6 +307,8 @@ public class SliceMasterPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.TrackEnded("blade-drop-3d", isGameOver || isLevelClear, isLevelClear, score);
         HandleInput();
         SimulateKnifePhysics();
         AnimateSlicedSplits();

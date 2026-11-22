@@ -300,6 +300,8 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.TrackEnded("viking-longship", _victory || _gameOver, _victory, 0);
         float dt = Mathf.Min(Time.deltaTime, 0.05f);
         if (_gameOver)
         {

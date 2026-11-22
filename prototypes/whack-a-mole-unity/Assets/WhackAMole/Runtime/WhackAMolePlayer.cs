@@ -595,6 +595,8 @@ public class WhackAMolePlayer : MonoBehaviour
 
     private void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("whack-a-mole", state, score);
         HandlePlayerInput();
         UpdateMalletPositionAndSwing();
         UpdateMoleSpawnsAndLifecycles();

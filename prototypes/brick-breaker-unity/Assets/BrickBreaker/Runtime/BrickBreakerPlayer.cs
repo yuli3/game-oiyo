@@ -617,6 +617,8 @@ public class BrickBreakerPlayer : MonoBehaviour
 
     private void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.TrackEnded("brick-breaker", isGameOver || isVictory, isVictory, score);
         HandleInput();
         UpdatePaddle();
         UpdateLasers();

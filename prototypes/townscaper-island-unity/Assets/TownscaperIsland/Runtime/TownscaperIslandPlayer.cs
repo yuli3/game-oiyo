@@ -278,6 +278,8 @@ public class TownscaperIslandPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.TrackEnded("harbor-blocks", stageCleared, true, 0);
         HandleCameraControls();
         HandleInteraction();
         AnimateEnvironment();

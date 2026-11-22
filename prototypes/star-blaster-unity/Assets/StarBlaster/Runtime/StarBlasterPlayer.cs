@@ -525,6 +525,8 @@ public class StarBlasterPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("star-blaster", state, score);
         float dt = Time.deltaTime;
 
         if (Input.GetKeyDown(KeyCode.Escape))

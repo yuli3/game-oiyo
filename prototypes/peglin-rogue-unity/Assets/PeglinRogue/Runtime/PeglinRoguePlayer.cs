@@ -444,6 +444,8 @@ public class PeglinRoguePlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("peg-dungeon", state, totalScore);
         HandleCameraTrauma();
         UpdateFloatingTexts();
 

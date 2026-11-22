@@ -372,6 +372,8 @@ public sealed class FrostpunkPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.TrackEnded("heat-ring-city", _victory || _gameOver, _victory, 0);
         float dt = Mathf.Min(Time.deltaTime, 0.05f);
         if (_alertTimer > 0f) _alertTimer -= dt;
 
