@@ -3,6 +3,9 @@ using UnityEngine;
 
 public sealed class MiniMotorwaysPlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
+    static string F(string en, params object[] args) => string.Format(OiyoI18n.Ui(en, OiyoI18n.Page), args);
     const int GridW = 14;
     const int GridH = 10;
     const float CellSize = 1.6f;
@@ -254,7 +257,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
         AddHouse(1, 5, ColorGroup.Blue);
         AddMall(10, 7, ColorGroup.Blue);
 
-        SetStatus("Connect colored Houses to matching Malls across the river!");
+        SetStatus(U("Connect colored Houses to matching Malls across the river!"));
     }
 
     void AddHouse(int x, int y, ColorGroup group)
@@ -371,7 +374,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
                 if (!_motorwayStart.HasValue)
                 {
                     _motorwayStart = cellPos.Value;
-                    SetStatus("Select destination cell for Expressway end!");
+                    SetStatus(U("Select destination cell for Expressway end!"));
                 }
                 else
                 {
@@ -440,7 +443,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
             {
                 if (_bridges <= 0)
                 {
-                    SetStatus("Out of Bridges! Pick Bridges at week end.");
+                    SetStatus(U("Out of Bridges! Pick Bridges at week end."));
                     return;
                 }
                 _bridges--;
@@ -450,7 +453,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
             {
                 if (_roadTiles <= 0)
                 {
-                    SetStatus("Out of Road Tiles! Erase unused roads or await week supply.");
+                    SetStatus(U("Out of Road Tiles! Erase unused roads or await week supply."));
                     return;
                 }
                 _roadTiles--;
@@ -469,7 +472,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
     {
         if (_motorwayCount <= 0)
         {
-            SetStatus("No roads remaining!");
+            SetStatus(U("No roads remaining!"));
             return;
         }
         if (a == b) return;
@@ -487,7 +490,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
         arc.GetComponent<Renderer>().material = _motorwayMat;
 
         _motorways.Add(new Motorway { Start = a, End = b, ArcGo = arc });
-        SetStatus("Expressway opened!");
+        SetStatus(U("Expressway opened!"));
     }
 
     void SpawnNewBuildingsForWeek()
@@ -700,17 +703,18 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         var bold = new GUIStyle(GUI.skin.box) { fontSize = 14, fontStyle = FontStyle.Bold };
         GUI.Box(new Rect(14, 12, 470, 62), "");
-        GUI.Label(new Rect(24, 18, 450, 24), $"ROAD WEAVER  |  TRIPS: {_trips}  |  WEEK {_week}/{FinalWeek} ({Mathf.CeilToInt(WeekDuration - _weekTimer)}s)", bold);
-        GUI.Label(new Rect(24, 44, 450, 22), $"Roads: {_roadTiles}  •  Bridges: {_bridges}  •  Expressways: {_motorwayCount}  •  Mode: {(_motorwayMode ? "EXPRESSWAY (Click 2 tiles)" : (_eraseMode ? "ERASE" : "DRAW ROAD"))}");
+        GUI.Label(new Rect(24, 18, 450, 24), F("ROAD WEAVER  |  TRIPS: {0}  |  WEEK {1}/{2} ({3}s)", _trips, _week, FinalWeek, Mathf.CeilToInt(WeekDuration - _weekTimer)), bold);
+        GUI.Label(new Rect(24, 44, 450, 22), F("Roads: {0}  •  Bridges: {1}  •  Expressways: {2}  •  Mode: {3}", _roadTiles, _bridges, _motorwayCount, _motorwayMode ? U("EXPRESSWAY (Click 2 tiles)") : (_eraseMode ? U("ERASE") : U("DRAW ROAD"))));
 
-        if (GUI.Button(new Rect(500, 14, 110, 28), _eraseMode ? "Mode: Erase ✓" : "Erase (E)"))
+        if (GUI.Button(new Rect(500, 14, 110, 28), _eraseMode ? U("Mode: Erase ✓") : U("Erase (E)")))
         {
             _eraseMode = !_eraseMode;
             _motorwayMode = false;
         }
-        if (GUI.Button(new Rect(618, 14, 130, 28), _motorwayMode ? "Expressway ✓" : $"Expressway (M) [{_motorwayCount}]"))
+        if (GUI.Button(new Rect(618, 14, 130, 28), _motorwayMode ? U("Expressway ✓") : F("Expressway (M) [{0}]", _motorwayCount)))
         {
             _motorwayMode = !_motorwayMode;
             _eraseMode = false;
@@ -725,14 +729,14 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
         if (_pendingUpgradeChoice)
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 210, Screen.height * 0.5f - 70, 420, 140), "");
-            GUI.Label(new Rect(Screen.width * 0.5f - 190, Screen.height * 0.5f - 54, 380, 28), $"WEEK {_week} SUPPLY DROP — CHOOSE BUNDLE", bold);
-            if (GUI.Button(new Rect(Screen.width * 0.5f - 185, Screen.height * 0.5f - 10, 175, 48), "+12 Road Tiles\n+1 Bridge"))
+            GUI.Label(new Rect(Screen.width * 0.5f - 190, Screen.height * 0.5f - 54, 380, 28), F("WEEK {0} SUPPLY DROP — CHOOSE BUNDLE", _week), bold);
+            if (GUI.Button(new Rect(Screen.width * 0.5f - 185, Screen.height * 0.5f - 10, 175, 48), U("+12 Road Tiles\n+1 Bridge")))
             {
                 _roadTiles += 12;
                 _bridges += 1;
                 _pendingUpgradeChoice = false;
             }
-            if (GUI.Button(new Rect(Screen.width * 0.5f + 10, Screen.height * 0.5f - 10, 175, 48), "+8 Road Tiles\n+1 Expressway"))
+            if (GUI.Button(new Rect(Screen.width * 0.5f + 10, Screen.height * 0.5f - 10, 175, 48), U("+8 Road Tiles\n+1 Expressway")))
             {
                 _roadTiles += 8;
                 _motorwayCount += 1;
@@ -743,9 +747,9 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
         if (_gameOver)
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 170, Screen.height * 0.5f - 55, 340, 110), "");
-            GUI.Label(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f - 36, 300, 28), _victory ? $"CITY THRIVED — ALL {FinalWeek} WEEKS!" : "GRIDLOCK OVERLOAD!", bold);
-            GUI.Label(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f - 8, 300, 24), $"Completed {_trips} Trips over {_week} Weeks");
-            if (GUI.Button(new Rect(Screen.width * 0.5f - 65, Screen.height * 0.5f + 20, 130, 28), "Rebuild (R)"))
+            GUI.Label(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f - 36, 300, 28), _victory ? F("CITY THRIVED — ALL {0} WEEKS!", FinalWeek) : U("GRIDLOCK OVERLOAD!"), bold);
+            GUI.Label(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f - 8, 300, 24), F("Completed {0} Trips over {1} Weeks", _trips, _week));
+            if (GUI.Button(new Rect(Screen.width * 0.5f - 65, Screen.height * 0.5f + 20, 130, 28), U("Rebuild (R)")))
             {
                 ResetCity();
             }

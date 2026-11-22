@@ -1,0 +1,23 @@
+{
+  "_order": ["ko", "ja", "es", "zh", "fr"],
+  "Gen: OFF✓": ["발전기: 끔✓", "発電機: オフ✓", "Gen: APAG✓", "发电机：关✓", "Gén : ARRÊT✓"],
+  "Gen OFF": ["발전기 끄기", "発電機オフ", "Apagar gen", "关闭发电机", "Arrêt gén"],
+  "OD(O)": ["과부하(O)", "過負荷(O)", "Sobrec.(O)", "超载(O)", "Surch.(O)"],
+  "THE CITY SURVIVED THE WHITEOUT!": ["도시가 눈보라를 견뎌냈다!", "街は猛吹雪を耐え抜いた！", "¡LA CIUDAD SOBREVIVIÓ A LA VENTISCA!", "城市挺过了暴风雪！", "LA VILLE A SURVÉCU AU BLIZZARD !"],
+  "THE CITY FELL TO THE FROST": ["도시가 혹한에 무너졌다", "街は凍てつきに倒れた", "LA CIUDAD CAYÓ ANTE LA ESCARCHA", "城市被严寒吞没", "LA VILLE A SUCCOMBÉ AU GEL"],
+  "Rebuild (R)": ["재건 (R)", "再建 (R)", "Reconstruir (R)", "重建 (R)", "Reconstruire (R)"],
+  "Survive 6 Days to -70°C! Build in Ring 1 or place Steam Hubs in Ring 2.": ["-70°C까지 6일을 버티세요! 1번 고리에 건설하거나 2번 고리에 증기 허브를 두세요.", "-70°C まで 6 日生き延びろ！第1環に建設、第2環には蒸気ハブを。", "¡Sobrevive 6 días hasta -70°C! Construye en el anillo 1 o pon nodos de vapor en el anillo 2.", "坚持 6 天直到 -70°C！在第 1 环建造，或在第 2 环放置蒸汽枢纽。", "Survivez 6 jours jusqu'à -70°C ! Construisez sur l'anneau 1 ou posez des relais vapeur sur l'anneau 2."],
+  "Plot occupied! Click an empty plot or press X while clicking to demolish.": ["이미 건물이 있습니다! 빈 칸을 누르거나 X를 누른 채 클릭해 철거하세요.", "区画は使用中！空き区画をクリックするか、X を押しながらクリックで解体。", "¡Parcela ocupada! Pulsa una vacía o mantén X al hacer clic para demoler.", "地块已占用！点击空地，或按住 X 点击拆除。", "Parcelle occupée ! Cliquez une parcelle vide ou maintenez X pour démolir."],
+  "Need {0} Wood for {1}!": ["{1}에 나무 {0}개가 필요합니다!", "{1} には木材 {0} が必要！", "¡Necesitas {0} de madera para {1}!", "{1} 需要 {0} 木材！", "Il faut {0} bois pour {1} !"],
+  "Day {0}: Storm deepens! Ambient {1}°C": ["{0}일차: 폭풍이 거세진다! 기온 {1}°C", "{0}日目: 嵐が激化！気温 {1}°C", "Día {0}: ¡la tormenta empeora! Ambiente {1}°C", "第 {0} 天：风暴加剧！气温 {1}°C", "Jour {0} : la tempête s'intensifie ! Ambiante {1}°C"],
+  "Demolished (+2 Wood)": ["철거 (나무 +2)", "解体 (木材 +2)", "Demolido (+2 madera)", "已拆除 (木材 +2)", "Démoli (+2 bois)"],
+  "GENERATOR OVERPRESSURE EXPLOSION!": ["발전기 과압 폭발!", "発電機が過圧で爆発！", "¡EXPLOSIÓN POR SOBREPRESIÓN DEL GENERADOR!", "发电机超压爆炸！", "EXPLOSION DU GÉNÉRATEUR EN SURPRESSION !"],
+  "Day {0}/{1} • Hope {2}% • Citizens {3}": ["{0}/{1}일 • 희망 {2}% • 주민 {3}", "{0}/{1}日目 • 希望 {2}% • 市民 {3}", "Día {0}/{1} • Esperanza {2}% • Habitantes {3}", "第 {0}/{1} 天 • 希望 {2}% • 居民 {3}", "Jour {0}/{1} • Espoir {2}% • Habitants {3}"],
+  "HEAT RING CITY  |  DAY {0}/{1} ({2}s)  |  TEMP: {3}°C  |  HOPE: {4}%": ["열기 고리 도시  |  {0}/{1}일 ({2}초)  |  기온: {3}°C  |  희망: {4}%", "ヒートリング都市  |  {0}/{1}日目 ({2}秒)  |  気温: {3}°C  |  希望: {4}%", "CIUDAD DEL ANILLO DE CALOR  |  DÍA {0}/{1} ({2}s)  |  TEMP: {3}°C  |  ESPERANZA: {4}%", "热环之城  |  第 {0}/{1} 天 ({2} 秒)  |  气温：{3}°C  |  希望：{4}%", "CITÉ DE L'ANNEAU CHAUD  |  JOUR {0}/{1} ({2}s)  |  TEMP : {3}°C  |  ESPOIR : {4}%"],
+  "Coal: {0}   Wood: {1}   Citizens: {2} (Sick: {3})   Stress: {4}%   •  A/D or Right-Drag Orbit Camera": ["석탄: {0}   나무: {1}   주민: {2} (환자: {3})   스트레스: {4}%   •  A/D 또는 우클릭 드래그로 카메라 회전", "石炭: {0}   木材: {1}   市民: {2} (病人: {3})   ストレス: {4}%   •  A/D か右ドラッグでカメラ回転", "Carbón: {0}   Madera: {1}   Habitantes: {2} (enfermos: {3})   Estrés: {4}%   •  A/D o arrastre derecho para girar la cámara", "煤：{0}   木材：{1}   居民：{2} (病人：{3})   压力：{4}%   •  A/D 或右键拖动旋转镜头", "Charbon : {0}   Bois : {1}   Habitants : {2} (malades : {3})   Stress : {4}%   •  A/D ou clic droit glissé pour tourner"],
+  "1: Tent (5w)": ["1: 천막 (나무5)", "1: テント (木5)", "1: Tienda (5m)", "1: 帐篷 (5木)", "1: Tente (5b)"],
+  "2: Coal (6w)": ["2: 석탄 (나무6)", "2: 石炭 (木6)", "2: Carbón (6m)", "2: 煤矿 (6木)", "2: Charbon (6b)"],
+  "3: Sawmill (4w)": ["3: 제재소 (나무4)", "3: 製材所 (木4)", "3: Aserradero (4m)", "3: 锯木厂 (4木)", "3: Scierie (4b)"],
+  "4: MedPost (8w)": ["4: 의무소 (나무8)", "4: 医務所 (木8)", "4: Enfermería (8m)", "4: 医疗站 (8木)", "4: Infirmerie (8b)"],
+  "5: SteamHub (10w)": ["5: 증기 허브 (나무10)", "5: 蒸気ハブ (木10)", "5: Nodo de vapor (10m)", "5: 蒸汽枢纽 (10木)", "5: Relais vapeur (10b)"]
+}

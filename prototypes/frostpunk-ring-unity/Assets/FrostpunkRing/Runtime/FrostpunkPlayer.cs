@@ -3,6 +3,9 @@ using UnityEngine;
 
 public sealed class FrostpunkPlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
+    static string F(string en, params object[] args) => string.Format(OiyoI18n.Ui(en, OiyoI18n.Page), args);
     enum BuildingType
     {
         Empty,
@@ -281,7 +284,7 @@ public sealed class FrostpunkPlayer : MonoBehaviour
         BuildOnPlot(_plots[0], BuildingType.Tent, true);
         BuildOnPlot(_plots[2], BuildingType.CoalThumper, true);
         BuildOnPlot(_plots[4], BuildingType.Sawmill, true);
-        SetAlert("Survive 6 Days to -70°C! Build in Ring 1 or place Steam Hubs in Ring 2.");
+        SetAlert(U("Survive 6 Days to -70°C! Build in Ring 1 or place Steam Hubs in Ring 2."));
     }
 
     int BuildCostWood(BuildingType t)
@@ -301,13 +304,13 @@ public sealed class FrostpunkPlayer : MonoBehaviour
     {
         if (p.Type != BuildingType.Empty)
         {
-            SetAlert("Plot occupied! Click an empty plot or press X while clicking to demolish.");
+            SetAlert(U("Plot occupied! Click an empty plot or press X while clicking to demolish."));
             return;
         }
         int cost = free ? 0 : BuildCostWood(t);
         if (_wood < cost)
         {
-            SetAlert($"Need {cost} Wood for {t}!");
+            SetAlert(F("Need {0} Wood for {1}!", cost, t));
             return;
         }
         _wood -= cost;
@@ -407,7 +410,7 @@ public sealed class FrostpunkPlayer : MonoBehaviour
             }
             else
             {
-                SetAlert($"Day {_day}: Storm deepens! Ambient {Mathf.RoundToInt(AmbientTempC())}°C");
+                SetAlert(F("Day {0}: Storm deepens! Ambient {1}°C", _day, Mathf.RoundToInt(AmbientTempC())));
             }
         }
     }
@@ -457,7 +460,7 @@ public sealed class FrostpunkPlayer : MonoBehaviour
                         best.Structure = null;
                         best.Type = BuildingType.Empty;
                         _wood += 2;
-                        SetAlert("Demolished (+2 Wood)");
+                        SetAlert(U("Demolished (+2 Wood)"));
                     }
                     else
                     {
@@ -499,7 +502,7 @@ public sealed class FrostpunkPlayer : MonoBehaviour
             _stress = Mathf.Min(100f, _stress + 5.5f * dt);
             if (_stress >= 100f)
             {
-                SetAlert("GENERATOR OVERPRESSURE EXPLOSION!");
+                SetAlert(U("GENERATOR OVERPRESSURE EXPLOSION!"));
                 _gameOver = true;
                 return;
             }
@@ -587,24 +590,25 @@ public sealed class FrostpunkPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         var bold = new GUIStyle(GUI.skin.box) { fontSize = 14, fontStyle = FontStyle.Bold };
         int amb = Mathf.RoundToInt(AmbientTempC());
 
         GUI.Box(new Rect(14, 12, Screen.width - 28, 68), "");
         GUI.Label(new Rect(26, 18, 560, 24),
-            $"HEAT RING CITY  |  DAY {_day}/{MaxDays} ({Mathf.CeilToInt(DayLengthSec - _dayTimer)}s)  |  TEMP: {amb}°C  |  HOPE: {Mathf.RoundToInt(_hope)}%", bold);
+            F("HEAT RING CITY  |  DAY {0}/{1} ({2}s)  |  TEMP: {3}°C  |  HOPE: {4}%", _day, MaxDays, Mathf.CeilToInt(DayLengthSec - _dayTimer), amb, Mathf.RoundToInt(_hope)), bold);
         GUI.Label(new Rect(26, 44, 720, 22),
-            $"Coal: {Mathf.FloorToInt(_coal)}   Wood: {Mathf.FloorToInt(_wood)}   Citizens: {_citizens} (Sick: {_sick})   Stress: {Mathf.RoundToInt(_stress)}%   •  A/D or Right-Drag Orbit Camera");
+            F("Coal: {0}   Wood: {1}   Citizens: {2} (Sick: {3})   Stress: {4}%   •  A/D or Right-Drag Orbit Camera", Mathf.FloorToInt(_coal), Mathf.FloorToInt(_wood), _citizens, _sick, Mathf.RoundToInt(_stress)));
 
         // Generator Power Controls
-        if (GUI.Button(new Rect(Screen.width - 335, 18, 95, 28), _genPower == 0 ? "Gen: OFF✓" : "Gen OFF")) _genPower = 0;
+        if (GUI.Button(new Rect(Screen.width - 335, 18, 95, 28), _genPower == 0 ? U("Gen: OFF✓") : U("Gen OFF"))) _genPower = 0;
         if (GUI.Button(new Rect(Screen.width - 234, 18, 70, 28), _genPower == 1 ? "Lv1✓" : "Lv1")) _genPower = 1;
         if (GUI.Button(new Rect(Screen.width - 158, 18, 70, 28), _genPower == 2 ? "Lv2✓" : "Lv2")) _genPower = 2;
-        if (GUI.Button(new Rect(Screen.width - 82, 18, 66, 28), _overdrive ? "OD✓" : "OD(O)")) _overdrive = !_overdrive;
+        if (GUI.Button(new Rect(Screen.width - 82, 18, 66, 28), _overdrive ? "OD✓" : U("OD(O)"))) _overdrive = !_overdrive;
 
         // Build toolbar at bottom
         BuildingType[] tools = { BuildingType.Tent, BuildingType.CoalThumper, BuildingType.Sawmill, BuildingType.MedicalPost, BuildingType.SteamHub };
-        string[] labels = { "1: Tent (5w)", "2: Coal (6w)", "3: Sawmill (4w)", "4: MedPost (8w)", "5: SteamHub (10w)" };
+        string[] labels = { U("1: Tent (5w)"), U("2: Coal (6w)"), U("3: Sawmill (4w)"), U("4: MedPost (8w)"), U("5: SteamHub (10w)") };
         float totalW = tools.Length * 135f;
         float startX = Screen.width * 0.5f - totalW * 0.5f;
         for (int i = 0; i < tools.Length; i++)
@@ -624,9 +628,9 @@ public sealed class FrostpunkPlayer : MonoBehaviour
         if (_gameOver || _victory)
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 175, Screen.height * 0.5f - 55, 350, 110), "");
-            GUI.Label(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f - 36, 300, 28), _victory ? "THE CITY SURVIVED THE WHITEOUT!" : "THE CITY FELL TO THE FROST", bold);
-            GUI.Label(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f - 8, 300, 24), $"Day {_day}/{MaxDays} • Hope {Mathf.RoundToInt(_hope)}% • Citizens {_citizens}");
-            if (GUI.Button(new Rect(Screen.width * 0.5f - 65, Screen.height * 0.5f + 20, 130, 28), "Rebuild (R)"))
+            GUI.Label(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f - 36, 300, 28), _victory ? U("THE CITY SURVIVED THE WHITEOUT!") : U("THE CITY FELL TO THE FROST"), bold);
+            GUI.Label(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f - 8, 300, 24), F("Day {0}/{1} • Hope {2}% • Citizens {3}", _day, MaxDays, Mathf.RoundToInt(_hope), _citizens));
+            if (GUI.Button(new Rect(Screen.width * 0.5f - 65, Screen.height * 0.5f + 20, 130, 28), U("Rebuild (R)")))
             {
                 ResetCity();
             }

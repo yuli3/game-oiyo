@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class ChaosKitchenPlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
+    static string F(string en, params object[] args) => string.Format(OiyoI18n.Ui(en, OiyoI18n.Page), args);
     enum Mode { Title, Playing, GameOver }
     enum ItemKind { None, Tomato, ChoppedTomato, RawPatty, CookedPatty, BurntPatty, Bun, Plate, SaladDish, BurgerDish, Extinguisher }
     enum StationKind { CrateTomato, CratePatty, CrateBun, CratePlate, ChoppingBoard, Stove, ServeBelt, Trash }
@@ -401,7 +404,7 @@ public class ChaosKitchenPlayer : MonoBehaviour
         bool burger = UnityEngine.Random.value < 0.55f;
         _orders.Add(new OrderTicket
         {
-            label = burger ? "BURGER (Patty->Stove + Bun + Plate)" : "SALAD (Tomato->Chop + Plate)",
+            label = burger ? U("BURGER (Patty->Stove + Bun + Plate)") : U("SALAD (Tomato->Chop + Plate)"),
             targetDish = burger ? ItemKind.BurgerDish : ItemKind.SaladDish,
             timeLeft = (burger ? 38f : 28f) * ShiftPace,
             maxTime = (burger ? 38f : 28f) * ShiftPace,
@@ -821,6 +824,7 @@ public class ChaosKitchenPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         EnsureStyles();
         float w = Screen.width;
         float h = Screen.height;
@@ -828,11 +832,11 @@ public class ChaosKitchenPlayer : MonoBehaviour
         if (_mode == Mode.Title)
         {
             GUI.Box(new Rect(w * 0.5f - 260, h * 0.5f - 145, 520, 290), "");
-            GUI.Label(new Rect(w * 0.5f - 240, h * 0.5f - 125, 480, 48), "CHAOS KITCHEN", _titleStyle);
+            GUI.Label(new Rect(w * 0.5f - 240, h * 0.5f - 125, 480, 48), U("CHAOS KITCHEN"), _titleStyle);
             GUI.Label(new Rect(w * 0.5f - 240, h * 0.5f - 68, 480, 96),
-                "WASD / Drag: Run & Dash (Shift)\nSpace / E: Pick Up, Place, Plate & Serve on Bottom Belt\nQ / Right-Click: Throw Ingredients Across Kitchen!",
+                U("WASD / Drag: Run & Dash (Shift)\nSpace / E: Pick Up, Place, Plate & Serve on Bottom Belt\nQ / Right-Click: Throw Ingredients Across Kitchen!"),
                 _subStyle);
-            if (GUI.Button(new Rect(w * 0.5f - 110, h * 0.5f + 56, 220, 48), "OPEN KITCHEN", _btnStyle))
+            if (GUI.Button(new Rect(w * 0.5f - 110, h * 0.5f + 56, 220, 48), U("OPEN KITCHEN"), _btnStyle))
             {
                 StartNextShift();
             }
@@ -841,7 +845,7 @@ public class ChaosKitchenPlayer : MonoBehaviour
 
         // Top Order & Score Bar
         GUI.Box(new Rect(10, 8, w - 20, 52), "");
-        GUI.Label(new Rect(22, 18, 560, 28), $"SHIFT {_shift}/{FinalShift} · TIME {Mathf.CeilToInt(_roundTime)}s · SCORE {_score}/{ShiftTarget} (x{_combo})", _hudStyle);
+        GUI.Label(new Rect(22, 18, 560, 28), F("SHIFT {0}/{1} · TIME {2}s · SCORE {3}/{4} (x{5})", _shift, FinalShift, Mathf.CeilToInt(_roundTime), _score, ShiftTarget, _combo), _hudStyle);
 
         for (int i = 0; i < _orders.Count; i++)
         {
@@ -850,15 +854,15 @@ public class ChaosKitchenPlayer : MonoBehaviour
         }
 
         // Mobile / Mouse friendly Interact & Throw buttons at bottom corners
-        if (GUI.Button(new Rect(14, h - 54, 150, 42), "[Space] Interact", _btnStyle)) InteractNearestStation();
-        if (GUI.Button(new Rect(174, h - 54, 140, 42), "[Q] Throw", _btnStyle)) ThrowHeldItem();
+        if (GUI.Button(new Rect(14, h - 54, 150, 42), U("[Space] Interact"), _btnStyle)) InteractNearestStation();
+        if (GUI.Button(new Rect(174, h - 54, 140, 42), U("[Q] Throw"), _btnStyle)) ThrowHeldItem();
 
         if (_mode == Mode.GameOver)
         {
             GUI.Box(new Rect(w * 0.5f - 200, h * 0.5f - 105, 400, 210), "");
-            GUI.Label(new Rect(w * 0.5f - 180, h * 0.5f - 85, 360, 46), _victory ? "ALL SHIFTS CLEARED!" : (_shiftCleared ? $"SHIFT {_shift} CLEARED!" : "SHIFT FAILED"), _titleStyle);
-            GUI.Label(new Rect(w * 0.5f - 180, h * 0.5f - 32, 360, 50), $"Dishes Served: {_servedCount}\nScore: {_score} / Target {ShiftTarget}", _subStyle);
-            if (GUI.Button(new Rect(w * 0.5f - 100, h * 0.5f + 36, 200, 44), _victory ? "PLAY AGAIN" : (_shiftCleared ? "NEXT SHIFT" : "RETRY SHIFT"), _btnStyle))
+            GUI.Label(new Rect(w * 0.5f - 180, h * 0.5f - 85, 360, 46), _victory ? U("ALL SHIFTS CLEARED!") : (_shiftCleared ? F("SHIFT {0} CLEARED!", _shift) : U("SHIFT FAILED")), _titleStyle);
+            GUI.Label(new Rect(w * 0.5f - 180, h * 0.5f - 32, 360, 50), F("Dishes Served: {0}\nScore: {1} / Target {2}", _servedCount, _score, ShiftTarget), _subStyle);
+            if (GUI.Button(new Rect(w * 0.5f - 100, h * 0.5f + 36, 200, 44), _victory ? U("PLAY AGAIN") : (_shiftCleared ? U("NEXT SHIFT") : U("RETRY SHIFT")), _btnStyle))
             {
                 StartNextShift();
             }

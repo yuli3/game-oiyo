@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class DomeKeeperPlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
+    static string F(string en, params object[] args) => string.Format(OiyoI18n.Ui(en, OiyoI18n.Page), args);
     enum TileType { Empty = 0, Dirt = 1, Stone = 2, Basalt = 3, IronOre = 4, CobaltOre = 5, WaterOre = 6, Bedrock = 7 }
     enum GameMode { Title, Mining, Defense, GameOver }
 
@@ -932,6 +935,7 @@ public class DomeKeeperPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         EnsureStyles();
         float w = Screen.width;
         float h = Screen.height;
@@ -939,11 +943,11 @@ public class DomeKeeperPlayer : MonoBehaviour
         if (_mode == GameMode.Title)
         {
             GUI.Box(new Rect(w * 0.5f - 250, h * 0.5f - 140, 500, 280), "");
-            GUI.Label(new Rect(w * 0.5f - 230, h * 0.5f - 120, 460, 50), "DRILL DOME DEFENSE", _titleStyle);
+            GUI.Label(new Rect(w * 0.5f - 230, h * 0.5f - 120, 460, 50), U("DRILL DOME DEFENSE"), _titleStyle);
             GUI.Label(new Rect(w * 0.5f - 230, h * 0.5f - 60, 460, 80),
-                "WASD / Drag: Jetpack Drill & Tether Ore back to Center Shaft\nMouse Aim + Click/Space: Fire Dome Laser during Wave Defense\n1-4 Keys: Live Upgrades (Drill / Jetpack / Laser / Armor)",
+                U("WASD / Drag: Jetpack Drill & Tether Ore back to Center Shaft\nMouse Aim + Click/Space: Fire Dome Laser during Wave Defense\n1-4 Keys: Live Upgrades (Drill / Jetpack / Laser / Armor)"),
                 _subStyle);
-            if (GUI.Button(new Rect(w * 0.5f - 110, h * 0.5f + 50, 220, 48), "START EXPEDITION", _btnStyle))
+            if (GUI.Button(new Rect(w * 0.5f - 110, h * 0.5f + 50, 220, 48), U("START EXPEDITION"), _btnStyle))
             {
                 ResetRun(GameMode.Mining);
             }
@@ -953,29 +957,29 @@ public class DomeKeeperPlayer : MonoBehaviour
         // Top HUD Bar
         GUI.Box(new Rect(12, 10, w - 24, 44), "");
         string modeTxt = _mode == GameMode.Defense
-            ? $"WAVE {_wave}/{FinalWave} DEFENSE! ({_enemies.Count + _enemiesRemainingToSpawn} Hostiles)"
-            : $"WAVE {_wave}/{FinalWave} MINING · NEXT WAVE IN {Mathf.CeilToInt(_waveTimer)}s";
+            ? F("WAVE {0}/{1} DEFENSE! ({2} Hostiles)", _wave, FinalWave, _enemies.Count + _enemiesRemainingToSpawn)
+            : F("WAVE {0}/{1} MINING · NEXT WAVE IN {2}s", _wave, FinalWave, Mathf.CeilToInt(_waveTimer));
         GUI.Label(new Rect(24, 20, 420, 26), modeTxt, _hudStyle);
         GUI.Label(new Rect(w * 0.5f - 160, 20, 340, 26),
-            $"DOME HP {_domeHp}/{_domeMaxHp}   IRON {_iron}   COBALT {_cobalt}   WATER {_water}",
+            F("DOME HP {0}/{1}   IRON {2}   COBALT {3}   WATER {4}", _domeHp, _domeMaxHp, _iron, _cobalt, _water),
             _hudStyle);
-        GUI.Label(new Rect(w - 150, 20, 130, 26), $"SCORE {_score}", _hudStyle);
+        GUI.Label(new Rect(w - 150, 20, 130, 26), F("SCORE {0}", _score), _hudStyle);
 
         // Bottom Upgrade Bar
         float by = h - 54;
-        if (GUI.Button(new Rect(14, by, 175, 42), $"[1] Drill Lv.{_drillLv} ({_drillLv * 3} Fe)", _btnStyle)) TryUpgrade(0);
-        if (GUI.Button(new Rect(197, by, 190, 42), $"[2] Jet Lv.{_jetLv} ({_jetLv * 2} Fe,1 W)", _btnStyle)) TryUpgrade(1);
-        if (GUI.Button(new Rect(395, by, 180, 42), $"[3] Laser Lv.{_laserLv} ({_laserLv * 2} Co)", _btnStyle)) TryUpgrade(2);
-        if (GUI.Button(new Rect(583, by, 185, 42), $"[4] Armor Lv.{_armorLv} (2 Fe,1 Co)", _btnStyle)) TryUpgrade(3);
+        if (GUI.Button(new Rect(14, by, 175, 42), F("[1] Drill Lv.{0} ({1} Fe)", _drillLv, _drillLv * 3), _btnStyle)) TryUpgrade(0);
+        if (GUI.Button(new Rect(197, by, 190, 42), F("[2] Jet Lv.{0} ({1} Fe,1 W)", _jetLv, _jetLv * 2), _btnStyle)) TryUpgrade(1);
+        if (GUI.Button(new Rect(395, by, 180, 42), F("[3] Laser Lv.{0} ({1} Co)", _laserLv, _laserLv * 2), _btnStyle)) TryUpgrade(2);
+        if (GUI.Button(new Rect(583, by, 185, 42), F("[4] Armor Lv.{0} (2 Fe,1 Co)", _armorLv), _btnStyle)) TryUpgrade(3);
 
         if (_mode == GameMode.GameOver)
         {
             GUI.Box(new Rect(w * 0.5f - 210, h * 0.5f - 110, 420, 220), "");
-            GUI.Label(new Rect(w * 0.5f - 190, h * 0.5f - 90, 380, 46), _victory ? "DOME HELD — ALL WAVES CLEARED" : "DOME BREACHED", _titleStyle);
+            GUI.Label(new Rect(w * 0.5f - 190, h * 0.5f - 90, 380, 46), _victory ? U("DOME HELD — ALL WAVES CLEARED") : U("DOME BREACHED"), _titleStyle);
             GUI.Label(new Rect(w * 0.5f - 190, h * 0.5f - 36, 380, 56),
-                $"Reached Wave {_wave} · Ores Delivered: {_oresDelivered}\nFinal Score: {_score}",
+                F("Reached Wave {0} · Ores Delivered: {1}\nFinal Score: {2}", _wave, _oresDelivered, _score),
                 _subStyle);
-            if (GUI.Button(new Rect(w * 0.5f - 100, h * 0.5f + 38, 200, 44), "PLAY AGAIN", _btnStyle))
+            if (GUI.Button(new Rect(w * 0.5f - 100, h * 0.5f + 38, 200, 44), U("PLAY AGAIN"), _btnStyle))
             {
                 ResetRun(GameMode.Mining);
             }

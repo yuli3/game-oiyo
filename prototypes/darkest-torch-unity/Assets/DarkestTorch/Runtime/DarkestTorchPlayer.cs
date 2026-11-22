@@ -3,6 +3,9 @@ using UnityEngine;
 
 public sealed class DarkestTorchPlayer : MonoBehaviour
 {
+    // Page language for English UI text (scripts/unity/oiyo-i18n).
+    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);
+    static string F(string en, params object[] args) => string.Format(OiyoI18n.Ui(en, OiyoI18n.Page), args);
     sealed class Hero
     {
         public string Name;
@@ -70,7 +73,7 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
 
     bool _victory;
     bool _gameOver;
-    string _banner = "Hold D / Right Arrow to march deeper! Click Skills or 1-4 in combat.";
+    string _banner = U("Hold D / Right Arrow to march deeper! Click Skills or 1-4 in combat.");
     float _bannerTimer = 4.5f;
 
     Material _stoneMat;
@@ -282,7 +285,7 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
             _curios.Add(new Curio { X = chestXs[i], Go = chest });
         }
 
-        SetBanner("March forward (D / →) through the crypt! Open golden chests with Space.");
+        SetBanner(U("March forward (D / →) through the crypt! Open golden chests with Space."));
     }
 
     void SpawnEncounter(int corridorNum)
@@ -307,7 +310,7 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
 
             _enemies.Add(new Enemy
             {
-                Name = makeBoss ? "Necromancer Lord" : (i % 2 == 0 ? "Bone Soldier" : "Cultist"),
+                Name = makeBoss ? U("Necromancer Lord") : (i % 2 == 0 ? U("Bone Soldier") : U("Cultist")),
                 Hp = makeBoss ? 88 : (14 + corridorNum * 3),
                 MaxHp = makeBoss ? 88 : (14 + corridorNum * 3),
                 IsBoss = makeBoss,
@@ -315,7 +318,7 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
                 Root = root
             });
         }
-        SetBanner(isBoss ? "THE NECROMANCER LORD APPEARS!" : $"Ambush in Corridor {corridorNum}!");
+        SetBanner(isBoss ? U("THE NECROMANCER LORD APPEARS!") : F("Ambush in Corridor {0}!", corridorNum));
     }
 
     void SetBanner(string msg)
@@ -365,13 +368,13 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
     {
         if (_torchesLeft <= 0)
         {
-            SetBanner("No torches left in pack!");
+            SetBanner(U("No torches left in pack!"));
             return;
         }
         _torchesLeft--;
         _torch = Mathf.Min(100f, _torch + 32f);
         SpawnBurst(_partyX + 0.5f, 1.8f, _flameMat, 10);
-        SetBanner("Torch reignited! +32 Torchlight");
+        SetBanner(U("Torch reignited! +32 Torchlight"));
     }
 
     void HandleExploration(float dt)
@@ -407,7 +410,7 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
                     _gold += 120;
                     _torchesLeft++;
                     SpawnBurst(_curios[i].X, 0.8f, _goldMat, 12);
-                    SetBanner("Looted Chest: +120 Gold & +1 Torch!");
+                    SetBanner(U("Looted Chest: +120 Gold & +1 Torch!"));
                     break;
                 }
             }
@@ -472,7 +475,7 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
                 }
             }
             SpawnBurst(_partyX - 1.5f, 1.6f, _goldMat, 10);
-            SetBanner($"{actor.Name} casts Divine Comfort (+6 HP, -8 Stress)!");
+            SetBanner(F("{0} casts Divine Comfort (+6 HP, -8 Stress)!", actor.Name));
         }
         else if (skillSlot == 2)
         {
@@ -488,7 +491,7 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
                 SpawnBurst(target.X, 1.3f, _blightMat, 8);
             }
             CleanupDeadEnemies();
-            SetBanner($"{actor.Name} hurled Plague Grenade!");
+            SetBanner(F("{0} hurled Plague Grenade!", actor.Name));
         }
         else
         {
@@ -502,7 +505,7 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
             _shakeTimer = 0.14f;
             SpawnBurst(target.X, 1.2f, _bloodMat, 12);
             CleanupDeadEnemies();
-            SetBanner($"{actor.Name} struck for {baseDmg} DMG!");
+            SetBanner(F("{0} struck for {1} DMG!", actor.Name, baseDmg));
         }
 
         if (_enemies.Count == 0)
@@ -512,14 +515,14 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
             if (_corridor >= BossCorridor)
             {
                 _victory = true;
-                SetBanner("VICTORY! The Necromancer Lord has fallen!");
+                SetBanner(U("VICTORY! The Necromancer Lord has fallen!"));
             }
             else
             {
                 _corridor++;
                 // 10-corridor run: a short rest between corridors keeps the party alive to the boss.
                 foreach (var h in _heroes) if (h.Hp > 0) h.Hp = Mathf.Min(h.MaxHp, h.Hp + 6);
-                SetBanner($"Wave Cleared! +Gold. March forward to Corridor {_corridor}!");
+                SetBanner(F("Wave Cleared! +Gold. March forward to Corridor {0}!", _corridor));
             }
             return;
         }
@@ -614,19 +617,19 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
             {
                 h.Virtuous = true;
                 h.Stress = 45;
-                SetBanner($"{h.Name}'s RESOLVE IS VIRTUOUS! (+DMG, Stress halved)");
+                SetBanner(F("{0}'s RESOLVE IS VIRTUOUS! (+DMG, Stress halved)", h.Name));
             }
             else
             {
                 h.Afflicted = true;
-                SetBanner($"{h.Name} suffers AFFLICTION!");
+                SetBanner(F("{0} suffers AFFLICTION!", h.Name));
             }
         }
         if (h.Stress >= 200)
         {
             h.Hp = 0;
             h.Stress = 200;
-            SetBanner($"{h.Name} suffered a HEART ATTACK!");
+            SetBanner(F("{0} suffered a HEART ATTACK!", h.Name));
         }
     }
 
@@ -713,14 +716,15 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
 
     void OnGUI()
     {
+        OiyoUiFont.Apply();
         var bold = new GUIStyle(GUI.skin.box) { fontSize = 14, fontStyle = FontStyle.Bold };
         GUI.Box(new Rect(14, 12, Screen.width - 28, 56), "");
         GUI.Label(new Rect(26, 18, 600, 24),
-            $"TORCH EXPEDITION  |  CORRIDOR {_corridor}/{BossCorridor}  |  TORCH: {Mathf.RoundToInt(_torch)}/100  |  GOLD: {_gold}", bold);
+            F("TORCH EXPEDITION  |  CORRIDOR {0}/{1}  |  TORCH: {2}/100  |  GOLD: {3}", _corridor, BossCorridor, Mathf.RoundToInt(_torch), _gold), bold);
         GUI.Label(new Rect(26, 40, 620, 20),
-            _inCombat ? (_playerTurn ? $"COMBAT: {_heroes[Mathf.Clamp(_activeHeroIdx, 0, 3)].Name}'s Turn — Press 1-4 or Click Skill" : "ENEMIES ACTING...") : "EXPLORATION: Hold D/→ to March • Space to Loot Chest • T to Light Torch");
+            _inCombat ? (_playerTurn ? F("COMBAT: {0}'s Turn — Press 1-4 or Click Skill", _heroes[Mathf.Clamp(_activeHeroIdx, 0, 3)].Name) : U("ENEMIES ACTING...")) : U("EXPLORATION: Hold D/→ to March • Space to Loot Chest • T to Light Torch"));
 
-        if (GUI.Button(new Rect(Screen.width - 175, 18, 148, 36), $"Light Torch (T) [{_torchesLeft}]"))
+        if (GUI.Button(new Rect(Screen.width - 175, 18, 148, 36), F("Light Torch (T) [{0}]", _torchesLeft)))
         {
             RelightTorch();
         }
@@ -732,12 +736,12 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
             float bx = 18 + i * 155;
             string mark = (_inCombat && _playerTurn && i == _activeHeroIdx) ? "▶ " : "";
             GUI.Box(new Rect(bx, Screen.height - 96, 148, 42),
-                $"{mark}{h.Name}\nHP {h.Hp}/{h.MaxHp} | St {h.Stress}");
+                F("{0}{1}\nHP {2}/{3} | St {4}", mark, h.Name, h.Hp, h.MaxHp, h.Stress));
         }
 
         if (_inCombat && _playerTurn)
         {
-            string[] skills = { "1: Smite", "2: Pistol", "3: Blight AoE", "4: Party Heal" };
+            string[] skills = { U("1: Smite"), U("2: Pistol"), U("3: Blight AoE"), U("4: Party Heal") };
             for (int s = 0; s < 4; s++)
             {
                 if (GUI.Button(new Rect(18 + s * 155, Screen.height - 48, 148, 36), skills[s]))
@@ -748,7 +752,7 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
             for (int e = 0; e < _enemies.Count; e++)
             {
                 var en = _enemies[e];
-                string sel = (e == _selectedEnemyIdx) ? " [TARGET]" : "";
+                string sel = (e == _selectedEnemyIdx) ? U(" [TARGET]") : "";
                 if (GUI.Button(new Rect(Screen.width - 190, 80 + e * 44, 172, 38), $"{en.Name}{sel}\nHP {en.Hp}/{en.MaxHp}"))
                 {
                     _selectedEnemyIdx = e;
@@ -765,9 +769,9 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 175, Screen.height * 0.5f - 55, 350, 110), "");
             GUI.Label(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f - 36, 300, 28),
-                _victory ? "NECROMANCER VANQUISHED!" : "EXPEDITION LOST TO DARKNESS", bold);
-            GUI.Label(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f - 8, 300, 24), $"Corridor {_corridor}/{BossCorridor} • Gold Plundered: {_gold}");
-            if (GUI.Button(new Rect(Screen.width * 0.5f - 70, Screen.height * 0.5f + 20, 140, 28), "New Expedition (R)"))
+                _victory ? U("NECROMANCER VANQUISHED!") : U("EXPEDITION LOST TO DARKNESS"), bold);
+            GUI.Label(new Rect(Screen.width * 0.5f - 150, Screen.height * 0.5f - 8, 300, 24), F("Corridor {0}/{1} • Gold Plundered: {2}", _corridor, BossCorridor, _gold));
+            if (GUI.Button(new Rect(Screen.width * 0.5f - 70, Screen.height * 0.5f + 20, 140, 28), U("New Expedition (R)")))
             {
                 ResetExpedition();
             }

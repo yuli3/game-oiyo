@@ -17,7 +17,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 LIT = r'"(?:[^"\\]|\\.)*"'
-CALLS = re.compile(r'\b(GUI\.\w+|GUILayout\.\w+|Show\w*|Spawn\w*Text\w*|Spawn\w*Feedback\w*|Toast\w*|Banner\w*|Log\w*Message|AddLog|PushLog|SetMessage|Say|Announce)\s*\(')
+CALLS = re.compile(r'\b(Set(?:Banner|Alert|Message|Status|Hint|Toast|Log|Feedback)\w*|GUI\.\w+|GUILayout\.\w+|Show\w*|Spawn\w*Text\w*|Spawn\w*Feedback\w*|Toast\w*|Banner\w*|Log\w*Message|AddLog|PushLog|SetMessage|Say|Announce)\s*\(')
 FIELD = re.compile(r'\b(_?\w*(?:[Ff]eedback|[Mm]essage|[Bb]anner|[Tt]oast|[Hh]int|[Ss]tatus|[Ll]abel|[Tt]itle|[Tt]ext|[Tt]ag|[Nn]ame|[Dd]esc\w*|[Rr]eason|[Tt]ip|[Ll]og))\s*(?:\+?=)\s*')
 STYLES = {'Button', 'button', 'box', 'Box', 'label', 'Label', 'textfield', 'TextField', 'window', 'toggle', 'HorizontalSlider', 'verticalscrollbar'}
 SKIP_LINE = re.compile(r'Resources\.|Shader\.|GameObject\(|\.name\s*=|PlayerPrefs|Debug\.|AudioClip|\.tag\s*=|Find\(|SetFloat|SetColor|SetTexture|HasProperty|OiyoResult|Load<|ArtTex|ArtMat|SpriteMat|Tone\(|case "')
@@ -34,13 +34,46 @@ def harvest(line, keys):
             keys.append(t)
     return line
 
+INTERP = re.compile(r'\$"((?:[^"\\{}]|\\.|\{\{|\}\}|\{[^{}"]*\})*)"')
+
+def interp_to_f(m, keys):
+    body = m.group(1)
+    args, out, i = [], [], 0
+    for h in re.finditer(r'\{([^{}]*)\}', body):
+        if body[h.start()-1:h.start()] == '{':
+            continue
+        expr = h.group(1)
+        fmt = ''
+        if ':' in expr and '?' not in expr:
+            expr, fmt = expr.split(':', 1)
+            fmt = ':' + fmt
+        elif '?' in expr:
+            return None
+        out.append(body[i:h.start()]); out.append('{%d%s}' % (len(args), fmt)); args.append(expr.strip()); i = h.end()
+    out.append(body[i:])
+    fmtstr = ''.join(out)
+    text = fmtstr.encode('utf-8').decode('unicode_escape').encode('latin-1').decode('utf-8')
+    if sum(ch.isalpha() and ch.isascii() for ch in re.sub(r'\{\d+[^}]*\}|<[^>]+>', '', text)) < 3:
+        return None
+    keys.append(text)
+    return 'F("' + fmtstr + '"' + ''.join(', ' + a for a in args) + ')' if args else 'U("' + fmtstr + '")'
+
 def wrap_line(line, keys, plain):
     if SKIP_LINE.search(line) or line.lstrip().startswith('//'):
         return line
     if DECL.search(line):
         return harvest(line, plain)
-    if not (CALLS.search(line) or FIELD.search(line) or re.search(r'\?\s*' + LIT + r'\s*:', line)):
+    if not (CALLS.search(line) or FIELD.search(line) or re.search(r'\?\s*\$?' + LIT + r'\s*:', line) or re.match(r'\s*(?:[?:]\s*)?(?:\$"|\w+\s*\?\s*\()', line)):
         return line
+    if line.count('$"') > 1:
+        return line  # nested interpolation: wrap by hand
+    def conv(m):
+        r = interp_to_f(m, keys)
+        return r if r is not None else m.group(0)
+    if not DECL.search(line):
+        line = INTERP.sub(conv, line)
+    if '$"' in line:
+        return line  # interpolation with quotes inside a hole: wrap by hand
     out, i = [], 0
     for m in re.finditer(LIT, line):
         a, b = m.span()
@@ -74,8 +107,11 @@ def main(build):
             row = table.setdefault(unescape(m.group(2)), [None] * 5)
             row[0] = row[0] or unescape(m.group(1))
         s = re.sub(r'(static string T\(string ko, string en\) => IsKo \? ko : )en;', r'\1OiyoI18n.Ui(en, OiyoI18n.Page);', s)
+        if 'F("' in s and not re.search(r'\bstring F\(string', s):
+            cls = re.search(r'public (?:sealed |partial )*class \w+ : MonoBehaviour\s*\{[^\n]*\n', s)
+            s = s[:cls.end()] + '    static string F(string en, params object[] args) => string.Format(OiyoI18n.Ui(en, OiyoI18n.Page), args);\n' + s[cls.end():]
         if keys and not re.search(r'\bstring U\(string', s):
-            cls = re.search(r'public class \w+ : MonoBehaviour\s*\{\n', s)
+            cls = re.search(r'public (?:sealed |partial )*class \w+ : MonoBehaviour\s*\{[^\n]*\n', s)
             s = s[:cls.end()] + '    // Page language for English UI text (scripts/unity/oiyo-i18n).\n    static string U(string en) => OiyoI18n.Ui(en, OiyoI18n.Page);\n' + s[cls.end():]
         p.write_text(s, encoding='utf-8')
         print(f'{p.name}: wrapped {len(keys)} literals')
