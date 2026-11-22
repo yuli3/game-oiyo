@@ -1,4 +1,5 @@
 import { handleCreateRequest, handleGetRequest, type ShareKv } from "../../src/lib/cloud-state/share-endpoint";
+import { forbiddenOrigin, isSameOriginWrite } from "../../src/lib/cloud-state/same-origin";
 
 type PagesContext = {
   request: Request;
@@ -7,6 +8,7 @@ type PagesContext = {
 };
 
 export async function onRequestPost(context: PagesContext): Promise<Response> {
+  if (!isSameOriginWrite(context.request)) return forbiddenOrigin();
   return handleCreateRequest(context.env.SHARE_KV, "tier-list.v1", context.request);
 }
 

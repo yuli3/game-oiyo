@@ -50,6 +50,8 @@ export interface BossEntity {
 }
 
 export interface GrapplingBossState {
+  /** Boss tier 1-20 (stage range 2026-11-22). Tier 1 is the original fight. */
+  tier: number;
   player: PendulumBody2D;
   playerHp: number;
   maxPlayerHp: number;
@@ -116,7 +118,39 @@ export function createBossTentacles(): BossTentacle[] {
   });
 }
 
-export function initializeGrapplingBoss(): GrapplingBossState {
+/** Boss tiers (2026-11-22, stage range 10-50): each tier is a tougher rematch. */
+export const GRAPPLING_BOSS_TIERS = 20;
+
+export interface BossTierStats {
+  hp: number;
+  boltCooldownScale: number;
+  boltSpeed: number;
+  boltDamage: number;
+  /** Bolts per volley in phase 1 and in phase 2 (fanned around the aim line). */
+  volleyPhase1: number;
+  volleyPhase2: number;
+  tentacleDps: number;
+}
+
+export function clampBossTier(tier: number): number {
+  return Math.min(GRAPPLING_BOSS_TIERS, Math.max(1, Math.trunc(Number.isFinite(tier) ? tier : 1)));
+}
+
+export function bossTierStats(tier: number): BossTierStats {
+  const t = clampBossTier(tier) - 1;
+  return {
+    hp: Math.round(1000 * (1 + 0.12 * t)),
+    boltCooldownScale: Math.max(0.55, 1 - 0.025 * t),
+    boltSpeed: 220 + 6 * t,
+    boltDamage: Math.round(18 + 0.8 * t),
+    volleyPhase1: t >= 14 ? 3 : 1,
+    volleyPhase2: t >= 7 ? 3 : 1,
+    tentacleDps: 12 + 0.5 * t,
+  };
+}
+
+export function initializeGrapplingBoss(tier = 1): GrapplingBossState {
+  const stats = bossTierStats(tier);
   const anchors = createArenaAnchors();
   const tentacles = createBossTentacles();
 
@@ -136,8 +170,8 @@ export function initializeGrapplingBoss(): GrapplingBossState {
     y: 160,
     vx: 0,
     vy: 0,
-    hp: 1000,
-    maxHp: 1000,
+    hp: stats.hp,
+    maxHp: stats.hp,
     phase: 1,
     tentacles,
     attackCooldownSec: 1.8,
@@ -145,6 +179,7 @@ export function initializeGrapplingBoss(): GrapplingBossState {
   };
 
   return {
+    tier: clampBossTier(tier),
     player,
     playerHp: 100,
     maxPlayerHp: 100,
@@ -160,7 +195,7 @@ export function initializeGrapplingBoss(): GrapplingBossState {
 
     gameTimeSec: 0,
     score: 0,
-    activeLog: "Terraria Grappling Arena! Fire your hook with Space / Click to swing, shoot with F!",
+    activeLog: "Grappling Arena! Fire your hook with Space / Click to swing, shoot with F!",
     status: "playing",
   };
 }
@@ -325,24 +360,25 @@ export function stepGrapplingBoss(
   b.y += (hoverY - b.y) * 1.8 * dt;
 
   // Boss attack cooldown (fires plasma bolts at player)
+  const stats = bossTierStats(nextState.tier ?? 1);
   b.attackCooldownSec -= dt;
   if (b.attackCooldownSec <= 0) {
-    b.attackCooldownSec = b.phase === 2 ? 1.0 : 1.8;
-    const bdx = p.x - b.x;
-    const bdy = p.y - b.y;
-    const bdist = Math.max(0.001, Math.hypot(bdx, bdy));
-    const bSpeed = 220;
-
-    nextState.projectiles.push({
-      id: `plasma-${Date.now()}-${Math.random()}`,
-      x: b.x,
-      y: b.y,
-      vx: (bdx / bdist) * bSpeed,
-      vy: (bdy / bdist) * bSpeed,
-      damage: 18,
-      isHostile: true,
-      lifespanSec: 3.5,
-    });
+    b.attackCooldownSec = (b.phase === 2 ? 1.0 : 1.8) * stats.boltCooldownScale;
+    const aim = Math.atan2(p.y - b.y, p.x - b.x);
+    const volley = b.phase === 2 ? stats.volleyPhase2 : stats.volleyPhase1;
+    for (let i = 0; i < volley; i += 1) {
+      const angle = aim + (i - (volley - 1) / 2) * 0.28;
+      nextState.projectiles.push({
+        id: `plasma-${Date.now()}-${Math.random()}`,
+        x: b.x,
+        y: b.y,
+        vx: Math.cos(angle) * stats.boltSpeed,
+        vy: Math.sin(angle) * stats.boltSpeed,
+        damage: stats.boltDamage,
+        isHostile: true,
+        lifespanSec: 3.5,
+      });
+    }
   }
 
   // Solve FABRIK IK for all tentacles
@@ -362,7 +398,7 @@ export function stepGrapplingBoss(
     // Tentacle Tip collision with player
     const tip = tentacle.joints[tentacle.joints.length - 1];
     if (tip && Math.hypot(tip.x - p.x, tip.y - p.y) < 24) {
-      nextState.playerHp -= 12 * dt;
+      nextState.playerHp -= stats.tentacleDps * dt;
       p.vx += (p.x - tip.x) * 5;
       p.vy -= 40;
     }
@@ -407,16 +443,16 @@ export function stepGrapplingBoss(
   if (b.hp <= 0) {
     nextState.status = "victory";
     nextState.score += 5000;
-    nextState.activeLog = "🏆 MECHANICAL BEHOLDER FELLED! Valhalla Arena Mastered!";
+    nextState.activeLog = `🏆 IRON GAZER MK-${nextState.tier ?? 1} FELLED!`;
   } else if (nextState.playerHp <= 0) {
     nextState.status = "defeated";
-    nextState.activeLog = "💀 Slain by the Beholder. Use grapple swings to evade attacks!";
+    nextState.activeLog = "💀 Slain by the Iron Gazer. Use grapple swings to evade attacks!";
   }
 
   return nextState;
 }
 
-export function runGrapplingBossMonteCarloAudit(trials = 20): {
+export function runGrapplingBossMonteCarloAudit(trials = 20, tier = 1): {
   survivedTrials: number;
   averageDamageDealt: number;
   averageSurvivalTimeSec: number;
@@ -426,7 +462,7 @@ export function runGrapplingBossMonteCarloAudit(trials = 20): {
   let totalTime = 0;
 
   for (let i = 0; i < trials; i++) {
-    let sim = initializeGrapplingBoss();
+    let sim = initializeGrapplingBoss(tier);
     let simTime = 0;
     const dt = 0.5;
 

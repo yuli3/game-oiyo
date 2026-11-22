@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import YutNori from "../../components/games/YutNori";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "윷놀이 — 온라인 무료 윷놀이, AI 10단계와 한 폰 2인 대전",
+    description: "설날 윷놀이를 브라우저에서 바로. 도·개·걸·윷·모와 빽도, 업기·잡기·지름길까지 진짜 윷판 규칙. 옆집 꼬마부터 전설의 할머니까지 AI 10단계, 한 폰으로 가족과 둘이서도.",
+  },
+  en: {
+    title: "Yut Nori — Play the Korean New Year board game free online",
+    description: "Play yut nori, the traditional Korean Lunar New Year board game, in your browser: four sticks, stacking, captures and corner short cuts. Beat a 10-level AI ladder or play 2 players on one phone.",
+  },
+  ja: {
+    title: "ユンノリ — 韓国のお正月ボードゲームを無料でオンライン",
+    description: "韓国の旧正月の定番ボードゲーム、ユンノリをブラウザで。4本のユッ、重ね・つかまえ・近道まで本物のルール。AI10段のはしごに挑むか、1台のスマホで2人対戦も。",
+  },
+  zh: {
+    title: "尤茨游戏 (Yut Nori) — 免费在线玩韩国春节棋盘游戏",
+    description: "在浏览器里玩韩国春节传统棋盘游戏尤茨（윷놀이）：四根尤茨棍、叠子、吃子和走捷径。挑战AI十级天梯，或用一部手机双人对战。",
+  },
+  fr: {
+    title: "Yut Nori — Le jeu de plateau du Nouvel An coréen, gratuit en ligne",
+    description: "Jouez au yut nori, jeu de plateau traditionnel du Nouvel An lunaire coréen : quatre bâtons, piles, captures et raccourcis. Une échelle d'IA en 10 niveaux ou 2 joueurs sur un téléphone.",
+  },
+  es: {
+    title: "Yut Nori — Juego de mesa del Año Nuevo coreano gratis en línea",
+    description: "Juega al yut nori, el juego de mesa tradicional del Año Nuevo lunar coreano: cuatro palos, pilas, capturas y atajos. Escalera de IA de 10 niveles o 2 jugadores en un móvil.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["yut-nori"]}>
+  <div class="mx-auto max-w-3xl px-2 py-2 sm:px-4 sm:py-6">
+    <YutNori client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="yut-nori" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

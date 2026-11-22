@@ -9,6 +9,7 @@
 // in src/lib/cloud-state/vote-tally.ts. Read that before raising any limit: the
 // free KV baseline is 1,000 writes/day and it is shared with /api/share.
 import { flushDeltas, readTallies, type TallyKv } from "../../src/lib/cloud-state/vote-tally";
+import { forbiddenOrigin, isSameOriginWrite } from "../../src/lib/cloud-state/same-origin";
 
 type PagesContext = {
   request: Request;
@@ -39,6 +40,7 @@ export async function onRequestGet(context: PagesContext): Promise<Response> {
 }
 
 export async function onRequestPost(context: PagesContext): Promise<Response> {
+  if (!isSameOriginWrite(context.request)) return forbiddenOrigin();
   let payload: unknown;
   try {
     payload = await context.request.json();

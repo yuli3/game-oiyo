@@ -2,12 +2,14 @@ import {
   MINESWEEPER_DIFFICULTIES,
   isMinesweeperWon,
   type MinesweeperBoard,
+  type MinesweeperDifficulty,
   type MinesweeperDifficultyId,
 } from "./minesweeper";
+import { isMinesweeperStageIndex, minesweeperStageDifficulty } from "./minesweeper-stages";
 
 export const MINESWEEPER_SAVE_KEY = "oiyo:minesweeper-state:v1";
 
-export type MinesweeperMode = "daily" | MinesweeperDifficultyId;
+export type MinesweeperMode = "daily" | "stage" | MinesweeperDifficultyId;
 export type MinesweeperGenerationStrategy = "pending" | "verified" | "safe-fallback";
 
 export interface MinesweeperSave {
@@ -24,6 +26,8 @@ export interface MinesweeperSave {
   flagMode: boolean;
   activeCell: number;
   assist: "none" | "hint";
+  /** 0-based stage for mode "stage" (2026-11-22). Absent in every other mode. */
+  stageIndex?: number;
 }
 
 type MinesweeperStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -38,13 +42,14 @@ function validCivilDate(value: unknown): value is string {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
-function difficultyFor(mode: MinesweeperMode): MinesweeperDifficultyId {
-  return mode === "daily" ? "intermediate" : mode;
+function dimsFor(mode: MinesweeperMode, stageIndex: number): MinesweeperDifficulty {
+  if (mode === "stage") return minesweeperStageDifficulty(stageIndex);
+  return MINESWEEPER_DIFFICULTIES[mode === "daily" ? "intermediate" : mode];
 }
 
-function parseBoard(value: unknown, mode: MinesweeperMode, firstClick: boolean, strategy: MinesweeperGenerationStrategy): MinesweeperBoard | null {
+function parseBoard(value: unknown, mode: MinesweeperMode, firstClick: boolean, strategy: MinesweeperGenerationStrategy, stageIndex = 0): MinesweeperBoard | null {
   if (!Array.isArray(value)) return null;
-  const difficulty = MINESWEEPER_DIFFICULTIES[difficultyFor(mode)];
+  const difficulty = dimsFor(mode, stageIndex);
   if (value.length !== difficulty.height) return null;
   const board: MinesweeperBoard = [];
   for (let y = 0; y < difficulty.height; y++) {
@@ -70,7 +75,7 @@ function parseBoard(value: unknown, mode: MinesweeperMode, firstClick: boolean, 
 
   const cells = board.flat();
   const pending = strategy === "pending";
-  if (pending !== firstClick || mode === "daily" && pending) return null;
+  if (pending !== firstClick || (mode === "daily" || mode === "stage") && pending) return null;
   if (pending) {
     if (cells.some((cell) => cell.isMine || cell.isRevealed || cell.neighborMines !== 0)) return null;
   } else {
@@ -98,7 +103,9 @@ export function parseMinesweeperSave(raw: string | null, expectedDailyDate: stri
     const value: unknown = JSON.parse(raw);
     if (!isRecord(value) || value.version !== 1) return null;
     const mode = value.mode;
-    if (mode !== "daily" && mode !== "beginner" && mode !== "intermediate" && mode !== "expert") return null;
+    if (mode !== "daily" && mode !== "stage" && mode !== "beginner" && mode !== "intermediate" && mode !== "expert") return null;
+    if (mode === "stage" ? !isMinesweeperStageIndex(value.stageIndex) : value.stageIndex !== undefined) return null;
+    const stageIndex = mode === "stage" ? (value.stageIndex as number) : 0;
     if (!validCivilDate(value.dailyDate) || mode === "daily" && value.dailyDate !== expectedDailyDate) return null;
     if (!Number.isInteger(value.generationSeed) || (value.generationSeed as number) < -0x8000_0000 || (value.generationSeed as number) > 0x7fff_ffff) return null;
     if (value.generationStrategy !== "pending" && value.generationStrategy !== "verified" && value.generationStrategy !== "safe-fallback") return null;
@@ -107,9 +114,9 @@ export function parseMinesweeperSave(raw: string | null, expectedDailyDate: stri
     if (!Number.isFinite(value.elapsedMs) || (value.elapsedMs as number) < 0 || !Number.isInteger(value.elapsedMs)) return null;
     if (!Number.isFinite(value.savedAtEpochMs) || !Number.isInteger(value.savedAtEpochMs) || (value.savedAtEpochMs as number) < 0 || (value.savedAtEpochMs as number) > nowEpochMs + 300_000) return null;
     if (!value.hasStarted && value.elapsedMs !== 0) return null;
-    const difficulty = MINESWEEPER_DIFFICULTIES[difficultyFor(mode)];
+    const difficulty = dimsFor(mode, stageIndex);
     if (!Number.isInteger(value.activeCell) || (value.activeCell as number) < 0 || (value.activeCell as number) >= difficulty.width * difficulty.height) return null;
-    const board = parseBoard(value.board, mode, value.firstClick, value.generationStrategy);
+    const board = parseBoard(value.board, mode, value.firstClick, value.generationStrategy, stageIndex);
     if (!board) return null;
     return {
       version: 1,
@@ -125,6 +132,7 @@ export function parseMinesweeperSave(raw: string | null, expectedDailyDate: stri
       flagMode: value.flagMode,
       activeCell: value.activeCell as number,
       assist: value.assist,
+      ...(mode === "stage" ? { stageIndex } : {}),
     };
   } catch {
     return null;

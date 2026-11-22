@@ -122,3 +122,22 @@ describe("urban strike hit-scan", () => {
     expect(formatMatchTime(-3)).toBe("0:00");
   });
 });
+
+describe("urban strike operations", () => {
+  it("ships 20 ops; op 1 is the original match and later ops only get harder", async () => {
+    const { URBAN_STRIKE_OPS, urbanStrikeOpStats, urbanStrikeOpWon, clampUrbanStrikeOp } = await import("./urban-strike");
+    expect(URBAN_STRIKE_OPS).toBe(20);
+    expect(urbanStrikeOpStats(1)).toEqual({ accuracyScale: 1, fireIntervalScale: 1, damageBonus: 0, speedScale: 1 });
+    for (let op = 2; op <= URBAN_STRIKE_OPS; op += 1) {
+      const prev = urbanStrikeOpStats(op - 1);
+      const cur = urbanStrikeOpStats(op);
+      expect(cur.accuracyScale).toBeGreaterThan(prev.accuracyScale);
+      expect(cur.fireIntervalScale).toBeLessThan(prev.fireIntervalScale);
+      expect(cur.damageBonus).toBeGreaterThanOrEqual(prev.damageBonus);
+    }
+    expect(clampUrbanStrikeOp(0)).toBe(1);
+    expect(clampUrbanStrikeOp(55)).toBe(20);
+    expect(urbanStrikeOpWon({ blueScore: 40, redScore: 12 })).toBe(true);
+    expect(urbanStrikeOpWon({ blueScore: 10, redScore: 10 })).toBe(false);
+  });
+});

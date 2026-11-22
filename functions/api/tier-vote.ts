@@ -1,4 +1,5 @@
 import { flushDeltas, readTallies, type TallyKv, type VoteDelta } from "../../src/lib/cloud-state/vote-tally";
+import { forbiddenOrigin, isSameOriginWrite } from "../../src/lib/cloud-state/same-origin";
 
 type PagesContext = {
   request: Request;
@@ -33,6 +34,7 @@ export async function onRequestGet(context: PagesContext): Promise<Response> {
 }
 
 export async function onRequestPost(context: PagesContext): Promise<Response> {
+  if (!isSameOriginWrite(context.request)) return forbiddenOrigin();
   let body: { templateId?: string; side?: "up" | "down" };
   try {
     body = (await context.request.json()) as { templateId?: string; side?: "up" | "down" };

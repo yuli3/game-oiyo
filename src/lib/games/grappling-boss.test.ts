@@ -4,6 +4,8 @@ import {
   stepGrapplingBoss,
   fireGrappleHookToNearestAnchor,
   runGrapplingBossMonteCarloAudit,
+  GRAPPLING_BOSS_TIERS,
+  bossTierStats,
 } from "./grappling-boss";
 
 describe("grappling-boss engine", () => {
@@ -76,5 +78,25 @@ describe("grappling-boss engine", () => {
     const audit = runGrapplingBossMonteCarloAudit(15);
     expect(audit.survivedTrials).toBeGreaterThan(0);
     expect(audit.averageDamageDealt).toBeGreaterThan(0);
+  });
+
+  it("ships 20 boss tiers that only get tougher, with tier 1 matching the original fight", () => {
+    expect(GRAPPLING_BOSS_TIERS).toBe(20);
+    const first = bossTierStats(1);
+    expect(first).toMatchObject({ hp: 1000, boltCooldownScale: 1, boltSpeed: 220, boltDamage: 18, volleyPhase1: 1, volleyPhase2: 1, tentacleDps: 12 });
+    for (let t = 2; t <= GRAPPLING_BOSS_TIERS; t += 1) {
+      const prev = bossTierStats(t - 1);
+      const cur = bossTierStats(t);
+      expect(cur.hp).toBeGreaterThan(prev.hp);
+      expect(cur.boltCooldownScale).toBeLessThanOrEqual(prev.boltCooldownScale);
+      expect(cur.boltDamage).toBeGreaterThanOrEqual(prev.boltDamage);
+    }
+    expect(initializeGrapplingBoss(7).boss.maxHp).toBe(bossTierStats(7).hp);
+    expect(initializeGrapplingBoss(99).tier).toBe(20);
+    expect(initializeGrapplingBoss(0).tier).toBe(1);
+  });
+
+  it("keeps tiers up to 19 survivable for the audit bot", () => {
+    expect(runGrapplingBossMonteCarloAudit(6, 19).survivedTrials).toBeGreaterThan(0);
   });
 });
