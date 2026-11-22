@@ -87,6 +87,45 @@ public sealed class FrostpunkPlayer : MonoBehaviour
         return m;
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/FR/Art) ----
+    readonly Dictionary<BuildingType, Material> _roofMats = new Dictionary<BuildingType, Material>();
+
+    static Material Textured(Material m, string tex, float tile = 1f)
+    {
+        var t = Resources.Load<Texture2D>("FR/Art/" + tex);
+        if (t != null)
+        {
+            t.wrapMode = tile != 1f ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+            m.mainTexture = t;
+        }
+        m.mainTextureScale = new Vector2(tile, tile);
+        m.color = Color.white;
+        if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.1f);
+        return m;
+    }
+
+    static Material Glowing(string tex)
+    {
+        var sh = Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        m.mainTexture = Resources.Load<Texture2D>("FR/Art/" + tex);
+        m.color = Color.white;
+        return m;
+    }
+
+    // A-frame roof: a cube turned 45 degrees so its top half pokes out of the body.
+    void AddRoof(Transform parent, BuildingType t, float y, float w, float d)
+    {
+        var r = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        r.name = "Roof";
+        Destroy(r.GetComponent<Collider>());
+        r.transform.SetParent(parent, false);
+        r.transform.localPosition = new Vector3(0f, y, 0f);
+        r.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+        r.transform.localScale = new Vector3(w * 0.72f, w * 0.72f, d);
+        r.GetComponent<Renderer>().material = _roofMats[t];
+    }
+
     void CreateMaterials()
     {
         _snowMat = MakeMat(new Color(0.76f, 0.84f, 0.92f));
@@ -101,6 +140,24 @@ public sealed class FrostpunkPlayer : MonoBehaviour
         _bldgMats[BuildingType.Sawmill] = MakeMat(new Color(0.56f, 0.36f, 0.18f));
         _bldgMats[BuildingType.MedicalPost] = MakeMat(new Color(0.90f, 0.94f, 0.96f));
         _bldgMats[BuildingType.SteamHub] = MakeMat(new Color(0.96f, 0.55f, 0.16f));
+
+        Textured(_snowMat, "snow", 6f);
+        Textured(_warmPlotMat, "plot_warm");
+        Textured(_coldPlotMat, "plot_cold");
+        Textured(_ironMat, "iron", 2f);
+        _furnaceMat = Glowing("furnace");
+        Textured(_bldgMats[BuildingType.Tent], "f_tent");
+        Textured(_bldgMats[BuildingType.CoalThumper], "f_coal");
+        Textured(_bldgMats[BuildingType.Sawmill], "f_saw");
+        Textured(_bldgMats[BuildingType.MedicalPost], "f_med");
+        Textured(_bldgMats[BuildingType.SteamHub], "f_hub");
+        _roofMats[BuildingType.Tent] = Textured(MakeMat(Color.white), "r_canvas");
+        _roofMats[BuildingType.CoalThumper] = Textured(MakeMat(Color.white), "r_slate");
+        _roofMats[BuildingType.Sawmill] = Textured(MakeMat(Color.white), "r_wood");
+        _roofMats[BuildingType.MedicalPost] = Textured(MakeMat(Color.white), "r_slate");
+        // soft see-through snow and steam puffs
+        _steamMat = new Material(Shader.Find("Sprites/Default"));
+        _steamMat.color = new Color(0.95f, 0.97f, 1f, 0.6f);
     }
 
     void SetupCameraAndLight()
@@ -267,6 +324,7 @@ public sealed class FrostpunkPlayer : MonoBehaviour
             body.transform.localPosition = new Vector3(0f, 0.45f, 0f);
             body.transform.localScale = new Vector3(1.5f, 0.8f, 1.5f);
             body.GetComponent<Renderer>().material = _bldgMats[t];
+            AddRoof(go.transform, t, 0.85f, 1.5f, 1.5f);
         }
         else if (t == BuildingType.SteamHub)
         {
@@ -283,6 +341,17 @@ public sealed class FrostpunkPlayer : MonoBehaviour
             main.transform.localPosition = new Vector3(0f, 0.65f, 0f);
             main.transform.localScale = new Vector3(1.6f, 1.2f, 1.6f);
             main.GetComponent<Renderer>().material = _bldgMats[t];
+            AddRoof(go.transform, t, 1.25f, 1.6f, 1.6f);
+            if (t == BuildingType.CoalThumper)
+            {
+                var stack = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                stack.name = "Stack";
+                Destroy(stack.GetComponent<Collider>());
+                stack.transform.SetParent(go.transform, false);
+                stack.transform.localPosition = new Vector3(0.45f, 1.7f, 0.3f);
+                stack.transform.localScale = new Vector3(0.28f, 0.55f, 0.28f);
+                stack.GetComponent<Renderer>().material = _ironMat;
+            }
         }
 
         p.Structure = go;

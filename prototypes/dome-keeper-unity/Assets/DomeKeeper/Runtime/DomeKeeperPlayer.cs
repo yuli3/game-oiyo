@@ -96,6 +96,37 @@ public class DomeKeeperPlayer : MonoBehaviour
     Sprite _circleSprite;
     Sprite _domeSprite;
 
+    // ---- Painted art (scripts/make_art.py -> Resources/DK/Art) ----
+    readonly Dictionary<string, Sprite> _art = new Dictionary<string, Sprite>();
+
+    // Sprite that is `width` world units wide (height keeps the texture's aspect).
+    Sprite Art(string name, float width = 1f, Vector2? pivot = null)
+    {
+        string key = name + "@" + width;
+        if (!_art.TryGetValue(key, out var sp))
+        {
+            var t = Resources.Load<Texture2D>("DK/Art/" + name);
+            if (t != null)
+            {
+                t.wrapMode = TextureWrapMode.Clamp;
+                sp = Sprite.Create(t, new Rect(0, 0, t.width, t.height), pivot ?? new Vector2(0.5f, 0.5f), t.width / width);
+            }
+            _art[key] = sp;
+        }
+        return sp;
+    }
+
+    Sprite TileArt(TileType t) => t switch
+    {
+        TileType.Dirt => Art("t_dirt"),
+        TileType.Stone => Art("t_stone"),
+        TileType.Basalt => Art("t_basalt"),
+        TileType.IronOre => Art("t_iron"),
+        TileType.CobaltOre => Art("t_cobalt"),
+        TileType.WaterOre => Art("t_water"),
+        _ => Art("t_bedrock")
+    };
+
     AudioSource _sfx;
     AudioClip _clipDrill;
     AudioClip _clipPickup;
@@ -221,28 +252,28 @@ public class DomeKeeperPlayer : MonoBehaviour
         var sky = new GameObject("Sky");
         sky.transform.SetParent(_worldRoot.transform);
         var skySr = sky.AddComponent<SpriteRenderer>();
-        skySr.sprite = _sqSprite;
-        skySr.color = new Color(0.05f, 0.09f, 0.16f, 1f);
+        skySr.sprite = Art("sky", 40f) ?? _sqSprite;
+        skySr.color = Color.white;
         skySr.sortingOrder = -20;
         sky.transform.position = new Vector3(0, 6.5f, 0);
-        sky.transform.localScale = new Vector3(40f, 13f, 1f);
+        sky.transform.localScale = new Vector3(1f, 13f / (40f * 340f / 1024f), 1f);
 
         // Surface ground bar
         var surf = new GameObject("Surface");
         surf.transform.SetParent(_worldRoot.transform);
         var surfSr = surf.AddComponent<SpriteRenderer>();
-        surfSr.sprite = _sqSprite;
-        surfSr.color = new Color(0.18f, 0.22f, 0.28f, 1f);
+        surfSr.sprite = Art("crust", 36f) ?? _sqSprite;
+        surfSr.color = Color.white;
         surfSr.sortingOrder = -5;
         surf.transform.position = new Vector3(0, 0.55f, 0);
-        surf.transform.localScale = new Vector3(36f, 0.22f, 1f);
+        surf.transform.localScale = new Vector3(1f, 0.32f / (36f * 48f / 1024f), 1f);
 
         // Dome base
         _domeGo = new GameObject("Dome");
         _domeGo.transform.SetParent(_worldRoot.transform);
         _domeGo.transform.position = new Vector3(0, 0.6f, 0);
         _domeShieldSr = _domeGo.AddComponent<SpriteRenderer>();
-        _domeShieldSr.sprite = _domeSprite;
+        _domeShieldSr.sprite = Art("dome", 4f, new Vector2(0.5f, 0f)) ?? _domeSprite;
         _domeShieldSr.sortingOrder = 6;
 
         // Turret barrel pivot
@@ -252,10 +283,10 @@ public class DomeKeeperPlayer : MonoBehaviour
         var barrel = new GameObject("Barrel");
         barrel.transform.SetParent(_turretPivot.transform);
         barrel.transform.localPosition = new Vector3(0.45f, 0, 0);
-        barrel.transform.localScale = new Vector3(0.9f, 0.18f, 1f);
+        barrel.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
         var bSr = barrel.AddComponent<SpriteRenderer>();
-        bSr.sprite = _sqSprite;
-        bSr.color = new Color(0.55f, 0.92f, 1f, 1f);
+        bSr.sprite = Art("barrel") ?? _sqSprite;
+        bSr.color = Color.white;
         bSr.sortingOrder = 7;
 
         // Laser LineRenderer
@@ -288,10 +319,10 @@ public class DomeKeeperPlayer : MonoBehaviour
         _minerGo = new GameObject("JetpackMiner");
         _minerGo.transform.SetParent(_worldRoot.transform);
         _minerSr = _minerGo.AddComponent<SpriteRenderer>();
-        _minerSr.sprite = _circleSprite;
-        _minerSr.color = new Color(0.98f, 0.80f, 0.25f, 1f);
+        _minerSr.sprite = Art("miner") ?? _circleSprite;
+        _minerSr.color = Color.white;
         _minerSr.sortingOrder = 10;
-        _minerGo.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
+        _minerGo.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
 
         var visor = new GameObject("Visor");
         visor.transform.SetParent(_minerGo.transform);
@@ -300,6 +331,7 @@ public class DomeKeeperPlayer : MonoBehaviour
         var vSr = visor.AddComponent<SpriteRenderer>();
         vSr.sprite = _sqSprite;
         vSr.color = new Color(0.22f, 0.92f, 1f, 1f);
+        vSr.enabled = false; // the painted miner has its own visor
         vSr.sortingOrder = 11;
 
         // Underground tiles pool
@@ -404,6 +436,7 @@ public class DomeKeeperPlayer : MonoBehaviour
             return;
         }
         sr.enabled = true;
+        sr.sprite = TileArt(t) ?? _sqSprite;
         Color baseCol = t switch
         {
             TileType.Dirt => new Color(0.45f, 0.31f, 0.20f, 1f),
@@ -415,7 +448,8 @@ public class DomeKeeperPlayer : MonoBehaviour
             _ => new Color(0.11f, 0.12f, 0.16f, 1f)
         };
         float dmgRatio = _tileMaxHp[x, y] > 0 ? Mathf.Clamp01(_tileHp[x, y] / _tileMaxHp[x, y]) : 1f;
-        sr.color = baseCol * (0.45f + 0.55f * dmgRatio);
+        float shade = 0.45f + 0.55f * dmgRatio; // cracked tiles darken
+        sr.color = sr.sprite == _sqSprite ? baseCol * shade : new Color(shade, shade, shade, 1f);
     }
 
     void Update()
@@ -582,16 +616,11 @@ public class DomeKeeperPlayer : MonoBehaviour
         var go = new GameObject("Ore");
         go.transform.SetParent(_worldRoot.transform);
         go.transform.position = pos;
-        go.transform.localScale = new Vector3(0.42f, 0.42f, 1f);
+        go.transform.localScale = new Vector3(0.6f, 0.6f, 1f);
         var sr = go.AddComponent<SpriteRenderer>();
-        sr.sprite = _circleSprite;
+        sr.sprite = Art(kind == TileType.IronOre ? "ore_iron" : kind == TileType.CobaltOre ? "ore_cobalt" : "ore_water") ?? _circleSprite;
         sr.sortingOrder = 9;
-        sr.color = kind switch
-        {
-            TileType.IronOre => new Color(1f, 0.72f, 0.25f, 1f),
-            TileType.CobaltOre => new Color(0.28f, 0.78f, 1f, 1f),
-            _ => new Color(0.25f, 0.98f, 0.82f, 1f)
-        };
+        sr.color = Color.white;
         _ores.Add(new OreDrop { pos = pos, vel = UnityEngine.Random.insideUnitCircle * 1.5f, kind = kind, go = go });
     }
 
@@ -820,10 +849,11 @@ public class DomeKeeperPlayer : MonoBehaviour
         var go = new GameObject("Hostile");
         go.transform.SetParent(_worldRoot.transform);
         go.transform.position = new Vector3(x, y, 0);
-        go.transform.localScale = flyer ? new Vector3(0.75f, 0.55f, 1f) : new Vector3(0.85f, 0.85f, 1f);
+        go.transform.localScale = flyer ? new Vector3(1.15f, 1.15f, 1f) : new Vector3(1.05f, 1.05f, 1f);
         var sr = go.AddComponent<SpriteRenderer>();
-        sr.sprite = flyer ? _circleSprite : _sqSprite;
-        sr.color = flyer ? new Color(0.95f, 0.32f, 0.72f, 1f) : new Color(0.95f, 0.28f, 0.28f, 1f);
+        sr.sprite = Art(flyer ? "flyer" : "crawler") ?? _sqSprite;
+        sr.color = Color.white;
+        sr.flipX = left; // art faces left; ones from the left walk right
         sr.sortingOrder = 12;
 
         _enemies.Add(new EnemyUnit

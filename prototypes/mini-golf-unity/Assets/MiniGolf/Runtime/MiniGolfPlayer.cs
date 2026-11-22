@@ -109,6 +109,32 @@ public class MiniGolfPlayer : MonoBehaviour
         InitHole(0);
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/MG/Art) ----
+    Material roughMat, towerMat, sailMat;
+
+    static Material Paint(Material m, string tex, float tile = 1f)
+    {
+        var t = Resources.Load<Texture2D>("MG/Art/" + tex);
+        if (t != null)
+        {
+            t.wrapMode = tile != 1f ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+            m.mainTexture = t;
+        }
+        m.mainTextureScale = new Vector2(tile, tile);
+        m.color = Color.white;
+        if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.12f);
+        return m;
+    }
+
+    static Material Cutout(string tex)
+    {
+        var sh = Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        m.mainTexture = Resources.Load<Texture2D>("MG/Art/" + tex);
+        m.color = Color.white;
+        return m;
+    }
+
     void CreateMaterials()
     {
         Shader diffuse = Shader.Find("Mobile/Diffuse") ?? Shader.Find("Standard");
@@ -120,6 +146,27 @@ public class MiniGolfPlayer : MonoBehaviour
         ballMat = new Material(OiyoShaders.Safe(diffuse)) { color = Color.white };
         cupMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.15f, 0.15f, 0.18f) };
         flagMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.95f, 0.25f, 0.2f) }; // Red Flag
+
+        Paint(greenMat, "green", 3f);
+        Paint(borderMat, "timber");
+        Paint(bunkerMat, "sand", 2f);
+        Paint(waterMat, "water", 2f);
+        Paint(ballMat, "ball");
+        cupMat = Cutout("cup");
+        flagMat = Cutout("flag");
+        roughMat = Paint(new Material(OiyoShaders.Safe(diffuse)), "rough", 20f);
+        towerMat = Paint(new Material(OiyoShaders.Safe(diffuse)), "mill_tower");
+        sailMat = Paint(new Material(OiyoShaders.Safe(diffuse)), "sail");
+
+        // Park lawn around every hole so the course doesn't float in a void
+        var lawn = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        lawn.name = "ParkLawn";
+        Destroy(lawn.GetComponent<Collider>());
+        lawn.transform.position = new Vector3(0f, -0.12f, 0f);
+        lawn.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        lawn.transform.localScale = new Vector3(120f, 120f, 1f);
+        lawn.GetComponent<MeshRenderer>().sharedMaterial = roughMat;
+        mainCam.backgroundColor = new Color(0.1f, 0.2f, 0.14f);
     }
 
     void BuildBall()
@@ -132,9 +179,11 @@ public class MiniGolfPlayer : MonoBehaviour
 
     void BuildCupAndFlag()
     {
-        cupObj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        cupObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
         cupObj.name = "HoleCup";
-        cupObj.transform.localScale = new Vector3(CupRadius * 2f, 0.05f, CupRadius * 2f);
+        Destroy(cupObj.GetComponent<Collider>());
+        cupObj.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        cupObj.transform.localScale = new Vector3(CupRadius * 2.2f, CupRadius * 2.2f, 1f);
         cupObj.GetComponent<MeshRenderer>().sharedMaterial = cupMat;
 
         flagPole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -142,11 +191,12 @@ public class MiniGolfPlayer : MonoBehaviour
         flagPole.transform.localScale = new Vector3(0.04f, 1.2f, 0.04f);
         flagPole.GetComponent<MeshRenderer>().sharedMaterial = ballMat;
 
-        var flag = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        var flag = GameObject.CreatePrimitive(PrimitiveType.Quad);
         flag.name = "FlagCloth";
+        Destroy(flag.GetComponent<Collider>());
         flag.transform.SetParent(flagPole.transform);
-        flag.transform.localPosition = new Vector3(0.25f, 0.8f, 0);
-        flag.transform.localScale = new Vector3(0.5f, 0.3f, 0.02f);
+        flag.transform.localPosition = new Vector3(0.3f / 0.04f, 0.8f, 0);
+        flag.transform.localScale = new Vector3(0.6f / 0.04f, 0.37f / 1.2f, 1f);
         flag.GetComponent<MeshRenderer>().sharedMaterial = flagMat;
     }
 
@@ -164,7 +214,7 @@ public class MiniGolfPlayer : MonoBehaviour
         ballVel = Vector3.zero;
         ballObj.transform.position = ballPos;
 
-        cupObj.transform.position = new Vector3(def.cupPos.x, 0.02f, def.cupPos.z);
+        cupObj.transform.position = new Vector3(def.cupPos.x, 0.012f, def.cupPos.z);
         flagPole.transform.position = new Vector3(def.cupPos.x, 1.2f, def.cupPos.z);
 
         // Clear Old Course
@@ -230,7 +280,7 @@ public class MiniGolfPlayer : MonoBehaviour
             var tower = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             tower.transform.position = new Vector3(0, 1.2f, center.z);
             tower.transform.localScale = new Vector3(1.2f, 1.2f, 1.2f);
-            tower.GetComponent<MeshRenderer>().sharedMaterial = borderMat;
+            tower.GetComponent<MeshRenderer>().sharedMaterial = towerMat;
             courseObjects.Add(tower);
 
             windmillBlades = new GameObject("WindmillBlades");
@@ -238,12 +288,12 @@ public class MiniGolfPlayer : MonoBehaviour
             var b1 = GameObject.CreatePrimitive(PrimitiveType.Cube);
             b1.transform.SetParent(windmillBlades.transform);
             b1.transform.localScale = new Vector3(2.5f, 0.35f, 0.08f);
-            b1.GetComponent<MeshRenderer>().sharedMaterial = ballMat;
+            b1.GetComponent<MeshRenderer>().sharedMaterial = sailMat;
 
             var b2 = GameObject.CreatePrimitive(PrimitiveType.Cube);
             b2.transform.SetParent(windmillBlades.transform);
             b2.transform.localScale = new Vector3(0.35f, 2.5f, 0.08f);
-            b2.GetComponent<MeshRenderer>().sharedMaterial = ballMat;
+            b2.GetComponent<MeshRenderer>().sharedMaterial = sailMat;
 
             courseObjects.Add(windmillBlades);
         }
