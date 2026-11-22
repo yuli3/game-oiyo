@@ -17,6 +17,8 @@
  */
 import type { Locale } from "../../lib/i18n";
 import gameArtDocument from "../../../config/game-art-v1.json";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 
 interface Props {
   slug: string;
@@ -29,7 +31,11 @@ interface Props {
 }
 
 const { slug, build, locale, name, quickFirstFromSearch } = Astro.props as Props;
-const poster = Astro.props.poster ?? (gameArtDocument.games as Record<string, string>)[slug];
+const artPoster = Astro.props.poster ?? (gameArtDocument.games as Record<string, string>)[slug];
+// 2026-11-22 audit: the poster is the LCP element and some were 1MB social PNGs (aim-trainer LCP 15.5s).
+// Prefer the ~50KB 1200w WebP in public/games/unity-posters/ when one exists for this slug.
+const webpPoster = `/games/unity-posters/${slug}.webp`;
+const poster = artPoster?.endsWith(".png") && existsSync(join(process.cwd(), "public", webpPoster)) ? webpPoster : artPoster;
 
 type Labels = {
   main: string; quick: string; play: string; replay: string; note: string; fullscreen: string; exit: string;
@@ -106,7 +112,7 @@ const toolButton = "inline-flex min-h-11 items-center gap-2 rounded-xl border bo
       </button>
 
       <div class="absolute inset-0 z-20 grid place-items-center" data-poster>
-        {poster && <img class="absolute inset-0 size-full object-cover brightness-60 transition data-loading:blur-sm data-loading:brightness-40" src={poster} alt="" loading="eager" decoding="async" data-poster-img />}
+        {poster && <img class="absolute inset-0 size-full object-cover brightness-60 transition data-loading:blur-sm data-loading:brightness-40" src={poster} alt="" loading="eager" fetchpriority="high" decoding="async" data-poster-img />}
         <div class="relative flex w-full max-w-sm flex-col items-center gap-3 p-4 text-center">
           <h2 class="m-0 text-2xl font-extrabold text-white drop-shadow sm:text-3xl">{name}</h2>
           <div class="flex flex-wrap justify-center gap-2" data-poster-chips>
