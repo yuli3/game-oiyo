@@ -188,12 +188,38 @@ public class PeglinRoguePlayer : MonoBehaviour
 
     void CreateMaterials()
     {
-        normalPegMat = CreateEmissiveMat(new Color(0.15f, 0.7f, 0.95f));
-        critPegMat = CreateEmissiveMat(new Color(1.0f, 0.85f, 0.15f));
-        refreshPegMat = CreateEmissiveMat(new Color(0.2f, 0.95f, 0.4f));
-        bombPegMat = CreateEmissiveMat(new Color(1.0f, 0.25f, 0.15f));
-        bumperPegMat = CreateEmissiveMat(new Color(0.85f, 0.3f, 0.95f));
-        hitPegMat = CreateEmissiveMat(new Color(0.25f, 0.3f, 0.4f));
+        // Painted pegs (scripts/make_art.py -> Resources/PG/Art)
+        normalPegMat = ArtMat("peg_normal");
+        critPegMat = ArtMat("peg_crit");
+        refreshPegMat = ArtMat("peg_refresh");
+        bombPegMat = ArtMat("peg_bomb");
+        bumperPegMat = ArtMat("peg_bumper");
+        hitPegMat = ArtMat("peg_hit");
+    }
+
+    static Material ArtMat(string tex, float tileY = 1f)
+    {
+        var mat = new Material(Shader.Find("Sprites/Default"));
+        var t = Resources.Load<Texture2D>("PG/Art/" + tex);
+        if (t != null)
+        {
+            t.wrapMode = tileY != 1f ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+            mat.mainTexture = t;
+        }
+        mat.mainTextureScale = new Vector2(1f, tileY);
+        mat.color = Color.white;
+        return mat;
+    }
+
+    static GameObject ArtQuad(string name, Vector3 pos, float w, float h, Material mat)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        go.transform.position = pos;
+        go.transform.localScale = new Vector3(w, h, 1f);
+        go.GetComponent<MeshRenderer>().material = mat;
+        return go;
     }
 
     Material CreateEmissiveMat(Color c)
@@ -210,26 +236,26 @@ public class PeglinRoguePlayer : MonoBehaviour
         bg.name = "BoardBG";
         bg.transform.position = new Vector3(0f, 0f, 0.5f);
         bg.transform.localScale = new Vector3(BoardWidth + 0.4f, BoardHeight + 0.4f, 1f);
-        bg.GetComponent<MeshRenderer>().material = CreateEmissiveMat(new Color(0.08f, 0.12f, 0.22f));
+        bg.GetComponent<MeshRenderer>().material = ArtMat("board");
 
         // Side Walls
         var leftWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
         leftWall.name = "LeftWall";
         leftWall.transform.position = new Vector3(-HalfW - 0.25f, 0f, 0f);
         leftWall.transform.localScale = new Vector3(0.5f, BoardHeight + 1.0f, 1.0f);
-        leftWall.GetComponent<MeshRenderer>().material = CreateEmissiveMat(new Color(0.2f, 0.3f, 0.5f));
+        leftWall.GetComponent<MeshRenderer>().material = ArtMat("pillar", 6f);
 
         var rightWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
         rightWall.name = "RightWall";
         rightWall.transform.position = new Vector3(HalfW + 0.25f, 0f, 0f);
         rightWall.transform.localScale = new Vector3(0.5f, BoardHeight + 1.0f, 1.0f);
-        rightWall.GetComponent<MeshRenderer>().material = CreateEmissiveMat(new Color(0.2f, 0.3f, 0.5f));
+        rightWall.GetComponent<MeshRenderer>().material = ArtMat("pillar", 6f);
 
         var topWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
         topWall.name = "TopWall";
         topWall.transform.position = new Vector3(0f, HalfH + 0.25f, 0f);
         topWall.transform.localScale = new Vector3(BoardWidth + 1.0f, 0.5f, 1.0f);
-        topWall.GetComponent<MeshRenderer>().material = CreateEmissiveMat(new Color(0.2f, 0.3f, 0.5f));
+        topWall.GetComponent<MeshRenderer>().material = ArtMat("pillar", 6f);
 
         // Bottom Buckets (5 multiplier slots)
         buckets = new Bucket[]
@@ -254,22 +280,14 @@ public class PeglinRoguePlayer : MonoBehaviour
         }
 
         // Enemy Model on Top Side
-        enemyGo = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        enemyGo.name = "EnemyBoss";
-        enemyGo.transform.position = enemyBasePos;
-        enemyGo.transform.localScale = new Vector3(1.2f, 1.2f, 1.2f);
-        enemyMat = CreateEmissiveMat(Color.green);
-        enemyGo.GetComponent<MeshRenderer>().material = enemyMat;
+        enemyMat = ArtMat("foe"); // pale monster, tinted per stage with bossColor
+        enemyGo = ArtQuad("EnemyBoss", enemyBasePos, 2.2f, 2.2f, enemyMat);
     }
 
     void BuildCannonAndBall()
     {
         // Cannon Base
-        cannonBaseGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        cannonBaseGo.name = "CannonBase";
-        cannonBaseGo.transform.position = CannonPos;
-        cannonBaseGo.transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
-        cannonBaseGo.GetComponent<MeshRenderer>().material = CreateEmissiveMat(new Color(0.85f, 0.6f, 0.1f));
+        cannonBaseGo = ArtQuad("CannonBase", CannonPos + new Vector3(0f, -0.25f, 0f), 1.5f, 1.5f, ArtMat("launcher"));
 
         // Cannon Barrel
         cannonBarrelGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -277,14 +295,11 @@ public class PeglinRoguePlayer : MonoBehaviour
         cannonBarrelGo.transform.SetParent(cannonBaseGo.transform, false);
         cannonBarrelGo.transform.localPosition = new Vector3(0f, -0.6f, 0f);
         cannonBarrelGo.transform.localScale = new Vector3(0.35f, 0.6f, 0.35f);
-        cannonBarrelGo.GetComponent<MeshRenderer>().material = CreateEmissiveMat(new Color(0.3f, 0.35f, 0.45f));
+        cannonBarrelGo.GetComponent<MeshRenderer>().enabled = false; // the barrel is painted on the launcher
 
         // Ball
-        ballGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        ballGo.name = "PachinkoBall";
-        ballGo.transform.localScale = Vector3.one * (BallRadius * 2.0f);
-        ballMat = CreateEmissiveMat(new Color(1f, 0.95f, 0.8f));
-        ballGo.GetComponent<MeshRenderer>().material = ballMat;
+        ballMat = ArtMat("orb");
+        ballGo = ArtQuad("PachinkoBall", Vector3.zero, BallRadius * 2.2f, BallRadius * 2.2f, ballMat);
         ballGo.SetActive(false);
 
         // Trajectory preview dots (10 dots)
@@ -374,10 +389,10 @@ public class PeglinRoguePlayer : MonoBehaviour
 
     void CreatePeg(int id, Vector3 pos, PegType type)
     {
-        var pegGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        var pegGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
         pegGo.name = "Peg_" + id + "_" + type;
+        Destroy(pegGo.GetComponent<Collider>());
         pegGo.transform.position = pos;
-        pegGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
         float rad = 0.24f;
         Color col = Color.cyan;
@@ -411,7 +426,7 @@ public class PeglinRoguePlayer : MonoBehaviour
                 break;
         }
 
-        pegGo.transform.localScale = new Vector3(rad * 2f, 0.12f, rad * 2f);
+        pegGo.transform.localScale = new Vector3(rad * 2.5f, rad * 2.5f, 1f);
         pegGo.GetComponent<MeshRenderer>().material = mat;
 
         pegs.Add(new PegData

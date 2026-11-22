@@ -190,16 +190,42 @@ public class PaperFlightPlayer : MonoBehaviour
 
         // Create Materials
         var unlitShader = Shader.Find("Hidden/Internal-Colored") ?? Shader.Find("Sprites/Default");
-        planeMat = new Material(unlitShader) { color = Color.white };
-        ringMat = new Material(unlitShader) { color = new Color(1f, 0.85f, 0.2f, 0.9f) };
-        craneMat = new Material(unlitShader) { color = new Color(0.2f, 0.95f, 1f) };
+        // Painted paper art (scripts/make_art.py -> Resources/PF/Art)
+        planeMat = ArtMat("notebook", Color.white);
+        ringMat = ArtMat("hoop", Color.white);
+        craneMat = ArtMat("crane", Color.white);
         updraftMat = new Material(unlitShader) { color = new Color(1f, 1f, 1f, 0.25f) };
-        obstacleMat = new Material(unlitShader) { color = new Color(0.4f, 0.35f, 0.45f) };
-        groundMat = new Material(unlitShader) { color = Stages[0].groundColor };
+        obstacleMat = ArtMat("books", Color.white);
+        groundMat = ArtMat("floor", FloorTint(Stages[0].groundColor));
+        groundMat.mainTexture.wrapMode = TextureWrapMode.Repeat;
         trailMat = new Material(unlitShader) { color = new Color(1f, 1f, 1f, 0.4f) };
 
         CreatePaperPlane();
         SetupStage(0);
+    }
+
+    private static Material ArtMat(string tex, Color tint)
+    {
+        var sh = Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        var t = Resources.Load<Texture2D>("PF/Art/" + tex);
+        if (t != null) { t.wrapMode = TextureWrapMode.Clamp; m.mainTexture = t; }
+        m.color = tint;
+        return m;
+    }
+
+    // stage ground colours are dark; the boards are pale, so lift the tint
+    private static Color FloorTint(Color c) => new Color(Mathf.Min(1f, c.r * 2f + 0.1f), Mathf.Min(1f, c.g * 2f + 0.1f), Mathf.Min(1f, c.b * 2f + 0.1f), 1f);
+
+    private static GameObject ArtQuad(string name, Vector3 pos, float w, float h, Material mat)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        go.transform.position = pos;
+        go.transform.localScale = new Vector3(w, h, 1f);
+        go.GetComponent<Renderer>().sharedMaterial = mat;
+        return go;
     }
 
     private void CreatePaperPlane()
@@ -252,6 +278,10 @@ public class PaperFlightPlayer : MonoBehaviour
         AddDoubleTri(tris, 4, 3, 6);
 
         mesh.vertices = verts;
+        // plan-view UVs so the notebook paper lies across the wings
+        var uvs = new Vector2[verts.Length];
+        for (int i = 0; i < verts.Length; i++) uvs[i] = new Vector2(verts[i].x / 3.2f + 0.5f, verts[i].z / 2f + 0.3f);
+        mesh.uv = uvs;
         mesh.triangles = tris.ToArray();
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
@@ -287,7 +317,7 @@ public class PaperFlightPlayer : MonoBehaviour
         StageDef s = Stages[currentStageIndex];
 
         mainCam.backgroundColor = s.skyColor;
-        groundMat.color = s.groundColor;
+        groundMat.color = FloorTint(s.groundColor);
 
         finishLineZ = isEndlessMode ? 999999f : s.courseLength;
 
@@ -428,54 +458,13 @@ public class PaperFlightPlayer : MonoBehaviour
 
     private GameObject CreateRingVisual(Vector3 center, float radius, Color color)
     {
-        var go = new GameObject("RingVisual");
-        go.transform.position = center;
-        var lr = go.AddComponent<LineRenderer>();
-        lr.sharedMaterial = ringMat;
-        lr.startWidth = 0.22f;
-        lr.endWidth = 0.22f;
-        lr.useWorldSpace = false;
-        lr.loop = true;
-
-        int segments = 24;
-        lr.positionCount = segments;
-        for (int i = 0; i < segments; i++)
-        {
-            float angle = i * Mathf.PI * 2f / segments;
-            lr.SetPosition(i, new Vector3(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, 0f));
-        }
-        return go;
+        // striped paper hoop, facing the oncoming plane
+        return ArtQuad("RingVisual", center, radius * 2.3f, radius * 2.3f, ringMat);
     }
 
     private GameObject CreateCraneVisual(Vector3 pos)
     {
-        var go = new GameObject("CraneVisual");
-        go.transform.position = pos;
-        var mf = go.AddComponent<MeshFilter>();
-        var mr = go.AddComponent<MeshRenderer>();
-        mr.sharedMaterial = craneMat;
-
-        // Origami crane stylized diamond mesh
-        Mesh m = new Mesh();
-        Vector3[] v = new Vector3[]
-        {
-            new Vector3(0, 0.8f, 0),         // Top head
-            new Vector3(-0.9f, 0.3f, 0),     // L wing
-            new Vector3(0.9f, 0.3f, 0),      // R wing
-            new Vector3(0, -0.6f, 0),        // Bottom tail
-            new Vector3(0, 0, 0.4f),         // Front beak
-            new Vector3(0, 0, -0.4f)         // Back fold
-        };
-        int[] tris = new int[]
-        {
-            0, 1, 4,  0, 4, 2,  3, 4, 1,  3, 2, 4,
-            0, 5, 1,  0, 2, 5,  3, 1, 5,  3, 5, 2
-        };
-        m.vertices = v;
-        m.triangles = tris;
-        m.RecalculateNormals();
-        mf.sharedMesh = m;
-        return go;
+        return ArtQuad("CraneVisual", pos, 2.4f, 2.4f, craneMat);
     }
 
     private GameObject CreateUpdraftVisual(Vector3 center, float radius, float height, Color themeColor)
@@ -517,7 +506,14 @@ public class PaperFlightPlayer : MonoBehaviour
         go.transform.position = center;
         go.transform.localScale = size;
         var r = go.GetComponent<Renderer>();
-        if (r) r.sharedMaterial = obstacleMat;
+        if (r)
+        {
+            // a tall stack of books: repeat the painted stack up the pillar
+            var m = new Material(obstacleMat);
+            m.mainTexture.wrapMode = TextureWrapMode.Repeat;
+            m.mainTextureScale = new Vector2(1f, Mathf.Max(1f, size.y / 3f));
+            r.sharedMaterial = m;
+        }
         return go;
     }
 
@@ -529,6 +525,7 @@ public class PaperFlightPlayer : MonoBehaviour
         ground.transform.localScale = new Vector3(lateralBoundary * 0.2f, 1f, length * 0.1f);
         var r = ground.GetComponent<Renderer>();
         if (r) r.sharedMaterial = groundMat;
+        groundMat.mainTextureScale = new Vector2(lateralBoundary * 2f / 6f, length / 6f);
         decoObjects.Add(ground);
     }
 

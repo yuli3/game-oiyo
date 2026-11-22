@@ -110,6 +110,20 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
         return m;
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/MM/Art) ----
+    readonly Dictionary<ColorGroup, Material> _roofMats = new Dictionary<ColorGroup, Material>();
+    readonly Dictionary<ColorGroup, Material> _awningMats = new Dictionary<ColorGroup, Material>();
+    readonly Dictionary<ColorGroup, Material> _carMats = new Dictionary<ColorGroup, Material>();
+
+    static Material Painted(string tex, Color tint)
+    {
+        var m = MakeMat(tint);
+        var t = Resources.Load<Texture2D>("MM/Art/" + tex);
+        if (t != null) { t.wrapMode = TextureWrapMode.Clamp; m.mainTexture = t; }
+        if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.1f);
+        return m;
+    }
+
     void CreateMaterials()
     {
         _groundMat = MakeMat(new Color(0.92f, 0.91f, 0.87f));
@@ -123,6 +137,18 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
         _groupMats[ColorGroup.Blue] = MakeMat(new Color(0.22f, 0.52f, 0.90f));
         _groupMats[ColorGroup.Yellow] = MakeMat(new Color(0.95f, 0.74f, 0.18f));
         _groupMats[ColorGroup.Green] = MakeMat(new Color(0.22f, 0.72f, 0.46f));
+
+        _groundMat = Painted("meadow", new Color(0.74f, 0.76f, 0.7f)); // the sun washes pale paint out; tone it down
+        _riverMat = Painted("river", Color.white);
+        _roadMat = Painted("road", Color.white);
+        _bridgeMat = Painted("bridge", Color.white);
+        _motorwayMat = Painted("expressway", Color.white);
+        foreach (var kv in _groupMats)
+        {
+            _roofMats[kv.Key] = Painted("roof", kv.Value.color);
+            _awningMats[kv.Key] = Painted("awning", kv.Value.color);
+            _carMats[kv.Key] = Painted("car", kv.Value.color);
+        }
     }
 
     void SetupCameraAndLight()
@@ -240,7 +266,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.transform.position = CellToWorld(x, y, 0.35f);
         go.transform.localScale = new Vector3(0.88f, 0.7f, 0.88f);
-        go.GetComponent<Renderer>().material = _groupMats[group];
+        go.GetComponent<Renderer>().material = _roofMats[group];
         c.StructureGo = go;
         _houses.Add(c);
     }
@@ -255,7 +281,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
         var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         go.transform.position = CellToWorld(x, y, 0.45f);
         go.transform.localScale = new Vector3(1.22f, 0.45f, 1.22f);
-        go.GetComponent<Renderer>().material = _groupMats[group];
+        go.GetComponent<Renderer>().material = _awningMats[group];
         c.StructureGo = go;
         _malls.Add(c);
         RefreshMallPins(c);
@@ -549,7 +575,7 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
                 var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 go.transform.position = CellToWorld(h.X, h.Y, 0.24f);
                 go.transform.localScale = new Vector3(0.45f, 0.28f, 0.65f);
-                go.GetComponent<Renderer>().material = _groupMats[h.Group];
+                go.GetComponent<Renderer>().material = _carMats[h.Group];
                 _cars.Add(new Car
                 {
                     Group = h.Group,
