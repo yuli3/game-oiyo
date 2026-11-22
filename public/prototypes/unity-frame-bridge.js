@@ -4,6 +4,10 @@
 // screen and a retry button instead of Unity's bar and a browser alert().
 // Standalone (opened directly) it does nothing. Inserted by scripts/unity/patch-unity-index.mjs.
 (function () {
+  // Touch controls for keyboard-only builds (standalone too): public/prototypes/unity-touch-pad.js.
+  var pad = document.createElement("script");
+  pad.src = "../unity-touch-pad.js";
+  document.head.appendChild(pad);
   if (window.parent === window) return;
   var post = function (message) {
     try { window.parent.postMessage(message, window.location.origin); } catch (e) {}
