@@ -70,6 +70,8 @@ export interface GameShellProps {
   resultTitle?: string;
   resultSubtitle?: string;
   resultStats?: Array<{ label: string; value: string | number }>;
+  /** Extra content on the result card above the buttons, such as a stage clear line and next-stage button. */
+  resultExtra?: React.ReactNode;
   onShare?: () => void;
   shareCopied?: boolean;
   onShareCard?: () => void;
@@ -115,6 +117,7 @@ export const GameShell: React.FC<GameShellProps> = ({
   resultTitle,
   resultSubtitle,
   resultStats,
+  resultExtra,
   onShare,
   shareCopied = false,
   onShareCard,
@@ -845,6 +848,8 @@ export const GameShell: React.FC<GameShellProps> = ({
                   ))}
                 </div>
               )}
+
+              {resultExtra}
 
               <div className="flex flex-wrap gap-2 pt-2">
                 {onShareCard && (

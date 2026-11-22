@@ -151,3 +151,64 @@ export function computeConsistency(reactions: readonly number[]): number {
     : 0;
   return Math.max(0, Math.round(100 - (stdev / avg) * 100));
 }
+
+/**
+ * Aim course (stage range 2026-11-22): 30 fixed drills. Each stage names a mode, a difficulty
+ * and the rank a 30-second run must reach. The rank bands above already scale with difficulty,
+ * so a stage passes exactly when computeAimRank reaches the required rank.
+ */
+export interface AimCourseStage {
+  readonly mode: AimMode;
+  readonly difficulty: AimDifficulty;
+  readonly rank: AimRank;
+}
+
+const COURSE: readonly (readonly [AimMode, AimDifficulty, AimRank])[] = [
+  ["gridshot", "easy", "Silver"],
+  ["flick", "easy", "Silver"],
+  ["tracking", "easy", "Silver"],
+  ["precision", "easy", "Silver"],
+  ["recovery", "easy", "Silver"],
+  ["flash", "easy", "Silver"],
+  ["gridshot", "normal", "Silver"],
+  ["flick", "normal", "Silver"],
+  ["tracking", "normal", "Gold"],
+  ["precision", "normal", "Silver"],
+  ["recovery", "normal", "Gold"],
+  ["flash", "normal", "Silver"],
+  ["gridshot", "normal", "Gold"],
+  ["flick", "normal", "Gold"],
+  ["gridshot", "hard", "Gold"],
+  ["tracking", "hard", "Gold"],
+  ["flick", "hard", "Gold"],
+  ["precision", "hard", "Gold"],
+  ["recovery", "hard", "Gold"],
+  ["flash", "hard", "Gold"],
+  ["gridshot", "hard", "Platinum"],
+  ["tracking", "hard", "Platinum"],
+  ["gridshot", "expert", "Gold"],
+  ["flick", "expert", "Gold"],
+  ["tracking", "expert", "Gold"],
+  ["precision", "expert", "Gold"],
+  ["recovery", "expert", "Platinum"],
+  ["flash", "expert", "Platinum"],
+  ["gridshot", "expert", "Platinum"],
+  ["flick", "expert", "Diamond"],
+];
+
+export const AIM_COURSE: readonly AimCourseStage[] = COURSE.map(([mode, difficulty, rank]) => ({ mode, difficulty, rank }));
+export const AIM_COURSE_COUNT = AIM_COURSE.length;
+export const AIM_COURSE_SLUG = "aim-trainer";
+
+/** Lowest score that reaches the stage's rank. */
+export function aimCourseTarget(stage: AimCourseStage): number {
+  const rankIndex = AIM_RANKS.indexOf(stage.rank);
+  if (rankIndex <= 0) return 0;
+  const factor = DIFFICULTY_RANK_FACTOR[stage.difficulty];
+  return Math.round(NORMAL_RANK_BANDS[stage.mode][rankIndex - 1] * factor);
+}
+
+export function aimCoursePassed(stage: AimCourseStage, mode: AimMode, difficulty: AimDifficulty, score: number): boolean {
+  if (stage.mode !== mode || stage.difficulty !== difficulty) return false;
+  return AIM_RANKS.indexOf(computeAimRank(mode, difficulty, score)) >= AIM_RANKS.indexOf(stage.rank);
+}

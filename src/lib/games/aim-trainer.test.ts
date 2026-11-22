@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  AIM_COURSE,
+  AIM_COURSE_COUNT,
+  aimCoursePassed,
+  aimCourseTarget,
   computeAimRank,
   computeConsistency,
   frameScale,
@@ -107,5 +111,32 @@ describe("aim trainer consistency scoring", () => {
 
   it("returns 0 for no data", () => {
     expect(computeConsistency([])).toBe(0);
+  });
+});
+
+describe("aim course", () => {
+  it("ships 30 stages whose target score lands exactly on the required rank", () => {
+    expect(AIM_COURSE_COUNT).toBe(30);
+    for (const stage of AIM_COURSE) {
+      const target = aimCourseTarget(stage);
+      expect(target).toBeGreaterThan(0);
+      expect(aimCoursePassed(stage, stage.mode, stage.difficulty, target)).toBe(true);
+      expect(aimCoursePassed(stage, stage.mode, stage.difficulty, target - 1)).toBe(false);
+      expect(computeAimRank(stage.mode, stage.difficulty, target)).toBe(stage.rank);
+    }
+  });
+
+  it("never lowers the difficulty along the course and covers every mode", () => {
+    const order = ["easy", "normal", "hard", "expert"];
+    for (let i = 1; i < AIM_COURSE.length; i += 1) {
+      expect(order.indexOf(AIM_COURSE[i].difficulty)).toBeGreaterThanOrEqual(order.indexOf(AIM_COURSE[i - 1].difficulty));
+    }
+    expect(new Set(AIM_COURSE.map((stage) => stage.mode)).size).toBe(6);
+  });
+
+  it("does not pass a run in another mode or difficulty", () => {
+    const stage = AIM_COURSE[0];
+    expect(aimCoursePassed(stage, "flick", stage.difficulty, 999)).toBe(false);
+    expect(aimCoursePassed(stage, stage.mode, "expert", 999)).toBe(false);
   });
 });

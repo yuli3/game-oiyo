@@ -18,7 +18,14 @@ import {
   type AimMode,
   type AimRank,
   type TrackingTargetState,
+  AIM_COURSE,
+  AIM_COURSE_COUNT,
+  AIM_COURSE_SLUG,
+  aimCoursePassed,
+  aimCourseTarget,
 } from "../../lib/games/aim-trainer";
+import StageBar from "./StageBar";
+import { finaleLabel, loadClearedStages, markStageCleared, nextOpenStage, STAGE_LABEL } from "../../lib/games/stage-progress";
 import AimFlashField, { type AimFlashCopy } from "./AimFlashField";
 import UsageClip from "./UsageClip";
 import {
@@ -150,6 +157,20 @@ interface I18n {
   flashClip: string;
   replay: string;
   flash: AimFlashCopy;
+}
+
+/** Aim course copy (stage range 2026-11-22). {n} stage, {mode}, {diff}, {rank}, {score}. */
+const COURSE_COPY: Record<Locale, { title: string; hint: string; goal: string; cleared: string; notYet: string; next: string; free: string }> = {
+  ko: { title: "에임 코스 30단계", hint: "단계를 고르면 모드와 난이도가 정해져요. 30초 안에 목표 랭크를 넘기면 클리어예요.", goal: "{mode} · {diff} · {rank} 이상 ({score}점)", cleared: "단계 {n} 클리어!", notYet: "단계 {n} 목표까지 조금 더: {rank} ({score}점)", next: "다음 단계", free: "자유 연습" },
+  en: { title: "Aim Course · 30 stages", hint: "Pick a stage to set the mode and difficulty. Reach the target rank in 30 seconds to clear it.", goal: "{mode} · {diff} · {rank} or better ({score} pts)", cleared: "Stage {n} cleared!", notYet: "Stage {n} needs {rank} ({score} pts)", next: "Next stage", free: "Free practice" },
+  ja: { title: "エイムコース 30ステージ", hint: "ステージを選ぶとモードと難易度が決まります。30秒で目標ランクに届けばクリアです。", goal: "{mode} · {diff} · {rank}以上 ({score}点)", cleared: "ステージ {n} クリア!", notYet: "ステージ {n} の目標: {rank} ({score}点)", next: "次のステージ", free: "自由練習" },
+  zh: { title: "瞄准课程 30 关", hint: "选择关卡即可确定模式和难度。30 秒内达到目标段位即可过关。", goal: "{mode} · {diff} · {rank} 及以上（{score} 分）", cleared: "第 {n} 关通过！", notYet: "第 {n} 关目标：{rank}（{score} 分）", next: "下一关", free: "自由练习" },
+  fr: { title: "Parcours de visée · 30 niveaux", hint: "Choisissez un niveau pour fixer le mode et la difficulté. Atteignez le rang visé en 30 secondes.", goal: "{mode} · {diff} · {rank} ou mieux ({score} pts)", cleared: "Niveau {n} réussi !", notYet: "Le niveau {n} demande {rank} ({score} pts)", next: "Niveau suivant", free: "Entraînement libre" },
+  es: { title: "Curso de puntería · 30 niveles", hint: "Elige un nivel para fijar modo y dificultad. Alcanza el rango objetivo en 30 segundos.", goal: "{mode} · {diff} · {rank} o más ({score} pts)", cleared: "¡Nivel {n} superado!", notYet: "El nivel {n} pide {rank} ({score} pts)", next: "Siguiente nivel", free: "Práctica libre" },
+};
+
+function fill(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? ""));
 }
 
 const T: Record<Locale, I18n> = {
@@ -407,6 +428,20 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   const [phase, setPhase] = useState<Phase>("menu");
   const [mode, setMode] = useState<Mode>("gridshot");
   const [diff, setDiff] = useState<Diff>("normal");
+  const courseCopy = COURSE_COPY[locale] ?? COURSE_COPY.en;
+  const [course, setCourse] = useState<number | null>(null);
+  const [courseCleared, setCourseCleared] = useState<number[]>([]);
+  const [coursePassed, setCoursePassed] = useState(false);
+  useEffect(() => {
+    setCourseCleared(loadClearedStages(AIM_COURSE_SLUG, AIM_COURSE_COUNT));
+  }, []);
+  const selectCourse = useCallback((index: number | null) => {
+    setCourse(index);
+    if (index === null) return;
+    const stage = AIM_COURSE[index];
+    setMode(stage.mode);
+    setDiff(stage.difficulty);
+  }, []);
 
   const [timeLeft, setTimeLeft] = useState(DURATION);
   const [targets, setTargets] = useState<Target[]>([]);
@@ -635,6 +670,9 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       score = hits;
     }
     setFinalScore(score);
+    const passed = course !== null && aimCoursePassed(AIM_COURSE[course], mode, diff, score);
+    setCoursePassed(passed);
+    if (passed && course !== null) setCourseCleared(markStageCleared(AIM_COURSE_SLUG, course, AIM_COURSE_COUNT));
     const totalAttempts = hits + misses;
     const completedAccuracy = totalAttempts > 0 ? Math.round((hits / totalAttempts) * 100) : 0;
     const completedAverage = reactionsRef.current.length
@@ -664,7 +702,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       celebrate(shellRef.current, { preset: "sparks", colors: ["#f87171", "#fde68a", "#ffffff"], origin: { x: 0.5, y: 0.5 } });
     }
     setPhase("result");
-  }, [addTrauma, stop, mode, hits, misses, key, diff, t.diffName, tone, track]);
+  }, [addTrauma, stop, mode, hits, misses, key, diff, t.diffName, tone, track, course]);
 
   // keep finish() fresh inside the interval without re-subscribing
   const finishRef = useRef(finish);
@@ -1073,13 +1111,49 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       {/* ── MENU ── */}
       {phase === "menu" && (
         <div className={`space-y-5 py-2 ${isImmersive ? "my-auto w-full max-w-md mx-auto overflow-y-auto max-h-full" : ""}`}>
+          <div className="rounded-2xl border border-border bg-muted/20 p-3" data-aim-course>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{courseCopy.title}</div>
+              {course !== null && (
+                <button
+                  type="button"
+                  onClick={() => selectCourse(null)}
+                  className="min-h-11 rounded-lg px-2 text-xs font-bold text-muted-foreground hover:text-foreground"
+                >
+                  {courseCopy.free}
+                </button>
+              )}
+            </div>
+            <div className="max-h-28 overflow-y-auto">
+              <StageBar
+                count={AIM_COURSE_COUNT}
+                current={course ?? nextOpenStage(courseCleared, AIM_COURSE_COUNT)}
+                cleared={courseCleared}
+                locale={locale}
+                onSelect={(i) => selectCourse(i)}
+              />
+            </div>
+            <p className="mt-2 text-xs leading-snug text-muted-foreground">
+              {course === null
+                ? courseCopy.hint
+                : `${STAGE_LABEL[locale] ?? STAGE_LABEL.en} ${course + 1}: ${fill(courseCopy.goal, {
+                    mode: t.modeName[AIM_COURSE[course].mode],
+                    diff: t.diffName[AIM_COURSE[course].difficulty],
+                    rank: AIM_COURSE[course].rank,
+                    score: aimCourseTarget(AIM_COURSE[course]),
+                  })}`}
+            </p>
+          </div>
           <div>
             <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t.chooseMode}</div>
             <div className="grid grid-cols-2 gap-2">
               {MODES.map((m) => (
                 <TiltAimCardButton
                   key={m}
-                  onClick={() => setMode(m)}
+                  onClick={() => {
+                    setMode(m);
+                    setCourse(null);
+                  }}
                   ariaPressed={mode === m}
                   className={`rounded-2xl border p-3 text-left transition-colors ${mode === m ? "border-primary bg-primary/10 shadow-sm" : "border-border hover:border-primary/40 bg-muted/20"}`}
                 >
@@ -1105,7 +1179,10 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
               {DIFFS.map((d) => (
                 <TiltAimCardButton
                   key={d}
-                  onClick={() => setDiff(d)}
+                  onClick={() => {
+                    setDiff(d);
+                    setCourse(null);
+                  }}
                   ariaPressed={diff === d}
                   className={`min-h-11! rounded-xl border py-2 text-xs font-bold transition-colors ${diff === d ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-border text-muted-foreground hover:border-primary/40 bg-muted/20"}`}
                 >
@@ -1167,6 +1244,13 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
         <div className={`flex flex-col items-center gap-4 py-6 ${isImmersive ? "my-auto w-full max-w-md mx-auto" : ""}`}>
           <img src={AIM_TRAINER_UI_SPRITES.trophy} alt="" className="size-16 object-contain drop-shadow-md animate-bounce" />
           {isNewBest && <div className="text-sm font-black text-violet-500">{t.newBest}</div>}
+          {course !== null && (
+            <div className="text-center text-sm font-bold" data-aim-course-result>
+              {coursePassed
+                ? fill(courseCopy.cleared, { n: course + 1 })
+                : fill(courseCopy.notYet, { n: course + 1, rank: AIM_COURSE[course].rank, score: aimCourseTarget(AIM_COURSE[course]) })}
+            </div>
+          )}
           <div className="flex flex-col items-center">
             <div className={`text-6xl font-black ${RANK_COLOR[rank]}`}>{rank}</div>
             <div className="text-xs text-muted-foreground">{t.rank} · {t.modeName[mode]} / {t.diffName[diff]}</div>
@@ -1194,6 +1278,18 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
             <button onClick={begin} className="rounded-full bg-primary px-6 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90">
               {t.restart}
             </button>
+            {course !== null && coursePassed && (
+              <button
+                type="button"
+                onClick={() => {
+                  selectCourse(course + 1 < AIM_COURSE_COUNT ? course + 1 : 0);
+                  setPhase("menu");
+                }}
+                className="rounded-full bg-primary px-6 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90"
+              >
+                {course + 1 < AIM_COURSE_COUNT ? courseCopy.next : finaleLabel(locale)}
+              </button>
+            )}
             <button
               type="button"
               onClick={handleShareCard}
