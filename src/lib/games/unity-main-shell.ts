@@ -64,6 +64,17 @@ const NO_BRIDGE_MS = 4000;
 const STALL_MS = 45000;
 const PHONE_QUERY = "(pointer: coarse) and (max-width: 900px)";
 
+/**
+ * True when the visitor came from a search engine results page. Pages whose
+ * search traffic wants instant play (aim trainer: "에임 연습 사이트") open the
+ * quick-play tab first for those visitors instead of the 5 MB Unity poster.
+ */
+export function fromSearch(referrer: string): boolean {
+  let host = "";
+  try { host = new URL(referrer).hostname.toLowerCase(); } catch { return false; }
+  return /(^|\.)(google\.[a-z.]+|bing\.com|search\.naver\.com|m\.search\.naver\.com|search\.daum\.net|duckduckgo\.com|search\.yahoo\.(co\.jp|com)|yandex\.[a-z]+|ecosia\.org)$/.test(host);
+}
+
 export function initUnityMainShell(shell: HTMLElement): void {
   if (shell.dataset.ready) return;
   shell.dataset.ready = "1";
@@ -360,4 +371,5 @@ export function initUnityMainShell(shell: HTMLElement): void {
   refreshPoster();
   const params = new URLSearchParams(location.search);
   if (params.get("play") === "quick" || location.hash === "#quick") select("quick");
+  else if (shell.dataset.quickFirstFromSearch === "1" && params.get("play") !== "main" && fromSearch(document.referrer)) select("quick");
 }
