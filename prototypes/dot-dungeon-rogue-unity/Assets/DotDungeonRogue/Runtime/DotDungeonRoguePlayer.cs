@@ -504,6 +504,8 @@ public class DotDungeonRoguePlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.TrackEnded("dot-dungeon-rogue", isGameOver || isGameVictory, isGameVictory, playerGold);
         HandleInput();
         AnimateSmoothMotion();
         UpdateFloatingTexts();

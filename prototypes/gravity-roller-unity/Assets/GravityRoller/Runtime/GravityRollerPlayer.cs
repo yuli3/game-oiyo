@@ -444,6 +444,8 @@ public class GravityRollerPlayer : MonoBehaviour
 
     private void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("gravity-roller-3d", state, score);
         // Global Keyboard Shortcut: L to cycle language
         if (Input.GetKeyDown(KeyCode.L))
         {

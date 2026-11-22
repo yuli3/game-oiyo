@@ -423,6 +423,8 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.TrackEnded("border-inspector", _stageComplete || _stageFailed, _stageComplete, 0);
         float dt = Mathf.Min(Time.deltaTime, 0.05f);
         if (_feedbackTimer > 0f) _feedbackTimer -= dt;
         _stampThudTimer = Mathf.Max(0f, _stampThudTimer - dt);

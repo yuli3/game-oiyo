@@ -531,6 +531,8 @@ public class PaperFlightPlayer : MonoBehaviour
 
     private void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("paper-flight-3d", state, score);
         // Global Keyboard Shortcut: L to cycle language
         if (Input.GetKeyDown(KeyCode.L))
         {

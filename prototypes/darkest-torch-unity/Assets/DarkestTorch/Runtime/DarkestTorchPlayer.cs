@@ -326,6 +326,8 @@ public sealed class DarkestTorchPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.TrackEnded("torch-expedition", _victory || _gameOver, _victory, 0);
         float dt = Mathf.Min(Time.deltaTime, 0.05f);
         if (_bannerTimer > 0f) _bannerTimer -= dt;
         _shakeTimer = Mathf.Max(0f, _shakeTimer - dt);

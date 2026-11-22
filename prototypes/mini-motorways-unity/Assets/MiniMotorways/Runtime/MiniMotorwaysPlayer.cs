@@ -311,6 +311,8 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
 
     void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.TrackEnded("road-weaver", _victory || _gameOver, _victory, _trips);
         float dt = Mathf.Min(Time.deltaTime, 0.05f);
         if (_statusTimer > 0f) _statusTimer -= dt;
 

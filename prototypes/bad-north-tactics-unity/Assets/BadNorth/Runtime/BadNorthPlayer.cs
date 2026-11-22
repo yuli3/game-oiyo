@@ -777,6 +777,8 @@ public class BadNorthPlayer : MonoBehaviour
 
     private void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("shield-isle-tactics", state, 0);
         HandleTacticalInput();
         UpdateWaveSpawning();
         UpdateShips();

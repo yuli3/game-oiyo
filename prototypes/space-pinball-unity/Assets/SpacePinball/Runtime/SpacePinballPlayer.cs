@@ -303,6 +303,8 @@ public class SpacePinballPlayer : MonoBehaviour
 
     private void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("space-pinball-3d", state, score);
         if (Input.GetKeyDown(KeyCode.L))
         {
             CurrentLang = (GameLang)(((int)CurrentLang + 1) % 4);

@@ -821,6 +821,8 @@ public class BlockBlastPlayer : MonoBehaviour
 
     private void Update()
     {
+        // Run result for the embedding OIYO page (scripts/unity/oiyo-result).
+        OiyoResult.Track("grid-clear", state, currentScore);
         HandleInput();
         UpdateShards();
         UpdateFloatingTexts();
