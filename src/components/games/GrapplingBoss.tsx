@@ -5,7 +5,10 @@ import { celebrate } from "../../lib/games/celebration";
 import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import { GRAPPLING_BOSS_SPRITES } from "../../lib/games/sprites";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import StageBar from "./StageBar";
+import { finaleLabel, loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
 import {
+  GRAPPLING_BOSS_TIERS,
   initializeGrapplingBoss,
   stepGrapplingBoss,
   ARENA_WIDTH,
@@ -70,7 +73,20 @@ function TiltBossButton({
   );
 }
 
-export function GrapplingBoss() {
+const TIER_COPY: Record<string, { next: string; tier: (n: number) => string }> = {
+  ko: { next: "다음 보스", tier: (n) => `보스 ${n}단계` },
+  en: { next: "Next boss", tier: (n) => `Boss tier ${n}` },
+  ja: { next: "次のボス", tier: (n) => `ボス ステージ${n}` },
+  zh: { next: "下一个首领", tier: (n) => `首领第${n}关` },
+  fr: { next: "Boss suivant", tier: (n) => `Boss niveau ${n}` },
+  es: { next: "Siguiente jefe", tier: (n) => `Jefe nivel ${n}` },
+};
+
+export function GrapplingBoss({ locale = "en" }: { locale?: string }) {
+  const tierCopy = TIER_COPY[locale] ?? TIER_COPY.en;
+  // Boss tiers 1-20 (stage range 2026-11-22): each clear opens a tougher rematch.
+  const [tier, setTier] = useState(1);
+  const [clearedTiers, setClearedTiers] = useState<number[]>([]);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: "en" });
 
@@ -124,6 +140,20 @@ export function GrapplingBoss() {
     status: "playing",
     score: 0,
   });
+
+  useEffect(() => {
+    const cleared = loadClearedStages("grappling-boss", GRAPPLING_BOSS_TIERS);
+    setClearedTiers(cleared);
+    const open = nextOpenStage(cleared, GRAPPLING_BOSS_TIERS) + 1;
+    setTier(open);
+    stateRef.current = initializeGrapplingBoss(open);
+  }, []);
+
+  useEffect(() => {
+    if (modalState.status === "victory") {
+      setClearedTiers(markStageCleared("grappling-boss", stateRef.current.tier - 1, GRAPPLING_BOSS_TIERS));
+    }
+  }, [modalState.status]);
 
   useEffect(() => {
     if (modalState.status === "victory" || modalState.status === "defeated") {
@@ -755,8 +785,9 @@ export function GrapplingBoss() {
     ctx.restore();
   };
 
-  const handleReset = () => {
-    stateRef.current = initializeGrapplingBoss();
+  const handleReset = (nextTier: number = tier) => {
+    setTier(nextTier);
+    stateRef.current = initializeGrapplingBoss(nextTier);
     setModalState({
       status: "playing",
       score: 0,
@@ -768,7 +799,7 @@ export function GrapplingBoss() {
   const handleShare = () => {
     MobileHapticsPro.light();
     shareText(
-      `Conquered Titan Beholder in Grappling Boss Arena! Score: ${modalState.score}. Free full-screen arcade: https://game.oiyo.net/grappling-boss`
+      `Felled Iron Gazer MK-${tier} in Grappling Boss Arena! Score: ${modalState.score}. Free full-screen arcade: https://game.oiyo.net/grappling-boss`
     );
   };
 
@@ -787,7 +818,7 @@ export function GrapplingBoss() {
         <span>VIPER-X</span>
         <span className="text-muted-foreground">vs</span>
         <img src={GRAPPLING_BOSS_SPRITES.beholder} alt="" className="size-5 object-contain" draggable={false} />
-        <span>BEHOLDER</span>
+        <span>IRON GAZER MK-{tier}</span>
       </div>
       <div className="absolute top-3 right-3 z-20 pointer-events-auto">
         <TiltBossButton
@@ -817,7 +848,7 @@ export function GrapplingBoss() {
             <div className="flex flex-col items-center gap-3">
               <img src={GRAPPLING_BOSS_SPRITES.trophy} alt="Victory Trophy" className="size-16 object-contain drop-shadow-md" draggable={false} />
               <h2 className="text-2xl font-black tracking-tight text-primary">
-                TITAN BEHOLDER DEFEATED!
+                IRON GAZER MK-{tier} DEFEATED!
               </h2>
               <p className="text-sm text-muted-foreground max-w-sm">
                 Aerial momentum mastered. Final Arena Score: {modalState.score}
@@ -830,16 +861,16 @@ export function GrapplingBoss() {
                   {copied ? "Copied!" : "Share Battle"}
                 </TiltBossButton>
                 <TiltBossButton
-                  onClick={handleReset}
+                  onClick={() => handleReset(tier >= GRAPPLING_BOSS_TIERS ? 1 : tier + 1)}
                   className="px-4 py-2 text-xs font-bold rounded-lg bg-secondary hover:bg-secondary/80 text-foreground border border-border shadow-md transition-all"
                 >
-                  Play Again
+                  {tier >= GRAPPLING_BOSS_TIERS ? finaleLabel(locale) : tierCopy.next}
                 </TiltBossButton>
               </div>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
-              <img src={GRAPPLING_BOSS_SPRITES.beholder} alt="Beholder" className="size-16 object-contain drop-shadow-md" draggable={false} />
+              <img src={GRAPPLING_BOSS_SPRITES.beholder} alt="Iron Gazer" className="size-16 object-contain drop-shadow-md" draggable={false} />
               <h2 className="text-2xl font-black tracking-tight text-destructive">
                 SHIELD BREACHED
               </h2>
@@ -847,13 +878,25 @@ export function GrapplingBoss() {
                 Touch and hold to swing across ceiling anchors; release to slingshot over death beams!
               </p>
               <TiltBossButton
-                onClick={handleReset}
+                onClick={() => handleReset()}
                 className="px-5 py-2.5 text-xs font-bold rounded-lg bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-md transition-all mt-2"
               >
                 Retry Arena
               </TiltBossButton>
             </div>
           )}
+        </div>
+      )}
+      {!isImmersive && (
+        <div className="bg-card p-3" data-boss-tiers>
+          <p className="mb-2 text-xs font-bold text-muted-foreground">{tierCopy.tier(tier)} · {GRAPPLING_BOSS_TIERS}</p>
+          <StageBar
+            count={GRAPPLING_BOSS_TIERS}
+            current={tier - 1}
+            cleared={clearedTiers}
+            locale={locale}
+            onSelect={(i) => handleReset(i + 1)}
+          />
         </div>
       )}
     </div>
