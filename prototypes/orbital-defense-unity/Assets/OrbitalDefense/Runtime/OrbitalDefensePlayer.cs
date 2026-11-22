@@ -293,6 +293,40 @@ public class OrbitalDefensePlayer : MonoBehaviour
         ResetToStage(0);
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/OD/Art) ----
+    private static readonly Dictionary<string, Material> artMats = new Dictionary<string, Material>();
+    private Material spaceMat;
+    private GameObject planetArt;
+
+    private static Material ArtMat(string tex, bool blended = false)
+    {
+        string key = tex + (blended ? "#b" : "");
+        if (!artMats.TryGetValue(key, out var m))
+        {
+            var sh = blended ? null : Shader.Find("OIYO/UnlitCutout");
+            m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+            var t = Resources.Load<Texture2D>("OD/Art/" + tex);
+            if (t != null) { t.wrapMode = TextureWrapMode.Clamp; m.mainTexture = t; }
+            m.color = Color.white;
+            artMats[key] = m;
+        }
+        return m;
+    }
+
+    // Flat sprite seen by the top-down camera; art "up" points along +z, turned by yawDeg.
+    private static GameObject FlatSprite(string name, string tex, float size, float yawDeg = 0f, bool blended = false)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        go.transform.rotation = Quaternion.Euler(90f, yawDeg, 0f);
+        go.transform.localScale = new Vector3(size, size, 1f);
+        go.GetComponent<Renderer>().material = ArtMat(tex, blended);
+        return go;
+    }
+
+    private static float Yaw(Vector3 v) => Mathf.Atan2(v.x, v.z) * Mathf.Rad2Deg;
+
     private void CreateMaterials()
     {
         var shader = Shader.Find("Mobile/Diffuse");
@@ -342,13 +376,19 @@ public class OrbitalDefensePlayer : MonoBehaviour
         planetSphere.transform.localPosition = Vector3.zero;
         planetSphere.transform.localScale = new Vector3(4.4f, 4.4f, 4.4f);
         planetSphere.GetComponent<Renderer>().material = planetMat;
+        var ptex = Resources.Load<Texture2D>("OD/Art/planet");
+        if (ptex != null) planetMat.mainTexture = ptex;
+
+        // Painted star field far below the playfield
+        spaceMat = ArtMat("space");
+        spaceMat.renderQueue = 1000;
+        var sky = FlatSprite("SpaceBackdrop", "space", 60f);
+        sky.transform.position = new Vector3(0f, -12f, 0f);
 
         // Shield Bubble
-        shieldBubble = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        shieldBubble = FlatSprite("ShieldRing", "shield", 5.2f, 0f, true);
         shieldBubble.transform.SetParent(planetRoot.transform);
-        shieldBubble.transform.localPosition = Vector3.zero;
-        shieldBubble.transform.localScale = new Vector3(5.2f, 5.2f, 5.2f);
-        shieldBubble.GetComponent<Renderer>().material = shieldMat;
+        shieldBubble.transform.localPosition = new Vector3(0f, 2.4f, 0f);
 
         // 3 Orbital Wire Rings
         float[] ringRadii = new float[] { 3.6f, 5.4f, 7.2f };
@@ -404,11 +444,8 @@ public class OrbitalDefensePlayer : MonoBehaviour
                 float angle = (float)i / n * Mathf.PI * 2f;
                 Vector3 pos = new Vector3(Mathf.Cos(angle) * rad, 0.15f, Mathf.Sin(angle) * rad);
 
-                var slotGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                slotGo.name = "Slot_" + slotId;
+                var slotGo = FlatSprite("Slot_" + slotId, "pad", 0.95f);
                 slotGo.transform.position = pos;
-                slotGo.transform.localScale = new Vector3(0.55f, 0.1f, 0.55f);
-                slotGo.GetComponent<Renderer>().material = slotMat;
 
                 slots.Add(new TurretSlot
                 {
@@ -436,6 +473,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
         sm.startSpeed = 9f;
         sm.startColor = Color.cyan;
         sm.simulationSpace = ParticleSystemSimulationSpace.World;
+        sGo.GetComponent<ParticleSystemRenderer>().material = ArtMat("spark", true); // WebGL has no default particle material
         var se = sparkParticles.emission;
         se.rateOverTime = 0f;
     }
@@ -446,7 +484,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
         var stg = stages[currentStageIndex];
 
         mainCam.backgroundColor = stg.spaceColor;
-        planetMat.color = stg.planetColor;
+        planetMat.color = Color.Lerp(Color.white, stg.planetColor, 0.45f); // tint the painted globe toward the sector colour
 
         planetHp = maxPlanetHp;
         shieldHp = maxShieldHp;
@@ -488,21 +526,11 @@ public class OrbitalDefensePlayer : MonoBehaviour
         bossMaxHp = stages[currentStageIndex].id == 12 ? 4000f : 2200f;
         bossHp = bossMaxHp;
 
-        // Hull
-        var hull = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        hull.transform.SetParent(bossMothership.transform);
-        hull.transform.localPosition = Vector3.zero;
-        hull.transform.localScale = new Vector3(4.8f, 0.8f, 4.8f);
-        hull.GetComponent<Renderer>().material = bossMat;
-
-        // Glowing Core Dome
-        var dome = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        dome.transform.SetParent(bossMothership.transform);
-        dome.transform.localPosition = new Vector3(0, 0.5f, 0);
-        dome.transform.localScale = new Vector3(2.2f, 1.2f, 2.2f);
-        var dMat = new Material(bossMat);
-        dMat.color = Color.yellow;
-        dome.GetComponent<Renderer>().material = dMat;
+        // Painted saucer (child of the root, so the root's turning spins it)
+        var hull = FlatSprite("MothershipArt", "mothership", 5.2f);
+        hull.transform.SetParent(bossMothership.transform, false);
+        hull.transform.localPosition = new Vector3(0f, 0.4f, 0f);
+        hull.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
 
         PlaySound(warningClip, 0.9f);
     }
@@ -630,6 +658,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
     private void FireTurret(TurretSlot s, Vector3 targetPos, int targetIdx)
     {
         Vector3 dir = (targetPos - s.pos).normalized;
+        if (s.turretGo != null) s.turretGo.transform.rotation = Quaternion.Euler(90f, Yaw(dir), 0f); // aim the barrel
 
         if (s.turretType == 1) // Pulse Laser
         {
@@ -650,25 +679,11 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
     private void SpawnBullet(Vector3 pos, Vector3 vel, int type, int targetIdx)
     {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        go.transform.position = pos;
-        go.transform.rotation = Quaternion.FromToRotation(Vector3.up, vel);
-
-        if (type == 1) // Missile
-        {
-            go.transform.localScale = new Vector3(0.2f, 0.45f, 0.2f);
-            go.GetComponent<Renderer>().material = missileMat;
-        }
-        else if (type == 2) // Flak
-        {
-            go.transform.localScale = new Vector3(0.25f, 0.35f, 0.25f);
-            go.GetComponent<Renderer>().material = flakMat;
-        }
-        else // Laser
-        {
-            go.transform.localScale = new Vector3(0.12f, 0.4f, 0.12f);
-            go.GetComponent<Renderer>().material = laserMat;
-        }
+        var go = FlatSprite("Shot", type == 1 ? "shot_missile" : type == 2 ? "shot_flak" : "shot_laser", 1f, Yaw(vel), true);
+        go.transform.position = pos + Vector3.up * 0.3f;
+        if (type == 1) go.transform.localScale = new Vector3(0.35f, 0.7f, 1f);
+        else if (type == 2) go.transform.localScale = new Vector3(0.4f, 0.8f, 1f);
+        else go.transform.localScale = new Vector3(0.25f, 0.8f, 1f);
 
         bullets.Add(new DefenseBullet
         {
@@ -688,7 +703,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
             {
                 Vector3 toTarget = (threats[b.targetEnemyIdx].pos - b.pos).normalized;
                 b.vel = Vector3.Lerp(b.vel, toTarget * 20f, dt * 6f);
-                if (b.go != null) b.go.transform.rotation = Quaternion.FromToRotation(Vector3.up, b.vel);
+                if (b.go != null) b.go.transform.rotation = Quaternion.Euler(90f, Yaw(b.vel), 0f);
             }
 
             b.pos += b.vel * dt;
@@ -735,7 +750,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
         else if (stg.hasFast && roll < 0.55f) type = 1; // Scout Drone
         else type = 0; // Meteor
 
-        var go = GameObject.CreatePrimitive(type == 0 ? PrimitiveType.Sphere : PrimitiveType.Cube);
+        var go = FlatSprite("Threat", type == 0 ? "meteor" : type == 1 ? "raider" : "cruiser", 1f, Yaw(-pos));
         go.transform.position = pos;
 
         float hp = 25f;
@@ -745,23 +760,21 @@ public class OrbitalDefensePlayer : MonoBehaviour
         if (type == 0) // Meteor
         {
             float sz = UnityEngine.Random.Range(0.8f, 1.4f);
-            go.transform.localScale = new Vector3(sz, sz, sz);
-            go.GetComponent<Renderer>().material = meteorMat;
+            go.transform.localScale = new Vector3(sz * 1.15f, sz * 1.15f, 1f);
+            go.transform.rotation = Quaternion.Euler(90f, UnityEngine.Random.Range(0f, 360f), 0f);
             hp = 30f;
             r = sz * 0.5f;
         }
         else if (type == 1) // Scout Drone
         {
-            go.transform.localScale = new Vector3(0.7f, 0.35f, 1.1f);
-            go.GetComponent<Renderer>().material = alienMat;
+            go.transform.localScale = new Vector3(1.2f, 1.2f, 1f);
             hp = 18f;
             vel *= 1.35f;
             r = 0.55f;
         }
         else if (type == 2) // Heavy Cruiser
         {
-            go.transform.localScale = new Vector3(1.6f, 0.6f, 1.6f);
-            go.GetComponent<Renderer>().material = bossMat;
+            go.transform.localScale = new Vector3(2.0f, 2.0f, 1f);
             hp = 95f;
             vel *= 0.7f;
             r = 0.95f;
@@ -927,11 +940,8 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
         if (s.turretGo != null) Destroy(s.turretGo);
 
-        var tg = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        tg.name = "Turret_" + slotId;
+        var tg = FlatSprite("Turret_" + slotId, type == 1 ? "turret_laser" : (type == 2 ? "turret_missile" : "turret_flak"), 0.95f, Yaw(s.pos));
         tg.transform.position = s.pos + new Vector3(0, 0.35f, 0);
-        tg.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-        tg.GetComponent<Renderer>().material = type == 1 ? laserMat : (type == 2 ? missileMat : flakMat);
         s.turretGo = tg;
 
         PlaySound(buildClip, 0.8f);
@@ -941,6 +951,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
     private void UpdateVisuals()
     {
+        if (planetSphere != null) planetSphere.transform.Rotate(0f, 8f * Time.deltaTime, 0f, Space.World);
         if (shieldBubble != null)
         {
             shieldBubble.SetActive(shieldHp > 0f);

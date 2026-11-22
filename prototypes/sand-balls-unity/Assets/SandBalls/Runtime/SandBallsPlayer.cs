@@ -203,19 +203,65 @@ public class SandBallsPlayer : MonoBehaviour
         ballMatDormant.color = new Color(0.55f, 0.58f, 0.65f);
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/SB/Art) ----
+    static Texture2D ArtTex(string name, bool repeat = false)
+    {
+        var t = Resources.Load<Texture2D>("SB/Art/" + name);
+        if (t != null) t.wrapMode = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+        return t;
+    }
+
+    static Material SpriteArt(string tex, Color tint, float tileY = 1f)
+    {
+        var m = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
+        m.mainTexture = ArtTex(tex, tileY != 1f);
+        m.mainTextureScale = new Vector2(1f, tileY);
+        m.color = tint;
+        m.renderQueue = 3050; // in front of the (transparent) sand, whatever the camera distance
+        return m;
+    }
+
+    static GameObject ArtQuad(string name, Vector3 pos, Vector3 scale, Material mat)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        go.transform.position = pos;
+        go.transform.localScale = scale;
+        go.GetComponent<MeshRenderer>().material = mat;
+        return go;
+    }
+
     void BuildSandMesh()
     {
+        // quarry rock face behind the sand, seen through dug holes
+        var wallMat = SpriteArt("rockwall", Color.white);
+        wallMat.renderQueue = 1000; // always the backmost layer
+        ArtQuad("QuarryWall", new Vector3(0f, 0f, 0.45f), new Vector3(BoardW, BoardH, 1f), wallMat);
+
         sandQuadGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
         sandQuadGo.name = "SandQuad";
         sandQuadGo.transform.position = new Vector3(0f, 0f, 0.2f);
         sandQuadGo.transform.localScale = new Vector3(BoardW, BoardH, 1f);
 
         sandTexture = new Texture2D(SandGridW, SandGridH, TextureFormat.RGBA32, false);
-        sandTexture.filterMode = FilterMode.Point;
+        sandTexture.filterMode = FilterMode.Bilinear; // soft hole edges
         sandTexture.wrapMode = TextureWrapMode.Clamp;
 
-        var mat = new Material(OiyoShaders.Safe(Shader.Find("Unlit/Transparent")));
-        mat.mainTexture = sandTexture;
+        // painted strata, alpha from the runtime dig mask (falls back to the plain mask texture)
+        var masked = Shader.Find("OIYO/MaskedSand");
+        Material mat;
+        if (masked != null)
+        {
+            mat = new Material(masked);
+            mat.mainTexture = ArtTex("sand");
+            mat.SetTexture("_MaskTex", sandTexture);
+        }
+        else
+        {
+            mat = new Material(OiyoShaders.Safe(Shader.Find("Unlit/Transparent")));
+            mat.mainTexture = sandTexture;
+        }
         sandQuadGo.GetComponent<MeshRenderer>().material = mat;
 
         // Board Boundary Walls
@@ -230,9 +276,7 @@ public class SandBallsPlayer : MonoBehaviour
         wall.name = "Wall";
         wall.transform.position = pos;
         wall.transform.localScale = scale;
-        var m = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
-        m.color = new Color(0.28f, 0.25f, 0.22f);
-        wall.GetComponent<MeshRenderer>().material = m;
+        wall.GetComponent<MeshRenderer>().material = SpriteArt("timber", Color.white, Mathf.Max(1f, Mathf.Max(scale.x, scale.y) / 2f));
     }
 
     void BuildTruckModel()
@@ -240,30 +284,10 @@ public class SandBallsPlayer : MonoBehaviour
         truckGo = new GameObject("DumpTruck");
         truckGo.transform.position = truckBasePos;
 
-        // Truck Flatbed
-        var bed = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        bed.name = "Bed";
-        bed.transform.SetParent(truckGo.transform, false);
-        bed.transform.localPosition = new Vector3(-0.6f, -0.1f, -0.1f);
-        bed.transform.localScale = new Vector3(2.6f, 0.7f, 1.2f);
-        var bedMat = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
-        bedMat.color = new Color(0.15f, 0.55f, 0.95f);
-        bed.GetComponent<MeshRenderer>().material = bedMat;
-
-        // Cabin
-        var cab = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        cab.name = "Cab";
-        cab.transform.SetParent(truckGo.transform, false);
-        cab.transform.localPosition = new Vector3(1.1f, 0.15f, -0.1f);
-        cab.transform.localScale = new Vector3(1.0f, 1.1f, 1.1f);
-        var cabMat = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
-        cabMat.color = new Color(0.95f, 0.65f, 0.15f);
-        cab.GetComponent<MeshRenderer>().material = cabMat;
-
-        // Wheels
-        CreateWheel(truckGo.transform, new Vector3(-1.4f, -0.55f, -0.2f));
-        CreateWheel(truckGo.transform, new Vector3(-0.2f, -0.55f, -0.2f));
-        CreateWheel(truckGo.transform, new Vector3(1.1f, -0.55f, -0.2f));
+        // Painted dump truck (side view)
+        var body = ArtQuad("TruckArt", Vector3.zero, new Vector3(3.9f, 1.95f, 1f), SpriteArt("truck", Color.white));
+        body.transform.SetParent(truckGo.transform, false);
+        body.transform.localPosition = new Vector3(0f, -0.05f, -0.1f);
     }
 
     void CreateWheel(Transform parent, Vector3 localPos)
@@ -589,13 +613,8 @@ public class SandBallsPlayer : MonoBehaviour
                 size = gDef.size,
                 multiplier = gDef.multiplier
             };
-            var gGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            gGo.name = "MultiplierGate_x" + g.multiplier;
-            gGo.transform.position = new Vector3(g.pos.x, g.pos.y, -0.1f);
-            gGo.transform.localScale = new Vector3(g.size.x, g.size.y, 0.3f);
-            var m = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
-            m.color = (g.multiplier >= 3) ? new Color(1.0f, 0.85f, 0.15f, 0.7f) : new Color(0.2f, 0.8f, 1.0f, 0.7f);
-            gGo.GetComponent<MeshRenderer>().material = m;
+            var gGo = ArtQuad("MultiplierGate_x" + g.multiplier, new Vector3(g.pos.x, g.pos.y, -0.1f), new Vector3(g.size.x, g.size.y, 1f),
+                SpriteArt("gate", (g.multiplier >= 3) ? new Color(1.0f, 0.85f, 0.15f, 0.9f) : new Color(0.2f, 0.8f, 1.0f, 0.9f)));
             g.go = gGo;
             activeGates.Add(g);
         }
@@ -608,14 +627,7 @@ public class SandBallsPlayer : MonoBehaviour
                 pos = pDef.pos,
                 radius = pDef.radius
             };
-            var bGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            bGo.name = "BumperPeg";
-            bGo.transform.position = new Vector3(b.pos.x, b.pos.y, -0.1f);
-            bGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-            bGo.transform.localScale = new Vector3(b.radius * 2f, 0.2f, b.radius * 2f);
-            var m = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
-            m.color = new Color(0.9f, 0.3f, 1.0f);
-            bGo.GetComponent<MeshRenderer>().material = m;
+            var bGo = ArtQuad("BumperPeg", new Vector3(b.pos.x, b.pos.y, -0.1f), new Vector3(b.radius * 2.3f, b.radius * 2.3f, 1f), SpriteArt("bumper", Color.white));
             b.go = bGo;
             activeBumpers.Add(b);
         }
@@ -630,13 +642,7 @@ public class SandBallsPlayer : MonoBehaviour
                 speed = spDef.speed,
                 angle = 0f
             };
-            var spGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            spGo.name = "Spinner";
-            spGo.transform.position = new Vector3(sp.center.x, sp.center.y, -0.1f);
-            spGo.transform.localScale = new Vector3(sp.length, 0.35f, 0.4f);
-            var m = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
-            m.color = new Color(0.95f, 0.4f, 0.2f);
-            spGo.GetComponent<MeshRenderer>().material = m;
+            var spGo = ArtQuad("Spinner", new Vector3(sp.center.x, sp.center.y, -0.1f), new Vector3(sp.length, 0.4f, 1f), SpriteArt("paddle", Color.white));
             sp.go = spGo;
             activeSpinners.Add(sp);
         }
@@ -648,15 +654,10 @@ public class SandBallsPlayer : MonoBehaviour
 
     void SpawnBall(int id, Vector2 pos, bool isColored, Color col)
     {
-        var ballGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        ballGo.name = "Ball_" + id;
-        ballGo.transform.position = new Vector3(pos.x, pos.y, -0.2f);
         float rad = 0.19f;
-        ballGo.transform.localScale = Vector3.one * (rad * 2f);
-
-        var mat = new Material(OiyoShaders.Safe(Shader.Find("Sprites/Default")));
-        mat.color = isColored ? col : new Color(0.55f, 0.58f, 0.65f);
-        ballGo.GetComponent<MeshRenderer>().material = mat;
+        var ballMat = SpriteArt("ball", isColored ? col : new Color(0.55f, 0.58f, 0.65f));
+        ballMat.renderQueue = 3100; // balls on top of everything on the board
+        var ballGo = ArtQuad("Ball_" + id, new Vector3(pos.x, pos.y, -0.2f), new Vector3(rad * 2.2f, rad * 2.2f, 1f), ballMat);
 
         balls.Add(new Ball
         {
