@@ -143,33 +143,68 @@ public class DotDungeonRoguePlayer : MonoBehaviour
         GenerateFloor(1);
     }
 
+    // ---- Painted art (scripts/make_art.py -> Resources/DR/Art) ----
+    GameObject heroSprite;
+    static Texture2D ArtTex(string name)
+    {
+        var t = Resources.Load<Texture2D>("DR/Art/" + name);
+        if (t != null) t.wrapMode = TextureWrapMode.Clamp;
+        return t;
+    }
+
+    static Material SpriteMat(string tex)
+    {
+        var sh = Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        m.mainTexture = ArtTex(tex);
+        m.color = Color.white;
+        return m;
+    }
+
+    // Camera-facing painted figure; kept facing the camera in LateUpdate.
+    readonly List<Transform> billboards = new List<Transform>();
+    GameObject Billboard(string name, Transform parent, Material mat, float size, float lift)
+    {
+        var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        q.name = name;
+        Destroy(q.GetComponent<Collider>());
+        q.transform.SetParent(parent, false);
+        q.transform.localPosition = new Vector3(0f, lift, 0f);
+        q.transform.localScale = new Vector3(size, size, 1f);
+        q.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        billboards.Add(q.transform);
+        return q;
+    }
+
+    void LateUpdate()
+    {
+        if (mainCam == null) return;
+        for (int i = billboards.Count - 1; i >= 0; i--)
+        {
+            if (billboards[i] == null) { billboards.RemoveAt(i); continue; }
+            billboards[i].rotation = mainCam.transform.rotation;
+        }
+    }
+
+    // Tile colours are dark tints; the painted stone is pale, so lift them a little.
+    static Color Lift(Color c) => new Color(Mathf.Min(1f, c.r * 2.4f), Mathf.Min(1f, c.g * 2.4f), Mathf.Min(1f, c.b * 2.4f), 1f);
+
     void CreateBaseMaterials()
     {
         Shader diffuse = Shader.Find("Mobile/Diffuse");
         if (diffuse == null) diffuse = Shader.Find("Standard");
 
-        wallMat = new Material(OiyoShaders.Safe(diffuse));
-        floorMat = new Material(OiyoShaders.Safe(diffuse));
-        stairsMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(1.0f, 0.85f, 0.2f) };
-        chestMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.95f, 0.6f, 0.15f) };
-        heroMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.2f, 0.65f, 1.0f) };
+        wallMat = new Material(OiyoShaders.Safe(diffuse)) { mainTexture = ArtTex("wall") };
+        floorMat = new Material(OiyoShaders.Safe(diffuse)) { mainTexture = ArtTex("floor") };
+        stairsMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(1.0f, 0.85f, 0.2f), mainTexture = ArtTex("stairs") };
+        chestMat = new Material(OiyoShaders.Safe(diffuse)) { color = new Color(0.95f, 0.6f, 0.15f), mainTexture = ArtTex("chest") };
+        heroMat = SpriteMat("hero");
     }
 
     void InitHeroVisual()
     {
         heroObj = new GameObject("Hero");
-        var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        body.transform.SetParent(heroObj.transform);
-        body.transform.localPosition = new Vector3(0, 0.6f, 0);
-        body.transform.localScale = new Vector3(0.55f, 0.55f, 0.55f);
-        body.GetComponent<MeshRenderer>().sharedMaterial = heroMat;
-
-        // Shield
-        var shield = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        shield.transform.SetParent(heroObj.transform);
-        shield.transform.localPosition = new Vector3(0.35f, 0.5f, 0.1f);
-        shield.transform.localScale = new Vector3(0.1f, 0.4f, 0.35f);
-        shield.GetComponent<MeshRenderer>().sharedMaterial = chestMat;
+        heroSprite = Billboard("HeroSprite", heroObj.transform, heroMat, 1.25f, 0.62f);
 
         // Torch Light
         var lightGo = new GameObject("TorchLight");
@@ -333,15 +368,11 @@ public class DotDungeonRoguePlayer : MonoBehaviour
             isBoss = isBoss
         };
 
-        var go = GameObject.CreatePrimitive(isBoss ? PrimitiveType.Cylinder : PrimitiveType.Cube);
-        go.name = "Monster_" + name;
+        var go = new GameObject("Monster_" + name);
         float scale = isBoss ? 1.0f : 0.65f;
-        go.transform.localScale = new Vector3(scale, scale, scale);
         go.transform.position = new Vector3(x * TileSize, scale * 0.5f, y * TileSize);
-
-        Material mat = new Material(OiyoShaders.Safe(Shader.Find("Mobile/Diffuse") ?? Shader.Find("Standard")));
-        mat.color = col;
-        go.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        // painted monster for this floor (mon_0..mon_9); bosses are drawn bigger
+        Billboard("Sprite", go.transform, SpriteMat("mon_" + Mathf.Clamp(currentFloor - 1, 0, 9)), isBoss ? 1.9f : 1.2f, isBoss ? 0.45f : 0.28f);
 
         m.visualObj = go;
         monsters.Add(m);
@@ -447,12 +478,12 @@ public class DotDungeonRoguePlayer : MonoBehaviour
                 if (map[x, y].visible)
                 {
                     go.SetActive(true);
-                    go.GetComponent<MeshRenderer>().material.color = (map[x, y].type == TileType.Wall) ? FloorDefs[currentFloor - 1].wallColor : (map[x, y].type == TileType.Stairs ? stairsMat.color : (map[x, y].type == TileType.Chest ? chestMat.color : FloorDefs[currentFloor - 1].floorColor));
+                    go.GetComponent<MeshRenderer>().material.color = (map[x, y].type == TileType.Wall) ? Lift(FloorDefs[currentFloor - 1].wallColor) : (map[x, y].type == TileType.Stairs ? Color.white : (map[x, y].type == TileType.Chest ? Lift(FloorDefs[currentFloor - 1].floorColor) : Lift(FloorDefs[currentFloor - 1].floorColor)));
                 }
                 else if (map[x, y].explored)
                 {
                     go.SetActive(true);
-                    go.GetComponent<MeshRenderer>().material.color = new Color(0.12f, 0.12f, 0.15f); // Dim explored shadow
+                    go.GetComponent<MeshRenderer>().material.color = new Color(0.2f, 0.2f, 0.25f); // Dim explored shadow
                 }
                 else
                 {

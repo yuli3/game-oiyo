@@ -182,18 +182,50 @@ public class GravityRollerPlayer : MonoBehaviour
         rollSource.Play();
 
         // Shaders & Materials
-        var unlitShader = Shader.Find("Hidden/Internal-Colored") ?? Shader.Find("Sprites/Default");
-        ballMat = new Material(unlitShader) { color = new Color(0.95f, 0.95f, 1f) };
-        boardMat = new Material(unlitShader) { color = Stages[0].boardColor };
-        wallMat = new Material(unlitShader) { color = Stages[0].wallColor };
-        holeMat = new Material(unlitShader) { color = new Color(0.02f, 0.02f, 0.03f) };
-        gemMat = new Material(unlitShader) { color = new Color(0.2f, 0.95f, 1f) };
-        bumperMat = new Material(unlitShader) { color = new Color(1f, 0.35f, 0.25f) };
-        boosterMat = new Material(unlitShader) { color = new Color(1f, 0.85f, 0.15f) };
-        goalMat = new Material(unlitShader) { color = new Color(0.35f, 1f, 0.45f) };
+        // Painted, unlit materials (scripts/make_art.py -> Resources/GR/Art); board and rails take the stage tint
+        ballMat = ArtMat("marble", Color.white);
+        boardMat = ArtMat("board", StageTint(Stages[0].boardColor), 5f);
+        wallMat = ArtMat("rail", StageTint(Stages[0].wallColor));
+        holeMat = ArtMat("hole", Color.white);
+        gemMat = ArtMat("gem", Color.white);
+        bumperMat = ArtMat("bumper", Color.white);
+        boosterMat = ArtMat("booster", Color.white);
+        goalMat = ArtMat("goal", Color.white);
 
         CreateBoardAndBall();
         SetupStage(0);
+    }
+
+    private static Material ArtMat(string tex, Color tint, float tile = 1f)
+    {
+        var sh = Shader.Find("OIYO/UnlitCutout");
+        var m = new Material(sh != null ? sh : Shader.Find("Sprites/Default"));
+        var t = Resources.Load<Texture2D>("GR/Art/" + tex);
+        if (t != null)
+        {
+            t.wrapMode = tile != 1f ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+            m.mainTexture = t;
+        }
+        m.mainTextureScale = new Vector2(tile, tile);
+        m.color = tint;
+        return m;
+    }
+
+    // stage colours are dark; the painted panels are pale, so brighten the tint
+    private static Color StageTint(Color c) => new Color(Mathf.Min(1f, c.r * 1.9f + 0.1f), Mathf.Min(1f, c.g * 1.9f + 0.1f), Mathf.Min(1f, c.b * 1.9f + 0.1f), 1f);
+
+    // Flat painted disc/pad lying on the board (quad facing up, texture top toward +z).
+    private GameObject FlatArt(string name, Vector3 localPos, float w, float h, Material mat)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        Destroy(go.GetComponent<Collider>());
+        go.transform.SetParent(boardGo.transform);
+        go.transform.localPosition = localPos + new Vector3(0f, 0.02f, 0f);
+        go.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        go.transform.localScale = new Vector3(w, h, 1f);
+        go.GetComponent<Renderer>().sharedMaterial = mat;
+        return go;
     }
 
     private void CreateBoardAndBall()
@@ -226,8 +258,8 @@ public class GravityRollerPlayer : MonoBehaviour
         StageDef s = Stages[currentStageIndex];
 
         stageTimer = s.timeLimit;
-        boardMat.color = s.boardColor;
-        wallMat.color = s.wallColor;
+        boardMat.color = StageTint(s.boardColor);
+        wallMat.color = StageTint(s.wallColor);
 
         tiltX = 0f;
         tiltZ = 0f;
@@ -373,14 +405,7 @@ public class GravityRollerPlayer : MonoBehaviour
 
     private GameObject CreateGoalVisual(Vector3 localPos, float radius)
     {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        go.name = "GoalPad";
-        go.transform.SetParent(boardGo.transform);
-        go.transform.localPosition = localPos;
-        go.transform.localScale = new Vector3(radius * 2f, 0.05f, radius * 2f);
-        var r = go.GetComponent<Renderer>();
-        if (r) r.sharedMaterial = goalMat;
-        return go;
+        return FlatArt("GoalPad", localPos, radius * 2f, radius * 2f, goalMat);
     }
 
     private GameObject CreateGemVisual(Vector3 localPos)
@@ -397,14 +422,7 @@ public class GravityRollerPlayer : MonoBehaviour
 
     private GameObject CreateHoleVisual(Vector3 localPos, float radius)
     {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        go.name = "TrapHole";
-        go.transform.SetParent(boardGo.transform);
-        go.transform.localPosition = localPos;
-        go.transform.localScale = new Vector3(radius * 2f, 0.02f, radius * 2f);
-        var r = go.GetComponent<Renderer>();
-        if (r) r.sharedMaterial = holeMat;
-        return go;
+        return FlatArt("TrapHole", localPos, radius * 2.1f, radius * 2.1f, holeMat);
     }
 
     private GameObject CreateBumperVisual(Vector3 localPos, float radius)
@@ -421,14 +439,7 @@ public class GravityRollerPlayer : MonoBehaviour
 
     private GameObject CreateBoosterVisual(Vector3 localPos, Vector3 dir)
     {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        go.name = "BoosterPad";
-        go.transform.SetParent(boardGo.transform);
-        go.transform.localPosition = localPos;
-        go.transform.localScale = new Vector3(2.4f, 0.04f, 2.8f);
-        var r = go.GetComponent<Renderer>();
-        if (r) r.sharedMaterial = boosterMat;
-        return go;
+        return FlatArt("BoosterPad", localPos, 2.4f, 2.8f, boosterMat);
     }
 
     private void Update()
