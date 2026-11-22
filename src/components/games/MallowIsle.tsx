@@ -314,6 +314,7 @@ export default function MallowIsle({ locale }: { locale: Locale }) {
           >
             <Scene
               copy={copy.scene}
+              locale={locale}
               audioEnabled={audioEnabled}
               onToggleAudio={() => {
                 MobileHapticsPro.click();

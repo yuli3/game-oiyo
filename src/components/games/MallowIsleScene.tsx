@@ -47,6 +47,8 @@ import {
   type MallowIsleSave,
   type PlayerPose,
 } from "../../lib/games/mallow-isle";
+import { ISLE_GOALS, ISLE_GOAL_COUNT, ISLE_GOAL_SLUG, isleGoalMet, isleGoalText, isleGoalValue } from "../../lib/games/mallow-isle-goals";
+import { loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
 import { celebrate } from "../../lib/games/celebration";
 import {
   createShareCardCanvas,
@@ -84,6 +86,7 @@ interface Props {
   copy: MallowSceneCopy;
   audioEnabled: boolean;
   onToggleAudio: () => void;
+  locale?: string;
 }
 
 interface Movement {
@@ -230,7 +233,7 @@ function useLofiIslandAudio(enabled: boolean) {
   }, [enabled]);
 }
 
-export default function MallowIsleScene({ copy, audioEnabled, onToggleAudio }: Props) {
+export default function MallowIsleScene({ copy, audioEnabled, onToggleAudio, locale = "en" }: Props) {
   const [save, setSave] = useState<MallowIsleSave>(() => {
     if (typeof window === "undefined") return createDefaultMallowSave();
     return parseMallowSave(window.localStorage.getItem(MALLOW_ISLE_SAVE_KEY));
@@ -246,6 +249,22 @@ export default function MallowIsleScene({ copy, audioEnabled, onToggleAudio }: P
   const idRef = useRef(0);
   const lastShapeRef = useRef(0);
   useLofiIslandAudio(audioEnabled);
+
+  // Island goals (2026-11-22): 20 stages in order on top of the sandbox.
+  const goalText = isleGoalText(locale);
+  const [clearedGoals, setClearedGoals] = useState<number[]>([]);
+  useEffect(() => { setClearedGoals(loadClearedStages(ISLE_GOAL_SLUG, ISLE_GOAL_COUNT)); }, []);
+  const allGoalsDone = clearedGoals.length >= ISLE_GOAL_COUNT;
+  const goalIndex = nextOpenStage(clearedGoals, ISLE_GOAL_COUNT);
+  const goal = ISLE_GOALS[goalIndex];
+  const goalValue = isleGoalValue(save, goal.metric);
+  useEffect(() => {
+    if (allGoalsDone || !isleGoalMet(save, goalIndex)) return;
+    const next = markStageCleared(ISLE_GOAL_SLUG, goalIndex, ISLE_GOAL_COUNT);
+    setClearedGoals(next);
+    const words = isleGoalText(locale);
+    setNotice(next.length >= ISLE_GOAL_COUNT ? words.allDone : words.reached(goalIndex + 1));
+  }, [save, goalIndex, allGoalsDone, locale]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setClockMinutes((value) => (value + 2) % 1_440), 1_600);
@@ -381,7 +400,7 @@ export default function MallowIsleScene({ copy, audioEnabled, onToggleAudio }: P
     const canvas = createShareCardCanvas({
       title: "Mallow Isle 3D",
       subtitle: `${copy.islandName} · ${copy.cozy} ${save.cozy}%`,
-      score: `포근함 ${save.cozy}%`,
+      score: `${copy.cozy} ${save.cozy}%`,
       slug: "mallow-isle",
       customStats: [
         { label: "DECORATIONS", value: `${save.decorations.length}개` },
@@ -453,6 +472,11 @@ export default function MallowIsleScene({ copy, audioEnabled, onToggleAudio }: P
           <div className="mt-1 h-1.5 w-full max-w-40 overflow-hidden bg-[#dbe8cf]">
             <div className="h-full bg-[#ef9fa5] transition-[width] duration-500" style={{ width: `${save.cozy}%` }} />
           </div>
+          <p className="mt-1 text-xs font-bold text-muted-foreground" data-isle-goal>
+            {allGoalsDone
+              ? goalText.allDone
+              : `${goalText.goal} ${goalIndex + 1}/${ISLE_GOAL_COUNT} · ${goalText.metric(goal.metric)} ${Math.min(goalValue, goal.target)}/${goal.target}`}
+          </p>
         </div>
 
         <div className="pointer-events-auto flex items-center gap-1.5">
