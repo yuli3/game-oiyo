@@ -7,6 +7,13 @@
  * Play, so the page stays light for crawlers and Lighthouse. The React game
  * sits in a hidden panel; with client:visible it hydrates only when that tab
  * is opened. ?play=quick (or #quick) opens the quick-play tab first.
+ *
+ * While the build loads, the poster stays up with a progress bar fed by
+ * public/prototypes/unity-frame-bridge.js (inside the build's index.html).
+ * Load errors show a retry button instead of a browser alert. On phones the
+ * game opens full screen (or a fixed full-window frame where the Fullscreen
+ * API is missing, as on iPhone). Builds that post oiyo:game-result get a
+ * result card, and the run is saved to the shared records.
  */
 import type { Locale } from "../../lib/i18n";
 import gameArtDocument from "../../../config/game-art-v1.json";
@@ -22,43 +29,127 @@ interface Props {
 const { slug, build, locale, name } = Astro.props as Props;
 const poster = Astro.props.poster ?? (gameArtDocument.games as Record<string, string>)[slug];
 
-const labels: Record<Locale, { main: string; quick: string; play: string; note: string; fullscreen: string; exit: string; hint: string; loading: string }> = {
-  ko: { main: "3D 본편", quick: "빠른 플레이", play: "3D로 플레이", note: "Unity 3D 본편이에요. 처음 한 번 약 5MB를 받아요.", fullscreen: "전체 화면", exit: "전체 화면 닫기", hint: "게임 안을 한 번 누르면 키보드 조작이 켜져요.", loading: "불러오는 중…" },
-  en: { main: "3D game", quick: "Quick play", play: "Play in 3D", note: "The full Unity 3D game. About 5 MB on first load.", fullscreen: "Full screen", exit: "Exit full screen", hint: "Click inside the game once to use the keyboard.", loading: "Loading…" },
-  ja: { main: "3D本編", quick: "クイックプレイ", play: "3Dで遊ぶ", note: "Unity 3D本編です。初回のみ約5MBを読み込みます。", fullscreen: "全画面", exit: "全画面を終了", hint: "ゲーム内を一度押すとキーボード操作が有効になります。", loading: "読み込み中…" },
-  zh: { main: "3D 正式版", quick: "快速游玩", play: "玩 3D 版", note: "Unity 3D 正式版，首次加载约 5MB。", fullscreen: "全屏", exit: "退出全屏", hint: "点击游戏区域一次即可使用键盘。", loading: "加载中…" },
-  fr: { main: "Jeu 3D", quick: "Partie rapide", play: "Jouer en 3D", note: "Le jeu complet en 3D Unity. Environ 5 Mo au premier chargement.", fullscreen: "Plein écran", exit: "Quitter le plein écran", hint: "Cliquez une fois dans le jeu pour utiliser le clavier.", loading: "Chargement…" },
-  es: { main: "Juego 3D", quick: "Partida rápida", play: "Jugar en 3D", note: "El juego completo en 3D con Unity. Unos 5 MB la primera vez.", fullscreen: "Pantalla completa", exit: "Salir de pantalla completa", hint: "Haz clic una vez en el juego para usar el teclado.", loading: "Cargando…" },
+type Labels = {
+  main: string; quick: string; play: string; replay: string; note: string; fullscreen: string; exit: string;
+  hint: string; touchHint: string; loading: string; firstLoad: string; error: string; retry: string;
+  tryQuick: string; best: string; plays: string; win: string; loss: string; draw: string; score: string;
+  newBest: string; share: string; copied: string; close: string; keys: string; touch: string;
+};
+
+const labels: Record<Locale, Labels> = {
+  ko: {
+    main: "3D 본편", quick: "빠른 플레이", play: "3D로 플레이", replay: "이어서 플레이", note: "Unity 3D 본편이에요. 처음 한 번 약 5MB를 받아요.",
+    fullscreen: "전체 화면", exit: "전체 화면 닫기", hint: "게임 안을 한 번 누르면 키보드 조작이 켜져요.", touchHint: "화면을 눌러 조작해요. 가로로 돌리면 더 넓게 보여요.",
+    loading: "불러오는 중", firstLoad: "처음 한 번만 받아요. 다음부터는 금방 열려요.", error: "게임을 불러오지 못했어요.", retry: "다시 시도", tryQuick: "빠른 플레이로 하기",
+    best: "내 최고 {v}", plays: "{n}판", win: "클리어!", loss: "아쉬워요", draw: "무승부", score: "{v}점", newBest: "새 최고 기록!",
+    share: "기록 공유", copied: "링크를 복사했어요", close: "닫기", keys: "키보드·마우스", touch: "터치",
+  },
+  en: {
+    main: "3D game", quick: "Quick play", play: "Play in 3D", replay: "Play again", note: "The full Unity 3D game. About 5 MB on first load.",
+    fullscreen: "Full screen", exit: "Exit full screen", hint: "Click inside the game once to use the keyboard.", touchHint: "Tap the screen to play. Turn your phone sideways for a wider view.",
+    loading: "Loading", firstLoad: "Only the first load takes a moment. Next time it opens fast.", error: "The game could not load.", retry: "Try again", tryQuick: "Play the quick version",
+    best: "Your best {v}", plays: "{n} plays", win: "Cleared!", loss: "So close", draw: "Draw", score: "{v} pts", newBest: "New personal best!",
+    share: "Share score", copied: "Link copied", close: "Close", keys: "Keyboard & mouse", touch: "Touch",
+  },
+  ja: {
+    main: "3D本編", quick: "クイックプレイ", play: "3Dで遊ぶ", replay: "続けて遊ぶ", note: "Unity 3D本編です。初回のみ約5MBを読み込みます。",
+    fullscreen: "全画面", exit: "全画面を終了", hint: "ゲーム内を一度押すとキーボード操作が有効になります。", touchHint: "画面をタップして操作します。横向きにするとより広く見えます。",
+    loading: "読み込み中", firstLoad: "時間がかかるのは初回だけです。次回からはすぐに開きます。", error: "ゲームを読み込めませんでした。", retry: "もう一度", tryQuick: "クイック版で遊ぶ",
+    best: "自己ベスト {v}", plays: "{n}回", win: "クリア！", loss: "惜しい！", draw: "引き分け", score: "{v}点", newBest: "自己ベスト更新！",
+    share: "記録をシェア", copied: "リンクをコピーしました", close: "閉じる", keys: "キーボード・マウス", touch: "タッチ",
+  },
+  zh: {
+    main: "3D 正式版", quick: "快速游玩", play: "玩 3D 版", replay: "继续游玩", note: "Unity 3D 正式版，首次加载约 5MB。",
+    fullscreen: "全屏", exit: "退出全屏", hint: "点击游戏区域一次即可使用键盘。", touchHint: "点击屏幕进行操作。横屏可以看得更宽。",
+    loading: "加载中", firstLoad: "只有第一次需要等待，之后会很快打开。", error: "游戏加载失败。", retry: "重试", tryQuick: "改玩快速版",
+    best: "我的最佳 {v}", plays: "{n} 局", win: "通关！", loss: "差一点", draw: "平局", score: "{v} 分", newBest: "刷新个人最佳！",
+    share: "分享成绩", copied: "链接已复制", close: "关闭", keys: "键盘和鼠标", touch: "触屏",
+  },
+  fr: {
+    main: "Jeu 3D", quick: "Partie rapide", play: "Jouer en 3D", replay: "Rejouer", note: "Le jeu complet en 3D Unity. Environ 5 Mo au premier chargement.",
+    fullscreen: "Plein écran", exit: "Quitter le plein écran", hint: "Cliquez une fois dans le jeu pour utiliser le clavier.", touchHint: "Touchez l'écran pour jouer. Tournez le téléphone pour une vue plus large.",
+    loading: "Chargement", firstLoad: "Seul le premier chargement prend un moment. La prochaine fois, c'est rapide.", error: "Le jeu n'a pas pu se charger.", retry: "Réessayer", tryQuick: "Jouer à la version rapide",
+    best: "Votre record {v}", plays: "{n} parties", win: "Réussi !", loss: "Presque !", draw: "Égalité", score: "{v} pts", newBest: "Nouveau record personnel !",
+    share: "Partager le score", copied: "Lien copié", close: "Fermer", keys: "Clavier et souris", touch: "Tactile",
+  },
+  es: {
+    main: "Juego 3D", quick: "Partida rápida", play: "Jugar en 3D", replay: "Seguir jugando", note: "El juego completo en 3D con Unity. Unos 5 MB la primera vez.",
+    fullscreen: "Pantalla completa", exit: "Salir de pantalla completa", hint: "Haz clic una vez en el juego para usar el teclado.", touchHint: "Toca la pantalla para jugar. Gira el móvil para verlo más amplio.",
+    loading: "Cargando", firstLoad: "Solo la primera carga tarda un poco. La próxima vez abrirá rápido.", error: "No se pudo cargar el juego.", retry: "Reintentar", tryQuick: "Jugar la versión rápida",
+    best: "Tu récord {v}", plays: "{n} partidas", win: "¡Superado!", loss: "¡Casi!", draw: "Empate", score: "{v} pts", newBest: "¡Nuevo récord personal!",
+    share: "Compartir récord", copied: "Enlace copiado", close: "Cerrar", keys: "Teclado y ratón", touch: "Táctil",
+  },
 };
 const ui = labels[locale] ?? labels.en;
 const src = `/prototypes/${build}/index.html?lang=${locale}&release=1`;
+const chip = "inline-flex min-h-8 items-center rounded-full border border-white/30 bg-secondary-foreground/70 px-3 py-1 text-xs font-bold text-white";
+const toolButton = "inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 font-bold text-foreground cursor-pointer";
 ---
 
-<section class="mx-auto max-w-7xl px-2" data-unity-main={slug} data-src={src} data-locale={locale}>
+<section class="mx-auto max-w-7xl px-2" data-unity-main={slug} data-build={build} data-src={src} data-locale={locale} data-name={name} data-labels={JSON.stringify(ui)}>
   <div class="mb-3 flex flex-wrap items-center gap-2" role="tablist" aria-label={name}>
     <button type="button" role="tab" id={`${slug}-tab-main`} aria-controls={`${slug}-panel-main`} aria-selected="true" data-tab="main" class="min-h-11 rounded-full border border-border bg-card px-4 py-2 font-bold text-foreground cursor-pointer aria-selected:border-primary aria-selected:bg-primary aria-selected:text-primary-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary">{ui.main}</button>
     <button type="button" role="tab" id={`${slug}-tab-quick`} aria-controls={`${slug}-panel-quick`} aria-selected="false" tabindex="-1" data-tab="quick" class="min-h-11 rounded-full border border-border bg-card px-4 py-2 font-bold text-foreground cursor-pointer aria-selected:border-primary aria-selected:bg-primary aria-selected:text-primary-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary">{ui.quick}</button>
-    <button type="button" class="ml-auto inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 font-bold text-foreground cursor-pointer" data-fullscreen aria-label={ui.fullscreen} hidden>
+    <button type="button" class={`ml-auto ${toolButton}`} data-fullscreen aria-label={ui.fullscreen} hidden>
       <svg class="size-4 stroke-current stroke-2" fill="none" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3H3v5M16 3h5v5M8 21H3v-5m13 5h5v-5" /></svg>
       <span class="sr-only sm:not-sr-only">{ui.fullscreen}</span>
     </button>
   </div>
 
   <div role="tabpanel" id={`${slug}-panel-main`} aria-labelledby={`${slug}-tab-main`} data-panel="main">
-    <div class="relative w-full overflow-hidden rounded-xl bg-secondary-foreground shadow-xl h-150 max-h-svh sm:h-auto sm:aspect-video sm:rounded-2xl [&:fullscreen]:h-screen [&:fullscreen]:w-screen [&:fullscreen]:rounded-none" data-frame>
-      <button type="button" class="absolute top-4 right-4 z-10 min-h-11 rounded-xl border border-white/35 bg-secondary-foreground/90 px-3 py-2 font-bold text-white cursor-pointer" data-exit-fullscreen aria-label={ui.exit} hidden>{ui.exit}</button>
-      <div class="absolute inset-0 grid place-items-center" data-poster>
-        {poster && <img class="absolute inset-0 size-full object-cover brightness-60" src={poster} alt="" loading="eager" decoding="async" />}
-        <div class="relative flex flex-col items-center gap-3 p-4 text-center">
-          <button type="button" class="inline-flex min-h-14 items-center gap-2 rounded-full bg-warning px-6 py-3 text-lg font-extrabold text-warning-foreground shadow-2xl cursor-pointer hover:opacity-90 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white" data-play>
-            <svg class="size-6 fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
-            <span>{ui.play}</span>
-          </button>
-          <p class="m-0 max-w-xs text-sm text-white drop-shadow">{ui.note}</p>
+    <div class="relative w-full overflow-hidden rounded-xl bg-secondary-foreground shadow-xl h-150 max-h-svh sm:h-auto sm:aspect-video sm:rounded-2xl [&:fullscreen]:h-screen [&:fullscreen]:w-screen [&:fullscreen]:rounded-none data-immersive:fixed data-immersive:inset-0 data-immersive:z-50 data-immersive:h-dvh data-immersive:max-h-none data-immersive:w-screen data-immersive:rounded-none data-immersive:aspect-auto" data-frame>
+      <button type="button" class="absolute bottom-3 left-3 z-30 inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full border border-white/35 bg-secondary-foreground/70 px-3 py-2 text-sm font-bold text-white cursor-pointer hover:bg-secondary-foreground" data-exit-fullscreen aria-label={ui.exit} hidden>
+        <svg class="size-5 stroke-current stroke-2" fill="none" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18" /></svg>
+        <span class="sr-only">{ui.exit}</span>
+      </button>
+
+      <div class="absolute inset-0 z-20 grid place-items-center" data-poster>
+        {poster && <img class="absolute inset-0 size-full object-cover brightness-60 transition data-loading:blur-sm data-loading:brightness-40" src={poster} alt="" loading="eager" decoding="async" data-poster-img />}
+        <div class="relative flex w-full max-w-sm flex-col items-center gap-3 p-4 text-center">
+          <h2 class="m-0 text-2xl font-extrabold text-white drop-shadow sm:text-3xl">{name}</h2>
+          <div class="flex flex-wrap justify-center gap-2" data-poster-chips>
+            <span class={`${chip} pointer-coarse:hidden`}>{ui.keys}</span>
+            <span class={`${chip} pointer-fine:hidden`}>{ui.touch}</span>
+            <span class={chip} data-best hidden></span>
+          </div>
+
+          <div class="flex flex-col items-center gap-3" data-idle>
+            <button type="button" class="inline-flex min-h-14 items-center gap-2 rounded-full bg-warning px-6 py-3 text-lg font-extrabold text-warning-foreground shadow-2xl cursor-pointer hover:opacity-90 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white" data-play>
+              <svg class="size-6 fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+              <span data-play-label>{ui.play}</span>
+            </button>
+            <p class="m-0 max-w-xs text-sm text-white drop-shadow">{ui.note}</p>
+          </div>
+
+          <div class="flex w-full flex-col items-center gap-2" data-progress-box role="status" aria-live="polite" hidden>
+            <p class="m-0 text-sm font-bold text-white drop-shadow"><span>{ui.loading}</span> <span data-progress-text>0%</span></p>
+            <div class="h-3 w-full overflow-hidden rounded-full bg-white/20">
+              <div class="h-full w-full origin-left scale-x-0 rounded-full bg-warning transition-transform" data-progress-bar></div>
+            </div>
+            <p class="m-0 text-xs text-white/80">{ui.firstLoad}</p>
+          </div>
+
+          <div class="flex flex-col items-center gap-3" data-error-box role="alert" hidden>
+            <p class="m-0 font-bold text-white drop-shadow">{ui.error}</p>
+            <div class="flex flex-wrap justify-center gap-2">
+              <button type="button" class="inline-flex min-h-11 items-center rounded-full bg-warning px-5 py-2 font-extrabold text-warning-foreground cursor-pointer" data-retry>{ui.retry}</button>
+              <button type="button" class="inline-flex min-h-11 items-center rounded-full border border-white/40 bg-secondary-foreground/80 px-5 py-2 font-bold text-white cursor-pointer" data-try-quick>{ui.tryQuick}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="absolute inset-x-3 bottom-16 z-30 mx-auto flex max-w-sm flex-col items-center gap-2 rounded-2xl border border-white/20 bg-secondary-foreground/95 p-4 text-center text-white shadow-2xl" data-result role="status" aria-live="polite" hidden>
+        <p class="m-0 text-xl font-extrabold" data-result-title></p>
+        <p class="m-0 text-sm text-white/85" data-result-detail></p>
+        <div class="flex flex-wrap justify-center gap-2">
+          <button type="button" class="inline-flex min-h-11 items-center rounded-full bg-warning px-4 py-2 font-extrabold text-warning-foreground cursor-pointer" data-share>{ui.share}</button>
+          <button type="button" class="inline-flex min-h-11 items-center rounded-full border border-white/40 px-4 py-2 font-bold text-white cursor-pointer" data-result-close>{ui.close}</button>
         </div>
       </div>
     </div>
-    <p class="mt-2 text-center text-xs text-muted-foreground">{ui.hint}</p>
+    <p class="mt-2 text-center text-xs text-muted-foreground pointer-coarse:hidden">{ui.hint}</p>
+    <p class="mt-2 text-center text-xs text-muted-foreground pointer-fine:hidden">{ui.touchHint}</p>
   </div>
 
   <div class="[&_a[href*='-unity/']]:hidden" role="tabpanel" id={`${slug}-panel-quick`} aria-labelledby={`${slug}-tab-quick`} data-panel="quick" hidden>
@@ -66,81 +157,7 @@ const src = `/prototypes/${build}/index.html?lang=${locale}&release=1`;
   </div>
 </section>
 
-<script is:inline define:vars={{ ui }}>
-  for (const shell of document.querySelectorAll("[data-unity-main]")) {
-    if (shell.dataset.ready) continue;
-    shell.dataset.ready = "1";
-    const tabs = [...shell.querySelectorAll("[data-tab]")];
-    const panels = [...shell.querySelectorAll("[data-panel]")];
-    const frame = shell.querySelector("[data-frame]");
-    const poster = shell.querySelector("[data-poster]");
-    const fsButton = shell.querySelector("[data-fullscreen]");
-    const fsLabel = fsButton?.querySelector("span");
-    const exitButton = shell.querySelector("[data-exit-fullscreen]");
-    const canFullscreen = Boolean(document.fullscreenEnabled && frame?.requestFullscreen);
-    let iframe = null;
-
-    const start = () => {
-      if (iframe) return;
-      iframe = document.createElement("iframe");
-      iframe.src = shell.dataset.src;
-      iframe.title = shell.getAttribute("aria-label") || document.title;
-      iframe.allow = "fullscreen; autoplay";
-      iframe.referrerPolicy = "same-origin";
-      iframe.className = "absolute inset-0 size-full border-0 bg-secondary-foreground";
-      frame.appendChild(iframe);
-      poster?.setAttribute("hidden", "");
-      if (fsButton && canFullscreen) fsButton.hidden = false;
-      iframe.addEventListener("load", () => iframe?.focus());
-      try { window.gtag?.("event", "unity_play_start", { game_id: shell.dataset.unityMain, locale: shell.dataset.locale }); } catch {}
-    };
-    const stop = () => {
-      if (!iframe) return;
-      iframe.remove();
-      iframe = null;
-      poster?.removeAttribute("hidden");
-      if (fsButton) fsButton.hidden = true;
-    };
-    const select = (name) => {
-      for (const tab of tabs) {
-        const on = tab.dataset.tab === name;
-        tab.setAttribute("aria-selected", String(on));
-        tab.tabIndex = on ? 0 : -1;
-      }
-      for (const panel of panels) panel.hidden = panel.dataset.panel !== name;
-      if (name === "main") {
-        if (fsButton && iframe && canFullscreen) fsButton.hidden = false;
-      } else {
-        stop();
-        window.dispatchEvent(new Event("resize"));
-      }
-    };
-
-    // Start on pointerdown as well as click: some pages insert content on the
-    // first pointerdown, which moves the button before pointerup and drops the click.
-    const playButton = shell.querySelector("[data-play]");
-    playButton?.addEventListener("pointerdown", (e) => { if (e.button === 0) start(); });
-    playButton?.addEventListener("click", start);
-    for (const tab of tabs) {
-      tab.addEventListener("click", () => select(tab.dataset.tab));
-      tab.addEventListener("keydown", (e) => {
-        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-        const next = tabs[(tabs.indexOf(tab) + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
-        next.focus();
-        select(next.dataset.tab);
-      });
-    }
-    fsButton?.addEventListener("click", async () => {
-      try { await frame.requestFullscreen(); } catch { fsButton.hidden = true; }
-    });
-    exitButton?.addEventListener("click", () => document.exitFullscreen());
-    document.addEventListener("fullscreenchange", () => {
-      const active = document.fullscreenElement === frame;
-      if (fsLabel) fsLabel.textContent = active ? ui.exit : ui.fullscreen;
-      if (exitButton) exitButton.hidden = !active;
-    });
-
-    const params = new URLSearchParams(location.search);
-    if (params.get("play") === "quick" || location.hash === "#quick") select("quick");
-  }
+<script>
+  import { initUnityMainShell } from "../../lib/games/unity-main-shell";
+  for (const shell of document.querySelectorAll<HTMLElement>("[data-unity-main]")) initUnityMainShell(shell);
 </script>
