@@ -5,7 +5,7 @@ import { getAllBestAchievedAt, getAllBests, getAllConditionalBests, getAllLastPl
 import { gameDisplayName } from "../../lib/games/display-names";
 import { Button } from "../ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "../ui/empty";
-import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "../ui/item";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from "../ui/item";
 import { Skeleton } from "../ui/skeleton";
 
 type UILocale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
@@ -267,12 +267,22 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
 
   return (
     <div className="not-prose flex flex-col gap-6 py-6 px-4 max-w-2xl mx-auto">
-      <div className="text-center">
-        {/* The route layout owns the page H1; this client dashboard is a subsection (2026-10-13). */}
-        <h2 className="text-2xl font-black">{t.title}</h2>
-        <p className="mt-1 text-xs font-bold text-muted-foreground">{t.subtitle}</p>
-        <p className="mt-3 text-3xl font-black text-primary">{unlockedCount}<span className="text-base text-muted-foreground"> / {evaluated.length} {t.unlocked}</span></p>
-      </div>
+      {/* The route layout owns the page H1; this client dashboard is a subsection (2026-10-13).
+          2026-11-24: summary is a cartridge panel with one pixel cell per achievement. */}
+      <section className="game-card p-4" aria-labelledby="achievements-summary">
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <h2 id="achievements-summary" className="text-lg font-black">{t.title}</h2>
+            <p className="mt-0.5 text-xs font-bold text-muted-foreground">{t.subtitle}</p>
+          </div>
+          <p className="shrink-0 text-3xl font-black tabular-nums text-primary">{unlockedCount}<span className="text-sm text-muted-foreground"> / {evaluated.length}</span></p>
+        </div>
+        <ol className="mt-3 flex flex-wrap gap-1" aria-label={`${unlockedCount} / ${evaluated.length} ${t.unlocked}`}>
+          {evaluated.map((a) => (
+            <li key={a.id} aria-hidden="true" className={a.unlocked ? "size-3 rounded-xs border border-foreground bg-primary" : "size-3 rounded-xs border border-border bg-muted"} />
+          ))}
+        </ol>
+      </section>
 
       {hasAnyProgress && (
         <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -307,7 +317,7 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
 
       {hasAnyProgress && (
         <div>
-          <h2 className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{t.myRecords}</h2>
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.myRecords}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="rounded-xl border border-border p-3">
               <p className="mb-2 text-xs font-black text-foreground">{t.bestLabel}</p>
@@ -345,7 +355,7 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
 
       {recentRecords.length > 0 && (
         <section>
-          <h2 className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{recordCopy.recentResults}</h2>
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">{recordCopy.recentResults}</h2>
           <ItemGroup>
             {recentRecords.map((record) => (
               <Item key={record.id} role="listitem" variant="outline">
@@ -367,31 +377,34 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
         const items = evaluated.filter((a) => a.category === category);
         return (
           <div key={category}>
-            <h2 className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{catLabel[category]}</h2>
-            <div role="list" className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <h2 className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">{catLabel[category]}</h2>
+            <div role="list" className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
               {items.map((a) => {
                 const copy = ACHIEVEMENT_COPY[a.id]?.[locale] ?? ACHIEVEMENT_COPY[a.id]?.en;
                 const pct = a.target > 0 ? Math.round((a.progress / a.target) * 100) : 0;
                 return (
-                  <Item key={a.id} role="listitem" variant="outline" className={a.unlocked ? "border-primary/40 bg-primary/5" : undefined}>
-                    <ItemMedia className={`text-2xl ${a.unlocked ? "" : "opacity-30 grayscale"}`} aria-hidden="true">{a.icon}</ItemMedia>
-                    <ItemContent>
-                      <ItemTitle className={a.unlocked ? "text-foreground" : "text-muted-foreground"}>{copy?.title}</ItemTitle>
-                      <ItemDescription>{copy?.desc}</ItemDescription>
-                      {!a.unlocked && (
-                        <div
-                          className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden"
-                          role="progressbar"
-                          aria-label={`${copy?.title}: ${a.progress} / ${a.target}`}
-                          aria-valuemin={0}
-                          aria-valuemax={a.target}
-                          aria-valuenow={a.progress}
-                        >
-                          <div className="h-full rounded-full bg-primary/60" style={{ width: `${pct}%` }} />
-                        </div>
-                      )}
-                    </ItemContent>
-                  </Item>
+                  <div key={a.id} role="listitem" className={a.unlocked ? "game-card flex flex-col gap-1 p-3" : "flex flex-col gap-1 rounded-lg border-2 border-dashed border-border bg-card p-3"}>
+                    <span className="flex items-center justify-between gap-2">
+                      <span className={a.unlocked ? "text-3xl" : "text-3xl opacity-30 grayscale"} aria-hidden="true">{a.icon}</span>
+                      {a.unlocked
+                        ? <span className="rounded-sm border-2 border-foreground bg-warning px-1.5 text-xs font-black text-warning-foreground"><span aria-hidden="true">✓</span><span className="sr-only">{t.unlocked}</span></span>
+                        : <span className="text-xs font-bold tabular-nums text-muted-foreground">{Math.min(a.progress, a.target)}/{a.target}</span>}
+                    </span>
+                    <span className={a.unlocked ? "text-sm font-black text-foreground" : "text-sm font-black text-muted-foreground"}>{copy?.title}</span>
+                    <span className="line-clamp-2 text-xs text-muted-foreground">{copy?.desc}</span>
+                    {!a.unlocked && (
+                      <div
+                        className="mt-auto h-1.5 overflow-hidden rounded-full bg-muted"
+                        role="progressbar"
+                        aria-label={`${copy?.title}: ${a.progress} / ${a.target}`}
+                        aria-valuemin={0}
+                        aria-valuemax={a.target}
+                        aria-valuenow={a.progress}
+                      >
+                        <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>

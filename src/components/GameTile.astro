@@ -31,7 +31,7 @@ const shelf = variant === "shelf";
 <a
   href={href}
   data-game={slug}
-  data-tile={shelf ? undefined : ""}
+  data-tile={search !== undefined ? "" : undefined}
   data-cat={cat}
   data-search={search}
   class:list={[
