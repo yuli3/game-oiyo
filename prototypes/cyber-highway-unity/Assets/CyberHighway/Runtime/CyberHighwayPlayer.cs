@@ -824,7 +824,7 @@ public class CyberHighwayPlayer : MonoBehaviour
 
         if (state == GameState.Ready)
         {
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+            if (Input.GetKeyDown(KeyCode.Space) || OiyoPointerInput.GetMouseButtonDown(0))
             {
                 state = GameState.Playing;
                 engineSource.clip = engineClip;
@@ -854,9 +854,9 @@ public class CyberHighwayPlayer : MonoBehaviour
         if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) steer += 1f;
 
         // Mouse or Touch steering
-        if (Input.GetMouseButton(0) || Input.touchCount > 0)
+        if (OiyoPointerInput.GetMouseButton(0) || OiyoPointerInput.touchCount > 0)
         {
-            Vector3 mouseScreen = Input.mousePosition;
+            Vector3 mouseScreen = OiyoPointerInput.mousePosition;
             Ray ray = mainCam.ScreenPointToRay(mouseScreen);
             Plane plane = new Plane(Vector3.up, new Vector3(0, 0.45f, 0));
             float dist;

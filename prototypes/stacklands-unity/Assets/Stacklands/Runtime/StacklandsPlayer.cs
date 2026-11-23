@@ -232,7 +232,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
 
     Vector3 PointerOnTable()
     {
-        var ray = _cam.ScreenPointToRay(Input.mousePosition);
+        var ray = _cam.ScreenPointToRay(OiyoPointerInput.mousePosition);
         if (new Plane(Vector3.up, Vector3.zero).Raycast(ray, out float enter))
         {
             return ray.GetPoint(enter);
@@ -270,7 +270,7 @@ public sealed class StacklandsPlayer : MonoBehaviour
     {
         Vector3 pt = PointerOnTable();
 
-        if (Input.GetMouseButtonDown(0))
+        if (OiyoPointerInput.GetMouseButtonDown(0))
         {
             // Check Booster Pack Pad click
             if (Vector3.Distance(new Vector3(pt.x, 0f, pt.z), new Vector3(_packZonePos.x, 0f, _packZonePos.z)) < 1.6f)
@@ -301,14 +301,14 @@ public sealed class StacklandsPlayer : MonoBehaviour
                 _dragOffset.y = 0f;
             }
         }
-        else if (Input.GetMouseButton(0) && _dragged != null)
+        else if (OiyoPointerInput.GetMouseButton(0) && _dragged != null)
         {
             Vector3 target = pt + _dragOffset;
             _dragged.Pos = new Vector3(Mathf.Clamp(target.x, -8.5f, 8.5f), 0.75f, Mathf.Clamp(target.z, -5.2f, 5.2f));
             _dragged.Vel = Vector3.zero;
             MoveChain(_dragged);
         }
-        else if (Input.GetMouseButtonUp(0) && _dragged != null)
+        else if (OiyoPointerInput.GetMouseButtonUp(0) && _dragged != null)
         {
             var dropped = _dragged;
             _dragged = null;

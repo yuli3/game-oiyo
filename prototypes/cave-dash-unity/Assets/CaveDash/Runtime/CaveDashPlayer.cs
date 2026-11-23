@@ -646,7 +646,7 @@ public class CaveDashPlayer : MonoBehaviour
 
         if (state == GameState.Ready)
         {
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+            if (Input.GetKeyDown(KeyCode.Space) || OiyoPointerInput.GetMouseButtonDown(0))
             {
                 state = GameState.Playing;
             }
@@ -668,8 +668,8 @@ public class CaveDashPlayer : MonoBehaviour
         var stg = stages[currentStageIndex];
 
         // Controls: Space, Left Click, or Touch
-        bool thrustInput = Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0);
-        if (Input.touchCount > 0) thrustInput = true;
+        bool thrustInput = Input.GetKey(KeyCode.Space) || OiyoPointerInput.GetMouseButton(0);
+        if (OiyoPointerInput.touchCount > 0) thrustInput = true;
 
         isThrusting = thrustInput && energy > 0f;
 

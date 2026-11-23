@@ -708,9 +708,9 @@ public class TwoHandsPlayer : MonoBehaviour
         }
 
         // Mouse/Touch Screen Split Buttons
-        if (Input.GetMouseButtonDown(0))
+        if (OiyoPointerInput.GetMouseButtonDown(0))
         {
-            Vector3 mPos = Input.mousePosition;
+            Vector3 mPos = OiyoPointerInput.mousePosition;
             if (mPos.y < Screen.height * 0.35f) // Bottom Touch Bar
             {
                 if (mPos.x < Screen.width * 0.25f) SetLeftLane(0);

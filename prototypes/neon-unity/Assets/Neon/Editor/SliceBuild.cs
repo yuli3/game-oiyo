@@ -23,7 +23,7 @@ public static class SliceBuild
         PlayerSettings.productName = "Neon Slice Experiment";
         PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.Android, "net.oiyo.neon.experiment");
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
-        PlayerSettings.runInBackground = false;
+        PlayerSettings.runInBackground = true; // keep running when the page iframe has no focus (2026-11-23)
         AssetDatabase.SaveAssets();
     }
     static void ConfigureTextures()

@@ -557,7 +557,7 @@ public class StarBlasterPlayer : MonoBehaviour
 
         if (state == GameState.Ready)
         {
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+            if (Input.GetKeyDown(KeyCode.Space) || OiyoPointerInput.GetMouseButtonDown(0))
             {
                 state = GameState.Playing;
             }
@@ -603,9 +603,9 @@ public class StarBlasterPlayer : MonoBehaviour
         if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S)) moveZ -= 1f;
 
         // Mouse or Touch control
-        if (Input.GetMouseButton(0) || Input.touchCount > 0)
+        if (OiyoPointerInput.GetMouseButton(0) || OiyoPointerInput.touchCount > 0)
         {
-            Vector3 mouseScreen = Input.mousePosition;
+            Vector3 mouseScreen = OiyoPointerInput.mousePosition;
             Ray ray = mainCam.ScreenPointToRay(mouseScreen);
             Plane plane = new Plane(Vector3.up, Vector3.zero);
             float dist;

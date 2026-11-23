@@ -776,9 +776,9 @@ public class BrickBreakerPlayer : MonoBehaviour
         if (isGameOver || isVictory || showStageSelect) return;
 
         // Mouse or Touch positioning
-        if (Input.GetMouseButton(0) || Input.touchCount > 0)
+        if (OiyoPointerInput.GetMouseButton(0) || OiyoPointerInput.touchCount > 0)
         {
-            Vector3 screenPos = Input.touchCount > 0 ? (Vector3)Input.GetTouch(0).position : Input.mousePosition;
+            Vector3 screenPos = OiyoPointerInput.touchCount > 0 ? (Vector3)Input.GetTouch(0).position : OiyoPointerInput.mousePosition;
             Ray ray = mainCam.ScreenPointToRay(screenPos);
             Plane plane = new Plane(Vector3.forward, Vector3.zero);
             if (plane.Raycast(ray, out float enter))
@@ -797,7 +797,7 @@ public class BrickBreakerPlayer : MonoBehaviour
         }
 
         // Launch Ball
-        if (Input.GetKeyDown(KeyCode.Space) || (Input.GetMouseButtonDown(0) && AnyBallAttached()))
+        if (Input.GetKeyDown(KeyCode.Space) || (OiyoPointerInput.GetMouseButtonDown(0) && AnyBallAttached()))
         {
             LaunchAttachedBalls();
         }
@@ -806,7 +806,7 @@ public class BrickBreakerPlayer : MonoBehaviour
         if (laserTimer > 0f)
         {
             laserShootCooldown -= Time.deltaTime;
-            if ((Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0)) && laserShootCooldown <= 0f)
+            if ((Input.GetKey(KeyCode.Space) || OiyoPointerInput.GetMouseButton(0)) && laserShootCooldown <= 0f)
             {
                 ShootLasers();
                 laserShootCooldown = 0.22f;

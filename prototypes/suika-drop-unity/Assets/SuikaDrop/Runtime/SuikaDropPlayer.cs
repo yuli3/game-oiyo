@@ -634,7 +634,7 @@ public class SuikaDropPlayer : MonoBehaviour
         if (dropCooldown > 0f) dropCooldown -= Time.deltaTime;
 
         // Follow mouse/touch pointer horizontally
-        Ray ray = mainCam.ScreenPointToRay(Input.mousePosition);
+        Ray ray = mainCam.ScreenPointToRay(OiyoPointerInput.mousePosition);
         Plane boardPlane = new Plane(Vector3.forward, Vector3.zero);
         float dist;
         if (boardPlane.Raycast(ray, out dist))
@@ -646,9 +646,9 @@ public class SuikaDropPlayer : MonoBehaviour
         }
 
         // Release fruit on click/tap
-        if (Input.GetMouseButtonDown(0))
+        if (OiyoPointerInput.GetMouseButtonDown(0))
         {
-            if (Input.mousePosition.y < Screen.height - 130 && !showStageSelect)
+            if (OiyoPointerInput.mousePosition.y < Screen.height - 130 && !showStageSelect)
             {
                 if (dropCooldown <= 0f)
                 {

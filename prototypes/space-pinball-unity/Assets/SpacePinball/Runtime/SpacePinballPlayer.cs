@@ -316,8 +316,8 @@ public class SpacePinballPlayer : MonoBehaviour
         }
 
         // Flipper Inputs (A/D, Left/Right Arrows, or Mouse buttons)
-        leftFlipperActive = Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow) || Input.GetMouseButton(0);
-        rightFlipperActive = Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow) || Input.GetMouseButton(1);
+        leftFlipperActive = Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow) || OiyoPointerInput.GetMouseButton(0);
+        rightFlipperActive = Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow) || OiyoPointerInput.GetMouseButton(1);
 
         // Sound on press
         if ((Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow)) && !isTilted) PlaySoundFlipper();

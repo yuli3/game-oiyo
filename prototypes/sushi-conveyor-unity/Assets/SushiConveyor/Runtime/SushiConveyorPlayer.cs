@@ -424,9 +424,9 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.X)) ClearPrepBoard();
 
         // Click on cutting board / belt to launch, or click diner to express-serve!
-        if (Input.GetMouseButtonDown(0) && Input.mousePosition.y < Screen.height - 80f && Input.mousePosition.y > 70f)
+        if (OiyoPointerInput.GetMouseButtonDown(0) && OiyoPointerInput.mousePosition.y < Screen.height - 80f && OiyoPointerInput.mousePosition.y > 70f)
         {
-            var ray = _cam.ScreenPointToRay(Input.mousePosition);
+            var ray = _cam.ScreenPointToRay(OiyoPointerInput.mousePosition);
             if (new Plane(Vector3.up, Vector3.zero).Raycast(ray, out float enter))
             {
                 Vector3 hit = ray.GetPoint(enter);

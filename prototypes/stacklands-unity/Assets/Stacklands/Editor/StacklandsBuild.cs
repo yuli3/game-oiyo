@@ -18,7 +18,7 @@ public static class StacklandsBuild
         PlayerSettings.companyName = "OIYO";
         PlayerSettings.productName = "Card Village";
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
-        PlayerSettings.runInBackground = false;
+        PlayerSettings.runInBackground = true; // keep running when the page iframe has no focus (2026-11-23)
         AssetDatabase.SaveAssets();
     }
 

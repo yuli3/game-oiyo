@@ -131,3 +131,25 @@ export function isValidSolution(p: TrailPuzzle, path: number[]): boolean {
   for (let i = 1; i < path.length; i++) if (!isAdjacent(path[i - 1], path[i], p.size)) return false;
   return pathSum(p, path) === p.target;
 }
+
+/** Stage campaign (2026-11-23): 30 fixed boards, 5×5 → 6×6 → 7×7. */
+export const TRAIL_STAGES = 30;
+export function trailStage(index: number): { level: TrailLevel; seed: number } {
+  const i = Math.max(0, Math.min(TRAIL_STAGES - 1, Math.floor(index)));
+  return { level: i < 10 ? "easy" : i < 20 ? "medium" : "hard", seed: 52000 + i * 13 };
+}
+
+/**
+ * Drag rule: sliding onto a free neighbour of the end extends the path, sliding
+ * back onto the cell before the end steps back. Anything else is ignored.
+ */
+export function dragTo(p: TrailPuzzle, path: number[], cell: number): number[] {
+  if (path.length === 0) return path;
+  const end = path[path.length - 1];
+  if (cell === end) return path;
+  if (path.length >= 2 && cell === path[path.length - 2]) return path.slice(0, -1);
+  if (path.includes(cell)) return path;
+  if (end === p.size * p.size - 1) return path;
+  if (!isAdjacent(end, cell, p.size)) return path;
+  return [...path, cell];
+}

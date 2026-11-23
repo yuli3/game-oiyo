@@ -347,7 +347,7 @@ public class SliceMasterPlayer : MonoBehaviour
             return;
         }
 
-        if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space))
+        if (OiyoPointerInput.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space))
         {
             // Tap to Jump & Flip
             isEmbedded = false;

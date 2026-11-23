@@ -571,7 +571,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
         if (state == GameState.Ready)
         {
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+            if (Input.GetKeyDown(KeyCode.Space) || OiyoPointerInput.GetMouseButtonDown(0))
             {
                 state = GameState.Playing;
             }
@@ -592,9 +592,9 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
     private void HandleInput()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (OiyoPointerInput.GetMouseButtonDown(0))
         {
-            Ray ray = mainCam.ScreenPointToRay(Input.mousePosition);
+            Ray ray = mainCam.ScreenPointToRay(OiyoPointerInput.mousePosition);
             Plane plane = new Plane(Vector3.up, Vector3.zero);
             float dist;
             if (plane.Raycast(ray, out dist))
