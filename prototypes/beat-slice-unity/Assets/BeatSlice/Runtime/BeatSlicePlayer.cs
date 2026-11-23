@@ -82,6 +82,7 @@ public class BeatSlicePlayer : MonoBehaviour
     private int currentStageIndex = 0;
     private bool isEndless = false;
     private bool showStageSelect = false;
+    private Vector2 trackSelectScroll;
 
     // Scoring & Stats
     private int score = 0;
@@ -138,7 +139,7 @@ public class BeatSlicePlayer : MonoBehaviour
     private float songTime = 0f;
     private int nextNoteId = 0;
 
-    // 12 Defined Stages (BPM 110 to 200)
+    // 30 Defined Stages (BPM 110 to 218)
     private TrackData[] stages = new TrackData[]
     {
         new TrackData {
@@ -260,6 +261,187 @@ public class BeatSlicePlayer : MonoBehaviour
             descEs = "¡El clímax definitivo a 200 BPM! Despliega toda tu maestría rítmica.",
             bpm = 200f, targetNotes = 260, scrollSpeed = 29f, hasBombs = true, isBossTrack = true,
             tunnelColor = new Color(0.4f, 0.25f, 0.05f), accentColor = Color.yellow
+        },
+        // 13-30: BPM +1, target slices +10 and scroll +0.3 per track after track 12
+        new TrackData {
+            id = 13,
+            nameKo = "오로라 펄스", nameEn = "Aurora Pulse", nameJa = "オーロラ・パルス", nameEs = "Pulso Aurora",
+            descKo = "200 BPM을 넘어선 첫 무대. 길어진 노트 행렬을 끝까지 버티세요.",
+            descEn = "The first stage past 200 BPM. Hold out through a longer stream of notes.",
+            descJa = "200 BPMを超えた最初の舞台。長くなったノーツ列を最後まで耐え抜こう。",
+            descEs = "El primer escenario por encima de 200 BPM. Resiste una corriente de notas más larga.",
+            bpm = 201f, targetNotes = 270, scrollSpeed = 29.3f, hasBombs = true,
+            tunnelColor = new Color(0.05f, 0.3f, 0.3f), accentColor = new Color(0.3f, 1f, 0.8f)
+        },
+        new TrackData {
+            id = 14,
+            nameKo = "크롬 타이드", nameEn = "Chrome Tide", nameJa = "クローム・タイド", nameEs = "Marea Cromada",
+            descKo = "금속빛 물결처럼 좌우로 밀려오는 블록을 번갈아 베세요.",
+            descEn = "Blocks surge from side to side like a metal tide. Alternate your cuts.",
+            descJa = "金属の波のように左右から押し寄せるブロックを交互に斬ろう。",
+            descEs = "Los bloques llegan de lado a lado como una marea metálica. Alterna los cortes.",
+            bpm = 202f, targetNotes = 280, scrollSpeed = 29.6f, hasBombs = true,
+            tunnelColor = new Color(0.2f, 0.22f, 0.3f), accentColor = Color.white
+        },
+        new TrackData {
+            id = 15,
+            nameKo = "미드나잇 브레이크비트", nameEn = "Midnight Breakbeat", nameJa = "ミッドナイト・ブレイクビート", nameEs = "Breakbeat de Medianoche",
+            descKo = "잘게 쪼갠 드럼 사이로 폭탄이 숨어 있어요. 색을 끝까지 확인하세요.",
+            descEn = "Bombs hide between chopped-up drums. Check every colour before you cut.",
+            descJa = "細かく刻んだドラムの間に爆弾が潜む。色を最後まで確かめよう。",
+            descEs = "Las bombas se esconden entre tambores troceados. Mira el color antes de cortar.",
+            bpm = 203f, targetNotes = 290, scrollSpeed = 29.9f, hasBombs = true,
+            tunnelColor = new Color(0.06f, 0.06f, 0.25f), accentColor = new Color(0.5f, 0.6f, 1f)
+        },
+        new TrackData {
+            id = 16,
+            nameKo = "레이저 라군", nameEn = "Laser Lagoon", nameJa = "レーザー・ラグーン", nameEs = "Laguna Láser",
+            descKo = "물빛 터널 속에서 빨라진 스크롤 속도에 눈을 맞추세요.",
+            descEn = "Tune your eyes to a faster scroll inside a watery tunnel.",
+            descJa = "水色のトンネルで速くなったスクロールに目を慣らそう。",
+            descEs = "Adapta la vista a un desplazamiento más rápido en un túnel acuático.",
+            bpm = 204f, targetNotes = 300, scrollSpeed = 30.2f, hasBombs = true,
+            tunnelColor = new Color(0.02f, 0.28f, 0.38f), accentColor = Color.cyan
+        },
+        new TrackData {
+            id = 17,
+            nameKo = "프리즘 캐스케이드", nameEn = "Prism Cascade", nameJa = "プリズム・カスケード", nameEs = "Cascada Prisma",
+            descKo = "빛이 갈라지듯 네 레인에 고르게 쏟아지는 노트를 받아내세요.",
+            descEn = "Notes pour evenly across all four lanes like split light. Catch them all.",
+            descJa = "光が分かれるように4レーンへ均等に降るノーツを受け止めよう。",
+            descEs = "Las notas caen por los cuatro carriles como luz dividida. Atrápalas todas.",
+            bpm = 205f, targetNotes = 310, scrollSpeed = 30.5f, hasBombs = true,
+            tunnelColor = new Color(0.3f, 0.1f, 0.38f), accentColor = new Color(1f, 0.6f, 1f)
+        },
+        new TrackData {
+            id = 18,
+            nameKo = "스태틱 스톰", nameEn = "Static Storm", nameJa = "スタティック・ストーム", nameEs = "Tormenta Estática",
+            descKo = "지지직거리는 잡음 속에서도 박자를 놓치지 마세요.",
+            descEn = "Keep the beat even through crackling static.",
+            descJa = "ノイズがはじける中でもリズムを外さないで。",
+            descEs = "No pierdas el ritmo ni entre la estática crepitante.",
+            bpm = 206f, targetNotes = 320, scrollSpeed = 30.8f, hasBombs = true,
+            tunnelColor = new Color(0.25f, 0.25f, 0.08f), accentColor = Color.yellow
+        },
+        new TrackData {
+            id = 19,
+            nameKo = "베이스라인 협곡", nameEn = "Bassline Canyon", nameJa = "ベースライン峡谷", nameEs = "Cañón del Bajo",
+            descKo = "낮게 울리는 베이스가 협곡을 흔들어요. 긴 구간을 체력 관리하며 버티세요.",
+            descEn = "A deep bassline shakes the canyon. Pace your health over a long run.",
+            descJa = "低く響くベースが峡谷を揺らす。長い区間を体力配分で乗り切ろう。",
+            descEs = "Un bajo profundo sacude el cañón. Administra tu vida en un tramo largo.",
+            bpm = 207f, targetNotes = 330, scrollSpeed = 31.1f, hasBombs = true,
+            tunnelColor = new Color(0.38f, 0.18f, 0.06f), accentColor = new Color(1f, 0.55f, 0.2f)
+        },
+        new TrackData {
+            id = 20,
+            nameKo = "보스 트랙: 천둥 지휘자", nameEn = "Boss: Thunder Conductor", nameJa = "ボストラック：雷の指揮者", nameEs = "Jefe: Director del Trueno",
+            descKo = "번개를 지휘봉 삼은 두 번째 보스. 300개가 넘는 슬라이스가 필요해요.",
+            descEn = "The second boss conducts with lightning. Over 300 slices to clear.",
+            descJa = "稲妻を指揮棒にする第2のボス。300を超えるスライスが必要だ。",
+            descEs = "El segundo jefe dirige con relámpagos. Necesitas más de 300 cortes.",
+            bpm = 208f, targetNotes = 340, scrollSpeed = 31.4f, hasBombs = true, isBossTrack = true,
+            tunnelColor = new Color(0.12f, 0.12f, 0.4f), accentColor = new Color(0.7f, 0.8f, 1f)
+        },
+        new TrackData {
+            id = 21,
+            nameKo = "쿼츠 서킷", nameEn = "Quartz Circuit", nameJa = "クォーツ・サーキット", nameEs = "Circuito de Cuarzo",
+            descKo = "보스 뒤의 정밀 회로. 빠르지만 규칙적인 박을 깔끔하게 끊으세요.",
+            descEn = "A precise circuit after the boss. Cut a fast but steady pulse cleanly.",
+            descJa = "ボスの後の精密回路。速いが規則正しい拍をきれいに刻もう。",
+            descEs = "Un circuito preciso tras el jefe. Corta un pulso rápido pero constante.",
+            bpm = 209f, targetNotes = 350, scrollSpeed = 31.7f, hasBombs = true,
+            tunnelColor = new Color(0.3f, 0.3f, 0.34f), accentColor = new Color(0.85f, 0.9f, 1f)
+        },
+        new TrackData {
+            id = 22,
+            nameKo = "태양 플레어 드롭", nameEn = "Solar Flare Drop", nameJa = "ソーラーフレア・ドロップ", nameEs = "Caída de Llamarada Solar",
+            descKo = "뜨거운 드롭이 쏟아져요. 피버를 유지해 점수를 끌어올리세요.",
+            descEn = "A blazing drop pours in. Keep fever alive to push your score.",
+            descJa = "灼熱のドロップが降り注ぐ。フィーバーを保ってスコアを伸ばそう。",
+            descEs = "Cae un drop ardiente. Mantén la fiebre para subir la puntuación.",
+            bpm = 210f, targetNotes = 360, scrollSpeed = 32.0f, hasBombs = true,
+            tunnelColor = new Color(0.42f, 0.2f, 0.02f), accentColor = new Color(1f, 0.75f, 0.1f)
+        },
+        new TrackData {
+            id = 23,
+            nameKo = "벨벳 볼티지", nameEn = "Velvet Voltage", nameJa = "ベルベット・ボルテージ", nameEs = "Voltaje de Terciopelo",
+            descKo = "부드러운 음색 뒤에 높은 전압이 숨어 있어요. 방심하면 콤보가 끊겨요.",
+            descEn = "High voltage hides behind a soft tone. Relax and the combo breaks.",
+            descJa = "柔らかな音色の裏に高電圧。油断するとコンボが途切れる。",
+            descEs = "Alto voltaje tras un tono suave. Si te relajas, el combo se rompe.",
+            bpm = 211f, targetNotes = 370, scrollSpeed = 32.3f, hasBombs = true,
+            tunnelColor = new Color(0.32f, 0.04f, 0.2f), accentColor = new Color(1f, 0.3f, 0.6f)
+        },
+        new TrackData {
+            id = 24,
+            nameKo = "혜성 꼬리 질주", nameEn = "Comet Tail Rush", nameJa = "彗星の尾ラッシュ", nameEs = "Carrera de Cola de Cometa",
+            descKo = "혜성의 꼬리를 따라 노트가 끝없이 이어져요. 긴 연타를 견디세요.",
+            descEn = "Notes trail on like a comet's tail. Endure a long barrage.",
+            descJa = "彗星の尾のようにノーツが続く。長い連打に耐えよう。",
+            descEs = "Las notas se alargan como la cola de un cometa. Aguanta la ráfaga.",
+            bpm = 212f, targetNotes = 380, scrollSpeed = 32.6f, hasBombs = true,
+            tunnelColor = new Color(0.08f, 0.18f, 0.4f), accentColor = new Color(0.6f, 0.85f, 1f)
+        },
+        new TrackData {
+            id = 25,
+            nameKo = "보스 트랙: 거울 히드라", nameEn = "Boss: Mirror Hydra", nameJa = "ボストラック：鏡のヒドラ", nameEs = "Jefe: Hidra Espejo",
+            descKo = "머리가 여럿인 세 번째 보스. 양손을 동시에 쓰는 구간이 계속돼요.",
+            descEn = "The many-headed third boss keeps both hands busy at once.",
+            descJa = "頭が多い第3のボス。両手を同時に使う区間が続く。",
+            descEs = "El tercer jefe de muchas cabezas mantiene ocupadas ambas manos.",
+            bpm = 213f, targetNotes = 390, scrollSpeed = 32.9f, hasBombs = true, isBossTrack = true,
+            tunnelColor = new Color(0.05f, 0.32f, 0.22f), accentColor = new Color(0.3f, 1f, 0.5f)
+        },
+        new TrackData {
+            id = 26,
+            nameKo = "오버클럭 엔진", nameEn = "Overclock Engine", nameJa = "オーバークロック・エンジン", nameEs = "Motor Overclock",
+            descKo = "한계를 넘겨 돌아가는 엔진. 스크롤이 눈에 띄게 빨라져요.",
+            descEn = "An engine running past its limit. The scroll gets noticeably faster.",
+            descJa = "限界を超えて回るエンジン。スクロールがはっきり速くなる。",
+            descEs = "Un motor por encima de su límite. El desplazamiento se acelera mucho.",
+            bpm = 214f, targetNotes = 400, scrollSpeed = 33.2f, hasBombs = true,
+            tunnelColor = new Color(0.4f, 0.08f, 0.05f), accentColor = new Color(1f, 0.35f, 0.2f)
+        },
+        new TrackData {
+            id = 27,
+            nameKo = "하이퍼라이트 터널", nameEn = "Hyperlight Tunnel", nameJa = "ハイパーライト・トンネル", nameEs = "Túnel Hiperlumínico",
+            descKo = "빛보다 빠른 터널. 판정 구간에 시선을 고정하세요.",
+            descEn = "A tunnel faster than light. Keep your eyes on the strike zone.",
+            descJa = "光より速いトンネル。判定ゾーンから目を離さないで。",
+            descEs = "Un túnel más rápido que la luz. Mira fijo la zona de corte.",
+            bpm = 215f, targetNotes = 410, scrollSpeed = 33.5f, hasBombs = true,
+            tunnelColor = new Color(0.15f, 0.05f, 0.42f), accentColor = new Color(0.75f, 0.5f, 1f)
+        },
+        new TrackData {
+            id = 28,
+            nameKo = "별똥별 레퀴엠", nameEn = "Starfall Requiem", nameJa = "星降りレクイエム", nameEs = "Réquiem de Estrellas Fugaces",
+            descKo = "쏟아지는 별 사이로 폭탄이 섞여 떨어져요. 마지막 세 곡의 시작입니다.",
+            descEn = "Bombs fall among the shooting stars. The last three tracks begin here.",
+            descJa = "降り注ぐ星に爆弾が混ざる。最後の3曲の始まり。",
+            descEs = "Caen bombas entre las estrellas fugaces. Empiezan las tres últimas pistas.",
+            bpm = 216f, targetNotes = 420, scrollSpeed = 33.8f, hasBombs = true,
+            tunnelColor = new Color(0.1f, 0.1f, 0.22f), accentColor = new Color(1f, 0.95f, 0.6f)
+        },
+        new TrackData {
+            id = 29,
+            nameKo = "사건의 지평선 비트", nameEn = "Event Horizon Beat", nameJa = "事象の地平線ビート", nameEs = "Ritmo del Horizonte de Sucesos",
+            descKo = "한번 놓치면 돌아올 수 없는 경계. 피날레 직전의 최종 시험이에요.",
+            descEn = "A border with no way back. The final test before the finale.",
+            descJa = "一度逃せば戻れない境界。フィナーレ直前の最終試験。",
+            descEs = "Una frontera sin retorno. La prueba final antes del gran cierre.",
+            bpm = 217f, targetNotes = 430, scrollSpeed = 34.1f, hasBombs = true,
+            tunnelColor = new Color(0.04f, 0.02f, 0.1f), accentColor = new Color(1f, 0.5f, 0.1f)
+        },
+        new TrackData {
+            id = 30,
+            nameKo = "보스 트랙: 초신성 서곡", nameEn = "Boss: Supernova Overture", nameJa = "ボストラック：超新星序曲", nameEs = "Jefe: Obertura Supernova",
+            descKo = "218 BPM, 440 슬라이스의 최종 보스. 모든 기술을 쏟아 30트랙을 완주하세요.",
+            descEn = "The final boss at 218 BPM and 440 slices. Give everything to finish all 30 tracks.",
+            descJa = "218 BPM・440スライスの最終ボス。全技術で30トラックを完走しよう。",
+            descEs = "Jefe final a 218 BPM y 440 cortes. Da todo para completar las 30 pistas.",
+            bpm = 218f, targetNotes = 440, scrollSpeed = 34.4f, hasBombs = true, isBossTrack = true,
+            tunnelColor = new Color(0.45f, 0.3f, 0.05f), accentColor = Color.white
         }
     };
 
@@ -1184,14 +1366,14 @@ public class BeatSlicePlayer : MonoBehaviour
 
         GUILayout.BeginArea(new Rect(r.x + 20, r.y + 15, r.width - 40, r.height - 30));
         GUI.color = Color.yellow;
-        GUILayout.Label($"<size=23><b>🏆 {GetText("12트랙 전곡 완전 제패!", "ALL 12 TRACKS CONQUERED!", "全12トラック完全制覇！", "¡TODAS LAS PISTAS SUPERADAS!")}</b></size>", GUILayout.Height(34));
+        GUILayout.Label($"<size=23><b>🏆 {GetText("30트랙 전곡 완전 제패!", "ALL 30 TRACKS CONQUERED!", "全30トラック完全制覇！", "¡LAS 30 PISTAS SUPERADAS!")}</b></size>", GUILayout.Height(34));
         GUI.color = Color.white;
 
         GUILayout.Space(8);
-        GUILayout.Label(GetText("축하합니다! 200 BPM 코스믹 심포니를 정복하고 비트 슬라이스 마스터로 등극했습니다.",
-                                "Incredible rhythm mastery! You conquered the 200 BPM Cosmic Symphony.",
-                                "おめでとうございます！200 BPMコズミック・シンフォニーを制覇し、ビートスライスマスターとなりました。",
-                                "¡Maestría rítmica absoluta! Has conquistado la Sinfonía Cósmica de 200 BPM."));
+        GUILayout.Label(GetText("축하합니다! 218 BPM 초신성 서곡까지 정복하고 비트 슬라이스 마스터로 등극했습니다.",
+                                "Incredible rhythm mastery! You conquered the 218 BPM Supernova Overture.",
+                                "おめでとうございます！218 BPMの超新星序曲まで制覇し、ビートスライスマスターとなりました。",
+                                "¡Maestría rítmica absoluta! Has conquistado la Obertura Supernova de 218 BPM."));
 
         GUILayout.Space(8);
         GUILayout.Label($"{U("Final Score")}: <b>{score:N0}</b> | {U("Max Combo")}: <b>{maxCombo}x</b>");
@@ -1220,7 +1402,7 @@ public class BeatSlicePlayer : MonoBehaviour
         GUILayout.BeginArea(new Rect(r.x + 15, r.y + 15, r.width - 30, r.height - 30));
         GUILayout.BeginHorizontal();
         GUI.color = Color.cyan;
-        GUILayout.Label($"<size=20><b>{GetText("트랙 선택 (12 Tracks)", "Select Track (12 Tracks)", "トラック選択 (全12曲)", "Seleccionar Pista (12 Pistas)")}</b></size>");
+        GUILayout.Label($"<size=20><b>{GetText("트랙 선택 (30 Tracks)", "Select Track (30 Tracks)", "トラック選択 (全30曲)", "Seleccionar Pista (30 Pistas)")}</b></size>");
         GUI.color = Color.white;
         GUILayout.FlexibleSpace();
         if (GUILayout.Button("×", GUILayout.Width(35), GUILayout.Height(28)))
@@ -1231,7 +1413,10 @@ public class BeatSlicePlayer : MonoBehaviour
 
         GUILayout.Space(10);
 
-        for (int row = 0; row < 3; row++)
+        // 4 columns, scrolling for all 30 tracks
+        trackSelectScroll = GUILayout.BeginScrollView(trackSelectScroll);
+        int rows = (stages.Length + 3) / 4;
+        for (int row = 0; row < rows; row++)
         {
             GUILayout.BeginHorizontal();
             for (int col = 0; col < 4; col++)
@@ -1243,7 +1428,7 @@ public class BeatSlicePlayer : MonoBehaviour
                     GUI.color = idx == currentStageIndex ? Color.cyan : Color.white;
 
                     string btnText = $"<b>{U("Track")} {trk.id}</b>\n<size=11>{GetTrackName(trk)}</size>\n<size=10>{trk.bpm:0} BPM</size>";
-                    if (GUILayout.Button(btnText, GUILayout.Height(85), GUILayout.Width((r.width - 50) / 4f)))
+                    if (GUILayout.Button(btnText, GUILayout.Height(85), GUILayout.Width((r.width - 74) / 4f)))
                     {
                         showStageSelect = false;
                         isEndless = false;
@@ -1255,6 +1440,7 @@ public class BeatSlicePlayer : MonoBehaviour
             GUILayout.EndHorizontal();
             GUILayout.Space(6);
         }
+        GUILayout.EndScrollView();
 
         GUI.color = Color.white;
         GUILayout.EndArea();
