@@ -82,6 +82,7 @@ public class CyberHighwayPlayer : MonoBehaviour
     private int currentStageIndex = 0;
     private bool isEndless = false;
     private bool showStageSelect = false;
+    private Vector2 sectorSelectScroll;
 
     // Car & Physics stats
     private GameObject playerCar;
@@ -135,7 +136,7 @@ public class CyberHighwayPlayer : MonoBehaviour
 
     private float trafficSpawnTimer = 0f;
 
-    // 12 Defined Stages
+    // 30 Defined Stages
     private StageData[] stages = new StageData[]
     {
         new StageData {
@@ -257,6 +258,187 @@ public class CyberHighwayPlayer : MonoBehaviour
             descEs = "¡Supera los 300 km/h en el clímax definitivo y conviértete en el Conductor Supremo!",
             targetDistance = 12000f, trafficSpeed = 120f, spawnInterval = 0.72f, hasPolice = true, hasRain = true,
             skyColor = new Color(0.35f, 0.2f, 0.05f), neonColor = Color.yellow
+        }.ToStageData(),
+        // 13-30: +600 m and a slightly shorter spawn gap per sector; bosses again at 20 and 30
+        new TrackData_StageAlias {
+            id = 13,
+            nameKo = "섹터 13: 유리 협곡 고속도로", nameEn = "Sector 13: Glass Canyon Freeway", nameJa = "セクター13：ガラス峡谷フリーウェイ", nameEs = "Sector 13: Autovía del Cañón de Cristal",
+            descKo = "유리벽에 비친 차들 사이로 진짜 차선을 골라내세요.",
+            descEn = "Pick out the real lanes between cars reflected in glass walls.",
+            descJa = "ガラスの壁に映る車の間から本物の車線を見極めよう。",
+            descEs = "Distingue los carriles reales entre coches reflejados en paredes de cristal.",
+            targetDistance = 12600f, trafficSpeed = 121f, spawnInterval = 0.71f, hasPolice = true,
+            skyColor = new Color(0.06f, 0.14f, 0.2f), neonColor = Color.cyan
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 14,
+            nameKo = "섹터 14: 홀로 시장 우회로", nameEn = "Sector 14: Holo Market Bypass", nameJa = "セクター14：ホロ市場バイパス", nameEs = "Sector 14: Desvío del Mercado Holo",
+            descKo = "광고 홀로그램이 번쩍이는 시장 옆길. 배달 트럭이 끊임없이 끼어들어요.",
+            descEn = "A side road by a market of flashing holo ads. Delivery trucks keep cutting in.",
+            descJa = "ホロ広告がきらめく市場の脇道。配送トラックが次々割り込む。",
+            descEs = "Una vía junto a un mercado de anuncios holográficos. Los camiones se cuelan sin parar.",
+            targetDistance = 13200f, trafficSpeed = 122f, spawnInterval = 0.70f, hasPolice = true,
+            skyColor = new Color(0.2f, 0.05f, 0.18f), neonColor = Color.magenta
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 15,
+            nameKo = "섹터 15: 태양광 농장 직선로", nameEn = "Sector 15: Solar Farm Straight", nameJa = "セクター15：ソーラー農場ストレート", nameEs = "Sector 15: Recta de la Granja Solar",
+            descKo = "끝없는 직선로. 니트로를 아껴 두었다가 빈틈에서 한꺼번에 쓰세요.",
+            descEn = "An endless straight. Save nitro and spend it all in the gaps.",
+            descJa = "果てしない直線。ニトロを温存して隙間で一気に使おう。",
+            descEs = "Una recta sin fin. Guarda el nitro y gástalo en los huecos.",
+            targetDistance = 13800f, trafficSpeed = 123f, spawnInterval = 0.69f, hasPolice = true,
+            skyColor = new Color(0.22f, 0.16f, 0.04f), neonColor = Color.yellow
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 16,
+            nameKo = "섹터 16: 해저 튜브 연결로", nameEn = "Sector 16: Undersea Tube Link", nameJa = "セクター16：海底チューブ連絡路", nameEs = "Sector 16: Enlace del Tubo Submarino",
+            descKo = "바다 밑 투명 튜브 안. 좁은 시야에서 차선 변경 타이밍을 잡으세요.",
+            descEn = "Inside a clear tube under the sea. Time lane changes with little view ahead.",
+            descJa = "海底の透明チューブ内。狭い視界で車線変更のタイミングをつかもう。",
+            descEs = "Dentro de un tubo transparente bajo el mar. Cambia de carril con poca visibilidad.",
+            targetDistance = 14400f, trafficSpeed = 124f, spawnInterval = 0.68f, hasPolice = true, isTunnel = true,
+            skyColor = new Color(0.02f, 0.1f, 0.22f), neonColor = new Color(0.2f, 0.8f, 1f)
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 17,
+            nameKo = "섹터 17: 데이터센터 나선로", nameEn = "Sector 17: Data Center Spiral", nameJa = "セクター17：データセンター螺旋路", nameEs = "Sector 17: Espiral del Centro de Datos",
+            descKo = "서버 타워를 감아 도는 길. 순찰차가 더 자주 나타나요.",
+            descEn = "A road wrapped around server towers. Patrol cars show up more often.",
+            descJa = "サーバータワーを巻く道。パトカーがより頻繁に現れる。",
+            descEs = "Una vía que rodea torres de servidores. Las patrullas aparecen más a menudo.",
+            targetDistance = 15000f, trafficSpeed = 125f, spawnInterval = 0.67f, hasPolice = true,
+            skyColor = new Color(0.04f, 0.12f, 0.08f), neonColor = new Color(0.3f, 1f, 0.4f)
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 18,
+            nameKo = "섹터 18: 뇌우 둑길", nameEn = "Sector 18: Thunderstorm Causeway", nameJa = "セクター18：雷雨の堤防道路", nameEs = "Sector 18: Calzada de la Tormenta",
+            descKo = "번개가 치는 둑길 위. 빗길에서도 차간 거리를 끝까지 읽으세요.",
+            descEn = "A causeway under lightning. Keep reading the gaps on wet asphalt.",
+            descJa = "稲妻の走る堤防道路。雨の路面でも車間を読み続けよう。",
+            descEs = "Una calzada bajo los rayos. Sigue leyendo los huecos en el asfalto mojado.",
+            targetDistance = 15600f, trafficSpeed = 126f, spawnInterval = 0.66f, hasPolice = true, hasRain = true,
+            skyColor = new Color(0.08f, 0.08f, 0.16f), neonColor = Color.white
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 19,
+            nameKo = "섹터 19: 드론 떼 회랑", nameEn = "Sector 19: Drone Swarm Corridor", nameJa = "セクター19：ドローン群の回廊", nameEs = "Sector 19: Corredor del Enjambre de Drones",
+            descKo = "배송 드론이 머리 위를 메운 회랑. 보스 직전의 촘촘한 트래픽이에요.",
+            descEn = "A corridor packed with delivery drones overhead. Dense traffic right before the boss.",
+            descJa = "頭上を配送ドローンが埋める回廊。ボス直前の密な交通。",
+            descEs = "Un corredor lleno de drones de reparto. Tráfico denso justo antes del jefe.",
+            targetDistance = 16200f, trafficSpeed = 127f, spawnInterval = 0.65f, hasPolice = true,
+            skyColor = new Color(0.14f, 0.1f, 0.02f), neonColor = new Color(1f, 0.6f, 0.1f)
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 20,
+            nameKo = "섹터 20: 보스: 강철 리바이어던 화물차", nameEn = "Sector 20: Boss: Iron Leviathan Hauler", nameJa = "セクター20：ボス：鋼鉄リヴァイアサン輸送車", nameEs = "Sector 20: Jefe: Carguero Leviatán de Hierro",
+            descKo = "지뢰를 뿌리는 두 번째 거대 화물차. 경찰까지 합세했어요.",
+            descEn = "The second giant hauler drops mines, and the police join in.",
+            descJa = "機雷をまく第2の巨大輸送車。警察まで加勢してくる。",
+            descEs = "El segundo carguero gigante suelta minas y la policía se une.",
+            targetDistance = 16800f, trafficSpeed = 100f, spawnInterval = 1.10f, hasPolice = true, isBossStage = true,
+            skyColor = new Color(0.3f, 0.04f, 0.08f), neonColor = Color.red
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 21,
+            nameKo = "섹터 21: 오로라 순환도로", nameEn = "Sector 21: Aurora Ring Road", nameJa = "セクター21：オーロラ環状道路", nameEs = "Sector 21: Anillo Vial Aurora",
+            descKo = "오로라 아래 순환도로. 보스를 넘긴 뒤 트래픽이 한층 빨라져요.",
+            descEn = "A ring road under the aurora. Traffic gets quicker after the boss.",
+            descJa = "オーロラの下の環状道路。ボスの後で交通が一段と速くなる。",
+            descEs = "Un anillo vial bajo la aurora. El tráfico se acelera tras el jefe.",
+            targetDistance = 17400f, trafficSpeed = 129f, spawnInterval = 0.63f, hasPolice = true,
+            skyColor = new Color(0.03f, 0.16f, 0.14f), neonColor = new Color(0.3f, 1f, 0.8f)
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 22,
+            nameKo = "섹터 22: 수정 사막 고속도로", nameEn = "Sector 22: Crystal Desert Highway", nameJa = "セクター22：水晶砂漠ハイウェイ", nameEs = "Sector 22: Autopista del Desierto de Cristal",
+            descKo = "수정이 반짝이는 사막의 긴 구간. 연료 아이템을 놓치지 마세요.",
+            descEn = "A long desert stretch glittering with crystals. Don't miss the fuel pickups.",
+            descJa = "水晶がきらめく砂漠の長い区間。燃料アイテムを逃さないで。",
+            descEs = "Un largo tramo de desierto con cristales. No pierdas el combustible.",
+            targetDistance = 18000f, trafficSpeed = 130f, spawnInterval = 0.62f, hasPolice = true,
+            skyColor = new Color(0.25f, 0.18f, 0.08f), neonColor = new Color(1f, 0.85f, 0.4f)
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 23,
+            nameKo = "섹터 23: 정전 지구", nameEn = "Sector 23: Blackout District", nameJa = "セクター23：停電地区", nameEs = "Sector 23: Distrito del Apagón",
+            descKo = "가로등이 꺼진 지구. 헤드라이트만 믿고 달려야 해요.",
+            descEn = "A district with the streetlights out. Drive on headlights alone.",
+            descJa = "街灯が消えた地区。ヘッドライトだけを頼りに走ろう。",
+            descEs = "Un distrito sin farolas. Conduce solo con los faros.",
+            targetDistance = 18600f, trafficSpeed = 131f, spawnInterval = 0.61f, hasPolice = true, isTunnel = true,
+            skyColor = new Color(0.02f, 0.02f, 0.04f), neonColor = new Color(0.6f, 0.6f, 1f)
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 24,
+            nameKo = "섹터 24: 자기 레일 합류로", nameEn = "Sector 24: Magnet Rail Merge", nameJa = "セクター24：磁気レール合流", nameEs = "Sector 24: Incorporación del Riel Magnético",
+            descKo = "자기부상 차량이 합류하는 구간. 네 차선이 동시에 막히기 쉬워요.",
+            descEn = "Maglev cars merge in here. All four lanes clog up at once.",
+            descJa = "リニア車両が合流する区間。4車線が同時に詰まりやすい。",
+            descEs = "Aquí se incorporan coches maglev. Los cuatro carriles se llenan a la vez.",
+            targetDistance = 19200f, trafficSpeed = 132f, spawnInterval = 0.60f, hasPolice = true,
+            skyColor = new Color(0.12f, 0.04f, 0.22f), neonColor = Color.magenta
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 25,
+            nameKo = "섹터 25: 태풍 방조제", nameEn = "Sector 25: Typhoon Seawall", nameJa = "セクター25：台風の防潮堤", nameEs = "Sector 25: Malecón del Tifón",
+            descKo = "파도가 넘치는 방조제 위. 폭우 속 고속 추월이 이어져요.",
+            descEn = "A seawall with waves crashing over. High-speed passing in a downpour.",
+            descJa = "波が越える防潮堤の上。豪雨の中の高速追い越しが続く。",
+            descEs = "Un malecón azotado por las olas. Adelantamientos rápidos bajo el aguacero.",
+            targetDistance = 19800f, trafficSpeed = 133f, spawnInterval = 0.59f, hasPolice = true, hasRain = true,
+            skyColor = new Color(0.05f, 0.1f, 0.14f), neonColor = Color.cyan
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 26,
+            nameKo = "섹터 26: 옥상 고속도로", nameEn = "Sector 26: Rooftop Expressway", nameJa = "セクター26：屋上エクスプレスウェイ", nameEs = "Sector 26: Vía Rápida de las Azoteas",
+            descKo = "고층 빌딩 옥상을 잇는 고가도로. 차간 거리가 확 좁아져요.",
+            descEn = "An elevated road linking skyscraper roofs. The gaps get much tighter.",
+            descJa = "高層ビルの屋上をつなぐ高架道路。車間がぐっと狭くなる。",
+            descEs = "Una vía elevada entre azoteas de rascacielos. Los huecos se estrechan mucho.",
+            targetDistance = 20400f, trafficSpeed = 134f, spawnInterval = 0.58f, hasPolice = true,
+            skyColor = new Color(0.16f, 0.08f, 0.2f), neonColor = new Color(1f, 0.3f, 0.8f)
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 27,
+            nameKo = "섹터 27: 플라스마 주조소 구간", nameEn = "Sector 27: Plasma Foundry Run", nameJa = "セクター27：プラズマ鋳造所区間", nameEs = "Sector 27: Tramo de la Fundición de Plasma",
+            descKo = "용광로 불빛이 번지는 공장 지대. 대형 트럭 행렬을 뚫으세요.",
+            descEn = "A factory zone glowing with furnaces. Break through convoys of big trucks.",
+            descJa = "溶鉱炉の光がにじむ工場地帯。大型トラックの列を突破しよう。",
+            descEs = "Una zona industrial iluminada por hornos. Rompe los convoyes de camiones.",
+            targetDistance = 21000f, trafficSpeed = 135f, spawnInterval = 0.57f, hasPolice = true,
+            skyColor = new Color(0.3f, 0.1f, 0.02f), neonColor = new Color(1f, 0.45f, 0.1f)
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 28,
+            nameKo = "섹터 28: 성층권 진입로", nameEn = "Sector 28: Stratosphere Ramp", nameJa = "セクター28：成層圏ランプ", nameEs = "Sector 28: Rampa a la Estratosfera",
+            descKo = "하늘로 올라가는 진입로. 마지막 세 섹터의 시작이에요.",
+            descEn = "A ramp climbing into the sky. The last three sectors begin here.",
+            descJa = "空へ昇るランプ。最後の3セクターの始まり。",
+            descEs = "Una rampa que sube al cielo. Empiezan los tres últimos sectores.",
+            targetDistance = 21600f, trafficSpeed = 136f, spawnInterval = 0.56f, hasPolice = true,
+            skyColor = new Color(0.06f, 0.1f, 0.3f), neonColor = new Color(0.5f, 0.8f, 1f)
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 29,
+            nameKo = "섹터 29: 유성우 차로", nameEn = "Sector 29: Meteor Shower Lanes", nameJa = "セクター29：流星群レーン", nameEs = "Sector 29: Carriles de la Lluvia de Meteoros",
+            descKo = "유성이 쏟아지는 하늘 아래 가장 촘촘한 트래픽. 최종 보스 직전이에요.",
+            descEn = "The densest traffic under a meteor shower, right before the final boss.",
+            descJa = "流星が降る空の下、最も密な交通。最終ボス直前。",
+            descEs = "El tráfico más denso bajo una lluvia de meteoros, justo antes del jefe final.",
+            targetDistance = 22200f, trafficSpeed = 137f, spawnInterval = 0.55f, hasPolice = true, hasRain = true,
+            skyColor = new Color(0.08f, 0.04f, 0.16f), neonColor = Color.white
+        }.ToStageData(),
+        new TrackData_StageAlias {
+            id = 30,
+            nameKo = "섹터 30: 보스: 별빛 드레드노트", nameEn = "Sector 30: Boss: Starlight Dreadnought", nameJa = "セクター30：ボス：星明かりのドレッドノート", nameEs = "Sector 30: Jefe: Acorazado Luz Estelar",
+            descKo = "최종 보스. 22,800m를 달려 30개 섹터를 모두 정복하세요.",
+            descEn = "The final boss. Drive 22,800 m to conquer all 30 sectors.",
+            descJa = "最終ボス。22,800mを走り抜けて全30セクターを制覇しよう。",
+            descEs = "El jefe final. Recorre 22.800 m para conquistar los 30 sectores.",
+            targetDistance = 22800f, trafficSpeed = 110f, spawnInterval = 0.80f, hasPolice = true, isBossStage = true,
+            skyColor = new Color(0.35f, 0.25f, 0.08f), neonColor = Color.yellow
         }.ToStageData()
     };
 
@@ -1324,14 +1506,14 @@ public class CyberHighwayPlayer : MonoBehaviour
 
         GUILayout.BeginArea(new Rect(r.x + 20, r.y + 15, r.width - 40, r.height - 30));
         GUI.color = Color.yellow;
-        GUILayout.Label($"<size=23><b>🏆 {GetText("12섹터 전 고속도로 완전 정복!", "ALL 12 SECTORS CONQUERED!", "全12セクター完全制覇！", "¡TODOS LOS SECTORES SUPERADOS!")}</b></size>", GUILayout.Height(34));
+        GUILayout.Label($"<size=23><b>🏆 {GetText("30섹터 전 고속도로 완전 정복!", "ALL 30 SECTORS CONQUERED!", "全30セクター完全制覇！", "¡LOS 30 SECTORES SUPERADOS!")}</b></size>", GUILayout.Height(34));
         GUI.color = Color.white;
 
         GUILayout.Space(8);
-        GUILayout.Label(GetText("축하합니다! 300km/h 사이버 제니스를 완주하고 전설의 에이펙스 드라이버로 등극했습니다.",
-                                "Incredible driving! You conquered the 300 km/h Cyber Zenith as the Apex Driver.",
-                                "おめでとうございます！時速300kmサイバーゼニスを制覇し、伝説のドライバーとなりました。",
-                                "¡Conducción magistral! Has conquistado el Cyber Zenith a 300 km/h como Conductor Supremo."));
+        GUILayout.Label(GetText("축하합니다! 별빛 드레드노트까지 따돌리고 30개 섹터를 완주해 전설의 드라이버로 등극했습니다.",
+                                "Incredible driving! You outran the Starlight Dreadnought and finished all 30 sectors.",
+                                "おめでとうございます！星明かりのドレッドノートを振り切り、全30セクターを完走しました。",
+                                "¡Conducción magistral! Dejaste atrás al Acorazado Luz Estelar y completaste los 30 sectores."));
 
         GUILayout.Space(8);
         GUILayout.Label($"{U("Final Score")}: <b>{score}</b> | {U("Distance")}: <b>{distanceTraveled:0.0}m</b>");
@@ -1363,7 +1545,7 @@ public class CyberHighwayPlayer : MonoBehaviour
         GUILayout.BeginArea(new Rect(r.x + 15, r.y + 15, r.width - 30, r.height - 30));
         GUILayout.BeginHorizontal();
         GUI.color = Color.cyan;
-        GUILayout.Label($"<size=20><b>{GetText("섹터 선택 (12 Sectors)", "Select Sector (12 Sectors)", "セクター選択 (全12セクター)", "Seleccionar Sector (12 Sectores)")}</b></size>");
+        GUILayout.Label($"<size=20><b>{GetText("섹터 선택 (30 Sectors)", "Select Sector (30 Sectors)", "セクター選択 (全30セクター)", "Seleccionar Sector (30 Sectores)")}</b></size>");
         GUI.color = Color.white;
         GUILayout.FlexibleSpace();
         if (GUILayout.Button("×", GUILayout.Width(35), GUILayout.Height(28)))
@@ -1374,7 +1556,10 @@ public class CyberHighwayPlayer : MonoBehaviour
 
         GUILayout.Space(10);
 
-        for (int row = 0; row < 3; row++)
+        // 4 columns, scrolling for all 30 sectors
+        sectorSelectScroll = GUILayout.BeginScrollView(sectorSelectScroll);
+        int rows = (stages.Length + 3) / 4;
+        for (int row = 0; row < rows; row++)
         {
             GUILayout.BeginHorizontal();
             for (int col = 0; col < 4; col++)
@@ -1386,7 +1571,7 @@ public class CyberHighwayPlayer : MonoBehaviour
                     GUI.color = idx == currentStageIndex ? Color.cyan : Color.white;
 
                     string btnText = $"<b>{U("Sector")} {stg.id}</b>\n<size=11>{GetStageName(stg)}</size>\n<size=10>{stg.targetDistance:0}m</size>";
-                    if (GUILayout.Button(btnText, GUILayout.Height(85), GUILayout.Width((r.width - 50) / 4f)))
+                    if (GUILayout.Button(btnText, GUILayout.Height(85), GUILayout.Width((r.width - 74) / 4f)))
                     {
                         showStageSelect = false;
                         isEndless = false;
@@ -1398,6 +1583,7 @@ public class CyberHighwayPlayer : MonoBehaviour
             GUILayout.EndHorizontal();
             GUILayout.Space(6);
         }
+        GUILayout.EndScrollView();
 
         GUI.color = Color.white;
         GUILayout.EndArea();
