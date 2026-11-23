@@ -174,8 +174,25 @@ const hreflangMap: Record<string, string> = {
     prop only — noindex prototypes and deindexed locales are playable games and
     keep earning. */}
 {googleAdsenseId && !noindex && (
-  <script is:inline async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${googleAdsenseId}`} data-overlays="bottom"
-     crossorigin="anonymous"></script>
+  <script is:inline data-ad-src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${googleAdsenseId}`}>
+    // 2026-11-23 LCP: head 에서 async 로 받으면 광고 스크립트(수백 KB, 뒤이어 show_ads_impl 등)가
+    // 제목 서체·CSS와 같은 때 대역폭을 나눠 써서 모바일 첫 화면(LCP)이 늦어진다(oiyo-astro #146과 같은 처방).
+    // 자동 광고는 load 뒤에 붙여도 같은 자리에 뜬다. 상단 앵커는 계속 끈다(data-overlays, CLS 감사).
+    (function (src) {
+      var done = false;
+      function loadAds() {
+        if (done) return; done = true;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = src;
+        s.crossOrigin = 'anonymous';
+        s.setAttribute('data-overlays', 'bottom');
+        document.head.appendChild(s);
+      }
+      if (document.readyState === 'complete') loadAds();
+      else window.addEventListener('load', loadAds, { once: true });
+    })(document.currentScript.getAttribute('data-ad-src'));
+  </script>
 )}
 
 <!-- Canonical URL -->
