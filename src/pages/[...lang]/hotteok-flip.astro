@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import HotteokFlip from "../../components/games/HotteokFlip";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "호떡 뒤집기 — 손가락으로 튕겨 호떡을 공중에서 뒤집는 무료 겨울 포장마차 게임 30단계",
+    description: "철판 위에서 호떡이 지글지글 익어요. 밑면이 노릇해지면 손가락으로 튕겨 공중에서 뒤집고, 양면이 다 익으면 한 번 더 튕겨 접시에 담으세요. 가장자리를 튕기면 빙글 돌고 가운데를 튕기면 통통 뛰기만 해요. 세워서 떨어지면 꿀이 터집니다. 30단계.",
+  },
+  en: {
+    title: "Hotteok Flip — Free winter street-food game: flick sweet pancakes into the air and flip them (30 stages)",
+    description: "Hotteok sizzle on the griddle. When the bottom turns golden, flick one into the air to flip it; when both sides are golden, flick it again onto the plate. Flick near the edge and it spins, flick the middle and it just hops. Land it on its edge and the sugar syrup bursts. 30 stages.",
+  },
+  ja: {
+    title: "ホットク返し — 指ではじいてホットクを空中で返す無料の冬の屋台ゲーム30ステージ",
+    description: "鉄板の上でホットクがジュージュー焼けます。裏が黄金色になったら指ではじいて空中で返し、両面が焼けたらもう一度はじいてお皿へ。端をはじくとくるっと回り、真ん中をはじくとぴょんと跳ねるだけ。立ったまま落ちると蜜がはじけます。30ステージ。",
+  },
+  zh: {
+    title: "翻糖饼 — 用手指把韩式糖饼弹到空中翻面的免费冬日小摊游戏30关",
+    description: "糖饼在铁板上滋滋作响。底面煎得金黄时，用手指把它弹到空中翻面；两面都金黄了，再弹一次装进盘子。弹边缘会旋转，弹中间只会跳一下。竖着落下的话糖浆会爆出来。共30关。",
+  },
+  fr: {
+    title: "Hotteok à retourner — Jeu gratuit de street food d'hiver : faites sauter et retournez les crêpes sucrées (30 niveaux)",
+    description: "Les hotteok grésillent sur la plaque. Quand le dessous est doré, faites-en sauter un d'une pichenette pour le retourner ; quand les deux faces sont dorées, une dernière pichenette l'envoie dans l'assiette. Près du bord il tourne, au centre il saute seulement. S'il retombe sur la tranche, le sirop éclate. 30 niveaux.",
+  },
+  es: {
+    title: "Voltea el hotteok — Juego gratis de comida callejera de invierno: lanza y voltea tortitas dulces (30 niveles)",
+    description: "Los hotteok chisporrotean en la plancha. Cuando la base se dora, dale un toque hacia arriba para voltearlo; cuando ambas caras estén doradas, otro toque lo manda al plato. Cerca del borde gira, en el centro solo salta. Si cae de canto, el almíbar revienta. 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["hotteok-flip"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <HotteokFlip client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="hotteok-flip" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

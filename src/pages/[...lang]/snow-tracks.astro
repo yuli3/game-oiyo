@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SnowTracks from "../../components/games/SnowTracks";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "눈 위 발자국 — 동물마다 굴에서 먹이까지 발자국 길을 잇는 무료 겨울 논리 퍼즐 30단계",
+    description: "밤새 눈이 내린 아침, 토끼·여우·사슴·까치가 각자 굴에서 먹이까지 걸어갔어요. 손가락으로 동물마다 발자국 길을 그어 보세요. 길은 서로 겹치지 않고, 눈밭의 모든 칸을 빠짐없이 지나야 해요. 미리 찍힌 발자국이 힌트입니다. 모든 문제는 답이 딱 하나, 30단계.",
+  },
+  en: {
+    title: "Snow Tracks — Free winter logic puzzle: draw each animal's trail from burrow to food (30 stages)",
+    description: "After a night of snow, a rabbit, fox, deer and magpie each walked from their burrow to their food. Draw every animal's trail with your finger. Trails never overlap and together cover every patch of snow. Footprints already in the snow are your clues. Every puzzle has exactly one answer. 30 stages.",
+  },
+  ja: {
+    title: "雪の足あと — 動物ごとに巣から餌まで足あとの道をつなぐ無料の冬のロジックパズル30ステージ",
+    description: "一晩雪が降った朝、ウサギ、キツネ、シカ、カササギがそれぞれ巣から餌まで歩きました。指で動物ごとの足あとの道を描きましょう。道は重ならず、雪原のマスをすべて通ります。先に付いている足あとがヒント。どの問題も答えはひとつ、30ステージ。",
+  },
+  zh: {
+    title: "雪地足迹 — 为每只动物画出从洞穴到食物的足迹路线的免费冬日逻辑谜题30关",
+    description: "下了一夜雪的早晨，兔子、狐狸、鹿和喜鹊各自从洞穴走到食物那里。用手指为每只动物画出足迹路线。路线互不重叠，并且要走遍雪地的每一格。雪里已经印着的脚印就是提示。每道题都只有一个答案，共30关。",
+  },
+  fr: {
+    title: "Traces dans la neige — Puzzle logique d'hiver gratuit : tracez le chemin de chaque animal du terrier à sa nourriture (30 niveaux)",
+    description: "Après une nuit de neige, un lapin, un renard, un cerf et une pie sont allés chacun de leur terrier à leur nourriture. Tracez le chemin de chaque animal du doigt. Les chemins ne se chevauchent jamais et couvrent toute la neige. Les empreintes déjà marquées sont vos indices. Chaque puzzle a une seule solution. 30 niveaux.",
+  },
+  es: {
+    title: "Huellas en la nieve — Rompecabezas lógico de invierno gratis: traza el rastro de cada animal de su madriguera a su comida (30 niveles)",
+    description: "Tras una noche de nieve, un conejo, un zorro, un ciervo y una urraca caminaron cada uno de su madriguera a su comida. Traza el rastro de cada animal con el dedo. Los rastros nunca se cruzan y entre todos cubren toda la nieve. Las huellas ya marcadas son tus pistas. Cada puzzle tiene una sola solución. 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["snow-tracks"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <SnowTracks client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="snow-tracks" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import WishLanterns from "../../components/games/WishLanterns";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "소원등 날리기 — 바람을 불어 소원등을 달까지 올려 보내는 무료 겨울밤 게임 30단계",
+    description: "새해 첫 밤, 종이 소원등이 하나씩 떠오릅니다. 손가락으로 공기를 쓸어 바람을 만들어 전깃줄과 소나무 가지, 밤새를 피해 달까지 올려 보내세요. 너무 세게 불면 촛불이 꺼져요. 옆바람·돌풍까지 30단계.",
+  },
+  en: {
+    title: "Wish Lanterns — Free winter-night game: breeze paper lanterns up to the moon (30 stages)",
+    description: "On the first night of the year, paper wish lanterns rise one by one. Swipe the air to make a breeze and guide them past power lines, pine branches and night birds up to the moon. Blow too hard and the candle goes out. 30 stages with side winds and gusts.",
+  },
+  ja: {
+    title: "願いのランタン — 風を送ってランタンを月まで届ける無料の冬の夜ゲーム30ステージ",
+    description: "新年最初の夜、紙のランタンが一つずつ昇っていきます。指で空をなでて風を起こし、電線や松の枝、夜の鳥をよけて月まで届けましょう。強く吹きすぎると火が消えます。横風や突風まで30ステージ。",
+  },
+  zh: {
+    title: "放许愿灯 — 用风把纸灯送上月亮的免费冬夜游戏30关",
+    description: "新年第一夜，纸做的许愿灯一盏盏升起。用手指划过夜空制造微风，带它们绕开电线、松枝和夜鸟，飞到月亮上。吹得太猛，烛火就会熄灭。共30关，还有侧风和阵风。",
+  },
+  fr: {
+    title: "Lanternes à vœux — Jeu gratuit de nuit d'hiver : poussez les lanternes jusqu'à la lune (30 niveaux)",
+    description: "Première nuit de l'année : les lanternes en papier s'élèvent une à une. Balayez l'air du doigt pour créer une brise et guidez-les entre les fils électriques, les branches de pin et les oiseaux de nuit jusqu'à la lune. Soufflez trop fort et la bougie s'éteint. 30 niveaux avec vent latéral et rafales.",
+  },
+  es: {
+    title: "Faroles de deseos — Juego gratis de noche de invierno: lleva los faroles hasta la luna (30 niveles)",
+    description: "En la primera noche del año, los faroles de papel suben uno a uno. Desliza el dedo por el aire para crear brisa y guíalos entre cables, ramas de pino y pájaros nocturnos hasta la luna. Si soplas demasiado fuerte, la vela se apaga. 30 niveles con viento lateral y ráfagas.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["wish-lanterns"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <WishLanterns client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="wish-lanterns" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
