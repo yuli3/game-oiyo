@@ -173,6 +173,7 @@ public class BlockBlastPlayer : MonoBehaviour
     private int currentStageIdx = 0;
     private bool isEndlessMode = false;
     private bool showStageSelect = false;
+    private Vector2 stageSelectScroll;
 
     // Powerups
     private int bombPowerups = 1;
@@ -182,7 +183,7 @@ public class BlockBlastPlayer : MonoBehaviour
     // Audio
     private AudioSource sfxSource;
 
-    // Stage Definitions (12 Stages)
+    // Stage Definitions (30 Stages)
     private List<StageDef> stages = new List<StageDef>();
 
     // Shape Library Templates
@@ -406,6 +407,296 @@ public class BlockBlastPlayer : MonoBehaviour
             bossHp = 0,
             hasIce = true,
             hasRocks = false,
+            hasBorderBlock = false
+        });
+
+        // 13-30: score goal +500 per stage (17,500 at 30) on ice and rock boards; bomb timers shrink from 18 to 10 moves
+        // Stage 13
+        stages.Add(new StageDef
+        {
+            stageNum = 13,
+            title = new LocalizedText("Stage 13: 서리 채석장", "Stage 13: Frost Quarry", "Stage 13: 霜の採石場", "Etapa 13: Cantera Helada"),
+            briefing = new LocalizedText("얼음과 바위를 피해 8,500점을 달성하세요!", "Work around ice and rocks to reach 8,500 pts!", "氷と岩をかわして8,500点を達成しましょう！", "¡Esquiva hielo y rocas y logra 8,500 pts!"),
+            targetScore = 8500,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 0,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = true,
+            hasBorderBlock = false
+        });
+        // Stage 14
+        stages.Add(new StageDef
+        {
+            stageNum = 14,
+            title = new LocalizedText("Stage 14: 도화선 정원", "Stage 14: Fuse Garden", "Stage 14: 導火線の庭", "Etapa 14: Jardín de Mechas"),
+            briefing = new LocalizedText("시한폭탄을 18수 안에 해체하며 9,000점을 달성하세요!", "Defuse the bombs within 18 moves and reach 9,000 pts!", "時限爆弾を18手以内に解除し、9,000点を達成しましょう！", "¡Desactiva las bombas en 18 jugadas y logra 9,000 pts!"),
+            targetScore = 9000,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 18,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = false,
+            hasBorderBlock = false
+        });
+        // Stage 15
+        stages.Add(new StageDef
+        {
+            stageNum = 15,
+            title = new LocalizedText("Stage 15: 화강암 요새 [보스]", "Stage 15: Granite Fortress [Boss]", "Stage 15: 花崗岩の要塞 [ボス]", "Etapa 15: Fortaleza de Granito [Jefe]"),
+            briefing = new LocalizedText("시한폭탄을 18수 안에 해체하며 9,500점을 달성하세요!", "Defuse the bombs within 18 moves and reach 9,500 pts!", "時限爆弾を18手以内に解除し、9,500点を達成しましょう！", "¡Desactiva las bombas en 18 jugadas y logra 9,500 pts!"),
+            targetScore = 9500,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 18,
+            bossHp = 0,
+            hasIce = false,
+            hasRocks = true,
+            hasBorderBlock = false
+        });
+        // Stage 16
+        stages.Add(new StageDef
+        {
+            stageNum = 16,
+            title = new LocalizedText("Stage 16: 수정 계단밭", "Stage 16: Crystal Terrace", "Stage 16: 水晶の段々畑", "Etapa 16: Terraza de Cristal"),
+            briefing = new LocalizedText("얼음과 바위를 피해 10,000점을 달성하세요!", "Work around ice and rocks to reach 10,000 pts!", "氷と岩をかわして10,000点を達成しましょう！", "¡Esquiva hielo y rocas y logra 10,000 pts!"),
+            targetScore = 10000,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 0,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = true,
+            hasBorderBlock = false
+        });
+        // Stage 17
+        stages.Add(new StageDef
+        {
+            stageNum = 17,
+            title = new LocalizedText("Stage 17: 얼음 뇌관 연구소", "Stage 17: Ice Fuse Lab", "Stage 17: 氷の雷管ラボ", "Etapa 17: Laboratorio de Hielo"),
+            briefing = new LocalizedText("시한폭탄을 17수 안에 해체하며 10,500점을 달성하세요!", "Defuse the bombs within 17 moves and reach 10,500 pts!", "時限爆弾を17手以内に解除し、10,500点を達成しましょう！", "¡Desactiva las bombas en 17 jugadas y logra 10,500 pts!"),
+            targetScore = 10500,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 17,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = false,
+            hasBorderBlock = false
+        });
+        // Stage 18
+        stages.Add(new StageDef
+        {
+            stageNum = 18,
+            title = new LocalizedText("Stage 18: 바위 시계탑", "Stage 18: Boulder Clock", "Stage 18: 岩の時計塔", "Etapa 18: Reloj de Piedra"),
+            briefing = new LocalizedText("시한폭탄을 17수 안에 해체하며 11,000점을 달성하세요!", "Defuse the bombs within 17 moves and reach 11,000 pts!", "時限爆弾を17手以内に解除し、11,000点を達成しましょう！", "¡Desactiva las bombas en 17 jugadas y logra 11,000 pts!"),
+            targetScore = 11000,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 17,
+            bossHp = 0,
+            hasIce = false,
+            hasRocks = true,
+            hasBorderBlock = false
+        });
+        // Stage 19
+        stages.Add(new StageDef
+        {
+            stageNum = 19,
+            title = new LocalizedText("Stage 19: 빙하 금고", "Stage 19: Glacier Vault", "Stage 19: 氷河の金庫", "Etapa 19: Bóveda Glaciar"),
+            briefing = new LocalizedText("시한폭탄을 17수 안에 해체하며 11,500점을 달성하세요!", "Defuse the bombs within 17 moves and reach 11,500 pts!", "時限爆弾を17手以内に解除し、11,500点を達成しましょう！", "¡Desactiva las bombas en 17 jugadas y logra 11,500 pts!"),
+            targetScore = 11500,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 17,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = true,
+            hasBorderBlock = false
+        });
+        // Stage 20
+        stages.Add(new StageDef
+        {
+            stageNum = 20,
+            title = new LocalizedText("Stage 20: 흑요석 성채 [보스]", "Stage 20: Obsidian Citadel [Boss]", "Stage 20: 黒曜石の城塞 [ボス]", "Etapa 20: Ciudadela de Obsidiana [Jefe]"),
+            briefing = new LocalizedText("시한폭탄을 16수 안에 해체하며 12,000점을 달성하세요!", "Defuse the bombs within 16 moves and reach 12,000 pts!", "時限爆弾を16手以内に解除し、12,000点を達成しましょう！", "¡Desactiva las bombas en 16 jugadas y logra 12,000 pts!"),
+            targetScore = 12000,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 16,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = true,
+            hasBorderBlock = false
+        });
+        // Stage 21
+        stages.Add(new StageDef
+        {
+            stageNum = 21,
+            title = new LocalizedText("Stage 21: 극지 카운트다운", "Stage 21: Polar Countdown", "Stage 21: 極地カウントダウン", "Etapa 21: Cuenta Atrás Polar"),
+            briefing = new LocalizedText("시한폭탄을 15수 안에 해체하며 12,500점을 달성하세요!", "Defuse the bombs within 15 moves and reach 12,500 pts!", "時限爆弾を15手以内に解除し、12,500点を達成しましょう！", "¡Desactiva las bombas en 15 jugadas y logra 12,500 pts!"),
+            targetScore = 12500,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 15,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = false,
+            hasBorderBlock = false
+        });
+        // Stage 22
+        stages.Add(new StageDef
+        {
+            stageNum = 22,
+            title = new LocalizedText("Stage 22: 현무암 미로", "Stage 22: Basalt Maze", "Stage 22: 玄武岩の迷路", "Etapa 22: Laberinto de Basalto"),
+            briefing = new LocalizedText("시한폭탄을 15수 안에 해체하며 13,000점을 달성하세요!", "Defuse the bombs within 15 moves and reach 13,000 pts!", "時限爆弾を15手以内に解除し、13,000点を達成しましょう！", "¡Desactiva las bombas en 15 jugadas y logra 13,000 pts!"),
+            targetScore = 13000,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 15,
+            bossHp = 0,
+            hasIce = false,
+            hasRocks = true,
+            hasBorderBlock = false
+        });
+        // Stage 23
+        stages.Add(new StageDef
+        {
+            stageNum = 23,
+            title = new LocalizedText("Stage 23: 프리즘 압박", "Stage 23: Prism Pressure", "Stage 23: プリズムの重圧", "Etapa 23: Presión Prismática"),
+            briefing = new LocalizedText("시한폭탄을 15수 안에 해체하며 13,500점을 달성하세요!", "Defuse the bombs within 15 moves and reach 13,500 pts!", "時限爆弾を15手以内に解除し、13,500点を達成しましょう！", "¡Desactiva las bombas en 15 jugadas y logra 13,500 pts!"),
+            targetScore = 13500,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 15,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = true,
+            hasBorderBlock = false
+        });
+        // Stage 24
+        stages.Add(new StageDef
+        {
+            stageNum = 24,
+            title = new LocalizedText("Stage 24: 운석 작업장", "Stage 24: Meteor Workshop", "Stage 24: 隕石の工房", "Etapa 24: Taller de Meteoritos"),
+            briefing = new LocalizedText("시한폭탄을 14수 안에 해체하며 14,000점을 달성하세요!", "Defuse the bombs within 14 moves and reach 14,000 pts!", "時限爆弾を14手以内に解除し、14,000点を達成しましょう！", "¡Desactiva las bombas en 14 jugadas y logra 14,000 pts!"),
+            targetScore = 14000,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 14,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = true,
+            hasBorderBlock = false
+        });
+        // Stage 25
+        stages.Add(new StageDef
+        {
+            stageNum = 25,
+            title = new LocalizedText("Stage 25: 천둥 성루 [보스]", "Stage 25: Thunder Keep [Boss]", "Stage 25: 雷鳴の砦 [ボス]", "Etapa 25: Torre del Trueno [Jefe]"),
+            briefing = new LocalizedText("시한폭탄을 13수 안에 해체하며 14,500점을 달성하세요!", "Defuse the bombs within 13 moves and reach 14,500 pts!", "時限爆弾を13手以内に解除し、14,500点を達成しましょう！", "¡Desactiva las bombas en 13 jugadas y logra 14,500 pts!"),
+            targetScore = 14500,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 13,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = true,
+            hasBorderBlock = false
+        });
+        // Stage 26
+        stages.Add(new StageDef
+        {
+            stageNum = 26,
+            title = new LocalizedText("Stage 26: 오로라 격자", "Stage 26: Aurora Grid", "Stage 26: オーロラ格子", "Etapa 26: Rejilla Aurora"),
+            briefing = new LocalizedText("시한폭탄을 13수 안에 해체하며 15,000점을 달성하세요!", "Defuse the bombs within 13 moves and reach 15,000 pts!", "時限爆弾を13手以内に解除し、15,000点を達成しましょう！", "¡Desactiva las bombas en 13 jugadas y logra 15,000 pts!"),
+            targetScore = 15000,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 13,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = true,
+            hasBorderBlock = false
+        });
+        // Stage 27
+        stages.Add(new StageDef
+        {
+            stageNum = 27,
+            title = new LocalizedText("Stage 27: 마그마 도화선", "Stage 27: Magma Fuse Run", "Stage 27: マグマ導火線", "Etapa 27: Mecha de Magma"),
+            briefing = new LocalizedText("시한폭탄을 12수 안에 해체하며 15,500점을 달성하세요!", "Defuse the bombs within 12 moves and reach 15,500 pts!", "時限爆弾を12手以内に解除し、15,500点を達成しましょう！", "¡Desactiva las bombas en 12 jugadas y logra 15,500 pts!"),
+            targetScore = 15500,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 12,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = true,
+            hasBorderBlock = false
+        });
+        // Stage 28
+        stages.Add(new StageDef
+        {
+            stageNum = 28,
+            title = new LocalizedText("Stage 28: 별빛 모자이크", "Stage 28: Starlight Mosaic", "Stage 28: 星明かりのモザイク", "Etapa 28: Mosaico Estelar"),
+            briefing = new LocalizedText("시한폭탄을 12수 안에 해체하며 16,000점을 달성하세요!", "Defuse the bombs within 12 moves and reach 16,000 pts!", "時限爆弾を12手以内に解除し、16,000点を達成しましょう！", "¡Desactiva las bombas en 12 jugadas y logra 16,000 pts!"),
+            targetScore = 16000,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 12,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = true,
+            hasBorderBlock = false
+        });
+        // Stage 29
+        stages.Add(new StageDef
+        {
+            stageNum = 29,
+            title = new LocalizedText("Stage 29: 마지막 도화선", "Stage 29: Last Fuse", "Stage 29: 最後の導火線", "Etapa 29: Última Mecha"),
+            briefing = new LocalizedText("시한폭탄을 11수 안에 해체하며 16,500점을 달성하세요!", "Defuse the bombs within 11 moves and reach 16,500 pts!", "時限爆弾を11手以内に解除し、16,500点を達成しましょう！", "¡Desactiva las bombas en 11 jugadas y logra 16,500 pts!"),
+            targetScore = 16500,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 11,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = true,
+            hasBorderBlock = false
+        });
+        // Stage 30
+        stages.Add(new StageDef
+        {
+            stageNum = 30,
+            title = new LocalizedText("Stage 30: 무한 격자의 왕관 [그랜드 피날레]", "Stage 30: Infinite Grid Crown [Grand Finale]", "Stage 30: 無限格子の王冠 [グランドフィナーレ]", "Etapa 30: Corona de la Cuadrícula Infinita [Gran Final]"),
+            briefing = new LocalizedText("시한폭탄을 10수 안에 해체하며 17,500점을 달성하세요!", "Defuse the bombs within 10 moves and reach 17,500 pts!", "時限爆弾を10手以内に解除し、17,500点を達成しましょう！", "¡Desactiva las bombas en 10 jugadas y logra 17,500 pts!"),
+            targetScore = 17500,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
+            bombCountdown = 10,
+            bossHp = 0,
+            hasIce = true,
+            hasRocks = true,
             hasBorderBlock = false
         });
     }
@@ -1508,23 +1799,27 @@ public class BlockBlastPlayer : MonoBehaviour
         GUI.Box(new Rect(Screen.width * 0.5f - 240, Screen.height * 0.5f - 230, 480, 460), "");
         GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 220, Screen.height * 0.5f - 210, 440, 420));
 
-        string selectHeader = U("<b><color=#00f0ff>Select Stage (12 Stages)</color></b>");
+        string selectHeader = U("<b><color=#00f0ff>Select Stage (30 Stages)</color></b>");
         GUILayout.Label(selectHeader, GUILayout.Height(30));
 
+        // 4 columns, scrolling for all 30 stages
+        var cellStyle = new GUIStyle(GUI.skin.button) { wordWrap = true, fontSize = 11 };
+        stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, GUILayout.Height(250));
         for (int i = 0; i < stages.Count; i++)
         {
-            if (i % 2 == 0) GUILayout.BeginHorizontal();
+            if (i % 4 == 0) GUILayout.BeginHorizontal();
 
             StageDef s = stages[i];
-            string btnLabel = string.Format("#{0} {1}", s.stageNum, s.title.Get(currentLang).Split(':')[1].Trim());
-            if (GUILayout.Button(btnLabel, GUILayout.Height(42)))
+            string btnLabel = string.Format("#{0} {1}", s.stageNum, s.title.Get(currentLang).Split(':', '：')[1].Trim());
+            if (GUILayout.Button(btnLabel, cellStyle, GUILayout.Width(98), GUILayout.Height(60)))
             {
                 isEndlessMode = false;
                 LoadStage(i);
             }
 
-            if (i % 2 == 1 || i == stages.Count - 1) GUILayout.EndHorizontal();
+            if (i % 4 == 3 || i == stages.Count - 1) GUILayout.EndHorizontal();
         }
+        GUILayout.EndScrollView();
 
         GUILayout.Space(8);
 
@@ -1592,7 +1887,7 @@ public class BlockBlastPlayer : MonoBehaviour
         }
         else
         {
-            string masterText = U("★ All 12 Stages Cleared! Start Endless ★");
+            string masterText = U("★ All 30 Stages Cleared! Start Endless ★");
             if (GUILayout.Button(masterText, GUILayout.Height(42)))
             {
                 isEndlessMode = true;
