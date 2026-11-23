@@ -453,3 +453,33 @@ main .aspect-square { max-width: min(100%, 92vw); }
 @utility pixelated {
   image-rendering: pixelated;
 }
+
+/* Chunky arcade buttons for in-game actions (2026-11-23): a hard outline and a
+   drop that the button sinks into when pressed, so moves feel like game
+   controls instead of form buttons. Colour comes from tokens. */
+@utility game-btn {
+  border: 2px solid var(--color-foreground);
+  border-radius: 6px;
+  background-color: var(--color-card);
+  color: var(--color-foreground);
+  font-weight: 800;
+  box-shadow: 0 4px 0 var(--color-foreground);
+  transition: transform 60ms ease-out, box-shadow 60ms ease-out;
+  &:active:not(:disabled) {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 var(--color-foreground);
+  }
+  &:disabled {
+    opacity: 0.45;
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 var(--color-foreground);
+  }
+}
+@utility game-btn-live {
+  background-color: var(--color-warning);
+  color: var(--color-warning-foreground);
+}
+@utility game-btn-danger {
+  background-color: var(--color-destructive);
+  color: var(--color-destructive-foreground);
+}

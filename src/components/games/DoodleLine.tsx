@@ -517,15 +517,15 @@ function writeSeed(value: number) {
 }
 
 function controlClass(tone: "primary" | "quiet" | "danger"): string {
-  if (tone === "danger") return "min-h-11 min-w-11 rounded-xl bg-destructive px-3 text-sm font-semibold text-destructive-foreground disabled:opacity-40";
-  if (tone === "primary") return "min-h-11 min-w-11 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground disabled:opacity-40";
-  return "min-h-11 min-w-11 rounded-xl bg-muted px-3 text-sm font-semibold text-foreground disabled:opacity-40";
+  if (tone === "danger") return "min-h-11 min-w-11 game-btn game-btn-danger px-3 text-sm disabled:opacity-40";
+  if (tone === "primary") return "min-h-11 min-w-11 game-btn game-btn-live px-3 text-sm disabled:opacity-40";
+  return "min-h-11 min-w-11 game-btn px-3 text-sm disabled:opacity-40";
 }
 
 function actClass(tone: "live" | "quiet" | "danger"): string {
-  if (tone === "danger") return "min-h-11 min-w-11 rounded-xl bg-destructive px-3 text-sm font-semibold text-destructive-foreground disabled:opacity-40";
-  if (tone === "live") return "min-h-11 min-w-11 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground disabled:opacity-40";
-  return "min-h-11 min-w-11 rounded-xl bg-muted px-3 text-sm font-semibold text-foreground disabled:opacity-40";
+  if (tone === "danger") return "min-h-11 min-w-11 game-btn game-btn-danger px-3 text-sm disabled:opacity-40";
+  if (tone === "live") return "min-h-11 min-w-11 game-btn game-btn-live px-3 text-sm disabled:opacity-40";
+  return "min-h-11 min-w-11 game-btn px-3 text-sm disabled:opacity-40";
 }
 
 function gaugeClass(inked: boolean): string {
@@ -954,7 +954,7 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
                 onClick={() => move(act)}
               >
                 {label(act, copy)}
-                <span className="block text-xs font-normal">{detail}</span>
+                <span className="sr-only">{detail}</span>
               </TiltDoodleButton>
             );
           })}
