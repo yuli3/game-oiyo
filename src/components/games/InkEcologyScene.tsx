@@ -18,6 +18,8 @@ import {
   type PondState,
 } from "../../lib/games/ink-ecology";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
+import PixelSkyBackground from "./PixelSkyBackground";
+import { SCENE_SKIES } from "../../lib/games/pixel-sprites";
 
 const PAPER_MAP = "/games/ink-ecology-paper.jpg";
 const FIXED = 1 / 60;
@@ -232,7 +234,7 @@ export default function InkEcologyScene({
   const frameloop = usePlayFrameloop(!paused);
   return (
     <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }} frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [CAMERA_POSES[0][0], CAMERA_POSES[0][1], CAMERA_POSES[0][2]], fov: 36 }}>
-      <color attach="background" args={[0.04, 0.05, 0.06]} />
+      <PixelSkyBackground spec={SCENE_SKIES.inkEcology} />
       <ambientLight intensity={0.32} />
       <directionalLight position={[KEY_LIGHT[0] * 8, KEY_LIGHT[1] * 8, KEY_LIGHT[2] * 8]} intensity={1.5} castShadow shadow-mapSize={[1024, 1024]} />
       <FixedCamera view={view} />

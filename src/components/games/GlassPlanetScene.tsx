@@ -17,6 +17,8 @@ import {
   type PlanetState,
 } from "../../lib/games/glass-planet";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
+import PixelSkyBackground from "./PixelSkyBackground";
+import { SCENE_SKIES } from "../../lib/games/pixel-sprites";
 
 const FLOOR = "/games/glass-planet-floor.jpg";
 const OUTER = "/games/glass-planet-outer.jpg";
@@ -264,7 +266,7 @@ export default function GlassPlanetScene({
   const frameloop = usePlayFrameloop(!paused);
   return (
     <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }} frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [CAMERA_POSES[0][0], CAMERA_POSES[0][1], CAMERA_POSES[0][2]], fov: 38 }}>
-      <color attach="background" args={[0.05, 0.07, 0.08]} />
+      <PixelSkyBackground spec={SCENE_SKIES.glassPlanet} />
       <ambientLight intensity={0.34} />
       <directionalLight
         position={[KEY_LIGHT[0] * 8, KEY_LIGHT[1] * 8, KEY_LIGHT[2] * 8]}

@@ -675,3 +675,21 @@ export const PATH_STAR: PixelArt = {
 };
 
 Object.assign(ALL_PIXEL_SPRITES, { PATH_STONE, PATH_STONE_LIT, PATH_ARROW, PATH_STAR });
+
+// ─── Pixel skies for the 3D puzzle scenes (set as scene.background) ─────────
+
+export const SCENE_SKIES = {
+  deepPhotographer: { sky: ["#020617", "#03122b", "#062a45", "#0b3d5c"], stars: 0.5, starColor: "#67e8f9", seed: 41 },
+  quietHunt: { sky: ["#2b2418", "#3d3320", "#5a4a2a", "#7a6236"], hills: "#1f1a10", orb: { x: 0.78, y: 0.55, r: 6, color: "#fbbf24", glow: "#b45309" }, seed: 42 },
+  screenKingdom: { sky: ["#1a0f0a", "#2a1810", "#3d2416", "#52301c"], stars: 0.35, starColor: "#fed7aa", hills: "#140b07", seed: 43 },
+  sentenceDungeon: { sky: ["#1c1717", "#241e1e", "#2c2525"], tiles: { size: 12, line: "#120e0e", alt: "#221c1c" }, seed: 44 },
+  dreamElevator: { sky: ["#05030f", "#120a2a", "#24124a", "#3a1a66"], stars: 1.2, starColor: "#f5d0fe", orb: { x: 0.85, y: 0.18, r: 6, color: "#fdf4ff", glow: "#c084fc" }, seed: 45 },
+  cloudSculptor: { sky: ["#0b1a2e", "#14304d", "#1f4a6e", "#2d6690"], stars: 0.35, starColor: "#e0f2fe", seed: 46 },
+  reverseDungeon: { sky: ["#121510", "#171b14", "#1d2218"], tiles: { size: 12, line: "#0c0e0a", alt: "#1a1f15" }, seed: 47 },
+  inkEcology: { sky: ["#060a0d", "#0b141a", "#102028", "#173040"], stars: 0.45, starColor: "#a7f3d0", hills: "#04080a", seed: 48 },
+  shadowArchitect: { sky: ["#0b0f0a", "#11160f", "#182014", "#22301c"], hills: "#0a0d08", orb: { x: 0.2, y: 0.6, r: 7, color: "#fde68a", glow: "#92400e" }, seed: 49 },
+  constellationShepherd: { sky: ["#02030a", "#070b1c", "#0d1430", "#141d45"], stars: 1.6, starColor: "#fef9c3", hills: "#05070f", seed: 50 },
+  emotionWeather: { sky: ["#1d1a22", "#29242f", "#38303f", "#4a3f52"], stars: 0.25, starColor: "#e9d5ff", hills: "#141118", seed: 51 },
+  museumNight: { sky: ["#0a0c10", "#0e1117", "#12161e"], tiles: { size: 14, line: "#06080b", alt: "#0c0f15" }, seed: 52 },
+  glassPlanet: { sky: ["#03060a", "#081018", "#0d1a24", "#122430"], stars: 1.4, starColor: "#cffafe", orb: { x: 0.82, y: 0.22, r: 9, color: "#5eead4", glow: "#0f766e" }, seed: 53 },
+} satisfies Record<string, BackdropSpec>;

@@ -17,6 +17,8 @@ import {
   type Turn,
 } from "../../lib/games/reverse-dungeon";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
+import PixelSkyBackground from "./PixelSkyBackground";
+import { SCENE_SKIES } from "../../lib/games/pixel-sprites";
 
 const STONE = "/games/reverse-dungeon-stone.jpg";
 const TRAVELER = "/games/reverse-dungeon-traveler.jpg";
@@ -301,7 +303,7 @@ export default function ReverseDungeonScene({
   const frameloop = usePlayFrameloop(!paused);
   return (
     <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }} frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [4.5, 3.4, 4.7], fov: 38 }}>
-      <color attach="background" args={[0.07, 0.08, 0.06]} />
+      <PixelSkyBackground spec={SCENE_SKIES.reverseDungeon} />
       <ambientLight intensity={0.32} />
       <directionalLight
         position={[KEY_LIGHT[0] * 8, KEY_LIGHT[1] * 8, KEY_LIGHT[2] * 8]}

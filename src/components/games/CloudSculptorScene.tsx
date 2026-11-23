@@ -15,6 +15,8 @@ import {
   type Dir,
 } from "../../lib/games/cloud-sculptor";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
+import PixelSkyBackground from "./PixelSkyBackground";
+import { SCENE_SKIES } from "../../lib/games/pixel-sprites";
 
 const VAPOR_MAP = "/games/cloud-sculptor-vapor.jpg";
 const FIXED = 1 / 60;
@@ -184,7 +186,7 @@ export default function CloudSculptorScene({
   const frameloop = usePlayFrameloop(!paused);
   return (
     <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }} frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [CAMERA_POSES[0][0], CAMERA_POSES[0][1], CAMERA_POSES[0][2]], fov: 36 }}>
-      <color attach="background" args={[0.04, 0.06, 0.09]} />
+      <PixelSkyBackground spec={SCENE_SKIES.cloudSculptor} />
       <ambientLight intensity={0.28} />
       <directionalLight position={[KEY_LIGHT[0] * 8, KEY_LIGHT[1] * 8, KEY_LIGHT[2] * 8]} intensity={1.55} castShadow shadow-mapSize={[1024, 1024]} />
       <FixedCamera view={view} />
