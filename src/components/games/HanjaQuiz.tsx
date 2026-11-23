@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import QuizBalloonArena from './QuizBalloonArena'
 import { useRunRecord } from '../../lib/games/use-run-record'
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react'
 import { useArcadePortal } from '../../lib/games/arcade-portal'
@@ -460,21 +461,14 @@ export default function HanjaQuiz({ locale }: Props) {
           <p className="text-sm text-muted-foreground">{locale === 'ko' ? '뜻' : 'Meaning'}</p>
           <p className="text-base font-medium leading-relaxed">{q.meaning}</p>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {q.options.map((opt, idx) => {
-            let cls = 'relative border rounded-xl p-4 text-center font-bold text-lg transition-all w-full'
-            if (selected === null) cls += ' hover:bg-accent hover:border-primary cursor-pointer'
-            else if (opt === q.idiom) cls += ' bg-primary/10 border-primary/50 text-primary'
-            else if (opt === selected) cls += ' bg-destructive/10 border-destructive/50 text-destructive'
-            else cls += ' opacity-50'
-            return (
-              <TiltHanjaButton key={opt} onClick={() => choose(opt)} className={cls}>
-                <span className="absolute top-1.5 left-2 text-xs font-mono text-muted-foreground">{idx + 1}</span>
-                {opt}
-              </TiltHanjaButton>
-            )
-          })}
-        </div>
+        <QuizBalloonArena
+          key={current}
+          options={q.options}
+          answer={q.idiom}
+          selected={selected}
+          onPick={choose}
+          ariaLabel={l.title}
+        />
         {selected && (
           <div className={`rounded-xl p-4 text-sm ${isCorrect ? 'bg-primary/10 border border-primary/30' : 'bg-destructive/10 border border-destructive/30'}`}>
             <p className={`font-semibold mb-1 ${isCorrect ? 'text-primary' : 'text-destructive'}`}>{isCorrect ? l.correct : l.wrong} {!isCorrect && <span className="text-primary">→ {q.idiom}</span>}</p>

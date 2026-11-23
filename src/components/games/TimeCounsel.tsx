@@ -1,400 +1,454 @@
-// The shell stays scrollable. data-game-surface would block the brief on a
-// phone (2026-10-20). The facts are drawn edges, not generated sentences.
-// The filing clock lives on this screen. The engine only counts beats.
+// Counsel Against Time v2 (2026-11-23): a real-time cross-check on a canvas.
+// Evidence is pinned above the witness stand; statements arrive as chips and
+// you tap the one chip that contradicts the evidence before the jury loses
+// patience. Hook (design lens): addictive one-more-trial + "spot the lie"
+// clips. Logic: lib/games/time-counsel.
 
-import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
-import { GameContainer } from "../ui/game/GamePrimitives";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import StageBar from "./StageBar";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
-import type { Locale } from "../../lib/i18n";
-import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
-import { getBest, getRecord, recordBest, recordResult, type BestRecord, type GameRecord } from "../../lib/games/records";
-import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
-import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
-import { createHaptics } from "../../lib/games/haptics";
-import { celebrate } from "../../lib/games/celebration";
-import { TIME_COUNSEL_SPRITES } from "../../lib/games/sprites";
-import { useGameJuicePro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { readMutedPref, writeMutedPref } from "../../lib/games/game-audio";
+import { createHaptics, readHapticsEnabled, type Haptics } from "../../lib/games/haptics";
+import { recordBest, recordResult } from "../../lib/games/records";
+import { finaleLabel, loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
+import { normalizeGameLocale } from "../../lib/games/game-text";
 import {
-  COLUMN_CARDS,
-  COLUMN_FACT,
-  COLUMNS,
-  GAME_ID,
-  LIMIT,
-  begin,
-  createBrief,
-  createRun,
-  file,
-  tick,
-  toggle,
-  type Card,
-  type Column,
-  type Finding,
-  type Run,
+  CATS, GAME_ID, HEARTS, STAGE_COUNT, begin, newRun, object, stars, tick,
+  type Cat, type Outcome, type RunState,
 } from "../../lib/games/time-counsel";
+import type { Locale } from "../../lib/i18n";
 
-const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+type L = "ko" | "en" | "ja" | "zh" | "fr" | "es";
+const MUTE_KEY = "oiyo:time-counsel:muted";
+const fill = (s: string, ...v: (string | number)[]) => v.reduce<string>((acc, x, i) => acc.replace(`{${i}}`, String(x)), s);
 
-interface Copy {
-  title: string;
-  subtitle: string;
-  preparing: string;
-  ready: string;
-  play: string;
-  start: string;
-  file: string;
-  columns: Record<Column, string>;
-  cards: Record<Card, string>;
-  facts: Record<(typeof COLUMN_FACT)[Column], string>;
-  stood: string;
-  rebutted: string;
-  empty: string;
-  seconds: (n: number) => string;
-  won: string;
-  lost: string;
-  again: string;
-  best: (n: number) => string;
-  record: (wins: number, losses: number) => string;
-  date: (key: string) => string;
-  line: (finding: Finding, copy: Copy) => string;
-}
+const ICON: Record<string, string> = {
+  sun: "☀️", rain: "🌧️", snow: "❄️", fog: "🌫️",
+  dawn: "🌅", noon: "🕛", dusk: "🌇", night: "🌙",
+  market: "🛒", bridge: "🌉", harbor: "⚓", station: "🚉",
+  walk: "🚶", bike: "🚲", taxi: "🚕", bus: "🚌",
+};
 
-function line(finding: Finding, copy: Copy): string {
-  if (finding.result === "empty" || !finding.pick) return `${copy.columns[finding.column]} · ${copy.empty}`;
-  if (finding.result === "rebutted") return `${copy.cards[finding.pick]} · ${copy.facts[COLUMN_FACT[finding.column]]} · ${copy.rebutted}`;
-  return `${copy.cards[finding.pick]} · ${copy.stood}`;
-}
+type Words = Record<string, string>;
+const WORDS: Record<L, Words & Record<Cat, string>> = {
+  ko: { weather: "날씨", time: "시간", place: "장소", ride: "이동", sun: "맑음", rain: "비", snow: "눈", fog: "안개", dawn: "새벽", noon: "정오", dusk: "해질녘", night: "밤", market: "시장", bridge: "다리", harbor: "항구", station: "역", walk: "걸어서", bike: "자전거", taxi: "택시", bus: "버스" },
+  en: { weather: "Weather", time: "Time", place: "Place", ride: "Travel", sun: "Sunny", rain: "Rain", snow: "Snow", fog: "Fog", dawn: "Dawn", noon: "Noon", dusk: "Dusk", night: "Night", market: "Market", bridge: "Bridge", harbor: "Harbor", station: "Station", walk: "On foot", bike: "Bike", taxi: "Taxi", bus: "Bus" },
+  ja: { weather: "天気", time: "時間", place: "場所", ride: "移動", sun: "晴れ", rain: "雨", snow: "雪", fog: "霧", dawn: "夜明け", noon: "正午", dusk: "夕暮れ", night: "夜", market: "市場", bridge: "橋", harbor: "港", station: "駅", walk: "徒歩", bike: "自転車", taxi: "タクシー", bus: "バス" },
+  zh: { weather: "天气", time: "时间", place: "地点", ride: "交通", sun: "晴", rain: "雨", snow: "雪", fog: "雾", dawn: "黎明", noon: "中午", dusk: "黄昏", night: "夜晚", market: "市场", bridge: "桥", harbor: "港口", station: "车站", walk: "步行", bike: "自行车", taxi: "出租车", bus: "公交" },
+  fr: { weather: "Météo", time: "Heure", place: "Lieu", ride: "Trajet", sun: "Soleil", rain: "Pluie", snow: "Neige", fog: "Brouillard", dawn: "Aube", noon: "Midi", dusk: "Crépuscule", night: "Nuit", market: "Marché", bridge: "Pont", harbor: "Port", station: "Gare", walk: "À pied", bike: "Vélo", taxi: "Taxi", bus: "Bus" },
+  es: { weather: "Clima", time: "Hora", place: "Lugar", ride: "Traslado", sun: "Sol", rain: "Lluvia", snow: "Nieve", fog: "Niebla", dawn: "Alba", noon: "Mediodía", dusk: "Atardecer", night: "Noche", market: "Mercado", bridge: "Puente", harbor: "Puerto", station: "Estación", walk: "A pie", bike: "Bici", taxi: "Taxi", bus: "Autobús" },
+};
 
-const COPY: Record<Locale, Copy> = {
+const COPY: Record<L, {
+  trial: string; stmt: string; score: string; start: string; next: string; retry: string; won: string; lost: string; hint: string;
+  stages: string; full: string; exitFull: string; mute: string; unmute: string; evidence: string; unknown: string;
+  out: Record<Outcome, string>;
+}> = {
   ko: {
-    title: "변호사 vs 시간",
-    subtitle: "각 사실은 카드 하나로 이어집니다. 가리키지 않은 카드를 고르고, 시간이 다하기 전에 제출하세요.",
-    preparing: "판을 준비하는 중입니다.",
-    ready: "사실의 화살표를 본 뒤 시작하세요.",
-    play: "각 칸에서 화살표가 없는 카드를 고르세요.",
-    start: "시작",
-    file: "제출",
-    columns: { when: "때", where: "곳", who: "사람" },
-    cards: { clock: "시계", bell: "종", bridge: "다리", market: "시장", clerk: "점원", driver: "운전수" },
-    facts: { rain: "비", glare: "빛", roster: "명부" },
-    stood: "남음",
-    rebutted: "반박됨",
-    empty: "비어 있음",
-    seconds: (n) => `${n}초 / ${LIMIT}`,
-    won: "세 칸이 모두 남았습니다.",
-    lost: "제출이 반박되었거나 비어 끝났습니다.",
-    again: "같은 판 다시",
-    best: (n) => `최단 ${n}초`,
-    record: (wins, losses) => `인정 ${wins} · 기각 ${losses}`,
-    date: (key) => `${key} · 한국 표준시`,
-    line,
+    trial: "{0}번째 재판", stmt: "증언 {0} / {1}", score: "점수 {0}", start: "법정 입장", next: "다음 재판", retry: "다시 하기",
+    won: "무죄 판결! 의뢰인을 지켰어요.", lost: "배심원이 등을 돌렸어요.", evidence: "증거", unknown: "모름",
+    hint: "위의 증거판이 실제로 있었던 일이에요. 증인의 말이 도착하면 증거와 다른 칸 하나를 톡 눌러 반박하세요. 맞는 말에는 손대지 말고 흘려보내요. 숫자 키 1~4도 돼요.",
+    stages: "재판 고르기", full: "전체화면", exitFull: "나가기", mute: "소리 끄기", unmute: "소리 켜기",
+    out: { caught: "반박 성공!", passed: "사실이네요", wrong: "기각!", missed: "거짓말이 통과했어요" },
   },
   en: {
-    title: "Counsel Against Time",
-    subtitle: "Each fact is an edge to one card. Pick the card it does not point to, and file before the clock ends.",
-    preparing: "Preparing the round.",
-    ready: "Read the arrows, then start.",
-    play: "In each pair, pick the card with no arrow.",
-    start: "Start",
-    file: "File",
-    columns: { when: "When", where: "Where", who: "Who" },
-    cards: { clock: "Clock", bell: "Bell", bridge: "Bridge", market: "Market", clerk: "Clerk", driver: "Driver" },
-    facts: { rain: "Rain", glare: "Glare", roster: "Roster" },
-    stood: "Stands",
-    rebutted: "Rebutted",
-    empty: "Empty",
-    seconds: (n) => `${n}s / ${LIMIT}`,
-    won: "All three cards stand.",
-    lost: "The brief was rebutted or left empty.",
-    again: "Same brief again",
-    best: (n) => `Best ${n}s`,
-    record: (wins, losses) => `Granted ${wins} · Denied ${losses}`,
-    date: (key) => `${key} · Korea Standard Time`,
-    line,
+    trial: "Trial {0}", stmt: "Statement {0} / {1}", score: "Score {0}", start: "Enter court", next: "Next trial", retry: "Try again",
+    won: "Not guilty! Your client walks free.", lost: "The jury turned against you.", evidence: "Evidence", unknown: "Unknown",
+    hint: "The evidence board above is what really happened. When a statement arrives, tap the one chip that contradicts the evidence. Leave true statements alone and let them pass. Keys 1–4 work too.",
+    stages: "Pick a trial", full: "Fullscreen", exitFull: "Exit", mute: "Mute", unmute: "Sound on",
+    out: { caught: "Contradiction!", passed: "That checks out", wrong: "Overruled!", missed: "A lie slipped by" },
   },
   ja: {
-    title: "弁護士対時間",
-    subtitle: "事実はそれぞれ一枚のカードへつながります。指されていないカードを選び、時間の前に提出してください。",
-    preparing: "盤面を準備しています。",
-    ready: "事実の矢印を見てから始めてください。",
-    play: "各組で、矢印のないカードを選んでください。",
-    start: "開始",
-    file: "提出",
-    columns: { when: "時刻", where: "場所", who: "人物" },
-    cards: { clock: "時計", bell: "鐘", bridge: "橋", market: "市場", clerk: "店員", driver: "運転手" },
-    facts: { rain: "雨", glare: "光", roster: "名簿" },
-    stood: "残る",
-    rebutted: "反駁",
-    empty: "空",
-    seconds: (n) => `${n}秒 / ${LIMIT}`,
-    won: "三つの組がすべて残りました。",
-    lost: "提出は反駁されたか、空のまま終わりました。",
-    again: "同じ盤でもう一度",
-    best: (n) => `最短 ${n}秒`,
-    record: (wins, losses) => `認容 ${wins} · 棄却 ${losses}`,
-    date: (key) => `${key} · 韓国標準時`,
-    line,
+    trial: "{0}番目の裁判", stmt: "証言 {0} / {1}", score: "スコア {0}", start: "法廷に入る", next: "次の裁判", retry: "もう一度",
+    won: "無罪判決！依頼人を守りました。", lost: "陪審員にそっぽを向かれました。", evidence: "証拠", unknown: "不明",
+    hint: "上の証拠ボードが本当にあったことです。証言が届いたら、証拠と食い違うチップを一つタップして反論しましょう。正しい証言には触れずに通します。数字キー1〜4でもOK。",
+    stages: "裁判を選ぶ", full: "全画面", exitFull: "戻る", mute: "ミュート", unmute: "音をオン",
+    out: { caught: "矛盾を指摘！", passed: "事実ですね", wrong: "却下！", missed: "うそが通りました" },
   },
   zh: {
-    title: "律师对时间",
-    subtitle: "每条事实都指向一张牌。选择没有被指向的牌，并在时间结束前提交。",
-    preparing: "正在准备这一局。",
-    ready: "先看事实的箭头，再开始。",
-    play: "每一组里，选没有箭头的牌。",
-    start: "开始",
-    file: "提交",
-    columns: { when: "时间", where: "地点", who: "人物" },
-    cards: { clock: "时钟", bell: "钟", bridge: "桥", market: "市场", clerk: "店员", driver: "司机" },
-    facts: { rain: "雨", glare: "反光", roster: "名册" },
-    stood: "成立",
-    rebutted: "被反驳",
-    empty: "空",
-    seconds: (n) => `${n}秒 / ${LIMIT}`,
-    won: "三组全部成立。",
-    lost: "提交被反驳，或空着结束了。",
-    again: "同一盘再来",
-    best: (n) => `最快 ${n}秒`,
-    record: (wins, losses) => `成立 ${wins} · 驳回 ${losses}`,
-    date: (key) => `${key} · 韩国标准时间`,
-    line,
+    trial: "第{0}场审判", stmt: "证词 {0} / {1}", score: "得分 {0}", start: "进入法庭", next: "下一场审判", retry: "再来一次",
+    won: "无罪！你保护了委托人。", lost: "陪审团不再相信你。", evidence: "证据", unknown: "未知",
+    hint: "上方的证据板是真实发生的事。证词出现后，点一下与证据矛盾的那一格来反驳。真话不要碰，让它过去。数字键1–4也可以。",
+    stages: "选择审判", full: "全屏", exitFull: "退出", mute: "静音", unmute: "开启声音",
+    out: { caught: "找到矛盾！", passed: "属实", wrong: "驳回！", missed: "谎言溜过去了" },
   },
   fr: {
-    title: "Avocat contre le temps",
-    subtitle: "Chaque fait est un lien vers une carte. Choisissez la carte qu'il ne vise pas, et déposez avant la fin du temps.",
-    preparing: "Préparation de la manche.",
-    ready: "Lisez les flèches, puis commencez.",
-    play: "Dans chaque paire, choisissez la carte sans flèche.",
-    start: "Commencer",
-    file: "Déposer",
-    columns: { when: "Moment", where: "Lieu", who: "Personne" },
-    cards: { clock: "Horloge", bell: "Cloche", bridge: "Pont", market: "Marché", clerk: "Employé", driver: "Conducteur" },
-    facts: { rain: "Pluie", glare: "Reflet", roster: "Liste" },
-    stood: "Tient",
-    rebutted: "Réfuté",
-    empty: "Vide",
-    seconds: (n) => `${n} s / ${LIMIT}`,
-    won: "Les trois cartes tiennent.",
-    lost: "Le dossier est réfuté ou resté vide.",
-    again: "Le même dossier",
-    best: (n) => `Meilleur ${n} s`,
-    record: (wins, losses) => `Accordés ${wins} · Refusés ${losses}`,
-    date: (key) => `${key} · heure de Séoul`,
-    line,
+    trial: "Procès {0}", stmt: "Déclaration {0} / {1}", score: "Score {0}", start: "Entrer au tribunal", next: "Procès suivant", retry: "Réessayer",
+    won: "Non coupable ! Votre client est libre.", lost: "Le jury s'est retourné contre vous.", evidence: "Preuves", unknown: "Inconnu",
+    hint: "Le tableau des preuves montre ce qui s'est vraiment passé. Quand une déclaration arrive, touchez la pastille qui contredit les preuves. Laissez passer les déclarations vraies. Les touches 1–4 marchent aussi.",
+    stages: "Choisir un procès", full: "Plein écran", exitFull: "Quitter", mute: "Couper le son", unmute: "Activer le son",
+    out: { caught: "Contradiction !", passed: "C'est exact", wrong: "Rejeté !", missed: "Un mensonge est passé" },
   },
   es: {
-    title: "Abogado contra el tiempo",
-    subtitle: "Cada hecho es un enlace a una carta. Elige la carta que no señala, y presenta antes de que acabe el tiempo.",
-    preparing: "Preparando la ronda.",
-    ready: "Lee las flechas y empieza.",
-    play: "En cada par, elige la carta sin flecha.",
-    start: "Empezar",
-    file: "Presentar",
-    columns: { when: "Momento", where: "Lugar", who: "Persona" },
-    cards: { clock: "Reloj", bell: "Campana", bridge: "Puente", market: "Mercado", clerk: "Dependiente", driver: "Conductor" },
-    facts: { rain: "Lluvia", glare: "Reflejo", roster: "Lista" },
-    stood: "Se sostiene",
-    rebutted: "Rebatida",
-    empty: "Vacío",
-    seconds: (n) => `${n} s / ${LIMIT}`,
-    won: "Las tres cartas se sostienen.",
-    lost: "El escrito fue rebatido o quedó vacío.",
-    again: "El mismo escrito",
-    best: (n) => `Mejor ${n} s`,
-    record: (wins, losses) => `Concedidos ${wins} · Denegados ${losses}`,
-    date: (key) => `${key} · hora de Seúl`,
-    line,
+    trial: "Juicio {0}", stmt: "Declaración {0} / {1}", score: "Puntos {0}", start: "Entrar al tribunal", next: "Siguiente juicio", retry: "Reintentar",
+    won: "¡Inocente! Tu cliente sale libre.", lost: "El jurado se volvió en tu contra.", evidence: "Pruebas", unknown: "Desconocido",
+    hint: "El tablero de pruebas muestra lo que pasó de verdad. Cuando llegue una declaración, toca la ficha que contradice las pruebas. No toques las declaraciones verdaderas y déjalas pasar. Las teclas 1–4 también valen.",
+    stages: "Elegir juicio", full: "Pantalla completa", exitFull: "Salir", mute: "Silenciar", unmute: "Activar sonido",
+    out: { caught: "¡Contradicción!", passed: "Es cierto", wrong: "¡Denegado!", missed: "Se coló una mentira" },
   },
 };
 
-export default function TimeCounsel({ locale }: { locale: Locale }) {
-  const loc = COPY[locale] ? locale : "en";
-  const t = COPY[loc];
-  const reducedMotion = usePrefersReducedMotion();
-  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
-  const { shakeCssVars, addTrauma } = useGameJuicePro();
-  const [dateKey, setDateKey] = useState<string | null>(null);
-  const [run, setRun] = useState<Run | null>(null);
-  const [attempt, setAttempt] = useState(0);
-  const [record, setRecord] = useState<GameRecord | null>(null);
-  const [best, setBest] = useState<BestRecord | null>(null);
+const W = 360;
+const H = 380;
+const DPR = 2;
+const CHIP_W = 80;
+const CHIP_H = 70;
+const CHIP_GAP = 6;
+const BUBBLE_Y = 186;
+const ENTER_S = 0.25;
+
+function boop(ctx: AudioContext | null, freq: number, vol = 0.14, type: OscillatorType = "triangle", len = 0.12) {
+  if (!ctx) return;
+  const when = ctx.currentTime;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, when);
+  o.frequency.exponentialRampToValueAtTime(freq * 0.7, when + len);
+  g.gain.setValueAtTime(vol, when);
+  g.gain.exponentialRampToValueAtTime(0.001, when + len + 0.02);
+  o.connect(g).connect(ctx.destination);
+  o.start(when);
+  o.stop(when + len + 0.04);
+}
+
+/** Left x of chip j for a statement of n chips, given the bubble's slide offset. */
+function chipX(n: number, j: number, offset: number): number {
+  const total = n * CHIP_W + (n - 1) * CHIP_GAP;
+  return (W - total) / 2 + j * (CHIP_W + CHIP_GAP) + offset;
+}
+
+function slideOffset(t: number, travel: number): number {
+  if (t < 0) return W;
+  if (t < ENTER_S) return W * (1 - t / ENTER_S) ** 2;
+  if (t > travel - ENTER_S) return -W * ((t - (travel - ENTER_S)) / ENTER_S) ** 2;
+  return 0;
+}
+
+export default function TimeCounsel({ locale: pageLocale }: { locale?: string }) {
+  const locale = normalizeGameLocale(pageLocale) as L;
+  const c = COPY[locale] ?? COPY.en;
+  const w = WORDS[locale] ?? WORDS.en;
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: locale as Locale });
+  const [run, setRun] = useState<RunState>(() => newRun(0));
+  const [cleared, setCleared] = useState<number[]>([]);
   const [muted, setMuted] = useState(false);
-  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
-  const hapticsRef = useRef(createHaptics());
-  const noted = useRef(new Set<string>());
-  const phase = useRef<Run["phase"] | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const audio = useRef<AudioContext | null>(null);
+  const haptics = useRef<Haptics | null>(null);
+  const runRef = useRef(run);
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
+  const flash = useRef<{ outcome: Outcome; t: number; chip: number; chips: { cat: Cat; val: string }[] } | null>(null);
+  const prevStatus = useRef(run.status);
 
-  const cue = (kind: CoreCue) => {
-    if (muted || reducedMotion) return;
-    try {
-      cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
-      void cuesRef.current.play(kind);
-    } catch {
-      /* audio blocked */
-    }
-  };
-
-  useEffect(() => {
-    const key = kstDateKey();
-    const seed = (dateKeyIndex(key) * 0x9e3779b1) >>> 0;
-    setDateKey(key);
-    setRun(createRun(createBrief(seed)));
-    try {
-      setRecord(getRecord(GAME_ID));
-      setBest(getBest(GAME_ID));
-    } catch { /* storage can be blocked */ }
+  const load = useCallback((i: number) => {
+    const s = newRun(i);
+    runRef.current = s;
+    flash.current = null;
+    setRun(s);
   }, []);
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      const root = containerRef.current;
-      if (!root || !(event.target instanceof Node) || !root.contains(event.target)) return;
-      if (event.key === "f" || event.key === "F") {
-        event.preventDefault();
-        togglePortal();
-      } else if (event.key === "m" || event.key === "M") {
-        event.preventDefault();
-        setMuted((value) => !value);
+    const done = loadClearedStages(GAME_ID, STAGE_COUNT);
+    setCleared(done);
+    load(nextOpenStage(done, STAGE_COUNT));
+    setMuted(readMutedPref(MUTE_KEY));
+    haptics.current = createHaptics({ enabled: readHapticsEnabled() });
+    return () => { void audio.current?.close().catch(() => undefined); };
+  }, [load]);
+
+  useEffect(() => {
+    const prev = prevStatus.current;
+    prevStatus.current = run.status;
+    if (prev === run.status) return;
+    if (run.status === "won") {
+      setCleared(markStageCleared(GAME_ID, run.trial.index, STAGE_COUNT));
+      try { recordResult(GAME_ID, "w"); recordBest(GAME_ID, run.trial.index + 1, "score"); } catch { /* storage blocked */ }
+      haptics.current?.fire("win");
+    } else if (run.status === "lost") {
+      try { recordResult(GAME_ID, "l"); } catch { /* storage blocked */ }
+      haptics.current?.fire("fail");
+    }
+  }, [run.status, run.trial.index]);
+
+  const ensureAudio = () => {
+    if (audio.current) return audio.current;
+    try {
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      audio.current = Ctx ? new Ctx() : null;
+    } catch { audio.current = null; }
+    return audio.current;
+  };
+  const sound = (f: number, v?: number, t?: OscillatorType, l?: number) => { if (!mutedRef.current) boop(audio.current, f, v, t, l); };
+
+  const react = (before: RunState, after: RunState, chip: number) => {
+    const outcome = after.outcomes[after.outcomes.length - 1];
+    if (!outcome || after.outcomes.length === before.outcomes.length) return;
+    const st = before.trial.statements[before.at]!;
+    flash.current = { outcome, t: 0, chip, chips: st.chips };
+    if (outcome === "caught") { sound(660, 0.16, "square", 0.08); setTimeout(() => sound(990, 0.14, "square", 0.1), 80); haptics.current?.fire("success"); }
+    else if (outcome === "passed") sound(440, 0.06, "sine", 0.06);
+    else { sound(120, 0.2, "sawtooth", 0.3); haptics.current?.fire("fail"); }
+  };
+
+  const start = () => {
+    ensureAudio();
+    void audio.current?.resume().catch(() => undefined);
+    const s = begin(runRef.current);
+    runRef.current = s;
+    setRun(s);
+    canvasRef.current?.focus();
+  };
+
+  const objectTo = (j: number) => {
+    const s = runRef.current;
+    const next = object(s, j);
+    if (next === s) return;
+    runRef.current = next;
+    react(s, next, j);
+    setRun(next);
+  };
+  const objectToRef = useRef(objectTo);
+  objectToRef.current = objectTo;
+
+  useEffect(() => {
+    let raf = 0;
+    let last = performance.now();
+    let time = 0;
+    let hudAt = 0;
+    const loop = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      time += dt;
+      let s = runRef.current;
+      if (s.status === "play") {
+        const next = tick(s, dt);
+        if (next.outcomes.length !== s.outcomes.length) { react(s, next, -1); setRun(next); }
+        else if (now - hudAt > 150) { hudAt = now; setRun(next); }
+        s = next;
+        runRef.current = s;
       }
+      if (flash.current) { flash.current.t += dt; if (flash.current.t > 0.9) flash.current = null; }
+
+      const ctx = canvasRef.current?.getContext("2d");
+      if (ctx) {
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        // courtroom wood
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, "#3b2a20");
+        bg.addColorStop(1, "#6b4a32");
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth = 1;
+        for (let y = 0; y < H; y += 18) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y + 4); ctx.stroke(); }
+        // evidence board
+        ctx.fillStyle = "#e8dcc0";
+        ctx.beginPath(); ctx.roundRect(10, 10, W - 20, 112, 10); ctx.fill();
+        ctx.fillStyle = "#5b4636"; ctx.font = "800 12px system-ui"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+        ctx.fillText(`📌 ${c.evidence}`, 20, 28);
+        CATS.forEach((cat, k) => {
+          const x = 18 + k * 82;
+          const val = s.trial.evidence[cat];
+          ctx.fillStyle = val ? "#fffaf0" : "rgba(255,255,255,0.35)";
+          ctx.beginPath(); ctx.roundRect(x, 36, 76, 78, 8); ctx.fill();
+          ctx.strokeStyle = val ? "#8a6d4c" : "rgba(90,70,54,0.35)"; ctx.setLineDash(val ? [] : [4, 3]); ctx.lineWidth = 1.5;
+          ctx.stroke(); ctx.setLineDash([]);
+          ctx.textAlign = "center";
+          ctx.fillStyle = "#7a6450"; ctx.font = "700 10px system-ui";
+          ctx.fillText(w[cat], x + 38, 50);
+          ctx.font = "26px system-ui";
+          ctx.fillText(val ? ICON[val]! : "❔", x + 38, 84);
+          ctx.fillStyle = "#3b2f25"; ctx.font = "700 11px system-ui";
+          ctx.fillText(val ? w[val]! : c.unknown, x + 38, 104);
+        });
+        // witness stand
+        ctx.fillStyle = "#4a3324";
+        ctx.fillRect(0, 330, W, 50);
+        ctx.fillStyle = "#7d5a3c";
+        ctx.fillRect(0, 322, W, 10);
+        const bob = Math.sin(time * 3) * 2;
+        ctx.font = "44px system-ui"; ctx.textAlign = "center";
+        const face = flash.current?.outcome === "caught" ? "😰" : flash.current?.outcome === "missed" ? "😏" : "🧐";
+        ctx.fillText(face, 60, 318 + bob);
+        ctx.fillText("⚖️", W - 50, 315);
+        // statement bubble
+        const st = s.trial.statements[Math.min(s.at, s.trial.statements.length - 1)];
+        if (s.status === "play" && st && s.t >= 0) {
+          const off = slideOffset(s.t, s.trial.travelS);
+          const n = st.chips.length;
+          const x0 = chipX(n, 0, off) - 10;
+          const bw = n * CHIP_W + (n - 1) * CHIP_GAP + 20;
+          ctx.fillStyle = "#fffdf6";
+          ctx.beginPath(); ctx.roundRect(x0, BUBBLE_Y - 12, bw, CHIP_H + 24, 14); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(x0 + 30, BUBBLE_Y + CHIP_H + 12); ctx.lineTo(x0 + 18, BUBBLE_Y + CHIP_H + 34); ctx.lineTo(x0 + 50, BUBBLE_Y + CHIP_H + 12); ctx.fill();
+          st.chips.forEach((ch, j) => {
+            const x = chipX(n, j, off);
+            ctx.fillStyle = "#f1ebe0";
+            ctx.beginPath(); ctx.roundRect(x, BUBBLE_Y, CHIP_W, CHIP_H, 10); ctx.fill();
+            ctx.strokeStyle = "#c9b79c"; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.textAlign = "center";
+            ctx.fillStyle = "#9a8670"; ctx.font = "700 9px system-ui";
+            ctx.fillText(`${j + 1} · ${w[ch.cat]}`, x + CHIP_W / 2, BUBBLE_Y + 13);
+            ctx.font = "24px system-ui";
+            ctx.fillText(ICON[ch.val]!, x + CHIP_W / 2, BUBBLE_Y + 42);
+            ctx.fillStyle = "#2b211a"; ctx.font = "800 11px system-ui";
+            ctx.fillText(w[ch.val]!, x + CHIP_W / 2, BUBBLE_Y + 61);
+          });
+          // jury patience fuse
+          const left = 1 - s.t / s.trial.travelS;
+          ctx.fillStyle = "rgba(0,0,0,0.35)";
+          ctx.beginPath(); ctx.roundRect(30, 140, W - 60, 10, 5); ctx.fill();
+          ctx.fillStyle = left > 0.35 ? "#ffd166" : "#ef476f";
+          ctx.beginPath(); ctx.roundRect(30, 140, Math.max(4, (W - 60) * left), 10, 5); ctx.fill();
+          ctx.font = "16px system-ui"; ctx.fillText("🔥", 30 + (W - 60) * left, 152);
+        }
+        // outcome flash
+        const f = flash.current;
+        if (f) {
+          const k = f.t / 0.9;
+          const good = f.outcome === "caught" || f.outcome === "passed";
+          if (f.outcome === "caught" || f.outcome === "wrong") {
+            const n = f.chips.length;
+            const x = chipX(n, Math.max(0, f.chip), 0);
+            ctx.strokeStyle = f.outcome === "caught" ? `rgba(47,158,68,${1 - k})` : `rgba(224,49,49,${1 - k})`;
+            ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.roundRect(x - k * 8, BUBBLE_Y - k * 8, CHIP_W + k * 16, CHIP_H + k * 16, 12); ctx.stroke();
+          }
+          ctx.save();
+          ctx.translate(W / 2, BUBBLE_Y + 44);
+          ctx.rotate(-0.12);
+          const scale = 1 + (1 - Math.min(1, f.t * 6)) * 0.6;
+          ctx.scale(scale, scale);
+          ctx.globalAlpha = 1 - Math.max(0, k - 0.6) / 0.4;
+          ctx.fillStyle = good ? (f.outcome === "caught" ? "#2f9e44" : "rgba(255,255,255,0.75)") : "#e03131";
+          ctx.font = f.outcome === "passed" ? "700 18px system-ui" : "900 30px system-ui";
+          ctx.textAlign = "center";
+          if (f.outcome !== "passed") { ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 5; ctx.strokeText(c.out[f.outcome], 0, 0); }
+          ctx.fillText(c.out[f.outcome], 0, 0);
+          ctx.restore();
+          ctx.globalAlpha = 1;
+        }
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+      }
+      raf = requestAnimationFrame(loop);
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [containerRef, togglePortal]);
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+    // copy is stable per locale; sim state lives in refs
+  }, [c, w]);
 
-  useEffect(() => {
-    if (run?.phase !== "play") return;
-    const id = window.setInterval(() => {
-      setRun((current) => (current && current.phase === "play" ? tick(current) : current));
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [run?.phase]);
-
-  useEffect(() => {
-    if (!run || !dateKey) return;
-    const previous = phase.current;
-    phase.current = run.phase;
-    if (previous === run.phase) return;
-    if (run.phase !== "won" && run.phase !== "lost") return;
-    const key = `${dateKey}:${attempt}`;
-    if (!noted.current.has(key)) {
-      noted.current.add(key);
-      try {
-        setRecord(recordResult(GAME_ID, run.phase === "won" ? "w" : "l"));
-        if (run.phase === "won") setBest(recordBest(GAME_ID, run.elapsed, "seconds"));
-      } catch { /* best-effort */ }
+  const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const s = runRef.current;
+    if (s.status !== "play" || s.t < 0) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * W;
+    const y = ((e.clientY - r.top) / r.height) * H;
+    const st = s.trial.statements[s.at];
+    if (!st || y < BUBBLE_Y - 14 || y > BUBBLE_Y + CHIP_H + 14) return;
+    const off = slideOffset(s.t, s.trial.travelS);
+    for (let j = 0; j < st.chips.length; j++) {
+      const cx = chipX(st.chips.length, j, off);
+      if (x >= cx - 3 && x <= cx + CHIP_W + 3) { objectTo(j); return; }
     }
-    if (run.phase === "won") {
-      cue("win");
-      hapticsRef.current.fire("win");
-      addTrauma(0.45);
-      if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
-    } else if (run.phase === "lost") {
-      cue("fail");
-      hapticsRef.current.fire("fail");
-      addTrauma(0.65);
-      MobileHapticsPro.error();
-    }
-  }, [run, dateKey, attempt, muted, reducedMotion, addTrauma]);
-
-  const onToggle = (card: Card) => {
-    cue("place");
-    hapticsRef.current.fire("place");
-    MobileHapticsPro.selection();
-    setRun((current) => (current ? toggle(current, card) : current));
   };
 
-  const onFile = () => {
-    cue("tap");
-    hapticsRef.current.fire("tap");
-    MobileHapticsPro.heavy();
-    addTrauma(0.25);
-    setRun((current) => (current ? file(current) : current));
+  const onKey = (e: React.KeyboardEvent) => {
+    if (runRef.current.status === "ready" && (e.key === " " || e.key === "Enter")) { e.preventDefault(); start(); }
   };
 
-  const again = () => {
-    cue("tap");
-    hapticsRef.current.fire("tap");
-    if (!dateKey) return;
-    const seed = (dateKeyIndex(dateKey) * 0x9e3779b1) >>> 0;
-    setAttempt((value) => value + 1);
-    setRun(createRun(createBrief(seed)));
+  // number keys object anywhere on the page while a trial is running
+  useEffect(() => {
+    const onDocKey = (e: KeyboardEvent) => {
+      if (runRef.current.status !== "play") return;
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      const n = Number(e.key);
+      if (n >= 1 && n <= 4) { e.preventDefault(); objectToRef.current(n - 1); }
+    };
+    window.addEventListener("keydown", onDocKey);
+    return () => window.removeEventListener("keydown", onDocKey);
+  }, []);
+
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    writeMutedPref(MUTE_KEY, next);
   };
 
-  const playing = run?.phase === "play";
+  const st = stars(run);
+  const total = run.trial.statements.length;
 
   return (
     <div
       ref={containerRef}
-      style={{
-        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
-        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
-        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
-      } as React.CSSProperties}
-      className={`${isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"} transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)`}
+      data-game="time-counsel"
+      className={isImmersive ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col gap-2 overflow-y-auto overscroll-none bg-background p-3" : "mx-auto w-full max-w-md space-y-2"}
     >
-      <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
-        <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
-          <img src={TIME_COUNSEL_SPRITES.keyart} alt={t.title} className="h-20 w-full object-cover sm:h-44" />
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Badge variant="secondary">{fill(c.trial, run.trial.index + 1)} / {STAGE_COUNT}</Badge>
+        <Badge variant="outline">{fill(c.stmt, Math.min(run.at + 1, total), total)}</Badge>
+        <Badge variant="outline" aria-label={`${run.hearts}/${HEARTS}`}>{"♥".repeat(Math.max(0, run.hearts))}{"♡".repeat(Math.max(0, HEARTS - run.hearts))}</Badge>
+        <Badge variant="outline">{fill(c.score, run.score)}</Badge>
+        <div className="ml-auto flex gap-1">
+          <Button variant="ghost" size="icon" className="size-11" onClick={toggleMute} aria-label={muted ? c.unmute : c.mute}>
+            {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
+          </Button>
+          <Button variant="ghost" size="icon" className="size-11" onClick={togglePortal} aria-label={isImmersive ? c.exitFull : c.full}>
+            {isImmersive ? <Minimize2 className="size-5" /> : <Maximize2 className="size-5" />}
+          </Button>
         </div>
-        <div className="mb-4 flex flex-wrap gap-2">
-          <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
-            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
-          </button>
-          <button type="button" onClick={togglePortal} aria-pressed={isImmersive} aria-label={isImmersive ? portalLabels.exit : portalLabels.enter} title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
-            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-          </button>
-        </div>
-        {!run || !dateKey ? <p className="text-sm text-muted-foreground">{t.preparing}</p> : (
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">{t.date(dateKey)}</p>
-            <p className="text-sm font-bold tabular-nums text-foreground" aria-live="polite">{t.seconds(run.elapsed)}</p>
-            <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
-            <div className="grid grid-cols-3 gap-2">
-              {COLUMNS.map((column) => (
-                <div key={column} className="space-y-2">
-                  <div className="flex flex-col items-center gap-1">
-                    <img src={TIME_COUNSEL_SPRITES[column]} alt="" className="size-7 object-contain drop-shadow-sm" />
-                    <p className="text-center text-sm font-bold text-foreground">{t.columns[column]}</p>
-                  </div>
-                  <p className="text-center text-sm text-muted-foreground">{t.facts[COLUMN_FACT[column]]}</p>
-                  {COLUMN_CARDS[column].map((card) => {
-                    const pointed = run.brief.target[column] === card;
-                    const selected = run.picks[column] === card;
-                    const tone = pointed ? "border-warning bg-warning/15 text-foreground" : "border-border bg-card text-foreground";
-                    return (
-                      <button key={card} type="button" disabled={!playing} onClick={() => onToggle(card)} aria-pressed={selected} className={`${CONTROL} w-full disabled:opacity-40 ${selected ? "ring-2 ring-primary" : ""} ${tone}`}>
-                        {pointed ? `↓ ${t.cards[card]}` : t.cards[card]}
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-            {run.phase === "ready" ? (
-              <button type="button" onClick={() => { cue("tap"); hapticsRef.current.fire("tap"); setRun((current) => (current ? begin(current) : current)); }} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.start}</button>
-            ) : null}
-            {playing ? (
-              <button type="button" onClick={onFile} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.file}</button>
-            ) : null}
-            {run.findings.length > 0 ? (
-              <ul className="space-y-1 text-sm text-foreground">
-                {run.findings.map((finding) => <li key={finding.column}>{t.line(finding, t)}</li>)}
-              </ul>
-            ) : null}
-            {run.phase === "won" || run.phase === "lost" ? (
-              <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
-                {run.phase === "won" && (
-                  <div className="flex justify-center">
-                    <img src={TIME_COUNSEL_SPRITES.trophy} alt="" className="size-14 object-contain animate-bounce drop-shadow-md" />
-                  </div>
-                )}
-                <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
-              </div>
-            ) : null}
-            <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "seconds" ? ` · ${t.best(best.value)}` : ""}</p>
+      </div>
+
+      <div className="relative">
+        <canvas
+          ref={canvasRef}
+          width={W * DPR}
+          height={H * DPR}
+          tabIndex={0}
+          onKeyDown={onKey}
+          onPointerDown={onPointerDown}
+          className="mx-auto block w-full max-w-md touch-none select-none rounded-xl border border-border"
+          aria-label={c.hint}
+        />
+        {run.status === "ready" ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-background/80 p-4 text-center">
+            <p className="text-2xl font-black">{fill(c.trial, run.trial.index + 1)}</p>
+            <Button className="min-h-12 min-w-40" onClick={start}>{c.start}</Button>
           </div>
-        )}
-      </GameContainer>
+        ) : null}
+      </div>
+
+      {run.status === "won" || run.status === "lost" ? (
+        <div className="space-y-2 rounded-lg border border-primary/40 bg-primary/10 p-3 text-center" aria-live="polite">
+          <p className="text-lg font-bold">{run.status === "won" ? c.won : c.lost}</p>
+          {run.status === "won" ? <p className="text-xl text-warning" aria-label={`${st}/3`}>{"★".repeat(st)}{"☆".repeat(3 - st)}</p> : null}
+          <p className="text-sm tabular-nums">{fill(c.score, run.score)}</p>
+          {run.status === "won" ? (
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" className="min-h-12" onClick={() => load(run.trial.index)}><RotateCcw className="size-4" /><span>{c.retry}</span></Button>
+              <Button className="min-h-12" onClick={() => load(run.trial.index >= STAGE_COUNT - 1 ? 0 : run.trial.index + 1)}>
+                {run.trial.index >= STAGE_COUNT - 1 ? finaleLabel(locale) : c.next}
+              </Button>
+            </div>
+          ) : (
+            <Button className="min-h-12 w-full" onClick={() => load(run.trial.index)}><RotateCcw className="size-4" /><span>{c.retry}</span></Button>
+          )}
+        </div>
+      ) : null}
+
+      <p className="text-xs text-muted-foreground">{c.hint}</p>
+
+      <details className="rounded-lg border border-border p-2">
+        <summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">{c.stages}</summary>
+        <div className="pt-2">
+          <StageBar count={STAGE_COUNT} current={run.trial.index} cleared={cleared} locale={locale} onSelect={load} />
+        </div>
+      </details>
     </div>
   );
 }
