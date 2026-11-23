@@ -147,7 +147,7 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
     </script>
   </head>
   <body
-    class="min-h-screen bg-background text-foreground font-serif antialiased text-pretty selection:bg-primary/20 selection:text-primary"
+    class="min-h-screen bg-background text-foreground font-sans antialiased text-pretty selection:bg-primary/20 selection:text-primary"
   >
     <a
       href="#main-content"
@@ -180,7 +180,7 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
           class="flex items-center space-x-2 shrink-0 z-10"
           aria-label="Oiyo home"
         >
-          <span class="font-black text-xl tracking-tighter text-foreground">OIYO</span><span class="text-sm font-semibold lowercase tracking-wide text-primary">game</span>
+          <span class="font-black text-xl tracking-tighter text-foreground">OIYO</span><span aria-hidden="true" class="size-2 rounded-full bg-primary"></span><span class="text-sm font-semibold lowercase tracking-wide text-primary">game</span>
         </a>
 
         <!-- Desktop nav (lg+) -->

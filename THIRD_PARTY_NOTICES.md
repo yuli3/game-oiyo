@@ -13,6 +13,7 @@ are covered by their own license files and `package-lock.json`.
 | Font | Author | License | Source |
 |---|---|---|---|
 | Gowun Batang (`public/fonts/GowunBatang-ks-400.woff2`, 한글 서브셋) | Yanghee Ryu | SIL Open Font License 1.1 | https://fonts.google.com/specimen/Gowun+Batang |
+| Galmuri11 Bold (`public/fonts/Galmuri11-Bold.woff2`, 게임 제목) | Minseo Lee (quiple) | SIL Open Font License 1.1 | https://github.com/quiple/galmuri |
 | Inter (`@fontsource-variable/inter`, `@fontsource/inter`) | Rasmus Andersson | SIL Open Font License 1.1 | https://github.com/rsms/inter |
 | KaTeX fonts (`katex/dist/katex.min.css`) | KaTeX contributors | MIT (font files: SIL OFL 1.1) | https://github.com/KaTeX/KaTeX |
 
