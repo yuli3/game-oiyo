@@ -1,4 +1,5 @@
 ---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import UrbanStrike from "../../components/games/UrbanStrike";
 import GameGuide from "../../components/GameGuide.astro";
@@ -49,7 +50,9 @@ const m = meta[locale] ?? meta.en;
       second lazy boundary behind the Deploy button. The arcade homepage and
       visitors who only read the guide never download the 3D engine.
     */}
-    <UrbanStrike client:visible locale={locale} />
+    <UnityMainShell slug="urban-strike" build="urban-strike-unity" locale={locale} name="Urban Strike" poster="/games/unity-posters/urban-strike.webp">
+      <UrbanStrike client:visible locale={locale} />
+    </UnityMainShell>
     <div class="mx-auto max-w-3xl px-4 mt-8">
       <GameGuide slug="urban-strike" locale={locale} name="Urban Strike" />
     </div>

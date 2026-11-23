@@ -1,0 +1,303 @@
+{
+"AIM": [
+"조준",
+"エイム",
+"APUNTAR",
+"瞄准",
+"VISER"
+],
+"Accuracy": [
+"정확도",
+"精度",
+"Precisión",
+"准确率",
+"Précision"
+],
+"All 20 stages": [
+"전체 20 스테이지",
+"全20ステージ",
+"Las 20 etapas",
+"全部 20 关",
+"Les 20 niveaux"
+],
+"Armor": [
+"방탄",
+"アーマー",
+"Blindaje",
+"护甲",
+"Armure"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Capturing": [
+"점령 중",
+"占領中",
+"Capturando",
+"占领中",
+"Capture"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Click the game to aim with the mouse (Esc frees it)": [
+"게임을 클릭하면 마우스로 조준해요 (Esc로 풀기)",
+"ゲームをクリックするとマウスでエイム（Escで解除）",
+"Haz clic en el juego para apuntar con el ratón (Esc lo libera)",
+"点击游戏即可用鼠标瞄准（Esc 解除）",
+"Cliquez sur le jeu pour viser à la souris (Échap pour libérer)"
+],
+"Click to aim with the mouse. WASD move, click fire, right-click aim, R reload, 1-3 weapons, Shift sprint, Space jump, C crouch.": [
+"클릭하면 마우스로 조준해요. WASD 이동, 클릭 사격, 우클릭 조준, R 재장전, 1-3 무기, Shift 달리기, Space 점프, C 앉기.",
+"クリックでマウスエイム。WASD 移動、クリック 射撃、右クリック エイム、R リロード、1-3 武器、Shift ダッシュ、Space ジャンプ、C しゃがみ。",
+"Haz clic para apuntar con el ratón. WASD mover, clic disparar, clic derecho apuntar, R recargar, 1-3 armas, Shift correr, Espacio saltar, C agacharse.",
+"点击后用鼠标瞄准。WASD 移动，左键射击，右键瞄准，R 换弹，1-3 切枪，Shift 冲刺，空格 跳跃，C 蹲下。",
+"Cliquez pour viser à la souris. ZQSD/WASD bouger, clic tirer, clic droit viser, R recharger, 1-3 armes, Maj sprint, Espace sauter, C s'accroupir."
+],
+"Contested": [
+"교전 중",
+"争奪中",
+"En disputa",
+"争夺中",
+"Contesté"
+],
+"Crouch": [
+"앉기",
+"しゃがむ",
+"Agachar",
+"蹲下",
+"Accroupi"
+],
+"Defeat": [
+"패배",
+"敗北",
+"Derrota",
+"失败",
+"Défaite"
+],
+"Elite bots": [
+"정예 봇",
+"精鋭ボット",
+"Bots de élite",
+"精英机器人",
+"Bots d'élite"
+],
+"FIRE": [
+"사격",
+"射撃",
+"FUEGO",
+"射击",
+"TIR"
+],
+"First to {0}": [
+"{0}점 먼저",
+"{0}点先取",
+"Primero a {0}",
+"先到 {0} 分",
+"Premier à {0}"
+],
+"HP": [
+"체력",
+"HP",
+"Vida",
+"生命",
+"PV"
+],
+"Jump": [
+"점프",
+"ジャンプ",
+"Saltar",
+"跳",
+"Sauter"
+],
+"Left side to move, right side to look, hold FIRE to shoot (drag it to aim).": [
+"왼쪽으로 이동, 오른쪽으로 시점을 돌려요. 사격 버튼을 누른 채 끌면 조준도 돼요.",
+"左側で移動、右側で視点。射撃ボタンを押したままドラッグで照準。",
+"Lado izquierdo para moverte, derecho para mirar; mantén FUEGO para disparar (arrástralo para apuntar).",
+"左侧移动，右侧转视角，按住射击键开火（拖动可瞄准）。",
+"Côté gauche pour bouger, côté droit pour regarder ; maintenez TIR pour tirer (glissez pour viser)."
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Op {0}": [
+"작전 {0}",
+"作戦{0}",
+"Op {0}",
+"行动 {0}",
+"Op {0}"
+],
+"Operation {0}": [
+"작전 {0}",
+"作戦{0}",
+"Operación {0}",
+"行动 {0}",
+"Opération {0}"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Recruit bots": [
+"신병 봇",
+"新兵ボット",
+"Bots novatos",
+"新兵机器人",
+"Bots recrues"
+],
+"Regular bots": [
+"일반 봇",
+"一般ボット",
+"Bots regulares",
+"普通机器人",
+"Bots réguliers"
+],
+"Reload": [
+"재장전",
+"リロード",
+"Recargar",
+"换弹",
+"Recharger"
+],
+"Reloading": [
+"재장전 중",
+"リロード中",
+"Recargando",
+"换弹中",
+"Rechargement"
+],
+"Respawn in {0}": [
+"{0}초 뒤 부활",
+"{0}秒後に復帰",
+"Reapareces en {0}",
+"{0} 秒后复活",
+"Retour dans {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Rejouer"
+],
+"Score": [
+"점수",
+"スコア",
+"Puntos",
+"得分",
+"Score"
+],
+"Six against six in a city block. Hold the centre ring, out-shoot the bots and finish the match ahead.": [
+"도심 한 블록에서 6대 6으로 싸워요. 중앙 링을 지키고 봇을 이겨 앞선 채 경기를 끝내요.",
+"市街地の一区画で6対6。中央のリングを押さえ、ボットを撃ち負かしてリードしたまま試合を終えよう。",
+"Seis contra seis en una manzana. Controla el anillo central, supera a los bots y termina por delante.",
+"城市街区里的六对六。守住中央圆环，击败机器人，领先结束比赛。",
+"Six contre six dans un pâté de maisons. Tenez l'anneau central, battez les bots et finissez en tête."
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Swap": [
+"무기 교체",
+"持ち替え",
+"Cambiar",
+"换枪",
+"Changer"
+],
+"The red team finished ahead.": [
+"레드 팀이 앞선 채 끝났어요.",
+"レッドチームが上回りました。",
+"El equipo rojo terminó por delante.",
+"红队领先结束。",
+"L'équipe rouge a fini devant."
+],
+"Urban Strike 3D": [
+"어반 스트라이크 3D",
+"アーバンストライク 3D",
+"Urban Strike 3D",
+"城市突击 3D",
+"Urban Strike 3D"
+],
+"Veteran bots": [
+"베테랑 봇",
+"ベテランボット",
+"Bots veteranos",
+"老兵机器人",
+"Bots vétérans"
+],
+"Victory!": [
+"승리!",
+"勝利！",
+"¡Victoria!",
+"胜利！",
+"Victoire !"
+],
+"Win the 2-minute team match": [
+"2분 팀 경기에서 이겨요",
+"2分のチーム戦に勝とう",
+"Gana la partida por equipos de 2 minutos",
+"赢下 2 分钟团队赛",
+"Gagnez le match d'équipe de 2 minutes"
+],
+"YOU": [
+"나",
+"あなた",
+"TÚ",
+"你",
+"VOUS"
+],
+"You cleared all 20 stages!": [
+"20 스테이지를 모두 깼어요!",
+"全20ステージをクリア！",
+"¡Superaste las 20 etapas!",
+"你通关了全部 20 关！",
+"Vous avez réussi les 20 niveaux !"
+]
+}

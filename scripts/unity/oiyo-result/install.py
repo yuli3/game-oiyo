@@ -68,6 +68,11 @@ BUILDS = {
     "cyber-track-unity": ("cyber-track", "CyberTrack/Runtime/CyberTrackPlayer.cs", T, "state, score"),
     "trap-stairs-unity": ("trap-stairs", "TrapStairs/Runtime/TrapStairsPlayer.cs", T, "state, score"),
     "night-horde-unity": ("night-horde", "NightHorde/Runtime/NightHordePlayer.cs", T, "state, score"),
+    "pressure-wash-3d-unity": ("pressure-wash-3d", "PressureWash/Runtime/PressureWashPlayer.cs", T, "state, score"),
+    "urban-strike-unity": ("urban-strike", "UrbanStrike/Runtime/UrbanStrikePlayer.cs", T, "state, score"),
+    "iron-tempest-unity": ("iron-tempest", "IronTempest/Runtime/IronTempestPlayer.cs", T, "state, score"),
+    "shadow-stealth-unity": ("shadow-stealth", "ShadowStealth/Runtime/ShadowStealthPlayer.cs", T, "state, score"),
+    "animal-pop-unity": ("animal-pop", "AnimalPop/Runtime/AnimalPopPlayer.cs", T, "state, score"),
 }
 
 MARK = "OiyoResult."

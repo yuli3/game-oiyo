@@ -1,0 +1,261 @@
+{
+"A guard caught you.": [
+"경비병에게 붙잡혔어요.",
+"見張りに捕まりました。",
+"Un guardia te atrapó.",
+"你被守卫抓住了。",
+"Un garde vous a attrapé."
+],
+"All 10 stages": [
+"전체 10 스테이지",
+"全10ステージ",
+"Las 10 etapas",
+"全部 10 关",
+"Les 10 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Caught!": [
+"붙잡혔어요!",
+"捕まった！",
+"¡Atrapado!",
+"被抓了！",
+"Pris !"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Drag anywhere to move. Shadows hide you. Strike guards from behind.": [
+"아무 곳이나 끌어서 움직여요. 그림자 속에서는 들키지 않아요. 경비병은 뒤에서 제압해요.",
+"どこでもドラッグして移動。影の中は見つかりません。見張りは背後から倒します。",
+"Arrastra en cualquier parte para moverte. Las sombras te ocultan. Golpea a los guardias por la espalda.",
+"在任意位置拖动来移动。阴影能隐藏你。从背后击倒守卫。",
+"Glissez n'importe où pour bouger. Les ombres vous cachent. Frappez les gardes de dos."
+],
+"East gate": [
+"동문",
+"東門",
+"Puerta este",
+"东门",
+"Porte est"
+],
+"Escape to the boat": [
+"배로 탈출해요",
+"舟まで脱出",
+"Escapa al bote",
+"逃回小船",
+"Fuyez vers la barque"
+],
+"Hidden": [
+"숨음",
+"潜伏中",
+"Oculto",
+"隐身",
+"Caché"
+],
+"Keys: arrows/WASD, Space shuriken, E smoke, Q strike": [
+"키: 방향키/WASD, Space 수리검, E 연막, Q 제압",
+"キー: 矢印/WASD、Space 手裏剣、E 煙玉、Q 当て身",
+"Teclas: flechas/WASD, Espacio shuriken, E humo, Q golpe",
+"按键：方向键/WASD，空格 手里剑，E 烟雾，Q 击倒",
+"Touches : flèches/ZQSD, Espace shuriken, E fumée, Q frappe"
+],
+"Mission complete!": [
+"임무 완료!",
+"任務完了！",
+"¡Misión cumplida!",
+"任务完成！",
+"Mission accomplie !"
+],
+"Mission {0}": [
+"임무 {0}",
+"任務{0}",
+"Misión {0}",
+"任务 {0}",
+"Mission {0}"
+],
+"Moat gate": [
+"해자 문",
+"堀の門",
+"Puerta del foso",
+"护城河门",
+"Porte des douves"
+],
+"Never chased": [
+"한 번도 쫓기지 않음",
+"一度も追われず",
+"Nunca perseguido",
+"从未被追",
+"Jamais poursuivi"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"North gate": [
+"북문",
+"北門",
+"Puerta norte",
+"北门",
+"Porte nord"
+],
+"Par {0}": [
+"기준 {0}",
+"目標 {0}",
+"Par {0}",
+"标准 {0}",
+"Par {0}"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Rejouer"
+],
+"Score": [
+"점수",
+"スコア",
+"Puntos",
+"得分",
+"Score"
+],
+"Scroll taken! Back to the boat.": [
+"두루마리 확보! 배로 돌아가요.",
+"巻物を奪った！舟へ戻れ。",
+"¡Pergamino robado! Vuelve al bote.",
+"卷轴到手！回到小船。",
+"Rouleau volé ! Retour à la barque."
+],
+"Shadow Stealth 3D": [
+"시노비 잠입 3D",
+"忍び潜入 3D",
+"Sigilo en las Sombras 3D",
+"影之潜入 3D",
+"Infiltration Shinobi 3D"
+],
+"Slip past the keep's guards, steal the secret scroll and get back to your boat.": [
+"성의 경비병을 피해 비밀 두루마리를 훔치고 배로 돌아와요.",
+"城の見張りをすり抜け、秘伝の巻物を盗んで舟へ戻ります。",
+"Esquiva a los guardias del castillo, roba el pergamino secreto y vuelve a tu bote.",
+"避开城中守卫，偷走秘密卷轴，回到你的小船。",
+"Passez les gardes du donjon, volez le rouleau secret et regagnez votre barque."
+],
+"Spotted!": [
+"들켰어요!",
+"見つかった！",
+"¡Descubierto!",
+"被发现了！",
+"Repéré !"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Steal the scroll": [
+"두루마리를 훔쳐요",
+"巻物を盗め",
+"Roba el pergamino",
+"偷走卷轴",
+"Volez le rouleau"
+],
+"Steal the scroll and escape unseen": [
+"들키지 않고 두루마리를 훔쳐 탈출해요",
+"見つからずに巻物を盗んで脱出",
+"Roba el pergamino y escapa sin ser visto",
+"神不知鬼不觉地偷走卷轴并逃脱",
+"Volez le rouleau et fuyez sans être vu"
+],
+"Strike": [
+"제압",
+"当て身",
+"Golpe",
+"击倒",
+"Frappe"
+],
+"Takedown!": [
+"제압 성공!",
+"制圧！",
+"¡Derribado!",
+"击倒！",
+"Neutralisé !"
+],
+"Time": [
+"시간",
+"時間",
+"Tiempo",
+"时间",
+"Temps"
+],
+"West gate": [
+"서문",
+"西門",
+"Puerta oeste",
+"西门",
+"Porte ouest"
+],
+"You cleared all 10 stages!": [
+"10 스테이지를 모두 깼어요!",
+"全10ステージをクリア！",
+"¡Superaste las 10 etapas!",
+"你通关了全部 10 关！",
+"Vous avez réussi les 10 niveaux !"
+],
+"You were chased": [
+"추격당함",
+"追われた",
+"Te persiguieron",
+"被追过",
+"Vous avez été poursuivi"
+]
+}
