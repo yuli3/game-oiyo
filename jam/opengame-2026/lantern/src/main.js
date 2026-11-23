@@ -776,7 +776,7 @@ function updatePlayer(dt) {
   const lr = lightRadius();
   lanternLight.position.set(player.x + Math.sin(aimA) * 0.6, 2.2, player.z + Math.cos(aimA) * 0.6);
   lanternLight.distance = lr * 2.1;
-  lanternLight.intensity = 9 + Math.sin(stageTime * 17) * 1 + Math.sin(stageTime * 5.3) * 1;
+  lanternLight.intensity = 4 + Math.sin(stageTime * 17) * 0.5 + Math.sin(stageTime * 5.3) * 0.5;
 }
 
 function updateLanterns(dt) {
@@ -1116,6 +1116,9 @@ window.__inklight = {
   get enemies() { return enemies; },
   get boss() { return boss; },
   get lanterns() { return lanterns; },
+  get gate() { return gate; },
+  clear() { stageCleared(); },
+  die() { gameOver(false); },
   start: startRun,
   jump(stage) { if (!run) startRun(); run.stage = stage; player.light = run.stats.maxLight; startStage(stage); },
   lightAll() { for (const l of lanterns) if (!l.lit) lightLantern(l); },

@@ -211,13 +211,44 @@ function roofTexture() {
   const g = cv.getContext('2d');
   g.fillStyle = '#ffffff'; g.fillRect(0, 0, 64, 64);
   // rows of curved giwa tiles: dark seams every 8px
-  for (let x = 0; x < 64; x += 8) { g.fillStyle = '#6d6d6d'; g.fillRect(x, 0, 2, 64); g.fillStyle = '#d8d8d8'; g.fillRect(x + 3, 0, 2, 64); }
+  for (let x = 0; x < 64; x += 8) { g.fillStyle = '#4a4a4a'; g.fillRect(x, 0, 3, 64); g.fillStyle = '#e8e8e8'; g.fillRect(x + 4, 0, 2, 64); }
   for (let y = 0; y < 64; y += 16) { g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(0, y, 64, 2); }
   roofTex = new THREE.CanvasTexture(cv);
   roofTex.wrapS = roofTex.wrapT = THREE.RepeatWrapping;
   roofTex.repeat.set(0.9, 0.9);
   roofTex.colorSpace = THREE.SRGBColorSpace;
   return roofTex;
+}
+
+let strawTex = null;
+function strawTexture() {
+  if (strawTex) return strawTex;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 64;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, 64, 64);
+  for (let n = 0; n < 220; n++) { g.strokeStyle = `rgba(90,70,30,${0.1 + Math.random() * 0.25})`; const x = Math.random() * 64, y = Math.random() * 64; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 1, y + 6 + Math.random() * 6); g.stroke(); }
+  // rope net that ties the thatch down
+  g.strokeStyle = 'rgba(70,50,20,0.55)'; g.lineWidth = 1.5;
+  for (let x = 0; x < 64; x += 16) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 64); g.stroke(); }
+  strawTex = new THREE.CanvasTexture(cv);
+  strawTex.wrapS = strawTex.wrapT = THREE.RepeatWrapping;
+  strawTex.repeat.set(3, 1);
+  strawTex.colorSpace = THREE.SRGBColorSpace;
+  return strawTex;
+}
+
+let awnTex = null;
+function awningTexture() {
+  if (awnTex) return awnTex;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 32;
+  const g = cv.getContext('2d');
+  const cols = ['#c8322a', '#f2e6cc', '#2f5fb3', '#f2e6cc'];
+  for (let x = 0; x < 32; x += 4) { g.fillStyle = cols[(x / 4) % 4]; g.fillRect(x, 0, 4, 32); }
+  awnTex = new THREE.CanvasTexture(cv);
+  awnTex.colorSpace = THREE.SRGBColorSpace;
+  return awnTex;
 }
 
 export function buildLevelMeshes(level) {
@@ -249,35 +280,75 @@ export function buildLevelMeshes(level) {
   const color = new THREE.Color();
   const yAxis = new THREE.Vector3(0, 1, 0);
 
-  // houses: stone base, plaster body, wooden posts, curved tile roof
+  // houses: stone base, plaster body, wooden posts, and a roof whose style
+  // depends on the district: thatched choga in the village, tiled giwa with
+  // striped awnings in the market, painted dancheong eaves in the palace.
   const nH = cells.house.length;
   const baseM = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: 0x9a948a }), nH);
   const bodyM = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: 0xffffff }), nH);
   const postM = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: d.beam }), nH * 4);
+  const bandM = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: 0xffffff }), nH);
   const roofM = new THREE.InstancedMesh(hanokRoofGeometry(CELL * 1.36, 1.25, CELL * 1.04), new THREE.MeshLambertMaterial({ color: 0xffffff, map: roofTexture() }), nH);
-  const ridgeM = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: 0x2a2f36 }), nH);
-  let k = 0, kp = 0;
-  const houseList = cells.house;
-  for (const [i, j] of houseList) {
+  const ridgeM = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: 0xe8e2d6 }), nH);
+  const chogaM = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshLambertMaterial({ color: 0xffffff, map: strawTexture() }), nH);
+  const awnM = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: 0xffffff, map: awningTexture() }), nH);
+  const jarM = new THREE.InstancedMesh(new THREE.SphereGeometry(0.32, 9, 7), new THREE.MeshLambertMaterial({ color: 0x5a3a26 }), nH * 3);
+  let k = 0, kp = 0, kr = 0, kc = 0, ka = 0, kj = 0;
+  const style = level.stage <= 4 ? 'village' : level.stage <= 8 ? 'market' : 'palace';
+  for (const [i, j] of cells.house) {
     const p = cellToWorld(level, i, j);
-    const isBorder = level.grid[level.idx(i, j)] === BORDER;
-    const hBody = isBorder ? 2.2 : 1.6 + rng() * 0.5;
+    const choga = style === 'village' && rng() < 0.55;
+    const hBody = choga ? 1.3 + rng() * 0.3 : style === 'palace' ? 1.9 + rng() * 0.5 : 1.6 + rng() * 0.5;
     const horiz = (!isBlocked(level, i, j - 1) || !isBlocked(level, i, j + 1)) ? true : (isBlocked(level, i - 1, j) && isBlocked(level, i + 1, j));
     const rot = horiz ? 0 : Math.PI / 2;
     q.setFromAxisAngle(yAxis, rot);
     m4.compose(v.set(p.x, 0.2, p.z), q, sc.set(CELL * 0.96, 0.4, CELL * 0.96)); baseM.setMatrixAt(k, m4);
-    m4.compose(v.set(p.x, 0.4 + hBody / 2, p.z), q, sc.set(CELL * 0.86, hBody, CELL * 0.86)); bodyM.setMatrixAt(k, m4);
-    bodyM.setColorAt(k, color.set(d.wall).multiplyScalar(0.92 + rng() * 0.1));
+    const bw = choga ? 0.74 : 0.86;
+    m4.compose(v.set(p.x, 0.4 + hBody / 2, p.z), q, sc.set(CELL * bw, hBody, CELL * bw)); bodyM.setMatrixAt(k, m4);
+    bodyM.setColorAt(k, color.set(choga ? 0xd9c7a2 : d.wall).multiplyScalar(0.92 + rng() * 0.1));
     for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-      m4.compose(v.set(p.x + sx * CELL * 0.43, 0.4 + hBody / 2, p.z + sz * CELL * 0.43), q, sc.set(0.22, hBody, 0.22)); postM.setMatrixAt(kp++, m4);
+      m4.compose(v.set(p.x + sx * CELL * bw / 2, 0.4 + hBody / 2, p.z + sz * CELL * bw / 2), q, sc.set(0.2, hBody, 0.2)); postM.setMatrixAt(kp++, m4);
     }
+    // painted band under the eaves (green dancheong in the palace, wood elsewhere)
+    m4.compose(v.set(p.x, 0.4 + hBody - 0.12, p.z), q, sc.set(CELL * (bw + 0.02), 0.24, CELL * (bw + 0.02))); bandM.setMatrixAt(k, m4);
+    bandM.setColorAt(k, color.set(style === 'palace' ? 0x1f8f6f : d.beam));
     const ry = 0.4 + hBody;
-    m4.compose(v.set(p.x, ry, p.z), new THREE.Quaternion().setFromAxisAngle(yAxis, rot + Math.PI / 2), sc.set(1, 1, 1)); roofM.setMatrixAt(k, m4);
-    roofM.setColorAt(k, color.set(d.roof).multiplyScalar(0.9 + rng() * 0.2));
-    m4.compose(v.set(p.x, ry + 1.25, p.z), q, sc.set(horiz ? CELL * 1.05 : 0.22, 0.2, horiz ? 0.22 : CELL * 1.05)); ridgeM.setMatrixAt(k, m4);
+    if (choga) {
+      m4.compose(v.set(p.x, ry - 0.1, p.z), q, sc.set(CELL * 0.62, 1.05 + rng() * 0.2, CELL * 0.62)); chogaM.setMatrixAt(kc, m4);
+      chogaM.setColorAt(kc++, color.set(0xd8b46a).multiplyScalar(0.88 + rng() * 0.2));
+    } else {
+      m4.compose(v.set(p.x, ry, p.z), new THREE.Quaternion().setFromAxisAngle(yAxis, rot + Math.PI / 2), sc.set(1, style === 'palace' ? 1.25 : 1, 1)); roofM.setMatrixAt(kr, m4);
+      roofM.setColorAt(kr, color.set(d.roof).multiplyScalar(1.5 + rng() * 0.3));
+      const rh = style === 'palace' ? 1.56 : 1.25;
+      m4.compose(v.set(p.x, ry + rh, p.z), q, sc.set(horiz ? CELL * 1.05 : 0.26, 0.24, horiz ? 0.26 : CELL * 1.05)); ridgeM.setMatrixAt(kr, m4);
+      kr++;
+    }
+    // market stalls: a striped awning over the street side
+    if (style === 'market') {
+      for (const [di, dj] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        if (isBlocked(level, i + di, j + dj) || rng() < 0.35) continue;
+        const ax = p.x + di * CELL * 0.62, az = p.z + dj * CELL * 0.62;
+        const aq = new THREE.Quaternion().setFromEuler(new THREE.Euler(dj * 0.35, 0, -di * 0.35));
+        m4.compose(v.set(ax, 1.5, az), aq, sc.set(di ? 0.9 : CELL * 0.8, 0.06, dj ? 0.9 : CELL * 0.8)); awnM.setMatrixAt(ka, m4);
+        awnM.setColorAt(ka++, color.set(rng() < 0.5 ? 0xffffff : 0xffe6b0));
+        break;
+      }
+    }
+    // jangdokdae: clusters of onggi jars beside village houses
+    if (style !== 'palace' && rng() < 0.35) {
+      for (const [di, dj] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        if (isBlocked(level, i + di, j + dj)) continue;
+        for (let n = 0; n < 3; n++) {
+          const jx = p.x + di * CELL * 0.62 + (dj ? (n - 1) * 0.6 : 0), jz = p.z + dj * CELL * 0.62 + (di ? (n - 1) * 0.6 : 0);
+          m4.compose(v.set(jx, 0.32, jz), q.identity(), sc.set(1, 1.15 - n * 0.12, 1)); jarM.setMatrixAt(kj++, m4);
+        }
+        break;
+      }
+    }
     k++;
   }
-  for (const im of [baseM, bodyM, postM, roofM, ridgeM]) { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; group.add(im); }
+  roofM.count = kr; ridgeM.count = kr; chogaM.count = kc; awnM.count = ka; jarM.count = kj;
+  for (const im of [baseM, bodyM, postM, bandM, roofM, ridgeM, chogaM, awnM, jarM]) { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; group.add(im); }
 
   // low stone walls with tile caps
   const wallCells = cells.wall;
@@ -303,7 +374,9 @@ export function buildLevelMeshes(level) {
   // the district is ringed by a dark pine forest
   for (const [i, j] of cells.border) {
     const p = cellToWorld(level, i, j);
-    for (let t = 0; t < 3; t++) treeSpots.push({ x: p.x + (rng() - 0.5) * CELL * 0.9, z: p.z + (rng() - 0.5) * CELL * 0.9, s: 1.1 + rng() * 0.6, persimmon: false });
+    // the camera looks north, so the southern edge gets low shrubs that never hide the player
+    const south = j >= N - 2;
+    for (let t = 0; t < (south ? 2 : 3); t++) treeSpots.push({ x: p.x + (rng() - 0.5) * CELL * 0.9, z: p.z + (rng() - 0.5) * CELL * 0.9, s: south ? 0.45 + rng() * 0.15 : 1.1 + rng() * 0.6, persimmon: false });
   }
   for (const [i, j] of cells.trees) {
     const p = cellToWorld(level, i, j);
