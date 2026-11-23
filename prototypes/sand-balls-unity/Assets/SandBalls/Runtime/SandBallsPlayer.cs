@@ -159,10 +159,11 @@ public class SandBallsPlayer : MonoBehaviour
     private GameState state = GameState.Playing;
     private int currentStageIdx = 0;
     private bool showStageSelect = false;
+    private Vector2 stageSelectScroll;
     private float cameraTrauma = 0f;
     private float carveSoundCooldown = 0f;
 
-    // 12 Mandatory Stages (User Rule: Minimum 10 stages accessible)
+    // 30 stages: 1-12 hand-made, 13-30 from AppendLateStages
     private StageDef[] stages;
 
     void Awake()
@@ -544,6 +545,107 @@ public class SandBallsPlayer : MonoBehaviour
                 }
             }
         };
+        stages = AppendLateStages(stages);
+    }
+
+    // Stages 13-30 continue from stage 12 (220 quota, 40 + 160 balls, one x3 gate):
+    // quota +5 per stage (225 -> 310), balls 200 -> 238 so the gates must carry the rest,
+    // spinners speed up 72 -> 106 deg/s. Layouts cycle bumper field / twin mills / gauntlet /
+    // split gates; 15, 20, 25, 30 are boss mills with three spinners guarding a x3 gate.
+    StageDef[] AppendLateStages(StageDef[] early)
+    {
+        var names = new LocalizedText[] {
+            new LocalizedText("호박빛 수문", "Amber Sluice", "琥珀の水門", "Compuerta Ámbar"),
+            new LocalizedText("조약돌 계단", "Pebble Stairway", "小石の階段", "Escalera de Guijarros"),
+            new LocalizedText("사구 분쇄 방앗간 [보스]", "Dune Crusher Mill [BOSS]", "砂丘粉砕ミル [ボス]", "Molino Triturador [JEFE]"),
+            new LocalizedText("구리 활강로", "Copper Chute", "銅のシュート", "Tobogán de Cobre"),
+            new LocalizedText("회오리 분지", "Whirlwind Basin", "つむじ風の盆地", "Cuenca del Remolino"),
+            new LocalizedText("소금 평원 릴레이", "Salt Flat Relay", "塩原リレー", "Relevo del Salar"),
+            new LocalizedText("황토 계단밭", "Ochre Terraces", "黄土の段々畑", "Terrazas Ocre"),
+            new LocalizedText("쌍둥이 회전 채석장 [보스]", "Twin Rotor Quarry [BOSS]", "双子ローター採石場 [ボス]", "Cantera Doble Rotor [JEFE]"),
+            new LocalizedText("유리 모래 가마", "Glass Sand Kiln", "ガラス砂の窯", "Horno de Arena Vítrea"),
+            new LocalizedText("신기루 건널목", "Mirage Crossing", "蜃気楼の渡り", "Cruce del Espejismo"),
+            new LocalizedText("현무암 범퍼 구덩이", "Basalt Bumper Pit", "玄武岩バンパーの穴", "Foso de Basalto"),
+            new LocalizedText("노을 방수로", "Sunset Spillway", "夕焼けの放水路", "Aliviadero del Ocaso"),
+            new LocalizedText("모래폭풍 엔진 [보스]", "Sandstorm Engine [BOSS]", "砂嵐エンジン [ボス]", "Motor de Tormenta [JEFE]"),
+            new LocalizedText("화석 회랑", "Fossil Gallery", "化石の回廊", "Galería Fósil"),
+            new LocalizedText("모래시계 갱도", "Hourglass Shaft", "砂時計の坑道", "Pozo del Reloj de Arena"),
+            new LocalizedText("석영 폭포", "Quartz Cascade", "石英の滝", "Cascada de Cuarzo"),
+            new LocalizedText("깊은 사구 급행로", "Deep Dune Express", "深い砂丘の急行路", "Expreso de las Dunas"),
+            new LocalizedText("사막 군주의 대운반 [최종]", "Desert Sovereign Haul [FINAL]", "砂漠の君主の大運搬 [最終]", "Gran Carga del Soberano [FINAL]")
+        };
+        var briefs = new LocalizedText[] {
+            new LocalizedText("범퍼가 구체 무리를 흩어 놓아요. 금색 x3 게이트까지 곧게 떨어지는 길을 파세요.", "Bumpers scatter the herd. Dig a straight drop into the gold x3 gate.", "バンパーが球の群れを散らす。金色のx3ゲートへまっすぐ落ちる道を掘ろう。", "Los rebotadores dispersan la manada. Cava una caída recta hacia la puerta dorada x3."),
+            new LocalizedText("두 물레방아가 양쪽 길을 쓸어요. 흐름을 나눠 x2 게이트 두 개를 모두 통과시키세요.", "Two mills sweep both lanes. Split the flow through both x2 gates.", "2基の水車が両側の道を払う。流れを分けて2つのx2ゲートを通そう。", "Dos molinos barren ambos carriles. Divide el flujo por las dos puertas x2."),
+            new LocalizedText("가운데 회전 막대와 범퍼 사이로 길을 내어 x3 게이트에 모으세요.", "Thread a path between the centre bar and the bumpers to reach the x3 gate.", "中央の回転バーとバンパーの間に道を通し、x3ゲートへ集めよう。", "Abre un camino entre la barra central y los rebotadores hasta la puerta x3."),
+            new LocalizedText("범퍼가 지키는 x2 게이트 두 개. 잠든 무리를 양쪽에서 모두 깨우세요.", "Bumpers guard two x2 gates. Wake the sleeping herds on both sides.", "バンパーが守る2つのx2ゲート。両側の眠る群れを全部起こそう。", "Los rebotadores protegen dos puertas x2. Despierta las manadas de ambos lados."),
+            new LocalizedText("회전 막대 세 개가 금색 x3 게이트를 지켜요. 모든 회색 무리를 깨워 트럭을 채우세요!", "Three spinning bars guard the gold x3 gate. Wake every grey herd to fill the truck!", "3本の回転バーが金色のx3ゲートを守る。灰色の群れを全部起こしてトラックを満たそう！", "¡Tres barras giratorias protegen la puerta dorada x3! Despierta a todas las manadas grises.")
+        };
+        var list = new List<StageDef>(early);
+        for (int n = 13; n <= 30; n++)
+        {
+            int k = n - 13;
+            bool boss = n % 5 == 0;
+            int layout = boss ? 4 : (k - (k + 2) / 5) % 4; // count only non-boss stages in the cycle
+            float spin = 72f + 2f * k;
+            float side = (k % 2 == 0) ? 1f : -1f; // mirror alternate stages
+            var st = new StageDef
+            {
+                stageNum = n,
+                title = names[k],
+                briefing = briefs[layout],
+                truckQuota = 225 + 5 * k,
+                initialColoredBalls = 40 + k / 4,
+                gates = new List<MultiplierGate>(),
+                bumpers = new List<BumperPeg>(),
+                spinners = new List<RotatingObstacle>()
+            };
+            int dormant = 160 + 2 * k;
+            switch (layout)
+            {
+                case 0: // bumper field over a wide x3 gate
+                    st.dormantClusters = new List<Vector2> { new Vector2(-2.3f, 2.3f), new Vector2(2.3f, 2.3f), new Vector2(-1.4f, 0.4f), new Vector2(1.4f, 0.4f) };
+                    st.gates.Add(new MultiplierGate { pos = new Vector2(0f, -3.1f), size = new Vector2(3.2f, 0.45f), multiplier = 3 });
+                    st.bumpers.Add(new BumperPeg { pos = new Vector2(-2.4f * side, -0.9f), radius = 0.5f });
+                    st.bumpers.Add(new BumperPeg { pos = new Vector2(0f, -1.3f), radius = 0.45f });
+                    st.bumpers.Add(new BumperPeg { pos = new Vector2(2.4f * side, -1.8f), radius = 0.5f });
+                    if (k >= 6) st.bumpers.Add(new BumperPeg { pos = new Vector2(-1.2f * side, -2.2f), radius = 0.4f });
+                    break;
+                case 1: // twin mills over twin x2 gates
+                    st.dormantClusters = new List<Vector2> { new Vector2(-2.2f, 2.2f), new Vector2(2.2f, 2.2f), new Vector2(0f, 1.0f), new Vector2(-2.0f, -0.6f), new Vector2(2.0f, -0.6f) };
+                    st.gates.Add(new MultiplierGate { pos = new Vector2(-1.9f, -2.7f), size = new Vector2(1.9f, 0.4f), multiplier = 2 });
+                    st.gates.Add(new MultiplierGate { pos = new Vector2(1.9f, -2.7f), size = new Vector2(1.9f, 0.4f), multiplier = 2 });
+                    st.spinners.Add(new RotatingObstacle { center = new Vector2(-1.7f, -1.6f), length = 1.9f, speed = -spin });
+                    st.spinners.Add(new RotatingObstacle { center = new Vector2(1.7f, -1.6f), length = 1.9f, speed = spin });
+                    break;
+                case 2: // centre bar plus bumpers, x3 gate
+                    st.dormantClusters = new List<Vector2> { new Vector2(-2.4f, 2.4f), new Vector2(2.4f, 2.4f), new Vector2(-2.2f, -0.3f), new Vector2(2.2f, -0.3f) };
+                    st.gates.Add(new MultiplierGate { pos = new Vector2(0f, -3.2f), size = new Vector2(3.0f, 0.45f), multiplier = 3 });
+                    st.spinners.Add(new RotatingObstacle { center = new Vector2(0f, 0.9f), length = 2.5f, speed = spin * side });
+                    st.bumpers.Add(new BumperPeg { pos = new Vector2(-1.5f, -1.6f), radius = 0.5f });
+                    st.bumpers.Add(new BumperPeg { pos = new Vector2(1.5f, -1.6f), radius = 0.5f });
+                    break;
+                case 3: // split x2 gates guarded by bumpers
+                    st.dormantClusters = new List<Vector2> { new Vector2(-2.3f, 1.8f), new Vector2(2.3f, 1.8f), new Vector2(0f, 2.6f), new Vector2(0f, 0.0f) };
+                    st.gates.Add(new MultiplierGate { pos = new Vector2(-2.1f, -2.4f), size = new Vector2(1.8f, 0.4f), multiplier = 2 });
+                    st.gates.Add(new MultiplierGate { pos = new Vector2(2.1f, -2.4f), size = new Vector2(1.8f, 0.4f), multiplier = 2 });
+                    st.bumpers.Add(new BumperPeg { pos = new Vector2(-1.0f, -1.2f), radius = 0.5f });
+                    st.bumpers.Add(new BumperPeg { pos = new Vector2(1.0f, -1.2f), radius = 0.5f });
+                    st.bumpers.Add(new BumperPeg { pos = new Vector2(0f, -3.2f), radius = 0.45f });
+                    break;
+                default: // boss mill: three bars over a x3 gate
+                    st.dormantClusters = new List<Vector2> { new Vector2(-2.5f, 2.5f), new Vector2(2.5f, 2.5f), new Vector2(0f, 2.0f), new Vector2(-2.3f, -0.2f), new Vector2(2.3f, -0.2f) };
+                    st.gates.Add(new MultiplierGate { pos = new Vector2(0f, -3.2f), size = new Vector2(3.4f, 0.5f), multiplier = 3 });
+                    st.spinners.Add(new RotatingObstacle { center = new Vector2(0f, 0.6f), length = 2.4f, speed = spin });
+                    st.spinners.Add(new RotatingObstacle { center = new Vector2(-1.9f, -1.7f), length = 1.7f, speed = -spin });
+                    st.spinners.Add(new RotatingObstacle { center = new Vector2(1.9f, -1.7f), length = 1.7f, speed = spin });
+                    break;
+            }
+            // dormant balls split evenly per cluster, so round the total to a multiple
+            st.initialDormantBalls = dormant - dormant % st.dormantClusters.Count;
+            list.Add(st);
+        }
+        return list.ToArray();
     }
 
     public void LoadStage(int idx)
@@ -1006,7 +1108,7 @@ public class SandBallsPlayer : MonoBehaviour
 
         // Stage Title & Cargo Progress
         GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(250));
-        GUILayout.Label("<color=#fbbf24><b>" + F("STAGE {0}/12", s.stageNum) + "</b></color>: " + s.title.Get(currentLang));
+        GUILayout.Label("<color=#fbbf24><b>" + F("STAGE {0}/30", s.stageNum) + "</b></color>: " + s.title.Get(currentLang));
         float pct = Mathf.Clamp01((float)collectedCount / currentQuota);
         GUILayout.Label("🚛 " + GetLocalizedCargoLabel() + ": <b>" + collectedCount + " / " + currentQuota + " (" + Mathf.RoundToInt(pct * 100f) + "%)</b>");
         DrawProgressBar(pct, new Color(0.15f, 0.75f, 0.95f), 10);
@@ -1028,7 +1130,7 @@ public class SandBallsPlayer : MonoBehaviour
         }
 
         // Stage Selector Button
-        if (GUILayout.Button("🗺️ " + U("STAGES\n(1~12)"), GUILayout.Width(85), GUILayout.Height(50)))
+        if (GUILayout.Button("🗺️ " + U("STAGES\n(1~30)"), GUILayout.Width(85), GUILayout.Height(50)))
         {
             showStageSelect = !showStageSelect;
         }
@@ -1069,7 +1171,7 @@ public class SandBallsPlayer : MonoBehaviour
             GUILayout.Space(12);
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button(currentStageIdx < 11 ? "▶ " + F("NEXT STAGE ({0})", currentStageIdx + 2) : "🏆 " + U("PLAY AGAIN"), GUILayout.Width(180), GUILayout.Height(40)))
+            if (GUILayout.Button(currentStageIdx < stages.Length - 1 ? "▶ " + F("NEXT STAGE ({0})", currentStageIdx + 2) : "🏆 " + U("PLAY AGAIN"), GUILayout.Width(180), GUILayout.Height(40)))
             {
                 NextStage();
             }
@@ -1078,34 +1180,28 @@ public class SandBallsPlayer : MonoBehaviour
             GUILayout.EndArea();
         }
 
-        // 12-Stage Selector Modal (User Rule: Minimum 10 stages accessible)
+        // 30-stage selector: 4 fixed-width columns, scrolling
         if (showStageSelect)
         {
             Rect modalRect = new Rect(Screen.width * 0.5f - 260, 105, 520, 420);
-            GUI.Box(modalRect, "<b>" + U("SELECT SAND STAGE (1~12)") + "</b>");
+            GUI.Box(modalRect, "<b>" + U("SELECT SAND STAGE (1~30)") + "</b>");
             GUILayout.BeginArea(new Rect(modalRect.x + 15, modalRect.y + 35, modalRect.width - 30, modalRect.height - 45));
 
-            int colsCount = 2;
-            for (int i = 0; i < stages.Length; i += colsCount)
+            var cellStyle = new GUIStyle(GUI.skin.button) { wordWrap = true, fontSize = 11 };
+            stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, GUILayout.Height(320));
+            for (int idx = 0; idx < stages.Length; idx++)
             {
-                GUILayout.BeginHorizontal();
-                for (int c = 0; c < colsCount; c++)
+                if (idx % 4 == 0) GUILayout.BeginHorizontal();
+                var st = stages[idx];
+                string btnText = "<b>#" + st.stageNum + "</b> " + st.title.Get(currentLang) + "\n(" + F("Quota: {0} balls", st.truckQuota) + ")";
+                if (GUILayout.Button(btnText, cellStyle, GUILayout.Width(110), GUILayout.Height(66)))
                 {
-                    int idx = i + c;
-                    if (idx < stages.Length)
-                    {
-                        var st = stages[idx];
-                        string btnText = "<b>" + F("Stage {0}", st.stageNum) + "</b>: " + st.title.Get(currentLang) + "\n(" + F("Quota: {0} balls", st.truckQuota) + ")";
-                        if (GUILayout.Button(btnText, GUILayout.Height(50)))
-                        {
-                            showStageSelect = false;
-                            LoadStage(idx);
-                        }
-                    }
+                    showStageSelect = false;
+                    LoadStage(idx);
                 }
-                GUILayout.EndHorizontal();
-                GUILayout.Space(3);
+                if (idx % 4 == 3 || idx == stages.Length - 1) GUILayout.EndHorizontal();
             }
+            GUILayout.EndScrollView();
 
             GUILayout.Space(6);
             if (GUILayout.Button("× " + U("CLOSE"), GUILayout.Height(28)))
