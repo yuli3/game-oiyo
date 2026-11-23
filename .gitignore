@@ -52,3 +52,4 @@ reports/
 scripts/korean-wordgames/.cache/
 scripts/korean-wordgames/out/
 scripts/korean-wordgames/.venv/
+dist-portal/
