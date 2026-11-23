@@ -1,0 +1,240 @@
+{
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Game over": [
+"게임 오버",
+"ゲームオーバー",
+"Fin del juego",
+"游戏结束",
+"Partie terminée"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Score": [
+"점수",
+"スコア",
+"Puntos",
+"得分",
+"Score"
+],
+"Stage clear!": [
+"스테이지 클리어!",
+"ステージクリア！",
+"¡Etapa superada!",
+"过关！",
+"Niveau réussi !"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Time": [
+"시간",
+"時間",
+"Tiempo",
+"时间",
+"Temps"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+],
+"Time is up!": [
+"시간이 다 됐어요!",
+"時間切れ！",
+"¡Se acabó el tiempo!",
+"时间到！",
+"Temps écoulé !"
+],
+"Sky Stack 3D": [
+"스카이 스택 3D",
+"スカイスタック3D",
+"Torre al Cielo 3D",
+"叠叠高塔 3D",
+"Pile Céleste 3D"
+],
+"Drop each slab right on top. Whatever hangs over gets sliced off.": [
+"판을 탑 위에 딱 맞춰 떨어뜨려요. 삐져나온 부분은 잘려 나가요.",
+"板をタワーの真上に落とそう。はみ出た部分は切り落とされます。",
+"Suelta cada losa justo encima. Lo que sobresalga se corta.",
+"把每块板正好落在塔顶，伸出去的部分会被切掉。",
+"Lâchez chaque dalle pile dessus. Ce qui dépasse est coupé."
+],
+"Floors": [
+"층",
+"階",
+"Pisos",
+"层数",
+"Étages"
+],
+"Perfect": [
+"퍼펙트",
+"パーフェクト",
+"Perfectos",
+"完美",
+"Parfaits"
+],
+"Perfect x{0}": [
+"퍼펙트 x{0}",
+"パーフェクト x{0}",
+"Perfecto x{0}",
+"完美 x{0}",
+"Parfait x{0}"
+],
+"Stack {0} floors": [
+"{0}층 쌓기",
+"{0}階まで積む",
+"Apila {0} pisos",
+"叠到 {0} 层",
+"Empilez {0} étages"
+],
+"{0} perfect drops": [
+"퍼펙트 {0}번",
+"パーフェクト{0}回",
+"{0} caídas perfectas",
+"完美落下 {0} 次",
+"{0} lâchers parfaits"
+],
+"You needed {0} perfect drops": [
+"퍼펙트가 {0}번 필요했어요",
+"パーフェクトが{0}回必要でした",
+"Necesitabas {0} caídas perfectas",
+"需要 {0} 次完美落下",
+"Il fallait {0} lâchers parfaits"
+],
+"Tap or press Space to drop the slab": [
+"화면을 누르거나 스페이스로 판을 떨어뜨려요",
+"タップかスペースで板を落とそう",
+"Toca o pulsa Espacio para soltar la losa",
+"点击屏幕或按空格放下板子",
+"Touchez ou appuyez sur Espace pour lâcher la dalle"
+],
+"The slab missed the tower!": [
+"판이 탑을 빗나갔어요!",
+"板がタワーから外れた！",
+"¡La losa no cayó sobre la torre!",
+"板子没落在塔上！",
+"La dalle a raté la tour !"
+],
+"Meadow Base": [
+"초원 기초",
+"草原の土台",
+"Base del prado",
+"草原地基",
+"Base de la prairie"
+],
+"Lantern Market": [
+"등불 시장",
+"ランタン市場",
+"Mercado de faroles",
+"灯笼集市",
+"Marché aux lanternes"
+],
+"Cloud Line": [
+"구름 선",
+"雲の高さ",
+"Línea de nubes",
+"云层线",
+"Ligne des nuages"
+],
+"Windy Spire": [
+"바람 부는 첨탑",
+"風の尖塔",
+"Aguja ventosa",
+"大风尖塔",
+"Flèche venteuse"
+],
+"Needle Tower": [
+"바늘 탑",
+"針の塔",
+"Torre aguja",
+"针塔",
+"Tour aiguille"
+],
+"Sky Crown": [
+"하늘 왕관",
+"天空の冠",
+"Corona del cielo",
+"天空之冠",
+"Couronne du ciel"
+]
+}

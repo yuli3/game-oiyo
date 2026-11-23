@@ -1,0 +1,282 @@
+{
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Game over": [
+"게임 오버",
+"ゲームオーバー",
+"Fin del juego",
+"游戏结束",
+"Partie terminée"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Score": [
+"점수",
+"スコア",
+"Puntos",
+"得分",
+"Score"
+],
+"Stage clear!": [
+"스테이지 클리어!",
+"ステージクリア！",
+"¡Etapa superada!",
+"过关！",
+"Niveau réussi !"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Time": [
+"시간",
+"時間",
+"Tiempo",
+"时间",
+"Temps"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+],
+"Time is up!": [
+"시간이 다 됐어요!",
+"時間切れ！",
+"¡Se acabó el tiempo!",
+"时间到！",
+"Temps écoulé !"
+],
+"Neon Katana 3D": [
+"네온 카타나 3D",
+"ネオン・カタナ3D",
+"Katana Neón 3D",
+"霓虹武士刀 3D",
+"Katana Néon 3D"
+],
+"Parry at the last instant to send shots back. Fill the gauge, then cut them all down.": [
+"마지막 순간에 받아쳐 탄을 되돌려요. 게이지가 차면 한 번에 베어 버려요.",
+"ギリギリで弾いて弾を返そう。ゲージが溜まったら一気に斬り払え。",
+"Desvía en el último instante para devolver los disparos. Llena la barra y córtalos a todos.",
+"在最后一刻弹反，把子弹打回去。蓄满能量后一刀斩尽。",
+"Parez au dernier instant pour renvoyer les tirs. Remplissez la jauge, puis tranchez tout."
+],
+"BLADE-DASH!": [
+"일섬!",
+"一閃！",
+"¡TAJO VELOZ!",
+"一闪！",
+"TAILLADE !"
+],
+"DASH": [
+"일섬",
+"一閃",
+"TAJO",
+"一闪",
+"TAILLE"
+],
+"Blade-Dash gauge": [
+"일섬 게이지",
+"一閃ゲージ",
+"Barra de tajo",
+"一闪能量",
+"Jauge de taillade"
+],
+"Best combo": [
+"최대 콤보",
+"最大コンボ",
+"Mejor combo",
+"最高连击",
+"Meilleur combo"
+],
+"{0} combo": [
+"{0} 콤보",
+"{0}コンボ",
+"{0} combo",
+"{0} 连击",
+"{0} combo"
+],
+"Cut down {0} drones": [
+"드론 {0}대 베기",
+"ドローンを{0}機斬る",
+"Derriba {0} drones",
+"击毁 {0} 架无人机",
+"Abattez {0} drones"
+],
+"Drones": [
+"드론",
+"ドローン",
+"Drones",
+"无人机",
+"Drones"
+],
+"GUARD": [
+"가드",
+"ガード",
+"BLOQUEO",
+"格挡",
+"GARDE"
+],
+"PERFECT": [
+"퍼펙트",
+"パーフェクト",
+"PERFECTO",
+"完美",
+"PARFAIT"
+],
+"HIT!": [
+"맞았어요!",
+"被弾！",
+"¡IMPACTO!",
+"中弹！",
+"TOUCHÉ !"
+],
+"Too early": [
+"너무 빨라요",
+"早すぎ",
+"Demasiado pronto",
+"太早了",
+"Trop tôt"
+],
+"Shift or DASH when the gauge is full": [
+"게이지가 차면 Shift나 일섬 버튼",
+"ゲージが満タンでShiftか一閃ボタン",
+"Con la barra llena, Shift o TAJO",
+"能量满时按 Shift 或一闪键",
+"Jauge pleine : Maj ou TAILLE"
+],
+"Tap or press Space the moment a shot reaches your ring": [
+"탄이 고리에 닿는 순간 화면을 누르거나 스페이스",
+"弾がリングに届く瞬間にタップかスペース",
+"Toca o pulsa Espacio justo cuando el disparo llegue a tu anillo",
+"子弹碰到光环的瞬间点击屏幕或按空格",
+"Touchez ou appuyez sur Espace quand le tir atteint votre anneau"
+],
+"The drones broke through your guard!": [
+"드론이 방어를 뚫었어요!",
+"ドローンに守りを破られた！",
+"¡Los drones rompieron tu guardia!",
+"无人机突破了你的防守！",
+"Les drones ont brisé votre garde !"
+],
+"Rooftop Dojo": [
+"옥상 도장",
+"屋上道場",
+"Dojo en la azotea",
+"屋顶道场",
+"Dojo du toit"
+],
+"Rain Alley": [
+"빗속 골목",
+"雨の路地",
+"Callejón lluvioso",
+"雨巷",
+"Ruelle pluvieuse"
+],
+"Laser Market": [
+"레이저 시장",
+"レーザー市場",
+"Mercado láser",
+"激光市场",
+"Marché laser"
+],
+"Shuriken Yard": [
+"수리검 마당",
+"手裏剣の庭",
+"Patio de shuriken",
+"手里剑庭院",
+"Cour des shuriken"
+],
+"Heavy Foundry": [
+"중공업 주조장",
+"重鋳造所",
+"Fundición pesada",
+"重型铸造厂",
+"Fonderie lourde"
+],
+"Core Tower": [
+"코어 타워",
+"コアタワー",
+"Torre central",
+"核心塔",
+"Tour du noyau"
+]
+}
