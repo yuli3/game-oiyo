@@ -97,6 +97,8 @@ export interface Starship {
 /** A run is fifteen sectors; beating the enemy in the last one wins it. */
 export const STAR_SKIFF_MAX_SECTOR = 15;
 
+import { skiffCopy, type SkiffCopy } from './ftl-mini-copy';
+
 export class FTLEngine {
   public player: Starship;
   public enemy: Starship;
@@ -114,25 +116,28 @@ export class FTLEngine {
   public gameOver = false;
   public victory = false;
 
-  constructor() {
+  public readonly copy: SkiffCopy;
+
+  constructor(locale?: string) {
+    this.copy = skiffCopy(locale);
     this.player = this.createPlayerShip();
     this.enemy = this.createEnemyShip(this.sector);
   }
 
   public createPlayerShip(): Starship {
     const rooms: ShipRoom[] = [
-      { id: 'p_helm', system: 'helm', name: 'Piloting', level: 1, powered: 1, damage: 0, fire: 0, oxygen: 100, gridX: 3, gridY: 1, width: 1, height: 1 },
-      { id: 'p_shields', system: 'shields', name: 'Shields', level: 4, powered: 2, damage: 0, fire: 0, oxygen: 100, gridX: 1, gridY: 1, width: 1, height: 1 },
-      { id: 'p_weapons', system: 'weapons', name: 'Weapons', level: 3, powered: 3, damage: 0, fire: 0, oxygen: 100, gridX: 1, gridY: 0, width: 1, height: 1 },
-      { id: 'p_engines', system: 'engines', name: 'Engines', level: 2, powered: 1, damage: 0, fire: 0, oxygen: 100, gridX: 0, gridY: 1, width: 1, height: 1 },
-      { id: 'p_medbay', system: 'medbay', name: 'Medbay', level: 1, powered: 1, damage: 0, fire: 0, oxygen: 100, gridX: 2, gridY: 0, width: 1, height: 1 },
-      { id: 'p_oxygen', system: 'oxygen', name: 'Life Support', level: 1, powered: 1, damage: 0, fire: 0, oxygen: 100, gridX: 2, gridY: 2, width: 1, height: 1 },
+      { id: 'p_helm', system: 'helm', name: this.copy.rooms.helm, level: 1, powered: 1, damage: 0, fire: 0, oxygen: 100, gridX: 3, gridY: 1, width: 1, height: 1 },
+      { id: 'p_shields', system: 'shields', name: this.copy.rooms.shields, level: 4, powered: 2, damage: 0, fire: 0, oxygen: 100, gridX: 1, gridY: 1, width: 1, height: 1 },
+      { id: 'p_weapons', system: 'weapons', name: this.copy.rooms.weapons, level: 3, powered: 3, damage: 0, fire: 0, oxygen: 100, gridX: 1, gridY: 0, width: 1, height: 1 },
+      { id: 'p_engines', system: 'engines', name: this.copy.rooms.engines, level: 2, powered: 1, damage: 0, fire: 0, oxygen: 100, gridX: 0, gridY: 1, width: 1, height: 1 },
+      { id: 'p_medbay', system: 'medbay', name: this.copy.rooms.medbay, level: 1, powered: 1, damage: 0, fire: 0, oxygen: 100, gridX: 2, gridY: 0, width: 1, height: 1 },
+      { id: 'p_oxygen', system: 'oxygen', name: this.copy.rooms.oxygen, level: 1, powered: 1, damage: 0, fire: 0, oxygen: 100, gridX: 2, gridY: 2, width: 1, height: 1 },
     ];
 
     const weapons: ShipWeapon[] = [
       {
         id: 'p_burst_laser',
-        name: 'Burst Laser II',
+        name: this.copy.weapons.burst,
         type: 'laser',
         powerCost: 2,
         chargeTime: 4.5,
@@ -146,7 +151,7 @@ export class FTLEngine {
       },
       {
         id: 'p_artemis',
-        name: 'Artemis Missile',
+        name: this.copy.weapons.missile,
         type: 'missile',
         powerCost: 1,
         chargeTime: 6.0,
@@ -161,14 +166,14 @@ export class FTLEngine {
     ];
 
     const crew: CrewMember[] = [
-      { id: 'c_pilot', name: 'Cmdr. Vance', hp: 100, maxHp: 100, roomId: 'p_helm', targetRoomId: null, moveProgress: 0, moveSpeed: 0.8, repairSkill: 1.0, color: '#38bdf8' },
-      { id: 'c_eng', name: 'Eng. Chen', hp: 100, maxHp: 100, roomId: 'p_shields', targetRoomId: null, moveProgress: 0, moveSpeed: 0.8, repairSkill: 1.2, color: '#fbbf24' },
-      { id: 'c_gunner', name: 'Gunner Jax', hp: 100, maxHp: 100, roomId: 'p_weapons', targetRoomId: null, moveProgress: 0, moveSpeed: 0.8, repairSkill: 0.9, color: '#f87171' },
+      { id: 'c_pilot', name: this.copy.crew.pilot, hp: 100, maxHp: 100, roomId: 'p_helm', targetRoomId: null, moveProgress: 0, moveSpeed: 0.8, repairSkill: 1.0, color: '#38bdf8' },
+      { id: 'c_eng', name: this.copy.crew.eng, hp: 100, maxHp: 100, roomId: 'p_shields', targetRoomId: null, moveProgress: 0, moveSpeed: 0.8, repairSkill: 1.2, color: '#fbbf24' },
+      { id: 'c_gunner', name: this.copy.crew.gunner, hp: 100, maxHp: 100, roomId: 'p_weapons', targetRoomId: null, moveProgress: 0, moveSpeed: 0.8, repairSkill: 0.9, color: '#f87171' },
     ];
 
     return {
       isPlayer: true,
-      name: 'USS Antigravity',
+      name: this.copy.playerShip,
       hull: 30,
       maxHull: 30,
       shields: 1,
@@ -187,16 +192,16 @@ export class FTLEngine {
   public createEnemyShip(sector: number): Starship {
     const scale = 1 + (sector - 1) * 0.3;
     const rooms: ShipRoom[] = [
-      { id: 'e_helm', system: 'helm', name: 'Cockpit', level: 1, powered: 1, damage: 0, fire: 0, oxygen: 100, gridX: 0, gridY: 1, width: 1, height: 1 },
-      { id: 'e_shields', system: 'shields', name: 'Shields', level: Math.min(4, Math.floor(1 + sector * 0.5) * 2), powered: Math.min(4, Math.floor(1 + sector * 0.5) * 2), damage: 0, fire: 0, oxygen: 100, gridX: 2, gridY: 1, width: 1, height: 1 },
-      { id: 'e_weapons', system: 'weapons', name: 'Weapons', level: 2, powered: 2, damage: 0, fire: 0, oxygen: 100, gridX: 2, gridY: 0, width: 1, height: 1 },
-      { id: 'e_engines', system: 'engines', name: 'Engines', level: 1, powered: 1, damage: 0, fire: 0, oxygen: 100, gridX: 3, gridY: 1, width: 1, height: 1 },
+      { id: 'e_helm', system: 'helm', name: this.copy.rooms.cockpit, level: 1, powered: 1, damage: 0, fire: 0, oxygen: 100, gridX: 0, gridY: 1, width: 1, height: 1 },
+      { id: 'e_shields', system: 'shields', name: this.copy.rooms.shields, level: Math.min(4, Math.floor(1 + sector * 0.5) * 2), powered: Math.min(4, Math.floor(1 + sector * 0.5) * 2), damage: 0, fire: 0, oxygen: 100, gridX: 2, gridY: 1, width: 1, height: 1 },
+      { id: 'e_weapons', system: 'weapons', name: this.copy.rooms.weapons, level: 2, powered: 2, damage: 0, fire: 0, oxygen: 100, gridX: 2, gridY: 0, width: 1, height: 1 },
+      { id: 'e_engines', system: 'engines', name: this.copy.rooms.engines, level: 1, powered: 1, damage: 0, fire: 0, oxygen: 100, gridX: 3, gridY: 1, width: 1, height: 1 },
     ];
 
     const weapons: ShipWeapon[] = [
       {
         id: 'e_laser',
-        name: 'Basic Laser',
+        name: this.copy.weapons.basic,
         type: 'laser',
         powerCost: 1,
         chargeTime: 5.0,
@@ -213,7 +218,7 @@ export class FTLEngine {
     if (sector >= 2) {
       weapons.push({
         id: 'e_heavy_laser',
-        name: 'Heavy Laser I',
+        name: this.copy.weapons.heavy,
         type: 'laser',
         powerCost: 1,
         chargeTime: 6.5,
@@ -227,12 +232,12 @@ export class FTLEngine {
       });
     }
 
-    const enemyNames = ['Rust Scout', 'Pirate Interceptor', 'Auto-Assault Drone', 'Hornet Fighter'];
+    const enemyNames = this.copy.enemies;
     const name = enemyNames[(sector - 1) % enemyNames.length];
 
     return {
       isPlayer: false,
-      name: `${name} Lv.${sector}`,
+      name: this.copy.lv(name, sector),
       hull: Math.round(12 * scale),
       maxHull: Math.round(12 * scale),
       shields: Math.floor(Math.min(4, Math.floor(1 + sector * 0.5) * 2) / 2),
@@ -476,14 +481,14 @@ export class FTLEngine {
     // Check evasion
     const isEvasion = Math.random() * 100 < ship.evasion;
     if (isEvasion) {
-      this.addFloatingText('MISS!', p.targetX, p.targetY, '#94a3b8');
+      this.addFloatingText(this.copy.fx.miss, p.targetX, p.targetY, '#94a3b8');
       return;
     }
 
     // Check shields
     if (ship.shields > 0 && p.pierce === 0) {
       ship.shields--;
-      this.addFloatingText('Shield Absorbed', p.targetX, p.targetY, '#38bdf8');
+      this.addFloatingText(this.copy.fx.absorbed, p.targetX, p.targetY, '#38bdf8');
       this.screenShake = 2;
       return;
     }
@@ -497,7 +502,7 @@ export class FTLEngine {
       targetRoom.fire = Math.min(100, targetRoom.fire + 35);
     }
 
-    this.addFloatingText(`-${p.damage} Hull`, p.targetX, p.targetY, '#ef4444');
+    this.addFloatingText(this.copy.fx.hull(p.damage), p.targetX, p.targetY, '#ef4444');
     this.screenShake = p.damage > 1 ? 5 : 3;
 
     this.recalculateShipStats(ship);
@@ -507,7 +512,7 @@ export class FTLEngine {
       if (ship.isPlayer) {
         this.gameOver = true;
         this.victory = false;
-        this.addFloatingText('SHIP DESTROYED', p.targetX, p.targetY, '#ef4444');
+        this.addFloatingText(this.copy.fx.destroyed, p.targetX, p.targetY, '#ef4444');
       } else {
         this.onEnemyDefeated();
       }
@@ -524,7 +529,7 @@ export class FTLEngine {
       // Final sector cleared: the run is won (stage range 10-50, 2026-11-21).
       this.gameOver = true;
       this.victory = true;
-      this.addFloatingText('ALL SECTORS CLEARED', 75, 45, '#fbbf24');
+      this.addFloatingText(this.copy.fx.allClear, 75, 45, '#fbbf24');
       return;
     }
     const scrapEarned = Math.round(15 + this.sector * 8 + Math.random() * 10);
@@ -532,7 +537,7 @@ export class FTLEngine {
     this.scrap += scrapEarned;
     this.missiles += missilesEarned;
 
-    this.addFloatingText(`Victory! +${scrapEarned} Scrap, +${missilesEarned} Missiles`, 75, 45, '#fbbf24');
+    this.addFloatingText(this.copy.fx.victory(scrapEarned, missilesEarned), 75, 45, '#fbbf24');
 
     // Spawn next enemy after delay
     this.advancingSector = true;
@@ -551,7 +556,7 @@ export class FTLEngine {
     this.player.ftlCharge = 0;
     this.sector++;
     this.enemy = this.createEnemyShip(this.sector);
-    this.addFloatingText(`Warp Jump: Sector ${this.sector}!`, 50, 20, '#38bdf8');
+    this.addFloatingText(this.copy.fx.jump(this.sector), 50, 20, '#38bdf8');
     return true;
   }
 

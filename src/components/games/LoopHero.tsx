@@ -24,6 +24,7 @@ import {
   Check,
 } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { loopCopy } from '../../lib/games/loop-hero-copy';
 import { celebrate } from '../../lib/games/celebration';
 import { LOOP_HERO_SPRITES } from '../../lib/games/sprites';
 import {
@@ -94,7 +95,8 @@ function getEquipSlotSprite(slot: EquipSlot): string | null {
   return null;
 }
 
-export const LoopHero: React.FC = () => {
+export const LoopHero: React.FC<{ locale?: string }> = ({ locale = 'en' }) => {
+  const t = loopCopy(locale);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<LoopHeroEngine | null>(null);
   const animFrameRef = useRef<number | null>(null);
@@ -225,7 +227,7 @@ export const LoopHero: React.FC = () => {
 
   // Initialize engine
   useEffect(() => {
-    engineRef.current = new LoopHeroEngine();
+    engineRef.current = new LoopHeroEngine(locale);
     syncSnapshot();
     lastTimeRef.current = performance.now();
 
@@ -300,7 +302,7 @@ export const LoopHero: React.FC = () => {
 
   const handleRestart = () => {
     MobileHapticsPro.medium();
-    engineRef.current = new LoopHeroEngine();
+    engineRef.current = new LoopHeroEngine(locale);
     prevLoopCountRef.current = 1;
     prevGameOverRef.current = false;
     setSelectedCardIndex(null);
@@ -404,10 +406,10 @@ export const LoopHero: React.FC = () => {
   const handleShare = async () => {
     MobileHapticsPro.medium();
     const canvas = createShareCardCanvas({
-      title: 'Loop Road',
+      title: t.title,
       slug: 'loop-road',
       score: loopCount,
-      subtitle: `Day ${dayCount} • HP ${heroHp}/${heroMaxHp} • ATK ${heroAtk} • DEF ${heroDef}`,
+      subtitle: t.ui.shareLine(dayCount, heroHp, heroMaxHp, heroAtk, heroDef),
     });
     const success = await copyShareCardToClipboard(canvas);
     if (success) {
@@ -847,14 +849,14 @@ export const LoopHero: React.FC = () => {
         <div className="flex items-center gap-4">
           <div className="flex flex-col">
             <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">
-              Loop
+              {t.ui.loop}
             </span>
             <span className="text-xl font-black text-warning">#{loopCount}</span>
           </div>
 
           <div className="flex flex-col min-w-28">
             <div className="flex justify-between text-xs text-muted-foreground font-semibold">
-              <span>Day {dayCount}</span>
+              <span>{t.ui.day(dayCount)}</span>
               <span>{dayPercent}%</span>
             </div>
             <div className="w-full bg-muted/60 h-2 rounded-full overflow-hidden mt-1 border border-border/40">
@@ -887,7 +889,7 @@ export const LoopHero: React.FC = () => {
 
           {inCombat && (
             <span className="px-2.5 py-1 text-xs font-black uppercase tracking-wider bg-destructive/20 text-destructive border border-destructive/40 rounded-full animate-pulse">
-              Combat
+              {t.ui.combat}
             </span>
           )}
         </div>
@@ -897,7 +899,7 @@ export const LoopHero: React.FC = () => {
           <TiltHeroButton
             onClick={togglePause}
             className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
-            ariaLabel={isPaused ? 'Resume Game' : 'Pause Game'}
+            ariaLabel={isPaused ? t.ui.resume : t.ui.pause}
           >
             {isPaused ? <Play className="size-4 text-primary" /> : <Pause className="size-4" />}
           </TiltHeroButton>
@@ -909,7 +911,7 @@ export const LoopHero: React.FC = () => {
                 ? 'border-primary bg-primary text-primary-foreground'
                 : 'border-border bg-card hover:bg-muted text-foreground'
             }`}
-            ariaLabel={`Cycle Game Speed, current ${gameSpeed}x`}
+            ariaLabel={t.ui.speed(gameSpeed)}
           >
             <Zap className="size-3.5" /> {gameSpeed}x
           </TiltHeroButton>
@@ -920,7 +922,7 @@ export const LoopHero: React.FC = () => {
               setSoundEnabled(!soundEnabled);
             }}
             className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
-            ariaLabel={soundEnabled ? 'Mute Sound' : 'Unmute Sound'}
+            ariaLabel={soundEnabled ? t.ui.mute : t.ui.unmute}
           >
             {soundEnabled ? (
               <Volume2 className="size-4 text-primary" />
@@ -932,7 +934,7 @@ export const LoopHero: React.FC = () => {
           <TiltHeroButton
             onClick={handleShare}
             className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
-            ariaLabel="Share Expedition"
+            ariaLabel={t.ui.share}
           >
             {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
           </TiltHeroButton>
@@ -940,7 +942,7 @@ export const LoopHero: React.FC = () => {
           <TiltHeroButton
             onClick={togglePortal}
             className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
-            ariaLabel={isImmersive ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            ariaLabel={isImmersive ? t.ui.exitFull : t.ui.enterFull}
           >
             {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </TiltHeroButton>
@@ -948,7 +950,7 @@ export const LoopHero: React.FC = () => {
           <TiltHeroButton
             onClick={handleRestart}
             className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
-            ariaLabel="Restart Expedition"
+            ariaLabel={t.ui.restart}
           >
             <RotateCcw className="size-4" />
           </TiltHeroButton>
@@ -971,19 +973,19 @@ export const LoopHero: React.FC = () => {
           <div className="absolute inset-0 bg-background/85 backdrop-blur-md flex flex-col items-center justify-center p-6 gap-4 z-20">
             <img
               src={LOOP_HERO_SPRITES.trophy}
-              alt="Expedition Summary"
+              alt={t.ui.summary}
               className="size-16 animate-bounce drop-shadow-xl select-none pointer-events-none"
             />
-            <h2 className="text-3xl font-black text-destructive tracking-wider">HERO FALLEN</h2>
+            <h2 className="text-3xl font-black text-destructive tracking-wider">{t.ui.fallen}</h2>
             <p className="text-muted-foreground text-xs max-w-sm text-center">
-              The loop claimed another soul. You completed {loopCount - 1} loops and survived {dayCount} days.
+              {t.ui.fallenBody(loopCount - 1, dayCount)}
             </p>
             <div className="flex items-center gap-3">
               <Button onClick={handleRestart} size="lg">
-                <RotateCcw className="size-4" /> Start New Expedition
+                <RotateCcw className="size-4" /> {t.ui.newRun}
               </Button>
               <Button variant="outline" size="lg" onClick={handleShare}>
-                {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />} Share Record
+                {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />} {t.ui.shareRecord}
               </Button>
             </div>
           </div>
@@ -993,7 +995,7 @@ export const LoopHero: React.FC = () => {
         {selectedCardIndex !== null && (
           <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-background/90 border border-primary/50 px-4 py-1.5 rounded-full shadow-lg text-xs font-bold text-primary flex items-center gap-1.5 pointer-events-none animate-bounce">
             <Sparkles className="size-3.5" />
-            Click highlighted green tile to place {hand[selectedCardIndex]?.name}
+            {t.ui.placeOn(hand[selectedCardIndex] ? t.cards[hand[selectedCardIndex].id as keyof typeof t.cards]?.name ?? '' : '')}
           </div>
         )}
       </div>
@@ -1004,10 +1006,10 @@ export const LoopHero: React.FC = () => {
         <div className="flex flex-col bg-card/60 border border-border p-3.5 rounded-xl gap-2.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-              Deck in Hand ({hand.length}/6)
+              {t.ui.deck(hand.length)}
             </span>
             <span className="text-xs text-muted-foreground">
-              {selectedCardIndex !== null ? 'Click board tile to place' : 'Select a card to place'}
+              {selectedCardIndex !== null ? t.ui.tapTile : t.ui.pickCard}
             </span>
           </div>
 
@@ -1025,16 +1027,16 @@ export const LoopHero: React.FC = () => {
                       : 'border-border/60 bg-muted/40 hover:bg-muted/70 hover:border-border'
                   }`}
                 >
-                  <span className="text-xs font-bold text-foreground">{card.name}</span>
+                  <span className="text-xs font-bold text-foreground">{t.cards[card.id as keyof typeof t.cards]?.name ?? card.name}</span>
                   <span className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                    {card.description}
+                    {t.cards[card.id as keyof typeof t.cards]?.description ?? card.description}
                   </span>
                 </button>
               );
             })}
             {hand.length === 0 && (
               <div className="flex items-center justify-center w-full text-xs text-muted-foreground italic h-16">
-                No cards in hand. Defeat monsters to earn cards!
+                {t.ui.noCards}
               </div>
             )}
           </div>
@@ -1045,18 +1047,18 @@ export const LoopHero: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Hero Equipment
+                {t.ui.equipment}
               </span>
               <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-                <span title="Attack Damage">⚔️ {heroAtk}</span>
-                <span title="Defense">
+                <span title={t.ui.atk}>⚔️ {heroAtk}</span>
+                <span title={t.ui.def}>
                   <Shield className="size-3 inline text-info" /> {heroDef}
                 </span>
-                {heroVamp > 0 && <span title="Vampirism">🩸 {heroVamp}%</span>}
-                {heroRegen > 0 && <span title="Regen">✨ +{heroRegen}/s</span>}
+                {heroVamp > 0 && <span title={t.ui.vamp}>🩸 {heroVamp}%</span>}
+                {heroRegen > 0 && <span title={t.ui.regen}>✨ +{heroRegen}/s</span>}
               </div>
             </div>
-            <span className="text-xs text-muted-foreground">Bag ({inventory.length}/12)</span>
+            <span className="text-xs text-muted-foreground">{t.ui.bag(inventory.length)}</span>
           </div>
 
           {/* Equipped Slots */}
@@ -1077,7 +1079,7 @@ export const LoopHero: React.FC = () => {
                     {sprite ? (
                       <img
                         src={sprite}
-                        alt={slot}
+                        alt={t.slotLabels[slot]}
                         className="size-full object-contain filter drop-shadow-xs select-none pointer-events-none"
                         draggable={false}
                       />
@@ -1086,14 +1088,14 @@ export const LoopHero: React.FC = () => {
                     )}
                   </div>
                   <span className="text-xs font-bold uppercase text-muted-foreground">
-                    {slot}
+                    {t.slotLabels[slot]}
                   </span>
                   {item ? (
                     <span className="text-xs font-bold text-foreground truncate w-full text-center">
                       {item.name}
                     </span>
                   ) : (
-                    <span className="text-xs text-muted-foreground italic">Empty</span>
+                    <span className="text-xs text-muted-foreground italic">{t.ui.empty}</span>
                   )}
                 </div>
               );
@@ -1115,12 +1117,13 @@ export const LoopHero: React.FC = () => {
                   onClick={() => equipItem(item, idx)}
                   className="text-xs bg-primary/20 text-primary font-bold px-1.5 py-0.5 rounded hover:bg-primary/30"
                 >
-                  Equip
+                  {t.ui.equip}
                 </button>
                 <button
                   type="button"
                   onClick={() => discardItem(idx)}
                   className="text-xs text-muted-foreground hover:text-destructive px-0.5"
+                  aria-label={t.ui.discard}
                 >
                   ✕
                 </button>
@@ -1128,7 +1131,7 @@ export const LoopHero: React.FC = () => {
             ))}
             {inventory.length === 0 && (
               <div className="flex items-center justify-center w-full text-xs text-muted-foreground italic h-8">
-                Loot dropped by monsters appears here.
+                {t.ui.lootHint}
               </div>
             )}
           </div>
@@ -1140,10 +1143,10 @@ export const LoopHero: React.FC = () => {
               {hoveredEquip.atk > 0 && <span className="text-destructive">+{hoveredEquip.atk} ATK</span>}
               {hoveredEquip.def > 0 && <span className="text-info">+{hoveredEquip.def} DEF</span>}
               {hoveredEquip.maxHpBonus > 0 && (
-                <span className="text-primary">+{hoveredEquip.maxHpBonus} Max HP</span>
+                <span className="text-primary">+{hoveredEquip.maxHpBonus} {t.ui.maxHp}</span>
               )}
               {hoveredEquip.vampirism > 0 && (
-                <span className="text-destructive">+{hoveredEquip.vampirism}% Vampirism</span>
+                <span className="text-destructive">+{hoveredEquip.vampirism}% {t.ui.vampStat}</span>
               )}
               {hoveredEquip.regen > 0 && (
                 <span className="text-warning">+{hoveredEquip.regen} HP/s</span>
