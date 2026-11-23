@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TopWhip from "../../components/games/TopWhip";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "팽이치기 — 손가락 채찍으로 얼음 위 팽이를 쳐서 깃발을 통과하는 무료 겨울 게임 30단계",
+    description: "얼어붙은 연못 위 팽이를 손가락 채찍으로 휙! 팽이를 가로질러 그으면 더 빨리 돌면서 그은 방향으로 미끄러져요. 번호 깃발을 차례로 지나 모닥불 옆 원에 넣으세요. 회전이 떨어지면 쓰러져요. 바위, 눈 더미, 얼음 구멍, 바람, 썰매 타는 아이들까지 30단계.",
+  },
+  en: {
+    title: "Top Whip — Free winter game: lash a spinning top across a frozen pond through the flags (30 stages)",
+    description: "Whip a wooden top across a frozen pond with your finger. Swipe across it and it spins up and slides off the way you swiped. Pass the numbered flags in order and glide into the circle by the bonfire before it runs out of spin. 30 stages with rocks, snow drifts, holes in the ice, wind and kids on sleds.",
+  },
+  ja: {
+    title: "ムチごま — 指のムチで氷の上のコマを打って旗を抜ける無料の冬ゲーム30ステージ",
+    description: "凍った池の上のコマを指のムチでパシッ！ コマを横切るように払うと速く回り、払った方向へすべります。番号の旗を順に抜けて、たき火のそばの輪へ。回転が切れると倒れます。岩、雪だまり、氷の穴、風、そり遊びの子どもまで30ステージ。",
+  },
+  zh: {
+    title: "抽陀螺 — 用手指当鞭子抽冰上的陀螺穿过旗门的免费冬季游戏30关",
+    description: "用手指当鞭子，啪地抽打结冰池塘上的陀螺！手指划过陀螺，它就转得更快，并朝划的方向滑出去。按顺序穿过编号旗门，再滑进篝火旁的圆圈。转速用完就会倒下。共30关，有石头、雪堆、冰窟窿、风和坐雪橇的孩子。",
+  },
+  fr: {
+    title: "Toupie au fouet — Jeu d'hiver gratuit : fouettez une toupie sur un étang gelé entre les drapeaux (30 niveaux)",
+    description: "Fouettez une toupie en bois sur un étang gelé du bout du doigt. Balayez à travers : elle tourne plus vite et glisse dans le sens du geste. Passez les drapeaux numérotés dans l'ordre et glissez dans le cercle près du feu avant qu'elle ne s'arrête. 30 niveaux avec rochers, congères, trous dans la glace, vent et enfants en luge.",
+  },
+  es: {
+    title: "Trompo al látigo — Juego de invierno gratis: azota un trompo sobre un estanque helado entre banderas (30 niveles)",
+    description: "Azota un trompo de madera sobre un estanque helado con el dedo. Desliza a través de él: gira más rápido y resbala hacia donde deslizaste. Pasa las banderas numeradas en orden y entra en el círculo junto a la hoguera antes de que se quede sin giro. 30 niveles con rocas, montones de nieve, agujeros en el hielo, viento y niños en trineo.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["top-whip"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <TopWhip client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="top-whip" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

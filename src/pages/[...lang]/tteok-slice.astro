@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TteokSlice from "../../components/games/TteokSlice";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "떡국 떡 썰기 — 밀려오는 가래떡을 딱 맞는 두께로 써는 무료 설날 요리 게임 30단계",
+    description: "설날 아침 떡국을 끓이려면 가래떡부터 썰어야죠. 칼 쪽으로 밀려오는 떡을 화면을 아래로 쓸어 썰고, 도마의 노란 눈금과 같은 두께로 맞춰 그릇을 채우세요. 6단계부터는 비스듬히 어슷썰기, 뒤로 갈수록 연필 자국이 사라지고 미는 속도가 들쭉날쭉. 30단계.",
+  },
+  en: {
+    title: "Tteok Slice — Free Seollal cooking game: cut the sliding rice-cake log into just-right slices (30 stages)",
+    description: "Seollal morning tteokguk starts with slicing the rice-cake log. Swipe down to cut the log as it slides toward the knife, and match the yellow mark on the board to fill the bowl. From stage 6, swipe on a slant for oval slices; later the pencil marks vanish and the push speeds up and slows down. 30 stages.",
+  },
+  ja: {
+    title: "トックの餅切り — 流れてくる棒もちをちょうどいい厚さに切る無料のお正月料理ゲーム30ステージ",
+    description: "お正月の朝のトックは、まず棒もちを切るところから。包丁のほうへ流れてくるもちを、画面を下へスワイプして切り、まな板の黄色い目盛りと同じ厚さにそろえて器を満たしましょう。6面からは斜め切り、後半は鉛筆の印が消え、押す速さもまちまちに。30ステージ。",
+  },
+  zh: {
+    title: "切年糕片 — 把推过来的年糕条切成刚好厚度的免费春节料理游戏30关",
+    description: "春节早上煮年糕汤，得先切年糕条。年糕被推向菜刀，在屏幕上往下划来切，切得和砧板上的黄色刻度一样厚，把碗装满。第6关起要斜着切，越往后铅笔记号会消失，推的速度也忽快忽慢。共30关。",
+  },
+  fr: {
+    title: "Tranches de tteok — Jeu de cuisine gratuit du Nouvel An : coupez le bâton de riz en tranches parfaites (30 niveaux)",
+    description: "Le tteokguk du matin de Seollal commence par trancher le bâton de gâteau de riz. Glissez vers le bas pour couper le bâton qui avance vers le couteau, et suivez le repère jaune de la planche pour remplir le bol. Dès le niveau 6, coupez en biais ; plus loin, les traits de crayon disparaissent et la poussée accélère et ralentit. 30 niveaux.",
+  },
+  es: {
+    title: "Rodajas de tteok — Juego de cocina gratis de Año Nuevo: corta el rollo de arroz en rodajas perfectas (30 niveles)",
+    description: "El tteokguk de la mañana de Seollal empieza cortando el rollo de pastel de arroz. Desliza hacia abajo para cortar el rollo que avanza hacia el cuchillo y sigue la marca amarilla de la tabla para llenar el tazón. Desde el nivel 6, corta en diagonal; más adelante desaparecen las marcas de lápiz y el empuje acelera y frena. 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["tteok-slice"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <TteokSlice client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="tteok-slice" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
