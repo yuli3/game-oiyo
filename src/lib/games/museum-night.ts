@@ -66,6 +66,17 @@ const PUZZLES: readonly NightDef[] = [
   { id: "far-door", start: 0, goal: 3, camera: [4], visitors: [[1], [3], [1]] },
   { id: "patient-bust", start: 3, goal: 0, camera: [4], visitors: [[2], [3], [4], [2]] },
   { id: "last-round", start: 0, goal: 3, camera: [4], visitors: [[1], [1], [4]] },
+  // Stages 11-20 (2026-11-23): each keeps one shortest line, found by search and checked in the tests.
+  { id: "night-lens", start: 4, goal: 1, camera: [], visitors: [[3], [4], [0]] },
+  { id: "dust-cover", start: 4, goal: 0, camera: [], visitors: [[4], [4], [1], [4]] },
+  { id: "bust-shadow", start: 1, goal: 3, camera: [], visitors: [[2], [1], [1], [0]] },
+  { id: "quiet-vault", start: 0, goal: 4, camera: [], visitors: [[0], [2], [1]] },
+  { id: "mirror-room", start: 1, goal: 4, camera: [], visitors: [[2], [1], [0], [2]] },
+  { id: "late-guard", start: 1, goal: 3, camera: [0], visitors: [[2], [2], [1], [3]] },
+  { id: "blue-gallery", start: 3, goal: 0, camera: [], visitors: [[2], [0], [2], [2]] },
+  { id: "rope-line", start: 4, goal: 1, camera: [0], visitors: [[3], [3], [0], [3]] },
+  { id: "marble-step", start: 3, goal: 1, camera: [4], visitors: [[2], [2], [2], [0]] },
+  { id: "dawn-close", start: 0, goal: 3, camera: [4], visitors: [[1], [1], [3], [1]] },
 ];
 
 export const PUZZLE_COUNT = PUZZLES.length;
@@ -189,8 +200,18 @@ export function mixSeed(seed: number): number {
   return (t ^ (t >>> 14)) >>> 0;
 }
 
+/**
+ * The first ten boards keep their old seed mapping, so a shared seed still opens the same board.
+ * Stages 11+ live at their own seed block: STAGE_SEED_BASE + index.
+ */
+export const LEGACY_PUZZLE_COUNT = 10;
+export const STAGE_SEED_BASE = 0x5354_0000;
+
 export function puzzleIndexForSeed(seed: number): number {
-  return mixSeed(seed) % PUZZLES.length;
+  const whole = Number.isFinite(seed) ? Math.trunc(seed) : 0;
+  const offset = whole - STAGE_SEED_BASE;
+  if (offset >= LEGACY_PUZZLE_COUNT && offset < PUZZLES.length) return offset;
+  return mixSeed(seed) % LEGACY_PUZZLE_COUNT;
 }
 
 export function nextSeed(seed: number): number {
@@ -216,6 +237,7 @@ function makeState(puzzle: NightDef, at: number, steps: number): NightState {
 /** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
 export function seedForPuzzle(index: number): number {
   const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  if (target >= LEGACY_PUZZLE_COUNT) return STAGE_SEED_BASE + target;
   for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
