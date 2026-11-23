@@ -52,6 +52,11 @@ BUILDS = {
     "townscaper-island-unity": ("harbor-blocks", "TownscaperIsland/Runtime/TownscaperIslandPlayer.cs", E, "stageCleared, true, 0"),
     "two-hands-unity": ("two-hands", "TwoHands/Runtime/TwoHandsPlayer.cs", E, "isGameOver || isVictory, isVictory, score"),
     "viking-longship-unity": ("viking-longship", "VikingLongship/Runtime/VikingLongshipPlayer.cs", E, "_victory || _gameOver, _victory, 0"),
+    "snake-game-unity": ("snake-game", "SnakeGame/Runtime/SnakeGamePlayer.cs", T, "state, score"),
+    "stack-tower-unity": ("stack-tower", "StackTower/Runtime/StackTowerPlayer.cs", T, "state, score"),
+    "rhythm-tap-unity": ("rhythm-tap", "RhythmTap/Runtime/RhythmTapPlayer.cs", T, "state, score"),
+    "neon-katana-unity": ("neon-katana", "NeonKatana/Runtime/NeonKatanaPlayer.cs", T, "state, score"),
+    "shadow-dodge-unity": ("shadow-dodge", "ShadowDodge/Runtime/ShadowDodgePlayer.cs", T, "state, score"),
     "whack-a-mole-unity": ("whack-a-mole", "WhackAMole/Runtime/WhackAMolePlayer.cs", T, "state, score"),
 }
 

@@ -1,0 +1,261 @@
+{
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Game over": [
+"게임 오버",
+"ゲームオーバー",
+"Fin del juego",
+"游戏结束",
+"Partie terminée"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Score": [
+"점수",
+"スコア",
+"Puntos",
+"得分",
+"Score"
+],
+"Stage clear!": [
+"스테이지 클리어!",
+"ステージクリア！",
+"¡Etapa superada!",
+"过关！",
+"Niveau réussi !"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Time": [
+"시간",
+"時間",
+"Tiempo",
+"时间",
+"Temps"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+],
+"Time is up!": [
+"시간이 다 됐어요!",
+"時間切れ！",
+"¡Se acabó el tiempo!",
+"时间到！",
+"Temps écoulé !"
+],
+"Beat Lane 3D": [
+"비트 레인 3D",
+"ビートレーン3D",
+"Carril del Ritmo 3D",
+"节拍车道 3D",
+"Voie du Rythme 3D"
+],
+"Hit each note as it crosses the line. Every stage plays its own tune.": [
+"노트가 선을 지날 때 맞춰 눌러요. 스테이지마다 곡이 달라요.",
+"ノーツがラインを通る瞬間にタップ。ステージごとに曲が違います。",
+"Pulsa cada nota al cruzar la línea. Cada etapa tiene su propia melodía.",
+"音符经过判定线时按下，每一关都有自己的曲子。",
+"Frappez chaque note quand elle passe la ligne. Chaque niveau a son air."
+],
+"Accuracy": [
+"정확도",
+"精度",
+"Precisión",
+"准确率",
+"Précision"
+],
+"Accuracy {0}% · you needed {1}%": [
+"정확도 {0}% · {1}%가 필요했어요",
+"精度{0}% · {1}%が必要でした",
+"Precisión {0}% · necesitabas {1}%",
+"准确率 {0}% · 需要 {1}%",
+"Précision {0} % · il fallait {1} %"
+],
+"Best combo": [
+"최대 콤보",
+"最大コンボ",
+"Mejor combo",
+"最高连击",
+"Meilleur combo"
+],
+"Combo": [
+"콤보",
+"コンボ",
+"Combo",
+"连击",
+"Combo"
+],
+"{0} combo": [
+"{0} 콤보",
+"{0}コンボ",
+"{0} combo",
+"{0} 连击",
+"{0} combo"
+],
+"PERFECT": [
+"퍼펙트",
+"パーフェクト",
+"PERFECTO",
+"完美",
+"PARFAIT"
+],
+"GOOD": [
+"굿",
+"グッド",
+"BIEN",
+"不错",
+"BIEN"
+],
+"MISS": [
+"미스",
+"ミス",
+"FALLO",
+"失误",
+"RATÉ"
+],
+"Hit the notes on the line · reach {0}% accuracy": [
+"선에서 노트를 맞춰요 · 정확도 {0}% 넘기기",
+"ラインでノーツを叩こう · 精度{0}%以上",
+"Acierta las notas en la línea · logra {0}% de precisión",
+"在判定线上击中音符 · 准确率达到 {0}%",
+"Frappez les notes sur la ligne · visez {0} % de précision"
+],
+"Tap a lane or press a key to start": [
+"레인을 누르거나 키를 눌러 시작해요",
+"レーンをタップかキーでスタート",
+"Toca un carril o pulsa una tecla para empezar",
+"点击车道或按键开始",
+"Touchez une voie ou une touche pour commencer"
+],
+"Your energy ran out!": [
+"에너지가 바닥났어요!",
+"エネルギーが尽きた！",
+"¡Te quedaste sin energía!",
+"能量耗尽了！",
+"Plus d'énergie !"
+],
+"Warm-Up Street": [
+"워밍업 거리",
+"ウォームアップ通り",
+"Calle de calentamiento",
+"热身街",
+"Rue d'échauffement"
+],
+"Neon Avenue": [
+"네온 대로",
+"ネオン大通り",
+"Avenida neón",
+"霓虹大道",
+"Avenue néon"
+],
+"Bass Bridge": [
+"베이스 다리",
+"ベースブリッジ",
+"Puente del bajo",
+"贝斯大桥",
+"Pont des basses"
+],
+"Chord Tunnel": [
+"화음 터널",
+"コードトンネル",
+"Túnel de acordes",
+"和弦隧道",
+"Tunnel des accords"
+],
+"Overdrive": [
+"오버드라이브",
+"オーバードライブ",
+"Sobremarcha",
+"超速",
+"Surrégime"
+],
+"Starlight Finale": [
+"별빛 피날레",
+"星明かりのフィナーレ",
+"Final estelar",
+"星光终章",
+"Final étoilé"
+]
+}

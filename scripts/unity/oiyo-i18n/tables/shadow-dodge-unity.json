@@ -1,0 +1,296 @@
+{
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Game over": [
+"게임 오버",
+"ゲームオーバー",
+"Fin del juego",
+"游戏结束",
+"Partie terminée"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Score": [
+"점수",
+"スコア",
+"Puntos",
+"得分",
+"Score"
+],
+"Stage clear!": [
+"스테이지 클리어!",
+"ステージクリア！",
+"¡Etapa superada!",
+"过关！",
+"Niveau réussi !"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Time": [
+"시간",
+"時間",
+"Tiempo",
+"时间",
+"Temps"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+],
+"Time is up!": [
+"시간이 다 됐어요!",
+"時間切れ！",
+"¡Se acabó el tiempo!",
+"时间到！",
+"Temps écoulé !"
+],
+"Shadow Dodge 3D": [
+"섀도우 닷지 3D",
+"シャドウドッジ3D",
+"Esquiva Sombría 3D",
+"暗影闪避 3D",
+"Esquive d'Ombre 3D"
+],
+"Brush past the shadow orbs to slow time and charge a pulse. Just don't touch them.": [
+"그림자 구슬을 아슬아슬하게 스치면 시간이 느려지고 펄스가 차요. 닿으면 안 돼요.",
+"影の玉をかすめると時間が遅くなりパルスが溜まる。触れたらアウト。",
+"Roza los orbes sombríos para frenar el tiempo y cargar un pulso. Pero no los toques.",
+"擦过暗影球会让时间变慢并积攒脉冲，但千万别碰到。",
+"Frôlez les orbes d'ombre pour ralentir le temps et charger une impulsion. Sans les toucher."
+],
+"Best combo": [
+"최대 콤보",
+"最大コンボ",
+"Mejor combo",
+"最高连击",
+"Meilleur combo"
+],
+"Dash": [
+"대시",
+"ダッシュ",
+"Impulso",
+"冲刺",
+"Ruée"
+],
+"Dash ready": [
+"대시 가능",
+"ダッシュOK",
+"Impulso listo",
+"可以冲刺",
+"Ruée prête"
+],
+"Drag anywhere or use the arrow keys to move": [
+"아무 곳이나 끌거나 방향키로 움직여요",
+"どこでもドラッグか矢印キーで移動",
+"Arrastra en cualquier parte o usa las flechas para moverte",
+"在任意位置拖动或用方向键移动",
+"Glissez n'importe où ou utilisez les flèches pour bouger"
+],
+"double-tap or Space to dash": [
+"두 번 탭이나 스페이스로 대시",
+"ダブルタップかスペースでダッシュ",
+"doble toque o Espacio para impulso",
+"双击或空格冲刺",
+"double-touchez ou Espace pour la ruée"
+],
+"GRAZE x{0}": [
+"스침 x{0}",
+"グレイズ x{0}",
+"ROCE x{0}",
+"擦弹 x{0}",
+"FRÔLÉ x{0}"
+],
+"Grazes": [
+"스침",
+"グレイズ",
+"Roces",
+"擦弹",
+"Frôlements"
+],
+"graze {0} times": [
+"{0}번 스치기",
+"{0}回グレイズ",
+"roza {0} veces",
+"擦弹 {0} 次",
+"frôlez {0} fois"
+],
+"HIT!": [
+"맞았어요!",
+"被弾！",
+"¡IMPACTO!",
+"中弹！",
+"TOUCHÉ !"
+],
+"PULSE": [
+"펄스",
+"パルス",
+"PULSO",
+"脉冲",
+"IMPULSION"
+],
+"Pulses": [
+"펄스",
+"パルス",
+"Pulsos",
+"脉冲",
+"Impulsions"
+],
+"SHADOW PULSE!": [
+"섀도우 펄스!",
+"シャドウパルス！",
+"¡PULSO SOMBRÍO!",
+"暗影脉冲！",
+"IMPULSION D'OMBRE !"
+],
+"Shadow energy": [
+"그림자 에너지",
+"影エネルギー",
+"Energía sombría",
+"暗影能量",
+"Énergie d'ombre"
+],
+"Survive {0} seconds": [
+"{0}초 버티기",
+"{0}秒生き残る",
+"Sobrevive {0} segundos",
+"坚持 {0} 秒",
+"Survivez {0} secondes"
+],
+"The shadows caught you!": [
+"그림자에 붙잡혔어요!",
+"影につかまった！",
+"¡Las sombras te atraparon!",
+"被暗影抓住了！",
+"Les ombres vous ont eu !"
+],
+"You survived, but needed {0} grazes": [
+"버텼지만 스침이 {0}번 필요했어요",
+"生き残ったがグレイズが{0}回必要でした",
+"Sobreviviste, pero necesitabas {0} roces",
+"坚持住了，但需要擦弹 {0} 次",
+"Vous avez survécu, mais il fallait {0} frôlements"
+],
+"Dusk Courtyard": [
+"황혼 안뜰",
+"黄昏の中庭",
+"Patio del ocaso",
+"黄昏庭院",
+"Cour du crépuscule"
+],
+"Lantern Hall": [
+"등불 회랑",
+"灯籠の回廊",
+"Salón de linternas",
+"灯笼长廊",
+"Salle des lanternes"
+],
+"Hunting Grounds": [
+"사냥터",
+"狩り場",
+"Coto de caza",
+"猎场",
+"Terrain de chasse"
+],
+"Mirror Garden": [
+"거울 정원",
+"鏡の庭",
+"Jardín de espejos",
+"镜之庭",
+"Jardin des miroirs"
+],
+"Eclipse Shrine": [
+"일식 사당",
+"日食の社",
+"Santuario del eclipse",
+"日蚀神社",
+"Sanctuaire de l'éclipse"
+],
+"Void Heart": [
+"공허의 심장",
+"虚無の心臓",
+"Corazón del vacío",
+"虚空之心",
+"Cœur du néant"
+]
+}
