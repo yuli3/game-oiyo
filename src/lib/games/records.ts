@@ -532,3 +532,32 @@ export function recordOpened(game: string): void {
 export function getAllOpened(): Record<string, string> {
   return readOpened();
 }
+
+// ─── Recently opened pages — separate store, purely additive (2026-11-24) ────────────────
+// `oiyo:game-opened:v1` only remembers *that* a page was opened ("1"), and last-played is
+// keyed by legacy game ids that often differ from page slugs. The home "continue" row needs
+// page slugs in recency order, so it gets its own small slug → ISO-timestamp store.
+const RECENT_OPENED_KEY = "oiyo:game-recent-opened:v1";
+export const RECENT_OPENED_LIMIT = 24;
+
+export function recordRecentOpen(slug: string, at: string = new Date().toISOString()): void {
+  if (!slug) return;
+  const all = readValidatedStore(RECENT_OPENED_KEY, isIsoTimestamp);
+  all[slug] = at;
+  const kept = Object.entries(all)
+    .sort((a, b) => Date.parse(b[1]) - Date.parse(a[1]))
+    .slice(0, RECENT_OPENED_LIMIT);
+  try {
+    localStorage.setItem(RECENT_OPENED_KEY, JSON.stringify(Object.fromEntries(kept)));
+  } catch {
+    /* best-effort */
+  }
+}
+
+/** Page slugs opened recently, newest first. */
+export function getRecentOpened(limit = RECENT_OPENED_LIMIT): string[] {
+  return Object.entries(readValidatedStore(RECENT_OPENED_KEY, isIsoTimestamp))
+    .sort((a, b) => Date.parse(b[1]) - Date.parse(a[1]))
+    .slice(0, limit)
+    .map(([slug]) => slug);
+}

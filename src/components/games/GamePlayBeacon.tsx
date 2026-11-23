@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { recordAchievementEvent, recordOpened } from "@/lib/games/records";
+import { recordAchievementEvent, recordOpened, recordRecentOpen } from "@/lib/games/records";
 import { installRunXp } from "@/lib/games/run-xp";
 import { parsePrototypeResult, savePrototypeResult } from "@/lib/games/prototype-result-bridge";
 import ResultToolNudge from "./ResultToolNudge";
@@ -13,7 +13,10 @@ export default function GamePlayBeacon({ slug, prototype = false }: { slug: stri
   useEffect(() => installRunXp(), []);
 
   useEffect(() => {
-    if (slug) recordOpened(slug);
+    if (slug) {
+      recordOpened(slug);
+      recordRecentOpen(slug);
+    }
 
     // Attach Universal OIYO Web-Unity Engine v5.0 Runtime Monitor across all game pages
     const urlParams = new URLSearchParams(window.location.search);

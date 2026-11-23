@@ -483,3 +483,42 @@ main .aspect-square { max-width: min(100%, 92vw); }
   background-color: var(--color-destructive);
   color: var(--color-destructive-foreground);
 }
+
+/* Arcade-cabinet card for the game hub (2026-11-24): the same hard outline and drop as
+   `game-btn`, so cards read as pressable cartridges, not soft web tiles. */
+@utility game-card {
+  border: 2px solid var(--color-foreground);
+  border-radius: 8px;
+  background-color: var(--color-card);
+  box-shadow: 0 3px 0 var(--color-foreground);
+  transition: transform 80ms ease-out, box-shadow 80ms ease-out;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 var(--color-foreground);
+  }
+  &:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--color-foreground);
+  }
+}
+
+/* Selected/unselected filter chip on the hub (2026-11-24). */
+@utility game-chip {
+  border: 2px solid var(--color-foreground);
+  border-radius: 999px;
+  background-color: var(--color-card);
+  color: var(--color-foreground);
+  box-shadow: 0 2px 0 var(--color-foreground);
+  &[aria-pressed="true"] {
+    background-color: var(--color-foreground);
+    color: var(--color-background);
+  }
+}
+
+/* Horizontal shelves and chip rows scroll by swipe; the bar itself is noise (2026-11-24). */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

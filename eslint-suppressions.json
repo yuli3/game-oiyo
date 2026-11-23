@@ -676,14 +676,6 @@
       "count": 1
     }
   },
-  "src/pages/[...lang]/index.astro": {
-    "shadcn/no-arbitrary-values": {
-      "count": 5
-    },
-    "shadcn/no-raw-colors": {
-      "count": 10
-    }
-  },
   "src/pages/[...lang]/tier-list.astro": {
     "shadcn/no-raw-colors": {
       "count": 1

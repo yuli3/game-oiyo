@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getAchievementEvents, getAllAchievementEvents, getAllBestAchievedAt, getAllBests, getAllConditionalBests, getAllDailyStreaks, getAllLastPlayed, getAllRecords, getAllStreaks, getBest, getBestForConditions, getDailyStreak, getRecentRecords, getRecord, getStreak, getVisitStreak, recordAchievementEvent, recordBest, recordBestForConditions, recordDailyVisit, recordDailyWin, recordResult, recordStreak } from "./records";
+import { RECENT_OPENED_LIMIT, getAchievementEvents, getAllAchievementEvents, getAllBestAchievedAt, getAllBests, getAllConditionalBests, getAllDailyStreaks, getAllLastPlayed, getAllRecords, getAllStreaks, getBest, getBestForConditions, getDailyStreak, getRecentOpened, getRecentRecords, getRecord, getStreak, getVisitStreak, recordAchievementEvent, recordBest, recordBestForConditions, recordDailyVisit, recordDailyWin, recordRecentOpen, recordResult, recordStreak } from "./records";
 
 // records.ts is localStorage-backed; provide a minimal in-memory Storage
 // polyfill so persistence across calls can actually be exercised in node.
@@ -393,5 +393,35 @@ describe("records: storage schema guards", () => {
     expect(Object.keys(getAllDailyStreaks())).toEqual(["kurodoko"]);
     expect(Object.keys(getAllStreaks())).toEqual(["wordle"]);
     expect(getAllLastPlayed()).toEqual({ chess: "2026-07-18T00:00:00.000Z" });
+  });
+});
+
+describe("records: recently opened pages", () => {
+  it("lists slugs newest first, re-opening moves a slug to the front", () => {
+    recordRecentOpen("chess", "2026-11-20T00:00:00.000Z");
+    recordRecentOpen("sudoku", "2026-11-21T00:00:00.000Z");
+    recordRecentOpen("chess", "2026-11-22T00:00:00.000Z");
+    expect(getRecentOpened()).toEqual(["chess", "sudoku"]);
+  });
+
+  it("caps the store and keeps the newest entries", () => {
+    for (let i = 0; i < RECENT_OPENED_LIMIT + 5; i++) {
+      recordRecentOpen(`g${i}`, new Date(Date.UTC(2026, 0, 1, 0, i)).toISOString());
+    }
+    const recent = getRecentOpened(100);
+    expect(recent).toHaveLength(RECENT_OPENED_LIMIT);
+    expect(recent[0]).toBe(`g${RECENT_OPENED_LIMIT + 4}`);
+    expect(recent).not.toContain("g0");
+  });
+
+  it("does not touch the opened or last-played stores", () => {
+    recordRecentOpen("chess");
+    expect(localStorage.getItem("oiyo:game-opened:v1")).toBeNull();
+    expect(getAllLastPlayed()).toEqual({});
+  });
+
+  it("ignores corrupt values", () => {
+    localStorage.setItem("oiyo:game-recent-opened:v1", JSON.stringify({ chess: "nope", sudoku: "2026-11-21T00:00:00.000Z" }));
+    expect(getRecentOpened()).toEqual(["sudoku"]);
   });
 });
