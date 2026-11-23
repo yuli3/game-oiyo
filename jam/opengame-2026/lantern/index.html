@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>INKLIGHT — Lantern of the Dokkaebi Night</title>
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<canvas id="game" aria-label="INKLIGHT game canvas"></canvas>
+
+<div id="hud" class="hidden">
+  <div class="hud-left">
+    <div class="meter" aria-label="Lantern light"><div class="meter-fill" id="lightFill"></div><span class="meter-label">LIGHT</span></div>
+    <div class="hud-line"><span id="stageLabel">Night 1</span> · <span id="districtLabel">Village</span></div>
+    <div class="hud-line">Stone lanterns <b id="lanternCount">0/0</b></div>
+  </div>
+  <div class="hud-right">
+    <div class="hud-score" id="score">0</div>
+    <div class="hud-line">Painted <b id="painted">0%</b></div>
+    <div class="talisman-row" id="talismanRow"></div>
+  </div>
+  <div class="objective" id="objective"></div>
+  <div class="boss-bar hidden" id="bossBar"><div class="boss-name" id="bossName"></div><div class="boss-track"><div class="boss-fill" id="bossFill"></div></div></div>
+</div>
+
+<div id="screen-title" class="screen">
+  <div class="title-wrap">
+    <div class="seal">墨</div>
+    <h1 class="title">INKLIGHT</h1>
+    <div class="subtitle">먹빛 등불 · Lantern of the Dokkaebi Night</div>
+    <p class="pitch">The night has swallowed the color of the world.<br>Your lantern is your sword, your life and your brush.<br>Light the stone lanterns. Paint the night back.</p>
+    <button class="btn" id="btnStart">Begin the night</button>
+    <div class="controls">
+      <span><b>WASD</b> move</span><span><b>Mouse</b> aim</span><span><b>Click</b> throw flame</span><span><b>Space</b> dash</span><span><b>E</b> light lantern</span><span><b>M</b> mute</span>
+    </div>
+    <div class="best" id="bestLine"></div>
+  </div>
+</div>
+
+<div id="screen-talisman" class="screen hidden">
+  <div class="panel">
+    <h2 id="talismanTitle">Choose a talisman</h2>
+    <p class="hint" id="talismanHint">Dawn is still far. Take one charm into the next night.</p>
+    <div class="cards" id="talismanCards"></div>
+  </div>
+</div>
+
+<div id="screen-end" class="screen hidden">
+  <div class="panel">
+    <h2 id="endTitle">The lantern went out</h2>
+    <div class="end-stats" id="endStats"></div>
+    <button class="btn" id="btnRetry">Light it again</button>
+  </div>
+</div>
+
+<div id="screen-pause" class="screen hidden">
+  <div class="panel">
+    <h2>Paused</h2>
+    <button class="btn" id="btnResume">Resume</button>
+  </div>
+</div>
+
+<div id="banner" class="banner"></div>
+<div id="loading" class="loading">Grinding the ink…</div>
+
+<script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
