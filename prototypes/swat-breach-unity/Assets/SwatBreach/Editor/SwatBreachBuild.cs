@@ -18,7 +18,7 @@ public static class SwatBreachBuild
         PlayerSettings.companyName = "OIYO";
         PlayerSettings.productName = "SWAT Tactical Breach Unity";
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
-        PlayerSettings.runInBackground = false;
+        PlayerSettings.runInBackground = true; // keep running when the page iframe has no focus (2026-11-23)
         AssetDatabase.SaveAssets();
     }
 
