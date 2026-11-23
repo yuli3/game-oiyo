@@ -73,6 +73,9 @@ BUILDS = {
     "iron-tempest-unity": ("iron-tempest", "IronTempest/Runtime/IronTempestPlayer.cs", T, "state, score"),
     "shadow-stealth-unity": ("shadow-stealth", "ShadowStealth/Runtime/ShadowStealthPlayer.cs", T, "state, score"),
     "animal-pop-unity": ("animal-pop", "AnimalPop/Runtime/AnimalPopPlayer.cs", T, "state, score"),
+    "cat-fishing-unity": ("cat-fishing", "CatFishing/Runtime/CatFishingPlayer.cs", T, "state, score"),
+    "dot-fishing-unity": ("dot-fishing", "DotFishing/Runtime/DotFishingPlayer.cs", T, "state, gold"),
+    "emberdeep-unity": ("emberdeep", "Emberdeep/Runtime/EmberdeepPlayer.cs", T, "state, score"),
 }
 
 MARK = "OiyoResult."
