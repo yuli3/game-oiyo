@@ -63,6 +63,7 @@ BUILDS = {
     "snowman-stack-unity": ("snowman-stack", "SnowmanStack/Runtime/SnowmanStackPlayer.cs", T, "state, score"),
     "line-surf-unity": ("line-surf", "LineSurf/Runtime/LineSurfPlayer.cs", T, "state, score"),
     "dot-runner-unity": ("dot-runner", "DotRunner/Runtime/DotRunnerPlayer.cs", T, "state, score"),
+    "charge-climb-unity": ("charge-climb", "ChargeClimb/Runtime/ChargeClimbPlayer.cs", T, "state, score"),
 }
 
 MARK = "OiyoResult."

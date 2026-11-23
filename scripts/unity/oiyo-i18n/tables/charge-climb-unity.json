@@ -1,0 +1,240 @@
+{
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Game over": [
+"게임 오버",
+"ゲームオーバー",
+"Fin del juego",
+"游戏结束",
+"Partie terminée"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Score": [
+"점수",
+"スコア",
+"Puntos",
+"得分",
+"Score"
+],
+"Stage clear!": [
+"스테이지 클리어!",
+"ステージクリア！",
+"¡Etapa superada!",
+"过关！",
+"Niveau réussi !"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Time": [
+"시간",
+"時間",
+"Tiempo",
+"时间",
+"Temps"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+],
+"Time is up!": [
+"시간이 다 됐어요!",
+"時間切れ！",
+"¡Se acabó el tiempo!",
+"时间到！",
+"Temps écoulé !"
+],
+"Charge Climb 3D": [
+"차지 클라임 3D",
+"チャージクライム3D",
+"Charge Climb 3D",
+"蓄力攀登 3D",
+"Charge Climb 3D"
+],
+"Hold to charge, aim and leap from ledge to ledge up to the summit flag.": [
+"꾹 눌러 힘을 모으고, 방향을 정해 발판에서 발판으로 뛰어 꼭대기 깃발까지 올라가요.",
+"長押しでためて狙いを決め、足場から足場へ跳んで頂上の旗まで登ろう。",
+"Mantén para cargar, apunta y salta de saliente en saliente hasta la bandera de la cima.",
+"按住蓄力，瞄准方向，从一块平台跳到另一块，一路登上山顶旗帜。",
+"Maintenez pour charger, visez et bondissez de corniche en corniche jusqu'au drapeau du sommet."
+],
+"Hold to charge, let go to jump": [
+"꾹 눌러 모으고, 떼면 점프해요",
+"長押しでため、離してジャンプ",
+"Mantén para cargar, suelta para saltar",
+"按住蓄力，松开跳跃",
+"Maintenez pour charger, relâchez pour sauter"
+],
+"Press left or right of the climber to aim that way. Space and the arrow keys work too.": [
+"캐릭터 왼쪽이나 오른쪽을 누르면 그쪽으로 뛰어요. 스페이스와 방향키도 돼요.",
+"キャラの左か右を押すとその方向へ跳びます。スペースと矢印キーでも遊べます。",
+"Pulsa a la izquierda o derecha del escalador para apuntar hacia allí. También sirven Espacio y las flechas.",
+"按在角色左边或右边就朝那边跳。也可以用空格和方向键。",
+"Appuyez à gauche ou à droite du grimpeur pour viser de ce côté. Espace et les flèches marchent aussi."
+],
+"Height": [
+"높이",
+"高さ",
+"Altura",
+"高度",
+"Hauteur"
+],
+"Jumps": [
+"점프",
+"ジャンプ",
+"Saltos",
+"跳跃",
+"Sauts"
+],
+"Par": [
+"기준",
+"基準",
+"Par",
+"标准",
+"Par"
+],
+"Power": [
+"힘",
+"パワー",
+"Fuerza",
+"力度",
+"Puissance"
+],
+"Wind": [
+"바람",
+"風",
+"Viento",
+"风",
+"Vent"
+],
+"You fell off the bottom of the screen.": [
+"화면 아래로 떨어졌어요.",
+"画面の下へ落ちてしまいました。",
+"Caíste por debajo de la pantalla.",
+"掉出了屏幕下方。",
+"Vous êtes tombé sous le bas de l'écran."
+],
+"Cloud steps": [
+"구름 계단",
+"雲の階段",
+"Escalones de nubes",
+"云朵台阶",
+"Marches de nuages"
+],
+"Narrow ledges": [
+"좁은 발판",
+"細い足場",
+"Salientes estrechos",
+"窄平台",
+"Corniches étroites"
+],
+"Drifting ledges": [
+"움직이는 발판",
+"動く足場",
+"Salientes a la deriva",
+"漂移平台",
+"Corniches mouvantes"
+],
+"Crumbling stones": [
+"무너지는 돌",
+"崩れる石",
+"Piedras que se desmoronan",
+"碎裂石块",
+"Pierres friables"
+],
+"Gusty peaks": [
+"돌풍 봉우리",
+"突風の峰",
+"Cumbres ventosas",
+"狂风山峰",
+"Pics venteux"
+],
+"Icy summit": [
+"얼음 정상",
+"氷の頂上",
+"Cima helada",
+"冰封山顶",
+"Sommet glacé"
+]
+}
