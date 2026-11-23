@@ -85,6 +85,17 @@ const PUZZLES: readonly LineDef[] = [
   { id: "full-wall", start: [2, 1], stones: [[3, 0], [3, 1]], threats: [0, 1, 2, 3] },
   { id: "tight-ink", start: [1, 2], stones: [[0, 2], [2, 2], [3, 2]], threats: [0, 1, 2, 3] },
   { id: "long-loop", start: [2, 2], stones: [[3, 1], [1, 2]], threats: [0, 3] },
+  // Stages 11-20 (2026-11-23): each keeps one shortest line, found by search and checked in the tests.
+  { id: "quill-turn", start: [2, 0], stones: [], threats: [0, 1, 2, 3] },
+  { id: "margin-run", start: [1, 2], stones: [], threats: [0, 2, 3] },
+  { id: "blot-gate", start: [1, 1], stones: [[2, 1], [2, 2]], threats: [0, 3] },
+  { id: "inkwell-bend", start: [1, 0], stones: [[3, 1], [0, 2], [3, 2]], threats: [0, 2, 3] },
+  { id: "page-fold", start: [2, 2], stones: [[2, 1], [1, 2]], threats: [0, 2] },
+  { id: "smudge-loop", start: [2, 0], stones: [[1, 1], [3, 2]], threats: [0, 1, 2, 3] },
+  { id: "pen-detour", start: [2, 1], stones: [[0, 0], [2, 2]], threats: [0, 3] },
+  { id: "folio-wall", start: [2, 2], stones: [[1, 0], [3, 1]], threats: [0, 1, 3] },
+  { id: "crease-line", start: [2, 0], stones: [[1, 1], [3, 1]], threats: [1, 3] },
+  { id: "last-stroke", start: [1, 1], stones: [[1, 0], [3, 1], [3, 2]], threats: [0, 1, 2, 3] },
 ];
 
 export const PUZZLE_COUNT = PUZZLES.length;
@@ -213,8 +224,18 @@ export function mixSeed(seed: number): number {
   return (t ^ (t >>> 14)) >>> 0;
 }
 
+/**
+ * The first ten boards keep their old seed mapping, so a shared seed still opens the same board.
+ * Stages 11+ live at their own seed block: STAGE_SEED_BASE + index.
+ */
+export const LEGACY_PUZZLE_COUNT = 10;
+export const STAGE_SEED_BASE = 0x5354_0000;
+
 export function puzzleIndexForSeed(seed: number): number {
-  return mixSeed(seed) % PUZZLES.length;
+  const whole = Number.isFinite(seed) ? Math.trunc(seed) : 0;
+  const offset = whole - STAGE_SEED_BASE;
+  if (offset >= LEGACY_PUZZLE_COUNT && offset < PUZZLES.length) return offset;
+  return mixSeed(seed) % LEGACY_PUZZLE_COUNT;
 }
 
 export function nextSeed(seed: number): number {
@@ -225,6 +246,7 @@ export function nextSeed(seed: number): number {
 /** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
 export function seedForPuzzle(index: number): number {
   const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  if (target >= LEGACY_PUZZLE_COUNT) return STAGE_SEED_BASE + target;
   for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
