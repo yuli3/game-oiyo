@@ -1,84 +1,84 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
-  GAME_ID,
-  ROOMS,
-  VERBS,
-  begin,
-  createPuzzle,
-  createRun,
-  expire,
-  holds,
-  press,
-  type Run,
+  DIRS, FLOOR_COUNT, GAME_ID, HEARTS, IDENTITY, activeMap, begin, makeFloor, newRun, patchNote, press, shortestPath, stars, swapMap,
+  type Dir, type RunState,
 } from "./patch-dungeon";
 
-function clear(run: Run): Run {
-  let current = begin(run);
-  while (current.phase === "play") {
-    const room = current.puzzle.rooms[current.index];
-    if (!room) break;
-    current = press(current, holds(current.puzzle, current.index, room.need));
-  }
-  return current;
+function invert(m: Record<Dir, Dir>, want: Dir): Dir {
+  return DIRS.find((d) => m[d] === want)!;
 }
 
-describe("patch dungeon", () => {
-  it("keeps the first room on the printed verbs and then moves the verb the room needs", () => {
-    for (let seed = 0; seed < 20; seed += 1) {
-      const puzzle = createPuzzle(seed);
-      expect(createPuzzle(seed)).toEqual(puzzle);
-      expect(puzzle.rooms).toHaveLength(ROOMS);
-      expect(puzzle.rooms[0]?.swapped).toBeNull();
-      expect(puzzle.maps[0]).toEqual([...VERBS]);
-      for (let room = 1; room < ROOMS; room += 1) {
-        const card = puzzle.rooms[room];
-        const previous = puzzle.maps[room - 1];
-        const current = puzzle.maps[room];
-        expect(card?.swapped).not.toBeNull();
-        expect(card && previous && current).toBeTruthy();
-        if (!card?.swapped || !previous || !current) continue;
-        expect(previous.indexOf(card.need)).not.toBe(current.indexOf(card.need));
-        expect(card.swapped).toContain(card.need);
+/** BFS over real play states (hearts, slimes, blink, keys); returns moves to win or -1. */
+function solve(start: RunState, limit = 70): number {
+  const sig = (s: RunState) => `${s.x},${s.y},${s.hearts},${s.moves % 2},${s.keys},${s.opened.join("|")},${s.taken.join("|")},${s.slimes.map((x) => `${x.x}.${x.y}.${x.dx}.${x.dy}`).join("|")},${s.floor.patches.filter((p) => s.moves >= p.at).length}`;
+  let frontier = [start];
+  const seen = new Set([sig(start)]);
+  for (let depth = 0; depth < limit && frontier.length; depth++) {
+    const next: RunState[] = [];
+    for (const s of frontier) {
+      for (const want of DIRS) {
+        const n = press(s, invert(activeMap(s.floor, s.moves), want));
+        if (n.status === "won") return depth + 1;
+        if (n.status !== "play") continue;
+        const k = sig(n);
+        if (seen.has(k)) continue;
+        seen.add(k);
+        next.push(n);
       }
     }
+    frontier = next;
+  }
+  return -1;
+}
+
+describe("patch dungeon v2", () => {
+  it("keeps the record id", () => expect(GAME_ID).toBe("patch-dungeon"));
+
+  it("ships 30 deterministic floors", () => {
+    expect(FLOOR_COUNT).toBe(30);
+    expect(JSON.stringify(makeFloor(9))).toBe(JSON.stringify(makeFloor(9)));
   });
 
-  it("loses the room when the printed verb is pressed after a swap", () => {
-    const puzzle = createPuzzle(5);
-    let run = begin(createRun(puzzle));
-    const first = puzzle.rooms[0];
-    expect(first).toBeTruthy();
-    if (!first) return;
-    run = press(run, VERBS.indexOf(first.need));
-    expect(run.phase).toBe("play");
-    expect(run.index).toBe(1);
-    const second = puzzle.rooms[1];
-    expect(second).toBeTruthy();
-    if (!second) return;
-    const stale = VERBS.indexOf(second.need);
-    expect(press(run, stale).phase).toBe("lost");
-    expect(press(press(run, stale), 0)).toEqual(press(run, stale));
-    expect(begin(press(run, stale))).toEqual(press(run, stale));
-  });
-
-  it("clears the dungeon only by following where each verb moved", () => {
-    for (let seed = 0; seed < 20; seed += 1) {
-      const won = clear(createRun(createPuzzle(seed)));
-      expect(won.phase).toBe("won");
-      expect(won.index).toBe(ROOMS);
+  it("every floor is winnable through real play with full hearts budget", () => {
+    for (let i = 0; i < FLOOR_COUNT; i++) {
+      const f = makeFloor(i);
+      expect(shortestPath(f.grid, f.start)).toBeGreaterThanOrEqual(6);
+      const moves = solve(begin(newRun(i)));
+      expect(moves, `floor ${i + 1}`).toBeGreaterThan(0);
     }
-    const waiting = expire(begin(createRun(createPuzzle(2))));
-    expect(waiting.phase).toBe("lost");
-    expect(waiting.index).toBe(0);
-    expect(expire(waiting)).toEqual(waiting);
   });
 
-  it("registers the catalog slug", () => {
-    const page = readFileSync("src/pages/[...lang]/patch-dungeon.astro", "utf8");
-    const catalog = readFileSync("src/pages/[...lang]/index.astro", "utf8");
-    expect(page).toContain('slug="patch-dungeon"');
-    expect(catalog).toContain('slug: "patch-dungeon"');
-    expect(GAME_ID).toBe("patch-dungeon");
+  it("every floor's first patch actually changes the controls, and hot patches arrive later", () => {
+    for (let i = 0; i < FLOOR_COUNT; i++) {
+      const f = makeFloor(i);
+      expect(patchNote(f.patches[0]!.map).length).toBeGreaterThan(0);
+      expect(f.patches[0]!.at).toBe(0);
+      if (i >= 20) expect(f.patches.length).toBe(3);
+      for (let k = 1; k < f.patches.length; k++) expect(f.patches[k]!.at).toBeGreaterThan(f.patches[k - 1]!.at);
+    }
+  });
+
+  it("presses are routed through the patch", () => {
+    const m = swapMap(IDENTITY, "up", "left");
+    expect(m.up).toBe("left");
+    expect(m.left).toBe("up");
+    expect(m.down).toBe("down");
+  });
+
+  it("bumping a wall costs a move, and no presses count before start", () => {
+    const r = newRun(0);
+    expect(press(r, "up")).toBe(r);
+    const s = begin(r);
+    // (1,1) has a wall on the outer ring above it
+    const n = press(s, invert(activeMap(s.floor, 0), "up"));
+    expect([n.x, n.y]).toEqual([1, 1]);
+    expect(n.moves).toBe(1);
+    expect(n.hearts).toBe(HEARTS);
+  });
+
+  it("stars reward clean, short clears", () => {
+    const s = { ...begin(newRun(0)), status: "won" as const, moves: 1 };
+    expect(stars(s)).toBe(3);
+    expect(stars({ ...s, hearts: 1, moves: 999 })).toBe(1);
   });
 });
