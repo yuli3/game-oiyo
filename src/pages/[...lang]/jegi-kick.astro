@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import JegiKick from "../../components/games/JegiKick";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "제기차기 — 톡 눌러 제기를 차올리는 무료 설날 물리 게임 30단계 + 폰 하나로 둘이서",
+    description: "떨어지는 제기 아래를 톡 누르면 아이가 달려가 발로 찹니다. 발 한가운데에 맞히면 ‘완벽!’ 바람·까치·빙판·제기 두 개까지 30단계, 폰 하나를 사이에 두고 둘이서 하는 발 배구 모드도 있어요.",
+  },
+  en: {
+    title: "Jegi Kick — Free new-year physics game: tap to keep the shuttlecock up (30 stages + one-phone 2P)",
+    description: "Tap under the falling jegi and the kid runs over and kicks it. Hit it on the middle of the foot for a Perfect. 30 stages with wind, magpies, ice and finally two jegis, plus a two-player foot-volley mode on one phone.",
+  },
+  ja: {
+    title: "チェギ蹴り — タップで羽根を蹴り上げる無料の新年物理ゲーム30ステージ＋スマホ1台で2人",
+    description: "落ちてくるチェギの下をタップすると子どもが走って蹴ります。足の真ん中に当てれば「パーフェクト！」。風・カササギ・氷・チェギ2個まで30ステージ、スマホ1台で2人の足バレーモードも。",
+  },
+  zh: {
+    title: "踢毽子 — 点一下把毽子踢上去的免费新年物理游戏30关 + 一部手机双人",
+    description: "在下落的毽子下方轻点，小孩就会跑去踢。踢在脚中间就是“完美！”。从风、喜鹊、冰面到两个毽子共30关，还有一部手机双人脚排球模式。",
+  },
+  fr: {
+    title: "Jegi, le volant au pied — Jeu physique gratuit du Nouvel An : touchez pour garder le volant en l'air (30 niveaux + duo)",
+    description: "Touchez sous le jegi qui tombe et l'enfant court le frapper. Au centre du pied, c'est un Parfait. 30 niveaux avec vent, pies, glace et enfin deux jegis, plus un volley au pied à deux sur un téléphone.",
+  },
+  es: {
+    title: "Jegi, el volante al pie — Juego de física gratis de Año Nuevo: toca para mantener el volante en el aire (30 niveles + dúo)",
+    description: "Toca bajo el jegi que cae y el niño corre a patearlo. En el centro del pie es un Perfecto. 30 niveles con viento, urracas, hielo y al final dos jegis, más un vóley con los pies para dos en un móvil.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["jegi-kick"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <JegiKick client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="jegi-kick" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
