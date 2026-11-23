@@ -1,0 +1,205 @@
+{
+"All 30 stages": [
+"30단계 전체",
+"全30面",
+"Los 30 niveles",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Arrows": [
+"남은 화살",
+"残りの矢",
+"Flechas",
+"剩余箭",
+"Flèches"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Cart": [
+"수레",
+"台車",
+"Carrito",
+"小车",
+"Chariot"
+],
+"Choose a stage": [
+"단계를 골라요",
+"ステージを選ぶ",
+"Elige un nivel",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Clack!": [
+"딱!",
+"カン！",
+"¡Clac!",
+"当！",
+"Clac !"
+],
+"Ear! +2": [
+"귀! +2",
+"耳！+2",
+"¡Oreja! +2",
+"壶耳！+2",
+"Oreille ! +2"
+],
+"In! +1": [
+"쏙! +1",
+"入った！+1",
+"¡Dentro! +1",
+"进了！+1",
+"Dedans ! +1"
+],
+"Next stage": [
+"다음 단계",
+"次の面",
+"Siguiente nivel",
+"下一关",
+"Niveau suivant"
+],
+"Out of arrows": [
+"화살을 다 썼어요",
+"矢がなくなりました",
+"Sin flechas",
+"箭用完了",
+"Plus de flèches"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0}단계 시작",
+"{0}面をプレイ",
+"Jugar nivel {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Points": [
+"점수",
+"得点",
+"Puntos",
+"得分",
+"Points"
+],
+"Pull back and let go to pitch arrows into the jar: the mouth scores 1, the little ears 2.": [
+"뒤로 당겼다 놓아 항아리에 화살을 넣어요. 입구는 1점, 작은 귀는 2점이에요.",
+"引いて離して壺に矢を投げ入れよう。口は1点、小さな耳は2点です。",
+"Tira hacia atrás y suelta para meter flechas en el jarrón: la boca vale 1 y las orejitas 2.",
+"向后拉再松手，把箭投进壶里：壶口 1 分，小壶耳 2 分。",
+"Tirez puis relâchez pour lancer des flèches dans le vase : le goulot vaut 1, les petites oreilles 2."
+],
+"Pull back and let go to throw": [
+"당겼다 놓으면 던져요",
+"引いて離すと投げます",
+"Tira hacia atrás y suelta para lanzar",
+"向后拉再松手就能投掷",
+"Tirez puis relâchez pour lancer"
+],
+"Restart": [
+"다시 시작",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 하기",
+"もう一度",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Right in the jar!": [
+"항아리에 쏙!",
+"壺にすっぽり！",
+"¡Directo al jarrón!",
+"正中壶里！",
+"Droit dans le vase !"
+],
+"Score {0} points with {1} arrows. The mouth is 1, an ear is 2.": [
+"화살 {1}개로 {0}점을 내요. 입구는 1점, 귀는 2점이에요.",
+"矢{1}本で{0}点取ろう。口は1点、耳は2点。",
+"Consigue {0} puntos con {1} flechas. La boca vale 1, una oreja 2.",
+"用 {1} 支箭得 {0} 分。壶口 1 分，壶耳 2 分。",
+"Marquez {0} points avec {1} flèches. Le goulot vaut 1, une oreille 2."
+],
+"Stage": [
+"단계",
+"面",
+"Nivel",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"단계 목록",
+"ステージ一覧",
+"Lista de niveles",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"{0}단계",
+"{0}面",
+"Nivel {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Tuho Toss": [
+"투호 던지기",
+"投壺(トゥホ)",
+"Lanzamiento de tuho",
+"投壶",
+"Lancer de tuho"
+],
+"Wind": [
+"바람",
+"風",
+"Viento",
+"风",
+"Vent"
+],
+"You cleared all 30 stages!": [
+"30단계를 모두 클리어했어요!",
+"全30面をクリアしました！",
+"¡Superaste los 30 niveles!",
+"你通关了全部 30 关！",
+"Vous avez terminé les 30 niveaux !"
+],
+"{0} arrows left": [
+"화살 {0}개 남음",
+"矢が{0}本残り",
+"Quedan {0} flechas",
+"剩余 {0} 支箭",
+"{0} flèches restantes"
+],
+"{0} of {1} points": [
+"{1}점 중 {0}점",
+"{1}点中{0}点",
+"{0} de {1} puntos",
+"{1} 分中得了 {0} 分",
+"{0} sur {1} points"
+],
+"{0} points to win": [
+"{0}점이면 통과",
+"{0}点でクリア",
+"{0} puntos para ganar",
+"得 {0} 分过关",
+"{0} points pour gagner"
+]
+}
