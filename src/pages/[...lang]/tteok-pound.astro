@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TteokPound from "../../components/games/TteokPound";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "떡메치기 — 짝꿍 손 피해 박자 맞춰 치는 무료 설날 타이밍 게임 30단계 + 둘이서",
+    description: "누르고 있으면 떡메를 들고, 떼면 내려칩니다. 짝꿍 손이 떡을 뒤집고 빠진 순간에 쳐야 ‘척!’ 손이 머뭇거리는 속임수와 빨라지는 박자까지 30단계, 한 명은 치고 한 명은 뒤집는 둘이서 모드도 있어요.",
+  },
+  en: {
+    title: "Rice Cake Pounding — Free new-year timing game: pound between your partner's folds (30 stages + 2P)",
+    description: "Hold to lift the mallet, let go to bring it down. Strike the instant your partner's hand has folded the dough and pulled away for a Thwack. 30 stages with fake-outs and faster rhythms, plus a two-player mode where one pounds and one folds.",
+  },
+  ja: {
+    title: "もちつき合戦 — 相方の手をよけてリズムよくつく無料の新年タイミングゲーム30ステージ＋2人で",
+    description: "押し続けると杵が上がり、離すと振り下ろします。相方の手が餅を返して離れた瞬間に打てば「ペッタン！」。フェイントや速くなるリズムまで30ステージ、1人がつき1人が返す2人モードもあります。",
+  },
+  zh: {
+    title: "打年糕 — 避开搭档的手、踩准节奏的免费新年节奏游戏30关 + 双人",
+    description: "按住举起木槌，松手砸下。搭档的手翻好年糕一离开就砸，就是一声“啪！”。共30关，有假动作和越来越快的节奏，还有一人砸一人翻的双人模式。",
+  },
+  fr: {
+    title: "Pilon à gâteau de riz — Jeu de timing gratuit du Nouvel An : frappez entre les plis de votre partenaire (30 niveaux + à deux)",
+    description: "Maintenez pour lever le maillet, relâchez pour frapper. Frappez dès que la main de votre partenaire a plié la pâte et s'est retirée pour un Paf. 30 niveaux avec des feintes et un rythme qui s'accélère, plus un mode à deux où l'un frappe et l'autre plie.",
+  },
+  es: {
+    title: "Golpes de pastel de arroz — Juego de ritmo gratis de Año Nuevo: golpea entre los pliegues de tu compañero (30 niveles + a dos)",
+    description: "Mantén pulsado para levantar el mazo y suelta para golpear. Golpea justo cuando la mano de tu compañero ha doblado la masa y se ha retirado para un ¡Pum!. 30 niveles con amagues y ritmos más rápidos, más un modo a dos donde uno golpea y otro dobla.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["tteok-pound"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <TteokPound client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="tteok-pound" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

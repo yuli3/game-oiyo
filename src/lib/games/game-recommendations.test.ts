@@ -4,8 +4,8 @@ import { getGameRecommendations, CATALOG_GAMES, CURATED_CLUSTERS } from "./game-
 import { locales } from "../i18n";
 
 describe("game-recommendations", () => {
-  it("contains all 192 catalog games", () => {
-    expect(Object.keys(CATALOG_GAMES)).toHaveLength(192);
+  it("contains all 195 catalog games", () => {
+    expect(Object.keys(CATALOG_GAMES)).toHaveLength(195);
   });
 
   // 2026-11-10: CATALOG_GAMES는 index.astro GAMES의 스냅샷이다. 신작이 index에만

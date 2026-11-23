@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SnowballFight from "../../components/games/SnowballFight";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "눈싸움 — 당겨서 던지는 무료 겨울 물리 게임 30단계 + 폰 하나로 둘이서",
+    description: "화면을 당겼다 놓으면 눈덩이가 포물선을 그리며 날아가요. 눈벽 뒤에서 고개를 내미는 친구들을 맞히고, 맞을 때마다 부서지는 눈벽 뒤에 숨으세요. 바람·두 방 친구까지 30단계, 폰 하나로 둘이서 하는 눈싸움도 있어요.",
+  },
+  en: {
+    title: "Snowball Hill — Free pull-and-throw winter physics game (30 stages + one-phone 2P)",
+    description: "Pull back and let go to lob a snowball in an arc. Hit the kids who pop up from behind their snow walls, and duck behind your own wall, which crumbles with every hit. 30 stages with wind and tough kids, plus a two-player fight on one phone.",
+  },
+  ja: {
+    title: "雪合戦の丘 — 引いて投げる無料の冬の物理ゲーム30ステージ＋スマホ1台で2人",
+    description: "画面を引いて離すと雪玉が放物線を描いて飛びます。雪の壁から顔を出す友だちに当て、当たるたびに崩れる自分の壁に隠れましょう。風や2発必要な友だちまで30ステージ、スマホ1台の2人対戦もあります。",
+  },
+  zh: {
+    title: "雪球大战 — 拉弓投掷的免费冬季物理游戏30关 + 一部手机双人",
+    description: "往后拉再松手，雪球就会划出抛物线飞出去。打中从雪墙后探头的小伙伴，再躲回每次被打中都会碎掉一点的雪墙后面。共30关，有风和要打两次的对手，还有一部手机的双人对战。",
+  },
+  fr: {
+    title: "Bataille de boules de neige — Jeu de physique d'hiver gratuit : tirer et lancer (30 niveaux + duel sur un téléphone)",
+    description: "Tirez puis relâchez pour lancer une boule de neige en cloche. Touchez les enfants qui sortent de derrière leur mur de neige, et cachez-vous derrière le vôtre, qui s'effrite à chaque coup. 30 niveaux avec du vent et des coriaces, plus un duel à deux sur un seul téléphone.",
+  },
+  es: {
+    title: "Guerra de bolas de nieve — Juego de física invernal gratis: tira y lanza (30 niveles + duelo en un móvil)",
+    description: "Tira hacia atrás y suelta para lanzar una bola de nieve en parábola. Dale a los niños que asoman tras sus muros de nieve y escóndete tras el tuyo, que se desmorona con cada golpe. 30 niveles con viento y rivales duros, más un duelo a dos en un solo móvil.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["snowball-fight"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <SnowballFight client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="snowball-fight" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
