@@ -121,11 +121,15 @@ void main() {
   vec3 painting = col;
   float pl = dot(painting, vec3(0.333));
   float psat = (max(painting.r, max(painting.g, painting.b)) - min(painting.r, min(painting.g, painting.b))) / max(max(painting.r, max(painting.g, painting.b)), 0.001);
-  painting = mix(vec3(pl), painting, 1.0 + 0.7 * psat) * 1.06;
+  painting = mix(vec3(pl), painting, 1.0 + 0.35 * psat) * 1.04;
   painting = mix(painting, painting * paper / max(uPaper, vec3(0.001)), 0.35);
   painting = mix(painting, uInk * 0.9, stroke * 0.6);
 
+  painting *= 1.22;
   vec3 outc = mix(ink, painting, mask);
+  // warm glow of the lantern itself
+  float core = 1.0 - smoothstep(0.0, uPlayer.z, pd);
+  outc += vec3(1.0, 0.72, 0.38) * 0.09 * core * core;
   if (sky) outc = paper * 0.96;
 
   // vignette + hurt flash

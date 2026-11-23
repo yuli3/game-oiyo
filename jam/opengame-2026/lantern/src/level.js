@@ -5,9 +5,9 @@ export const CELL = 3;
 export const OPEN = 0, HOUSE = 1, BORDER = 2, WALL = 3, TREES = 4;
 
 export const DISTRICTS = [
-  { name: 'Village', ko: '마을', wall: 0xe9e1cf, beam: 0x6b4a32, roof: 0x3d4652, ground: 0x7d8a5a, street: 0xcfc4ab, tree: 0x2f5a35, accent: 0xd9442b, fruit: 0xf08a1c },
-  { name: 'Night Market', ko: '저잣거리', wall: 0xeadbc0, beam: 0x7a3b22, roof: 0x34404c, ground: 0x7a7a52, street: 0xc8b996, tree: 0x3a6a3a, accent: 0x2f5fb3, fruit: 0xe0402a },
-  { name: 'Palace', ko: '궁궐', wall: 0xf1e8d6, beam: 0xa2301f, roof: 0x2b3a44, ground: 0x6f7d58, street: 0xd9d0bd, tree: 0x2e5e45, accent: 0x1f8f6f, fruit: 0xf2b21c },
+  { name: 'Village', ko: '마을', wall: 0xe9e1cf, beam: 0x6b4a32, roof: 0x3d4652, ground: 0xa9b28a, street: 0xcfc4ab, tree: 0x2f5a35, accent: 0xd9442b, fruit: 0xf08a1c },
+  { name: 'Night Market', ko: '저잣거리', wall: 0xeadbc0, beam: 0x7a3b22, roof: 0x34404c, ground: 0xb0ad88, street: 0xc8b996, tree: 0x3a6a3a, accent: 0x2f5fb3, fruit: 0xe0402a },
+  { name: 'Palace', ko: '궁궐', wall: 0xf1e8d6, beam: 0xa2301f, roof: 0x2b3a44, ground: 0xa3b090, street: 0xd9d0bd, tree: 0x2e5e45, accent: 0x1f8f6f, fruit: 0xf2b21c },
 ];
 
 export function districtFor(stage) {
@@ -258,7 +258,7 @@ export function buildLevelMeshes(level) {
   const N = level.N;
   const size = N * CELL;
 
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(size + 60, size + 60), new THREE.MeshLambertMaterial({ color: d.ground }));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(size + 60, size + 60), new THREE.MeshLambertMaterial({ color: 0xe6dccb }));
   ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02;
   group.add(ground);
   const inner = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshLambertMaterial({ map: groundTexture(level, d) }));
