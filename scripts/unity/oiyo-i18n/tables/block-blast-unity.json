@@ -34,7 +34,7 @@
   "Stage 6: Golden Geode Mine": [null, null, null, "第 6 关：金色晶洞矿", "Niveau 6 : Mine de géodes d'or"],
   "Harvest 6 glowing golden gems and score 3,000 pts!": [null, null, null, "收集 6 颗金色宝石，拿到 3,000 分！", "Récoltez 6 gemmes dorées et marquez 3 000 pts !"],
   "Stage 7: Constricted Grid (6x6)": [null, null, null, "第 7 关：狭窄棋盘（6x6）", "Niveau 7 : Grille étroite (6x6)"],
-  "Overcome the blocked border and score 3,500 pts in 6x6 space!": [null, null, null, "突破封锁的边框，在 6x6 空间拿到 3,500 分！", "Surmontez la bordure bloquée et marquez 3 500 pts en 6x6 !"],
+  "Ice walls box in a 6x6 space. Clear lines to break them and score 3,500 pts! (Corner rocks stay.)": [null, null, null, "冰墙围出 6x6 的空间。消除整行打破冰墙，拿到 3,500 分！（四角的岩石不会消失）", "Des murs de glace enferment un espace 6x6. Effacez des lignes pour les briser et marquez 3 500 pts ! (Les rochers des coins restent.)"],
   "Stage 8: Time Bomb Defusal": [null, null, null, "第 8 关：拆除定时炸弹", "Niveau 8 : Désamorçage"],
   "Clear lines containing countdown bombs before the timer hits 0!": [null, null, null, "在倒计时归零前消除有炸弹的行！", "Effacez les lignes avec des bombes avant la fin du compte à rebours !"],
   "Stage 9: 5-Combo Mastery": [null, null, null, "第 9 关：5 连击大师", "Niveau 9 : Maîtrise du combo x5"],
