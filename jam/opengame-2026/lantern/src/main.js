@@ -109,9 +109,30 @@ scene.add(player.mesh);
 const pointer = makePointer();
 scene.add(pointer);
 
-function newRun() {
-  const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
-  run = { seed, stage: 1, score: 0, kills: 0, levels: {}, stats: applyTalismans({}), time: 0, lanternsLit: 0, paintedSum: 0, rng: makeRng(seed) };
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function hashString(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+
+function newRun(daily = false) {
+  const day = daily ? todayKey() : null;
+  const seed = daily ? hashString(`inklight-${day}`) : (Date.now() ^ (Math.random() * 1e9)) >>> 0;
+  run = { seed, daily: day, stage: 1, score: 0, kills: 0, levels: {}, stats: applyTalismans({}), time: 0, lanternsLit: 0, paintedSum: 0, rng: makeRng(seed ^ 0x9e3779b9) };
+  tipsShown.clear();
+}
+
+// ---------- first-night tips ----------
+const tipsShown = new Set();
+let tipTimer = 0;
+function tip(id, text, ms = 4200) {
+  if (tipsShown.has(id) || !run || run.stage > 2) return;
+  tipsShown.add(id);
+  const el = $('tip');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(tipTimer);
+  tipTimer = setTimeout(() => el.classList.remove('show'), ms);
 }
 
 function clearStage() {
@@ -178,6 +199,8 @@ function startStage(stage) {
   const d = level.district;
   scene.background.set(0x10141c);
   updateHudStatic();
+  if (state === 'play' && stage === 1) setTimeout(() => tip('move', 'WASD to walk · hold the mouse button to throw flame seeds'), 2800);
+  if (state === 'play' && level.boss && stage === 4) setTimeout(() => tip('boss', 'Its ink armor only breaks inside the glow of a lit stone lantern', 6000), 3200);
   if (state === 'play') {
     flashBanner(level.boss ? bossTitle(stage) : `Night ${stage}`, level.boss ? 'Lure it into the light of the stone lanterns' : `${d.name} · ${d.ko}`, 2600);
   }
@@ -759,6 +782,8 @@ function updatePlayer(dt) {
   const painted = pipeline.paintedAt(player.x, player.z);
   const drain = 1.6 + run.stage * 0.08;
   if (painted > 0.5) player.light += st.regen * dt; else player.light -= drain * dt;
+  if (painted > 0.5 && run.lanternsLit > 0) tip('paint', 'Ground you have painted with flame restores your light');
+  if (enemies.length > 2 && stageTime > 15) tip('dash', 'Space dashes through dokkaebi · right-click works too');
   player.light = Math.min(st.maxLight, player.light);
   // your lantern leaves a faint wash of color where you walk
   pipeline.paint(player.x, player.z, lightRadius() * 0.45, 0.42);
@@ -780,6 +805,7 @@ function updatePlayer(dt) {
 }
 
 function updateLanterns(dt) {
+  if (run.stage === 1 && stageTime > 9) tip('lantern', 'Follow the red arrow · stand beside a stone lantern to kindle it');
   for (const l of lanterns) {
     if (l.lit) {
       l.mesh.userData.flame.scale.set(1 + Math.sin(stageTime * 9 + l.x) * 0.08, 1.3 + Math.sin(stageTime * 11 + l.z) * 0.12, 1);
@@ -914,10 +940,10 @@ function gameOver(victory) {
   mouse.down = false;
   $('hud').classList.add('hidden');
   $('bossBar').classList.add('hidden');
-  const best = loadBest();
+  const best = loadBest(run.daily);
   const isBest = run.score > (best.score || 0);
-  if (isBest) saveBest({ score: run.score, stage: run.stage, victory });
-  $('endTitle').textContent = victory ? 'Dawn returns to the world' : 'The lantern went out';
+  if (isBest) saveBest({ score: run.score, stage: run.stage, victory }, run.daily);
+  $('endTitle').innerHTML = (victory ? 'Dawn returns to the world' : 'The lantern went out') + (run.daily ? `<div class="daily-tag">DAILY NIGHT · ${run.daily}</div>` : '');
   const avgPaint = run.paintedSum / Math.max(1, run.stage - (victory ? 0 : 1));
   $('endStats').innerHTML = [
     ['Night reached', `${run.stage} / ${FINAL_STAGE}`],
@@ -934,8 +960,9 @@ function gameOver(victory) {
 
 function formatTime(t) { const m = Math.floor(t / 60), s = Math.floor(t % 60); return `${m}:${String(s).padStart(2, '0')}`; }
 
-function loadBest() { try { return JSON.parse(localStorage.getItem('inklight.best') || '{}'); } catch { return {}; } }
-function saveBest(v) { try { localStorage.setItem('inklight.best', JSON.stringify(v)); } catch { /* storage unavailable */ } }
+const bestKey = (day) => (day ? `inklight.daily.${day}` : 'inklight.best');
+function loadBest(day) { try { return JSON.parse(localStorage.getItem(bestKey(day)) || '{}'); } catch { return {}; } }
+function saveBest(v, day) { try { localStorage.setItem(bestKey(day), JSON.stringify(v)); } catch { /* storage unavailable */ } }
 
 function togglePause() {
   if (state === 'play') { state = 'pause'; $('screen-pause').classList.remove('hidden'); }
@@ -968,11 +995,14 @@ function updateHudStatic() {
   $('objective').textContent = obj;
 }
 
-let hudAcc = 0;
+let hudAcc = 0, heartT = 0;
 function updateHud(dt) {
   hudAcc += dt;
   const frac = clamp(player.light / run.stats.maxLight, 0, 1);
   $('lightFill').style.width = `${frac * 100}%`;
+  const low = frac < 0.25;
+  $('lightFill').parentElement.classList.toggle('low', low);
+  if (low) { heartT -= dt; if (heartT <= 0) { heartT = 0.35 + frac * 2.5; audio.tone(55, 0.18, 0.5, 'sine', 40); } }
   if (hudAcc < 0.2) return;
   hudAcc = 0;
   $('score').textContent = run.score.toLocaleString();
@@ -1071,9 +1101,9 @@ function adaptQuality(dt) {
 }
 
 // ---------- boot ----------
-function startRun() {
+function startRun(daily = false) {
   audio.start();
-  newRun();
+  newRun(daily === true);
   player.light = run.stats.maxLight;
   state = 'play';
   $('screen-title').classList.add('hidden');
@@ -1081,8 +1111,19 @@ function startRun() {
   $('hud').classList.remove('hidden');
   startStage(1);
 }
-$('btnStart').addEventListener('click', startRun);
-$('btnRetry').addEventListener('click', startRun);
+$('btnStart').addEventListener('click', () => startRun(false));
+$('btnDaily').addEventListener('click', () => startRun(true));
+$('btnRetry').addEventListener('click', () => startRun(!!(run && run.daily)));
+$('btnTitle').addEventListener('click', () => { location.reload(); });
+$('btnShare').addEventListener('click', async () => {
+  const txt = shareText();
+  try { await navigator.clipboard.writeText(txt); $('btnShare').textContent = 'Copied'; } catch { $('btnShare').textContent = 'Copy failed'; }
+  setTimeout(() => { $('btnShare').textContent = 'Copy result'; }, 1600);
+});
+function shareText() {
+  const nights = '墨'.repeat(Math.min(run.stage, FINAL_STAGE));
+  return `INKLIGHT 먹빛 등불${run.daily ? ` · Daily ${run.daily}` : ''}\nNight ${run.stage}/${FINAL_STAGE} · ${run.score.toLocaleString()} pts · ${run.kills} dokkaebi\n${nights}`;
+}
 $('btnResume').addEventListener('click', togglePause);
 
 function boot() {

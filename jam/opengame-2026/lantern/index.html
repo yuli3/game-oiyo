@@ -30,9 +30,12 @@
     <h1 class="title">INKLIGHT</h1>
     <div class="subtitle">먹빛 등불 · Lantern of the Dokkaebi Night</div>
     <p class="pitch">The night has swallowed the color of the world.<br>Your lantern is your sword, your life and your brush.<br>Light the stone lanterns. Paint the night back.</p>
-    <button class="btn" id="btnStart">Begin the night</button>
+    <div class="btn-row">
+      <button class="btn" id="btnStart">Begin the night</button>
+      <button class="btn btn-alt" id="btnDaily">Daily night</button>
+    </div>
     <div class="controls">
-      <span><b>WASD</b> move</span><span><b>Mouse</b> aim</span><span><b>Click</b> throw flame</span><span><b>Space</b> dash</span><span><b>E</b> light lantern</span><span><b>M</b> mute</span>
+      <span><b>WASD</b> move</span><span><b>Mouse</b> aim</span><span><b>Click</b> throw flame</span><span><b>Space</b> dash</span><span><b>Esc</b> pause</span><span><b>M</b> mute</span>
     </div>
     <div class="best" id="bestLine"></div>
   </div>
@@ -50,7 +53,11 @@
   <div class="panel">
     <h2 id="endTitle">The lantern went out</h2>
     <div class="end-stats" id="endStats"></div>
-    <button class="btn" id="btnRetry">Light it again</button>
+    <div class="btn-row">
+      <button class="btn" id="btnRetry">Light it again</button>
+      <button class="btn btn-alt" id="btnShare">Copy result</button>
+      <button class="btn btn-alt" id="btnTitle">Title</button>
+    </div>
   </div>
 </div>
 
@@ -62,6 +69,7 @@
 </div>
 
 <div id="banner" class="banner"></div>
+<div id="tip" class="tip"></div>
 <div id="loading" class="loading">Grinding the ink…</div>
 
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
