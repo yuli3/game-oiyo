@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AdventPuzzles from "../../components/games/AdventPuzzles";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "어드벤트 퍼즐 달력 — 12월 1일부터 25일까지 하루 한 칸 여는 무료 퍼즐 25개",
+    description: "12월 1일부터 크리스마스까지 매일 문 하나를 열고 퍼즐을 풀어 보세요. 촛불 켜기·겨울 그림 맞추기·전구 줄 잇기·방울 정리가 번갈아 나오고, 오늘의 별과 달력 진행을 이모지로 친구에게 공유할 수 있습니다.",
+  },
+  en: {
+    title: "Advent Puzzle Calendar — 25 free daily puzzles, one door a day from 1 to 25 December",
+    description: "Open one door a day from 1 December to Christmas and solve the puzzle behind it: light the candles, slide a winter picture, connect the lights and sort ornaments. Share today's stars and your calendar as emoji.",
+  },
+  ja: {
+    title: "アドベント・パズルカレンダー — 12月1日〜25日に毎日1つ開ける無料パズル25問",
+    description: "12月1日からクリスマスまで毎日扉を1つ開けてパズルを解きましょう。ろうそく点灯・冬の絵スライド・電飾つなぎ・オーナメント仕分けが交代で登場。今日の星とカレンダーを絵文字でシェアできます。",
+  },
+  zh: {
+    title: "降临节谜题日历 — 12月1日至25日每天打开一扇门的25道免费谜题",
+    description: "从12月1日到圣诞节，每天打开一扇门，解开门后的谜题：点亮蜡烛、冬日拼图滑块、连接彩灯、彩球分类轮流出现。还能用表情符号分享今天的星星和日历进度。",
+  },
+  fr: {
+    title: "Calendrier de l'Avent à énigmes — 25 énigmes gratuites, une porte par jour du 1er au 25 décembre",
+    description: "Ouvrez une porte par jour du 1er décembre à Noël et résolvez l'énigme cachée : bougies à allumer, taquin d'hiver, guirlande à relier et tri des boules. Partagez vos étoiles du jour et votre calendrier en émojis.",
+  },
+  es: {
+    title: "Calendario de Adviento de puzles — 25 puzles gratis, una puerta al día del 1 al 25 de diciembre",
+    description: "Abre una puerta al día desde el 1 de diciembre hasta Navidad y resuelve el puzle que esconde: velas, deslizante de invierno, guirnalda y bolas por colores. Comparte tus estrellas del día y tu calendario en emojis.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["advent-puzzles"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <AdventPuzzles client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="advent-puzzles" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

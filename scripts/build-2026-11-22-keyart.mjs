@@ -210,7 +210,38 @@ function fingerHockey() {
   );
 }
 
-const jobs = { "bubble-garden": bubbleGarden, "picture-logic": pictureLogic, "ice-penguin": icePenguin, "mirror-lanterns": mirrorLanterns, "typing-defense": typingDefense, "spin-sumo": spinSumo, "spider-cards": spiderCards, "market-mercenaries": marketMercenaries, "sunlit-glass": sunlitGlass, "finger-hockey": fingerHockey };
+function adventPuzzles() {
+  const colors = ["#b3262e", "#1f6b45", "#c9962b", "#2a4d8f"];
+  let doors = "";
+  for (let d = 1; d <= 25; d++) {
+    const r = Math.floor((d - 1) / 5);
+    const c = (d - 1) % 5;
+    const x = 330 + c * 112;
+    const y = 190 + r * 84;
+    const done = d < 8;
+    const today = d === 8;
+    if (today) doors += `<rect x="${x - 5}" y="${y - 5}" width="106" height="82" rx="14" fill="#ffd43b" opacity=".9"/>`;
+    doors += `<rect x="${x}" y="${y}" width="96" height="72" rx="10" fill="${done ? "#13203f" : d > 8 ? "#4a3428" : colors[d % 4]}"/>`;
+    if (!done && d <= 8) doors += `<rect x="${x + 45}" y="${y}" width="6" height="72" fill="#ffe08a" opacity=".85"/><rect x="${x}" y="${y + 33}" width="96" height="6" fill="#ffe08a" opacity=".85"/>`;
+    doors += `<text x="${x + 48}" y="${y + (done ? 30 : 46)}" text-anchor="middle" font-family="sans-serif" font-size="${done ? 20 : 30}" font-weight="800" fill="${d > 8 ? "rgba(255,255,255,.35)" : "#fff"}">${d}</text>`;
+    if (done) doors += `<text x="${x + 48}" y="${y + 60}" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#ffd43b">★★★</text>`;
+  }
+  let snow = "";
+  for (let i = 0; i < 90; i++) snow += `<circle cx="${(i * 137) % 1200}" cy="${(i * 83) % 630}" r="${1 + (i % 3)}" fill="#fff" opacity=".7"/>`;
+  return svg(
+    `<rect width="${W}" height="${H}" fill="url(#g)"/>` + snow +
+      `<circle cx="1060" cy="230" r="46" fill="#fff4c2"/><circle cx="1042" cy="218" r="40" fill="#0d1838"/>` +
+      `<rect x="310" y="170" width="580" height="436" rx="22" fill="#3b2418"/>` + doors +
+      `<path d="M150 600 L150 540" stroke="#5b3a24" stroke-width="22"/><path d="M150 250 L60 420 L240 420 Z M150 330 L40 540 L260 540 Z" fill="#238a46"/>` +
+      `<path d="M150 236 l10 22 24 2 -18 16 6 24 -22 -12 -22 12 6 -24 -18 -16 24 -2 z" fill="#ffd43b"/>` +
+      `<circle cx="120" cy="400" r="8" fill="#ff6b6b"/><circle cx="180" cy="470" r="8" fill="#4dabf7"/><circle cx="110" cy="500" r="8" fill="#ffd43b"/>` +
+      `<circle cx="1040" cy="560" r="44" fill="#fff"/><circle cx="1040" cy="486" r="32" fill="#fff"/><rect x="1014" y="440" width="52" height="10" fill="#222"/><rect x="1024" y="410" width="32" height="32" fill="#222"/><path d="M1040 490 l26 6 -26 6 z" fill="#f76707"/>` +
+      title("어드벤트 퍼즐 달력 · Advent Puzzle Calendar", "12월 1일~25일, 하루 한 칸 — One puzzle door a day", 600, "#fff", 90),
+    `<linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#081230"/><stop offset="1" stop-color="#1c2d5e"/></linearGradient>`,
+  );
+}
+
+const jobs = { "bubble-garden": bubbleGarden, "picture-logic": pictureLogic, "ice-penguin": icePenguin, "mirror-lanterns": mirrorLanterns, "typing-defense": typingDefense, "spin-sumo": spinSumo, "spider-cards": spiderCards, "market-mercenaries": marketMercenaries, "sunlit-glass": sunlitGlass, "finger-hockey": fingerHockey, "advent-puzzles": adventPuzzles };
 const only = process.argv.slice(2);
 for (const [slug, make] of Object.entries(jobs)) {
   if (only.length && !only.includes(slug)) continue;
