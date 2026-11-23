@@ -419,7 +419,7 @@ public sealed class FrostpunkPlayer : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.LeftArrow)) _camAngle -= 55f * dt;
         if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.RightArrow)) _camAngle += 55f * dt;
-        if (Input.GetMouseButton(1)) _camAngle += Input.GetAxis("Mouse X") * 4.5f;
+        if (OiyoPointerInput.GetMouseButton(1)) _camAngle += Input.GetAxis("Mouse X") * 4.5f;
 
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         _camDist = Mathf.Clamp(_camDist - scroll * 10f, 14f, 34f);
@@ -435,9 +435,9 @@ public sealed class FrostpunkPlayer : MonoBehaviour
     void HandlePlotClick()
     {
         // Avoid clicking behind top HUD strip
-        if (Input.GetMouseButtonDown(0) && Input.mousePosition.y < Screen.height - 90f && Input.mousePosition.y > 75f)
+        if (OiyoPointerInput.GetMouseButtonDown(0) && OiyoPointerInput.mousePosition.y < Screen.height - 90f && OiyoPointerInput.mousePosition.y > 75f)
         {
-            var ray = _cam.ScreenPointToRay(Input.mousePosition);
+            var ray = _cam.ScreenPointToRay(OiyoPointerInput.mousePosition);
             if (new Plane(Vector3.up, Vector3.zero).Raycast(ray, out float enter))
             {
                 Vector3 hit = ray.GetPoint(enter);

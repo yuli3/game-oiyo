@@ -544,9 +544,9 @@ public class DomeKeeperPlayer : MonoBehaviour
         float iy = Input.GetAxisRaw("Vertical");
 
         // Also support click/drag steering toward pointer when holding mouse button
-        if (Input.GetMouseButton(0) && GUIUtility.hotControl == 0 && Input.mousePosition.y > 72f)
+        if (OiyoPointerInput.GetMouseButton(0) && GUIUtility.hotControl == 0 && OiyoPointerInput.mousePosition.y > 72f)
         {
-            Vector3 wp = _cam.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 wp = _cam.ScreenToWorldPoint(OiyoPointerInput.mousePosition);
             Vector2 dir = new Vector2(wp.x - _minerPos.x, wp.y - _minerPos.y);
             if (dir.magnitude > 0.35f)
             {
@@ -712,13 +712,13 @@ public class DomeKeeperPlayer : MonoBehaviour
     void UpdateDefense(float dt)
     {
         // Aim turret toward mouse
-        Vector3 wp = _cam.ScreenToWorldPoint(Input.mousePosition);
+        Vector3 wp = _cam.ScreenToWorldPoint(OiyoPointerInput.mousePosition);
         Vector2 origin = _turretPivot.transform.position;
         Vector2 dir = new Vector2(wp.x - origin.x, Mathf.Max(0.15f, wp.y - origin.y)).normalized;
         _turretAngleDeg = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         _turretPivot.transform.rotation = Quaternion.Euler(0, 0, _turretAngleDeg);
 
-        _laserFiring = Input.GetMouseButton(0) || Input.GetKey(KeyCode.Space);
+        _laserFiring = OiyoPointerInput.GetMouseButton(0) || Input.GetKey(KeyCode.Space);
         if (_laserFiring && GUIUtility.hotControl == 0)
         {
             Vector2 endPos = origin + dir * 18f;

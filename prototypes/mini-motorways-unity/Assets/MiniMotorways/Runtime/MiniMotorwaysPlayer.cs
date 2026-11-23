@@ -362,14 +362,14 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
 
     void HandlePointer()
     {
-        var ray = _cam.ScreenPointToRay(Input.mousePosition);
+        var ray = _cam.ScreenPointToRay(OiyoPointerInput.mousePosition);
         if (!new Plane(Vector3.up, Vector3.zero).Raycast(ray, out float enter)) return;
         Vector3 hit = ray.GetPoint(enter);
         Vector2Int? cellPos = WorldToCell(hit);
 
         if (_motorwayMode)
         {
-            if (Input.GetMouseButtonDown(0) && cellPos.HasValue)
+            if (OiyoPointerInput.GetMouseButtonDown(0) && cellPos.HasValue)
             {
                 if (!_motorwayStart.HasValue)
                 {
@@ -386,15 +386,15 @@ public sealed class MiniMotorwaysPlayer : MonoBehaviour
             return;
         }
 
-        bool rightDown = Input.GetMouseButton(1) || Input.GetMouseButtonDown(1);
-        bool leftDown = Input.GetMouseButton(0) || Input.GetMouseButtonDown(0);
+        bool rightDown = OiyoPointerInput.GetMouseButton(1) || OiyoPointerInput.GetMouseButtonDown(1);
+        bool leftDown = OiyoPointerInput.GetMouseButton(0) || OiyoPointerInput.GetMouseButtonDown(0);
 
-        if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
+        if (OiyoPointerInput.GetMouseButtonDown(0) || OiyoPointerInput.GetMouseButtonDown(1))
         {
             _isDragging = true;
             _lastDragCell = null;
         }
-        if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+        if (OiyoPointerInput.GetMouseButtonUp(0) || OiyoPointerInput.GetMouseButtonUp(1))
         {
             _isDragging = false;
             _lastDragCell = null;
