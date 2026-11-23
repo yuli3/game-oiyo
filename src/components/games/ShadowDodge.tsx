@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { drawBackdrop, drawSprite } from "../../lib/games/pixel-kit";
+import { HAUNTED_NIGHT, HAUNTED_NIGHT_SLOW, ORB, ORB_GRAZED, SEEKER_EYE, SWEEPER_SHARD, WISP, WISP_SHIELD } from "../../lib/games/pixel-sprites";
 import { useRunRecord } from "../../lib/games/use-run-record";
 import {
   ARENA_HEIGHT,
@@ -397,81 +399,44 @@ export function ShadowDodge({ locale = "ko" }: ShadowDodgeProps) {
 
     ctx.clearRect(0, 0, ARENA_WIDTH, ARENA_HEIGHT);
 
-    // 1. Cyber Shadow Arena Background
-    ctx.fillStyle = gameState.timeScale < 1.0 ? "#081426" : "#090d16";
-    ctx.fillRect(0, 0, ARENA_WIDTH, ARENA_HEIGHT);
+    // 1. Haunted night backdrop (pixel art, cached). Slow time turns it blue.
+    drawBackdrop(ctx, ARENA_WIDTH, ARENA_HEIGHT, gameState.timeScale < 1.0 ? HAUNTED_NIGHT_SLOW : HAUNTED_NIGHT, 3);
 
-    // 2. Subtle Neon Grid
-    ctx.strokeStyle = gameState.timeScale < 1.0 ? "rgba(56, 189, 248, 0.16)" : "rgba(148, 163, 184, 0.08)";
-    ctx.lineWidth = 1;
-    for (let x = 0; x <= ARENA_WIDTH; x += 40) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, ARENA_HEIGHT);
-      ctx.stroke();
-    }
-    for (let y = 0; y <= ARENA_HEIGHT; y += 40) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(ARENA_WIDTH, y);
-      ctx.stroke();
-    }
-
-    // 3. Graze Sparks
+    // 2. Graze sparks as square pixels
+    ctx.save();
     for (const sp of gameState.sparks) {
-      ctx.save();
       ctx.globalAlpha = Math.max(0, sp.ttl * 2.5);
+      ctx.fillStyle = "#bae6fd";
+      ctx.fillRect(Math.round(sp.x) - 3, Math.round(sp.y) - 3, 6, 6);
       ctx.fillStyle = "#38bdf8";
-      ctx.beginPath();
-      ctx.arc(sp.x, sp.y, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      ctx.fillRect(Math.round(sp.x) - 1, Math.round(sp.y) - 6, 2, 12);
     }
+    ctx.restore();
 
-    // 4. Player Graze Outer Aura & Inner Core
+    // 3. Player: lantern wisp with a dotted graze ring
     const p = gameState.player;
     ctx.save();
-    // Outer Graze Detection Ring
     ctx.strokeStyle =
       p.shadowEnergy >= 100
         ? "rgba(250, 204, 21, 0.75)"
         : gameState.timeScale < 1.0
         ? "rgba(56, 189, 248, 0.65)"
-        : "rgba(56, 189, 248, 0.28)";
-    ctx.lineWidth = p.shadowEnergy >= 100 ? 2.5 : 1.5;
-    ctx.setLineDash([5, 4]);
+        : "rgba(186, 230, 253, 0.3)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 6]);
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.grazeRadius, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Player Hitbox Core
-    ctx.fillStyle = p.invulnerableTimer > 0 ? "#fde047" : "#38bdf8";
-    ctx.shadowColor = "#38bdf8";
-    ctx.shadowBlur = 14;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-    ctx.fill();
     ctx.restore();
+    const bob = Math.round(Math.sin(performance.now() / 160) * 1.5);
+    const blink = p.invulnerableTimer > 0 && Math.floor(performance.now() / 90) % 2 === 0;
+    drawSprite(ctx, p.invulnerableTimer > 0 ? WISP_SHIELD : WISP, p.x, p.y - 4 + bob, { scale: 2, alpha: blink ? 0.45 : 1 });
 
-    // 5. Hazards (Orbs, Seekers, Sweepers)
+    // 4. Hazards: pink embers, red seeker eyes, amber shards
     for (const h of gameState.hazards) {
-      ctx.save();
-      if (h.kind === "seeker") {
-        ctx.fillStyle = "#f43f5e";
-        ctx.shadowColor = "#f43f5e";
-      } else if (h.kind === "sweeper") {
-        ctx.fillStyle = "#f59e0b";
-        ctx.shadowColor = "#f59e0b";
-      } else {
-        ctx.fillStyle = h.grazed ? "#818cf8" : "#ec4899";
-        ctx.shadowColor = "#ec4899";
-      }
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.arc(h.x, h.y, h.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      if (h.kind === "seeker") drawSprite(ctx, SEEKER_EYE, h.x, h.y, { scale: 2 });
+      else if (h.kind === "sweeper") drawSprite(ctx, SWEEPER_SHARD, h.x, h.y, { scale: 2, rotate: Math.round(performance.now() / 120) * (Math.PI / 2) });
+      else drawSprite(ctx, h.grazed ? ORB_GRAZED : ORB, h.x, h.y, { scale: 2 });
     }
   }, [gameState]);
 

@@ -1,0 +1,261 @@
+{
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Game over": [
+"게임 오버",
+"ゲームオーバー",
+"Fin del juego",
+"游戏结束",
+"Partie terminée"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Score": [
+"점수",
+"スコア",
+"Puntos",
+"得分",
+"Score"
+],
+"Stage clear!": [
+"스테이지 클리어!",
+"ステージクリア！",
+"¡Etapa superada!",
+"过关！",
+"Niveau réussi !"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Time": [
+"시간",
+"時間",
+"Tiempo",
+"时间",
+"Temps"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+],
+"Time is up!": [
+"시간이 다 됐어요!",
+"時間切れ！",
+"¡Se acabó el tiempo!",
+"时间到！",
+"Temps écoulé !"
+],
+"CyberTrack 3D": [
+"사이버 트랙 3D",
+"サイバートラック3D",
+"CyberTrack 3D",
+"赛博赛道 3D",
+"CyberTrack 3D"
+],
+"Neon time attack. Race through every gate and back to the line before the clock runs out.": [
+"네온 타임어택. 시간이 다 가기 전에 모든 게이트를 지나 출발선으로 돌아와요.",
+"ネオンのタイムアタック。時間切れになる前にすべてのゲートを通ってスタートラインへ戻ろう。",
+"Contrarreloj de neón. Cruza todas las puertas y vuelve a la línea antes de que se acabe el tiempo.",
+"霓虹计时赛。在时间耗尽前穿过所有关门，回到起跑线。",
+"Contre-la-montre néon. Passez toutes les portes et revenez à la ligne avant la fin du chrono."
+],
+"Tap to start. The car drives itself.": [
+"탭하면 출발해요. 가속은 자동이에요.",
+"タップでスタート。アクセルは自動です。",
+"Toca para empezar. El coche acelera solo.",
+"点按开始。赛车会自动加速。",
+"Touchez pour démarrer. La voiture accélère toute seule."
+],
+"Hold the left or right half to steer, both halves to brake. Hold a full turn at speed to drift. Keys: arrows, Space drifts.": [
+"화면 왼쪽·오른쪽 절반을 누르면 방향을 틀고, 양쪽을 함께 누르면 브레이크예요. 빠를 때 끝까지 꺾고 있으면 드리프트해요. 키보드: 방향키, 스페이스로 드리프트.",
+"画面の左右半分を押してハンドル、両方でブレーキ。速いときに切り続けるとドリフト。キー：矢印、スペースでドリフト。",
+"Mantén la mitad izquierda o derecha para girar y ambas para frenar. Gira a tope a alta velocidad para derrapar. Teclas: flechas, Espacio derrapa.",
+"按住屏幕左半或右半转向，两边同时按刹车。高速时一直满舵就会漂移。按键：方向键，空格漂移。",
+"Maintenez la moitié gauche ou droite pour tourner, les deux pour freiner. Braquez à fond à grande vitesse pour drifter. Touches : flèches, Espace pour drifter."
+],
+"Gates": [
+"게이트",
+"ゲート",
+"Puertas",
+"关门",
+"Portes"
+],
+"Drift": [
+"드리프트",
+"ドリフト",
+"Derrape",
+"漂移",
+"Drift"
+],
+"Best": [
+"최고",
+"ベスト",
+"Récord",
+"最佳",
+"Record"
+],
+"Par": [
+"기준",
+"基準",
+"Par",
+"标准",
+"Par"
+],
+"New best lap!": [
+"최고 랩 기록!",
+"ベストラップ更新！",
+"¡Nueva mejor vuelta!",
+"新的最佳圈速！",
+"Nouveau meilleur tour !"
+],
+"Off the road!": [
+"도로 밖이에요!",
+"コースアウト！",
+"¡Fuera de la pista!",
+"冲出赛道！",
+"Hors piste !"
+],
+"Circuit Alpha": [
+"알파 서킷",
+"サーキット・アルファ",
+"Circuito Alfa",
+"阿尔法赛道",
+"Circuit Alpha"
+],
+"Neon Heights": [
+"네온 하이츠",
+"ネオン・ハイツ",
+"Alturas Neón",
+"霓虹高地",
+"Hauteurs Néon"
+],
+"Poly Roller": [
+"폴리 롤러코스터",
+"ポリ・ローラー",
+"Montaña Rusa Poli",
+"多边形过山车",
+"Grand Huit Poly"
+],
+"Neon circuits": [
+"네온 서킷",
+"ネオンサーキット",
+"Circuitos de neón",
+"霓虹赛道",
+"Circuits néon"
+],
+"Hairpins": [
+"헤어핀",
+"ヘアピン",
+"Horquillas",
+"发夹弯",
+"Épingles"
+],
+"Boost lanes": [
+"부스트 차선",
+"ブースト車線",
+"Carriles turbo",
+"加速车道",
+"Voies boost"
+],
+"Oil slicks": [
+"기름 웅덩이",
+"オイル溜まり",
+"Manchas de aceite",
+"油渍",
+"Nappes d'huile"
+],
+"Sliding gates": [
+"움직이는 방벽",
+"動くバリア",
+"Barreras móviles",
+"移动路障",
+"Barrières mobiles"
+],
+"Night sprint": [
+"야간 질주",
+"ナイトスプリント",
+"Sprint nocturno",
+"夜间冲刺",
+"Sprint de nuit"
+]
+}

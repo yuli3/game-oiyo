@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GameContainer } from "../ui/game/GamePrimitives";
+import PixelImg from "../ui/game/PixelImg";
+import { PATH_ARROW, PATH_STAR, PATH_STONE, PATH_STONE_LIT } from "../../lib/games/pixel-sprites";
 import { celebrate } from "../../lib/games/celebration";
 import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import { dailySeed } from "../../lib/games/number-trail";
@@ -125,9 +127,9 @@ export default function ArrowWalk({ locale = "en" }: { locale?: string }) {
         <span className="font-mono text-2xl font-black text-foreground">{trace.cells.length} / {total}</span>
       </div>
       <div ref={boardRef} className="mx-auto w-full max-w-md">
-        <div className="relative">
+        <div className="relative overflow-hidden rounded-xl border-4 border-border">
         <PathOverlay size={puzzle.size} cells={trace.cells} walker tone={solved ? "solved" : trace.end === "edge" || trace.end === "loop" ? "blocked" : "normal"} />
-        <div className={`grid ${COLS[puzzle.size]}`} role="grid" aria-label={t.title}>
+        <div className={`grid gap-0 ${COLS[puzzle.size]}`} role="grid" aria-label={t.title}>
           {arrows.map((d, i) => {
             const step = onTrace.get(i);
             const isStart = i === puzzle.start;
@@ -140,13 +142,20 @@ export default function ArrowWalk({ locale = "en" }: { locale?: string }) {
                 onClick={() => onTap(i)}
                 disabled={isGoal}
                 aria-label={`${isStart ? "start, " : ""}${isGoal ? "goal" : ["up", "right", "down", "left"][d]}${locked ? ", fixed" : ""}${step !== undefined ? `, step ${step + 1}` : ""}`}
-                className={`relative m-0.5 flex aspect-square min-h-11 items-center justify-center rounded-lg border-2 text-2xl font-black transition-colors motion-reduce:transition-none sm:text-3xl ${
-                  solved ? "border-primary bg-primary text-primary-foreground" : hintAt === i ? "border-destructive bg-destructive/10 text-foreground" : step !== undefined ? "border-primary bg-primary/15 text-foreground" : "border-border bg-card text-foreground hover:bg-muted"
-                } ${locked ? "opacity-60" : ""}`}
+                className={`relative flex aspect-square min-h-11 items-center justify-center text-2xl font-black text-foreground sm:text-3xl ${
+                  hintAt === i ? "ring-4 ring-inset ring-destructive" : ""
+                } ${locked ? "opacity-70" : ""}`}
               >
-                {isGoal ? <span aria-hidden="true">★</span> : <span aria-hidden="true" className={`inline-block transition-transform motion-reduce:transition-none ${ROT[d]}`}>↑</span>}
-                {isStart && <span className="absolute left-1 top-0.5 text-xs" aria-hidden="true">▶</span>}
-                {step !== undefined && !solved && <span className="absolute bottom-0.5 right-1 font-mono text-xs text-muted-foreground" aria-hidden="true">{step + 1}</span>}
+                <PixelImg art={solved || step !== undefined ? PATH_STONE_LIT : PATH_STONE} className="pointer-events-none absolute inset-0 size-full" />
+                {isGoal ? (
+                  <PixelImg art={PATH_STAR} className="pointer-events-none relative size-3/5" />
+                ) : (
+                  <span aria-hidden="true" className={`relative inline-flex size-3/5 transition-transform motion-reduce:transition-none ${ROT[d]}`}>
+                    <PixelImg art={PATH_ARROW} className="size-full" />
+                  </span>
+                )}
+                {isStart && <span className="absolute left-1 top-0.5 text-xs text-primary-foreground" aria-hidden="true">▶</span>}
+                {step !== undefined && !solved && <span className="absolute bottom-0.5 right-1 rounded bg-foreground px-1 font-mono text-xs text-background" aria-hidden="true">{step + 1}</span>}
               </button>
             );
           })}

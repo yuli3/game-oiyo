@@ -17,6 +17,15 @@ import { HEXA_SORT_SPRITES } from "../../lib/games/sprites";
 import { celebrate } from "../../lib/games/celebration";
 import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import { Button } from "../ui/button";
+import { usePixelUrls } from "../ui/game/PixelImg";
+import PixelBackdrop from "../ui/game/PixelBackdrop";
+import { HEXA_TABLE, HEX_SOCKET, hexTile } from "../../lib/games/pixel-sprites";
+
+const HEX_ARTS = {
+  socket: HEX_SOCKET,
+  ...(Object.fromEntries(Object.entries(HEX_COLOR_HEXES).map(([name, hex]) => [name, hexTile(hex)])) as Record<HexColor, ReturnType<typeof hexTile>>),
+};
+type HexArtKey = keyof typeof HEX_ARTS;
 
 interface HexaSortProps {
   locale?: string;
@@ -26,10 +35,12 @@ function TiltHandHexaButton({
   slot,
   isSelected,
   onSelect,
+  urls,
 }: {
   slot: { id: string; stack: HexColor[] };
   isSelected: boolean;
   onSelect: () => void;
+  urls: Partial<Record<HexArtKey, string>>;
 }) {
   const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
 
@@ -48,23 +59,29 @@ function TiltHandHexaButton({
         MobileHapticsPro.light();
         onSelect();
       }}
-      className={`relative flex h-24 w-20 flex-col-reverse items-center justify-start rounded-2xl border p-2 transition-all duration-150 will-change-transform transform-(--card-tilt) ${
+      className={`relative flex h-28 w-20 flex-col-reverse items-center justify-start rounded-2xl border p-2 transition-all duration-150 will-change-transform transform-(--card-tilt) ${
         isSelected
           ? "border-primary bg-primary/10 ring-2 ring-primary scale-105 shadow-md"
           : "border-border bg-muted/40 hover:bg-muted/70"
       }`}
     >
       {/* Mini Isometric Stack in Hand */}
-      <div className="relative mb-2 flex flex-col-reverse items-center">
-        {slot.stack.map((color, tileIdx) => (
-          <div
-            key={tileIdx}
-            style={{ "--tile-bg": HEX_COLOR_HEXES[color] } as React.CSSProperties}
-            className={`h-6 w-12 rounded-md border border-black/20 shadow-xs bg-(--tile-bg) ${
-              tileIdx > 0 ? "-mt-3" : ""
-            }`}
-          />
-        ))}
+      <div className="relative mb-1 flex flex-col-reverse items-center">
+        {slot.stack.map((color, tileIdx) =>
+          urls[color] ? (
+            <img
+              key={tileIdx}
+              src={urls[color]}
+              alt=""
+              width={46}
+              height={62}
+              draggable={false}
+              className={`pixelated ${tileIdx > 0 ? "-mb-13" : ""}`}
+            />
+          ) : (
+            <span key={tileIdx} className="block h-6 w-12" />
+          ),
+        )}
       </div>
       <span className="text-xs font-bold text-muted-foreground">
         {slot.stack.length}
@@ -77,6 +94,7 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
   const [game, setGame] = useState<HexaSortGameState>(() => createInitialHexaSortGame(1));
   const [selectedHandIdx, setSelectedHandIdx] = useState<number | null>(null);
   const [highScore, setHighScore] = useState(() => loadHighScore("hexa-sort", 0));
+  const urls = usePixelUrls(HEX_ARTS, 2);
 
   useEffect(() => {
     if (game.score > 0) {
@@ -244,8 +262,9 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
       </div>
 
       {/* 3D Hexagonal Isometric Board Viewport */}
-      <div className="relative my-4 flex h-80 w-full items-center justify-center overflow-hidden rounded-2xl bg-muted/20">
-        <svg viewBox="0 0 320 320" className="h-full w-full max-w-xs drop-shadow-md">
+      <div className="relative my-4 flex h-80 w-full items-center justify-center overflow-hidden rounded-2xl border-4 border-foreground/80 bg-foreground">
+        <PixelBackdrop spec={HEXA_TABLE} px={4} />
+        <svg viewBox="0 0 320 320" className="relative h-full w-full max-w-xs">
           {Object.values(game.slots).map((slot) => {
             const { x, y } = hexToPixel(slot.q, slot.r);
             const topColor =
@@ -258,47 +277,25 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
                 onClick={() => handleSlotClick(slot.id)}
                 className="cursor-pointer transition-transform duration-100 active:scale-95"
               >
-                {/* Hex Slot Base Outline */}
-                <polygon
-                  points="0,-36 31,-18 31,18 0,36 -31,18 -31,-18"
-                  className="fill-muted stroke-border stroke-2 transition-colors hover:fill-muted/70"
-                />
-
-                {/* Isometric 3D Stack of Tiles */}
-                {slot.stack.map((color, tileIdx) => {
-                  const offsetY = -tileIdx * 5;
-                  const hexColor = HEX_COLOR_HEXES[color];
-                  return (
-                    <g
+                {/* Carved socket, then the pixel tile stack (5 units per layer) */}
+                {urls.socket ? (
+                  <image href={urls.socket} x={-31} y={-35} width={62} height={74} className="pixelated" />
+                ) : (
+                  <polygon points="0,-36 31,-18 31,18 0,36 -31,18 -31,-18" className="fill-muted stroke-border stroke-2" />
+                )}
+                {slot.stack.map((color, tileIdx) =>
+                  urls[color] ? (
+                    <image
                       key={tileIdx}
-                      transform={`translate(0, ${offsetY})`}
-                      style={{ "--tile-hex": hexColor } as React.CSSProperties}
-                    >
-                      {/* 3D Tile Side Depth */}
-                      <polygon
-                        points="0,-26 23,-13 23,-9 0,-22 -23,-9 -23,-13"
-                        fill="var(--tile-hex)"
-                        className="brightness-75"
-                      />
-                      <polygon
-                        points="23,-9 23,17 0,30 0,26 23,13"
-                        fill="var(--tile-hex)"
-                        className="brightness-90"
-                      />
-                      <polygon
-                        points="-23,-9 -23,17 0,30 0,26 -23,13"
-                        fill="var(--tile-hex)"
-                        className="brightness-50"
-                      />
-                      {/* Tile Top Face */}
-                      <polygon
-                        points="0,-26 23,-13 23,13 0,26 -23,13 -23,-13"
-                        fill="var(--tile-hex)"
-                        className="stroke-black/10 stroke-1"
-                      />
-                    </g>
-                  );
-                })}
+                      href={urls[color]}
+                      x={-23}
+                      y={-27 - tileIdx * 5}
+                      width={46}
+                      height={62}
+                      className="pixelated"
+                    />
+                  ) : null,
+                )}
 
                 {/* Stack Count Indicator */}
                 {slot.stack.length > 0 && (
@@ -306,7 +303,7 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
                     x="0"
                     y={-slot.stack.length * 5 + 4}
                     textAnchor="middle"
-                    className="select-none text-xs font-black fill-white drop-shadow-md"
+                    className="pointer-events-none select-none text-xs font-black fill-white drop-shadow-md"
                   >
                     {slot.stack.length}
                   </text>
@@ -386,6 +383,7 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
                 slot={handSlot}
                 isSelected={isSelected}
                 onSelect={() => handleSelectHand(idx)}
+                urls={urls}
               />
             );
           })}
