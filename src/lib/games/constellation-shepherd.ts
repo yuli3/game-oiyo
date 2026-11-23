@@ -162,6 +162,97 @@ const PUZZLES: readonly PuzzleDef[] = [
     ],
     figure: [1, 2, 5, 8],
   },
+  // Stages 11-20 (2026-11-23): each keeps one shortest walk (6-8 steps), found by search and checked in the tests.
+  {
+    id: "shepherd-moon",
+    shepherd: 1,
+    stars: [
+      { mass: 1, at: 6, goal: 4 },
+      { mass: 3, at: 5, goal: 8 },
+    ],
+    figure: [1, 4, 8],
+  },
+  {
+    id: "wool-cloud",
+    shepherd: 2,
+    stars: [
+      { mass: 1, at: 8, goal: 4 },
+      { mass: 3, at: 7, goal: 8 },
+    ],
+    figure: [3, 4, 8],
+  },
+  {
+    id: "bell-star",
+    shepherd: 5,
+    stars: [
+      { mass: 1, at: 6, goal: 4 },
+      { mass: 3, at: 1, goal: 2 },
+    ],
+    figure: [1, 2, 3, 4],
+  },
+  {
+    id: "quiet-fold",
+    shepherd: 5,
+    stars: [
+      { mass: 1, at: 6, goal: 4 },
+      { mass: 3, at: 3, goal: 6 },
+    ],
+    figure: [4, 6, 7],
+  },
+  {
+    id: "river-crossing",
+    shepherd: 7,
+    stars: [
+      { mass: 1, at: 0, goal: 4 },
+      { mass: 3, at: 4, goal: 0 },
+    ],
+    figure: [0, 1, 4],
+  },
+  {
+    id: "north-pen",
+    shepherd: 3,
+    stars: [
+      { mass: 1, at: 0, goal: 4 },
+      { mass: 3, at: 4, goal: 2 },
+    ],
+    figure: [1, 2, 3, 4],
+  },
+  {
+    id: "comet-gate",
+    shepherd: 3,
+    stars: [
+      { mass: 1, at: 6, goal: 7 },
+      { mass: 3, at: 4, goal: 3 },
+    ],
+    figure: [3, 6, 7],
+  },
+  {
+    id: "dawn-flock",
+    shepherd: 3,
+    stars: [
+      { mass: 1, at: 1, goal: 4 },
+      { mass: 3, at: 4, goal: 0 },
+    ],
+    figure: [0, 4, 7],
+  },
+  {
+    id: "twin-lantern",
+    shepherd: 3,
+    stars: [
+      { mass: 1, at: 8, goal: 7 },
+      { mass: 3, at: 4, goal: 3 },
+    ],
+    figure: [0, 3, 4, 7],
+  },
+  {
+    id: "high-pasture",
+    shepherd: 0,
+    stars: [
+      { mass: 1, at: 2, goal: 4 },
+      { mass: 3, at: 4, goal: 1 },
+    ],
+    figure: [1, 4, 7],
+  },
 ];
 
 export const PUZZLE_COUNT = PUZZLES.length;
@@ -315,8 +406,18 @@ export function mixSeed(seed: number): number {
   return (t ^ (t >>> 14)) >>> 0;
 }
 
+/**
+ * The first ten boards keep their old seed mapping, so a shared seed still opens the same board.
+ * Stages 11+ live at their own seed block: STAGE_SEED_BASE + index.
+ */
+export const LEGACY_PUZZLE_COUNT = 10;
+export const STAGE_SEED_BASE = 0x5354_0000;
+
 export function puzzleIndexForSeed(seed: number): number {
-  return mixSeed(seed) % PUZZLES.length;
+  const whole = Number.isFinite(seed) ? Math.trunc(seed) : 0;
+  const offset = whole - STAGE_SEED_BASE;
+  if (offset >= LEGACY_PUZZLE_COUNT && offset < PUZZLES.length) return offset;
+  return mixSeed(seed) % LEGACY_PUZZLE_COUNT;
 }
 
 export function nextSeed(seed: number): number {
@@ -340,6 +441,7 @@ function makeState(puzzle: PuzzleDef, steps = 0): SkyState {
 /** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
 export function seedForPuzzle(index: number): number {
   const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  if (target >= LEGACY_PUZZLE_COUNT) return STAGE_SEED_BASE + target;
   for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
