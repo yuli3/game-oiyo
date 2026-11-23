@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SnowPlow from "../../components/games/SnowPlow";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "눈 치우기 — 제설차로 눈을 밀어 설날 귀성길을 여는 무료 겨울 퍼즐 30단계",
+    description: "설날 아침, 밤새 내린 눈에 마을 길이 막혔어요. 손가락으로 작은 제설차를 밀어 눈을 마당으로 치우세요. 눈 두 무더기가 합쳐지면 큰 눈더미가 되어 더는 밀 수 없어요. 어떤 순서로 밀지가 관건, 되돌리기도 있어요. 30단계.",
+  },
+  en: {
+    title: "Snow Plow — Free winter push puzzle: clear the village road for the New Year visit (30 stages)",
+    description: "On Seollal morning, overnight snow has buried the village road. Swipe the little plow to push the snow onto the yards. Push two piles together and they become a big heap that won't budge. The order you push in is everything, and you can undo. 30 stages.",
+  },
+  ja: {
+    title: "雪かき除雪車 — 除雪車で雪を押して新年の帰省路を開く無料の冬パズル30ステージ",
+    description: "お正月の朝、夜通しの雪で村の道がふさがりました。小さな除雪車を指で動かして雪を庭へ押し出しましょう。雪を2つ合わせると大きな雪山になってもう押せません。押す順番がカギ、戻すボタンもあります。30ステージ。",
+  },
+  zh: {
+    title: "扫雪车 — 推雪开路回家过年的免费冬日推箱谜题30关",
+    description: "大年初一早上，一夜大雪堵住了村里的路。用手指推动小扫雪车，把雪推进院子。两堆雪推到一起就会变成推不动的大雪堆。推的顺序是关键，还可以撤回。共30关。",
+  },
+  fr: {
+    title: "Chasse-neige — Puzzle d'hiver gratuit : dégagez la route du village pour le Nouvel An (30 niveaux)",
+    description: "Matin du Nouvel An : la neige de la nuit a bloqué la route du village. Glissez le petit chasse-neige pour pousser la neige dans les jardins. Deux tas poussés ensemble forment un gros tas impossible à bouger. Tout est dans l'ordre des poussées, et on peut annuler. 30 niveaux.",
+  },
+  es: {
+    title: "Quitanieves — Rompecabezas de invierno gratis: despeja la calle del pueblo para Año Nuevo (30 niveles)",
+    description: "Mañana de Año Nuevo: la nieve de la noche ha bloqueado la calle del pueblo. Desliza la pequeña quitanieves para empujar la nieve a los patios. Dos montones juntos forman uno grande que ya no se mueve. El orden lo es todo, y puedes deshacer. 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["snow-plow"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <SnowPlow client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="snow-plow" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

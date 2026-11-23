@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TuhoToss from "../../components/games/TuhoToss";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "투호 던지기 — 당겼다 놓아 화살을 항아리에 넣는 무료 설날 민속놀이 게임 30단계",
+    description: "설날 마루에서 하던 투호를 손가락 하나로. 화면을 누르고 뒤로 당겼다 놓으면 화살이 포물선을 그리며 날아가요. 항아리 입구는 1점, 목 옆 작은 귀는 2점. 가장자리에 맞으면 탁 튕겨 나가요. 바람, 병풍, 낮은 대들보, 굴러가는 항아리까지 30단계.",
+  },
+  en: {
+    title: "Tuho Toss — Free Seollal folk game: pull back and pitch arrows into the pot (30 stages)",
+    description: "The pot-toss game Koreans play at Seollal, under one finger. Press, pull back and let go, and the arrow arcs through the air. The pot's mouth is 1 point, the little ears beside the neck are 2. Hit the rim and it clatters off. 30 stages with wind, a folding screen, a low beam and a pot on a rolling cart.",
+  },
+  ja: {
+    title: "投壺あそび — 引いて離して矢を壺に入れる無料の韓国お正月遊びゲーム30ステージ",
+    description: "韓国のお正月に縁側で遊ぶ投壺を指一本で。画面を押して後ろへ引いて離すと、矢が弧を描いて飛びます。壺の口は1点、首の横の小さな耳は2点。縁に当たるとカンと弾かれます。風、屏風、低い梁、動く壺まで30ステージ。",
+  },
+  zh: {
+    title: "投壶 — 拉弓松手把箭投进壶里的免费春节民俗游戏30关",
+    description: "韩国春节在檐廊上玩的投壶，用一根手指就能玩。按住屏幕向后拉再松手，箭就划出弧线飞出去。投进壶口得1分，投进壶颈旁的小壶耳得2分。碰到壶口边缘会“当”地弹开。共30关，有风、屏风、低矮的房梁和会移动的壶。",
+  },
+  fr: {
+    title: "Tuho — Jeu traditionnel gratuit du Nouvel An coréen : lancez des flèches dans le pot (30 niveaux)",
+    description: "Le jeu du pot auquel on joue en Corée au Nouvel An, sous un seul doigt. Appuyez, tirez en arrière et lâchez : la flèche décrit un arc. Le goulot vaut 1 point, les petites oreilles à côté du col 2. Touchez le bord et elle rebondit. 30 niveaux avec vent, paravent, poutre basse et pot sur un chariot.",
+  },
+  es: {
+    title: "Tuho — Juego tradicional gratis del Año Nuevo coreano: lanza flechas al jarrón (30 niveles)",
+    description: "El juego del jarrón con el que se celebra el Año Nuevo coreano, con un solo dedo. Pulsa, tira hacia atrás y suelta: la flecha dibuja un arco. La boca vale 1 punto y las orejitas junto al cuello, 2. Si da en el borde, rebota. 30 niveles con viento, biombo, viga baja y un jarrón sobre un carrito.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["tuho-toss"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <TuhoToss client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="tuho-toss" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
