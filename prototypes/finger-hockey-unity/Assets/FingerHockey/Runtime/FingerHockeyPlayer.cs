@@ -610,6 +610,8 @@ public class FingerHockeyPlayer : MonoBehaviour
         float hx = TW / 2f * K + 0.35f, hz = TH / 2f * K + 0.45f;
         var corners = new[] { new Vector3(-hx, 0.25f, -hz), new Vector3(hx, 0.25f, -hz), new Vector3(-hx, 0.25f, hz), new Vector3(hx, 0.25f, hz) };
         float topMargin = Mathf.Min(0.2f, 92f * OiyoArcade.ComputeScale() / Mathf.Max(1f, Screen.height));
+        // room for the page frame's round exit button in the bottom-left corner on phones
+        float bottomMargin = Mathf.Min(0.12f, 60f * OiyoArcade.ComputeScale() / Mathf.Max(1f, Screen.height));
         for (int it = 0; it < 22; it++)
         {
             float mid = (lo + hi) * 0.5f;
@@ -618,13 +620,13 @@ public class FingerHockeyPlayer : MonoBehaviour
             foreach (var c in corners)
             {
                 var v = cam.WorldToViewportPoint(c);
-                if (v.z <= 0f || v.x < 0.02f || v.x > 0.98f || v.y < 0.02f || v.y > 0.98f - topMargin) { fits = false; break; }
+                if (v.z <= 0f || v.x < 0.02f || v.x > 0.98f || v.y < 0.02f + bottomMargin || v.y > 0.98f - topMargin) { fits = false; break; }
             }
             if (fits) hi = mid; else lo = mid;
         }
         var pos = center - rot * Vector3.forward * hi;
         // nudge the view down a little so the table sits under the HUD bar
-        pos += rot * Vector3.up * (topMargin * hi * 0.35f);
+        pos += rot * Vector3.up * ((topMargin - bottomMargin) * hi * 0.35f);
         if (shake > 0f) { pos += Random.insideUnitSphere * shake * 0.25f; shake = Mathf.MoveTowards(shake, 0f, dt * 1.5f); }
         cam.transform.SetPositionAndRotation(pos, rot);
         cam.backgroundColor = Color.Lerp(new Color(0.05f, 0.05f, 0.1f), new Color(0.25f, 0.2f, 0.08f), goalFlash * 0.6f);

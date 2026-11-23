@@ -506,7 +506,8 @@ public class LineSurfPlayer : MonoBehaviour
     void DrawControls(float w, float h)
     {
         float bw = Mathf.Min(86f, (w - 40f) / 4f), gap = 8f, bh = 64f;
-        float total = bw * 4f + gap * 3f, x = w * 0.5f - total * 0.5f, y = h - bh - 14f;
+        // kept clear of the page frame's round exit button in the bottom-left corner on phones
+        float total = bw * 4f + gap * 3f, x = w * 0.5f - total * 0.5f, y = h - bh - 66f;
         var c = new Color(0.08f, 0.2f, 0.3f, 0.88f);
         if (OiyoArcade.Button(new Rect(x, y, bw, bh), "◀\n<size=12>" + U("Left") + "</size>", c, 20)) Press(Act.Left);
         if (OiyoArcade.Button(new Rect(x + (bw + gap), y, bw, bh), "▲\n<size=12>" + U("Straight") + "</size>", new Color(0.12f, 0.55f, 0.72f, 0.95f), 20)) Press(Act.Straight);
