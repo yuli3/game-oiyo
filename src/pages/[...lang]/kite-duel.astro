@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import KiteDuel from "../../components/games/KiteDuel";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "연싸움 — 폰 하나로 둘이서, 연줄을 끊는 설날 무료 대결 게임 (컴퓨터 상대 20명)",
+    description: "내 연줄을 상대 연줄에 걸고 더 빠르게 휘두르면 상대 줄이 끊어집니다. 폰 하나를 둘 사이에 두고 친구와, 또는 바람·돌풍·까치가 나오는 컴퓨터 상대 20명과 겨뤄 보세요.",
+  },
+  en: {
+    title: "Kite Duel — Free one-phone kite fight for two: cut the rival string (20 computer rivals)",
+    description: "Hook your string over the rival's and whip faster to saw it through. Play a friend with one phone between you, or 20 computer rivals with wind, gusts and magpies.",
+  },
+  ja: {
+    title: "凧合戦 — スマホ1台で2人対戦、相手の糸を切る無料ゲーム（CPU相手20人）",
+    description: "自分の糸を相手の糸にかけ、速く振れば相手の糸が切れます。スマホ1台を挟んで友だちと、または風・突風・カササギが出るCPU相手20人と勝負。",
+  },
+  zh: {
+    title: "斗风筝 — 一部手机双人对战，割断对手风筝线的免费游戏（20位电脑对手）",
+    description: "把你的线搭在对手的线上，甩得更快就能把它磨断。一部手机放在中间和朋友对战，或挑战有风、阵风和喜鹊的20位电脑对手。",
+  },
+  fr: {
+    title: "Duel de cerfs-volants — Combat gratuit à deux sur un téléphone : coupez le fil adverse (20 adversaires)",
+    description: "Croisez votre fil sur celui de l'adversaire et agitez plus vite pour le scier. Jouez à deux avec un seul téléphone, ou contre 20 adversaires avec vent, rafales et pies.",
+  },
+  es: {
+    title: "Duelo de cometas — Combate gratis para dos en un móvil: corta el hilo rival (20 rivales)",
+    description: "Cruza tu hilo sobre el del rival y agita más rápido para cortarlo. Juega con un amigo en un solo móvil o contra 20 rivales con viento, ráfagas y urracas.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["kite-duel"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <KiteDuel client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="kite-duel" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import IceEtch from "../../components/games/IceEtch";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "빙판 그림 스케이트 — 모든 빙판을 한 번씩 지나 그림을 새기는 무료 한붓그리기 퍼즐 30단계",
+    description: "손가락으로 스케이터를 끌어 얼어붙은 연못의 모든 빙판을 딱 한 번씩 지나 오두막에서 끝내세요. 지나간 자리에 눈송이·방패연·떡국·2027 붉은 양 같은 도트 그림이 새겨집니다. 30개 연못, 힌트와 되짚기 지원.",
+  },
+  en: {
+    title: "Ice Etch — Free one-stroke skating puzzle: pass every ice cell once and etch a picture (30 ponds)",
+    description: "Drag the skater across a frozen pond, pass every ice cell exactly once and finish at the hut. Your trail etches a pixel picture: a snowflake, a shield kite, rice-cake soup, the 2027 red goat. 30 ponds with hints and easy retracing.",
+  },
+  ja: {
+    title: "氷上スケッチ — すべての氷を1回ずつ滑って絵を刻む無料一筆書きパズル30ステージ",
+    description: "指でスケーターを動かし、凍った池のすべての氷をちょうど1回ずつ通って小屋でゴール。通った跡に雪の結晶・四角だこ・トック・2027年の赤い羊などのドット絵が刻まれます。30の池、ヒントと戻り操作つき。",
+  },
+  zh: {
+    title: "冰面刻画 — 每块冰面只滑一次、刻出一幅画的免费一笔画谜题30关",
+    description: "用手指拖动滑冰者，让每块冰面恰好经过一次，最后到达小屋。滑过的地方会刻出雪花、盾形风筝、年糕汤、2027红羊等像素画。30个冰湖，支持提示和原路返回。",
+  },
+  fr: {
+    title: "Patin graveur — Puzzle gratuit d'un seul trait : patinez sur chaque case une fois et gravez un dessin (30 étangs)",
+    description: "Faites glisser le patineur sur un étang gelé, passez une seule fois sur chaque case et finissez à la cabane. Votre trace grave un dessin pixel : flocon, cerf-volant, soupe de gâteaux de riz, chèvre rouge 2027. 30 étangs, avec indices et retour en arrière.",
+  },
+  es: {
+    title: "Patín grabador — Puzle gratis de un solo trazo: patina cada casilla una vez y graba un dibujo (30 lagos)",
+    description: "Arrastra al patinador por un lago helado, pasa una sola vez por cada casilla y termina en la cabaña. Tu rastro graba un dibujo pixel: un copo, una cometa, sopa de pastel de arroz, la cabra roja de 2027. 30 lagos con pistas y retroceso fácil.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["ice-etch"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <IceEtch client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="ice-etch" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

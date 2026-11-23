@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import FirstSunrise from "../../components/games/FirstSunrise";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "첫 해 구름 밀기 — 구름을 밀어 2027년 첫 해를 띄우는 무료 슬라이드 퍼즐 30단계",
+    description: "가로 구름은 옆으로, 세로 구름은 위아래로, 까치는 어디로든. 구름을 밀어 길을 열면 해가 떠오르고 하늘이 밝아집니다. 최소 이동 수가 계산된 30단계, 완성 화면은 새해 인사 캡처용.",
+  },
+  en: {
+    title: "First Sunrise — Free sliding puzzle: push the clouds and raise the first sun of 2027 (30 dawns)",
+    description: "Wide clouds slide sideways, tall ones up and down, the magpie hops anywhere. Clear a path and the sun rises as the sky turns gold. 30 boards with solver-checked best move counts, and a finish screen made for new-year screenshots.",
+  },
+  ja: {
+    title: "初日の出パズル — 雲を動かして2027年の初日の出を昇らせる無料スライドパズル30ステージ",
+    description: "横長の雲は左右、縦長の雲は上下、カササギはどこへでも。道を開けると太陽が昇り空が明るくなります。最短手数を計算済みの30ステージ、クリア画面は年賀のスクショに。",
+  },
+  zh: {
+    title: "新年第一缕阳光 — 推开云朵让2027年第一轮太阳升起的免费滑块谜题30关",
+    description: "横云左右移，竖云上下移，喜鹊随处跳。打开通道，太阳升起，天空变成金色。30关均由求解器算出最少步数，通关画面适合截图拜年。",
+  },
+  fr: {
+    title: "Premier soleil — Puzzle coulissant gratuit : poussez les nuages pour lever le premier soleil de 2027 (30 aubes)",
+    description: "Les nuages larges glissent sur les côtés, les hauts de haut en bas, la pie saute partout. Ouvrez la voie et le soleil se lève dans un ciel doré. 30 grilles au nombre de coups minimal vérifié, et un écran final parfait pour vos vœux.",
+  },
+  es: {
+    title: "Primer amanecer — Puzle deslizante gratis: aparta las nubes y haz salir el primer sol de 2027 (30 amaneceres)",
+    description: "Las nubes anchas van a los lados, las altas arriba y abajo, la urraca a cualquier parte. Abre paso y el sol sale mientras el cielo se dora. 30 tableros con el mínimo de movimientos comprobado y una pantalla final ideal para felicitar el año.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["first-sunrise"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <FirstSunrise client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="first-sunrise" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
