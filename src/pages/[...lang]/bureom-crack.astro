@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BureomCrack from "../../components/games/BureomCrack";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "부럼 깨기 — 꾹 눌러 깨물고 딱 맞는 순간 손을 떼 견과를 깨는 무료 정월 대보름 타이밍 게임 30단계",
+    description: "정월 대보름 아침, 이가 튼튼해지라고 부럼을 깨물어요! 화면을 꾹 누르면 깨무는 힘이 점점 빨리 올라가고, 초록 칸에서 손을 떼면 딱! 너무 약하면 안 깨지고, 너무 세면 알맹이가 으스러져요. 땅콩·밤·호두·은행·잣이 저마다 다르게 깨지고, 몰래 섞인 돌멩이는 옆으로 휙 치우는 30단계.",
+  },
+  en: {
+    title: "Bureom Nut Crack — Free first-full-moon timing game: hold to bite, let go at just the right pressure to crack the nut (30 stages)",
+    description: "On the morning of the first full moon, crack nuts with your teeth for strong teeth all year! Hold the screen and the bite pressure climbs faster and faster; let go in the green band and crack! Too soft and the shell holds, too hard and the kernel turns to crumbs. Peanuts, chestnuts, walnuts, ginkgo and pine nuts each crack differently, and sneaky pebbles must be swiped away, over 30 stages.",
+  },
+  ja: {
+    title: "プロム割り — 長押しでかんで、ちょうどいい瞬間に指を離して木の実を割る無料の小正月タイミングゲーム30ステージ",
+    description: "小正月の朝、歯が丈夫になるよう木の実をかんで割ろう！ 画面を長押しするとかむ力がどんどん速く上がり、緑の帯で指を離せばパキッ！ 弱すぎると割れず、強すぎると中身が粉々。ピーナッツ・栗・クルミ・銀杏・松の実はそれぞれ割れ方が違い、こっそりまざった小石は横にさっとどける30ステージ。",
+  },
+  zh: {
+    title: "咬坚果 — 按住咬下去，在刚好的力道松手咬开坚果的免费正月十五时机游戏30关",
+    description: "正月十五早上，咬开坚果，祈求一年牙齿结实！按住屏幕，咬合力越升越快，在绿色区域松手就“咔”一声！太轻壳不开，太重果仁就碎了。花生、栗子、核桃、银杏和松子各有各的裂法，偷偷混进来的小石子要一划拨开，共30关。",
+  },
+  fr: {
+    title: "Casse-noix de Bureom — Jeu de timing gratuit de la pleine lune : maintenez pour mordre, lâchez à la bonne pression (30 niveaux)",
+    description: "Le matin de la première pleine lune, cassez des noix avec les dents pour avoir des dents solides toute l'année ! Maintenez l'écran : la pression monte de plus en plus vite ; lâchez dans la bande verte et crac ! Trop doux, la coque tient ; trop fort, l'amande s'émiette. Cacahuètes, châtaignes, noix, ginkgo et pignons cèdent chacun à leur façon, et les cailloux sournois se balaient de côté, sur 30 niveaux.",
+  },
+  es: {
+    title: "Rompenueces de Bureom — Juego de ritmo gratis de luna llena: mantén para morder y suelta con la presión justa (30 niveles)",
+    description: "La mañana de la primera luna llena, ¡parte frutos secos con los dientes para tenerlos fuertes todo el año! Mantén la pantalla y la presión sube cada vez más rápido; suelta en la franja verde y ¡crac! Muy suave y la cáscara aguanta, muy fuerte y el fruto se hace migas. Cacahuetes, castañas, nueces, ginkgo y piñones ceden cada uno a su manera, y las piedras escondidas se apartan deslizando, en 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["bureom-crack"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <BureomCrack client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="bureom-crack" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

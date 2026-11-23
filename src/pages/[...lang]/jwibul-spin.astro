@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import JwibulSpin from "../../components/games/JwibulSpin";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "쥐불놀이 — 손가락으로 원을 그려 불 깡통을 돌리고 마른 풀에 불을 붙이는 무료 정월 대보름 게임 30단계",
+    description: "정월 대보름 밤, 논두렁에서 불씨 깡통을 빙빙 돌려요! 손가락으로 작은 원을 그리면 깡통이 줄에 매달려 돌고, 손가락을 옮기면 아이가 따라 걸어가요. 빠르게 도는 깡통으로 마른 풀 무더기를 스쳐 불을 붙이고, 볏가리는 피하세요. 달이 꼭대기에 닿기 전에 모두 밝히는 30단계.",
+  },
+  en: {
+    title: "Jwibul Fire Spin — Free first-full-moon game: draw circles to whirl a can of embers and light the dry grass (30 stages)",
+    description: "On the first full moon night, whirl a can of embers over the winter paddies! Draw small circles with your finger and the can spins on its string; move your finger and the child walks after it. Brush every tuft of dry grass with the spinning can to light it, and keep clear of the haystacks. Light them all before the moon tops the sky, over 30 stages.",
+  },
+  ja: {
+    title: "チュィブル火回し — 指で円を描いて火の缶を回し、枯れ草に火をつける無料の小正月ゲーム30ステージ",
+    description: "小正月の夜、田んぼで火種の缶をくるくる回そう！ 指で小さな円を描くと缶がひもの先で回り、指を動かすと子どもがついて歩きます。勢いよく回る缶で枯れ草の束をかすめて火をつけ、わら山は避けて。月がてっぺんに届く前に全部ともす30ステージ。",
+  },
+  zh: {
+    title: "转火罐 — 用手指画圈甩动火罐、点燃干草的免费正月十五游戏30关",
+    description: "正月十五的夜里，在田埂上把装着火种的罐子转起来！用手指画小圈，罐子就挂在绳上转；手指一移，孩子就跟着走。用飞转的罐子擦过一堆堆干草把它们点着，还要躲开稻草垛。在月亮升到天顶前全部点亮，共30关。",
+  },
+  fr: {
+    title: "Jwibul, la boîte de feu — Jeu gratuit de la première pleine lune : tracez des cercles pour faire tournoyer la boîte de braises (30 niveaux)",
+    description: "La nuit de la première pleine lune, faites tournoyer une boîte de braises au-dessus des rizières d'hiver ! Tracez de petits cercles du doigt et la boîte tourne au bout de sa ficelle ; déplacez le doigt et l'enfant le suit. Frôlez chaque touffe d'herbe sèche pour l'allumer et évitez les meules de paille. Allumez tout avant que la lune n'atteigne le haut du ciel, sur 30 niveaux.",
+  },
+  es: {
+    title: "Jwibul, la lata de fuego — Juego gratis de la primera luna llena: dibuja círculos para girar la lata de brasas y encender la hierba (30 niveles)",
+    description: "La noche de la primera luna llena, ¡haz girar una lata de brasas sobre los arrozales de invierno! Dibuja círculos pequeños con el dedo y la lata gira en su cuerda; mueve el dedo y el niño lo sigue. Roza cada mata de hierba seca para encenderla y aléjate de los almiares. Enciéndelas todas antes de que la luna llegue a lo alto, en 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["jwibul-spin"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <JwibulSpin client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="jwibul-spin" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
