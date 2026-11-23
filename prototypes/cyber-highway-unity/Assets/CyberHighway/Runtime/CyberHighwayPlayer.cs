@@ -191,7 +191,7 @@ public class CyberHighwayPlayer : MonoBehaviour
         }.ToStageData(),
         new TrackData_StageAlias {
             id = 6,
-            nameKo = "섹터 6: 사이버 경찰 추격전", nameEn = "Sector 6: Police Pursuit Alert", nameJa = "セクター6：サイバー警察追走警보", nameEs = "Sector 6: Persecución Policial",
+            nameKo = "섹터 6: 사이버 경찰 추격전", nameEn = "Sector 6: Police Pursuit Alert", nameJa = "セクター6：サイバー警察追走警報", nameEs = "Sector 6: Persecución Policial",
             descKo = "경광등을 켜고 길을 가로막는 사이버 경찰 순찰차의 포위망을 뚫으세요!",
             descEn = "Break through roadblocks of interceptor squad cars with flashing sirens!",
             descJa = "パトランプを点滅させ前方を遮る警察パトカーの包囲網を突破！",
