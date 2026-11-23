@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SebaetdonSplit from "../../components/games/SebaetdonSplit";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "세뱃돈 봉투 — 지폐와 동전을 끌어 손주마다 맞는 금액으로 나눠 담는 무료 설날 돈 퍼즐 30단계",
+    description: "설날 아침, 할머니가 손주들 세뱃돈을 봉투에 나눠 담아요! 지갑의 지폐와 동전을 끌어 봉투마다 적힌 금액에 딱 맞추고, 한 푼도 남기지 마세요. 뒤로 가면 '민지와 똑같이', '준호보다 5,000원 더', '서연의 두 배' 같은 쪽지와 동전까지. 모든 문제가 실제로 나눌 수 있는 30단계.",
+  },
+  en: {
+    title: "Sebaetdon Envelopes — Free Seollal money puzzle: drag bills and coins so every grandchild's envelope holds the right amount (30 stages)",
+    description: "It's Seollal morning and Grandma is filling the New Year envelopes! Drag the bills and coins from her wallet so each envelope holds exactly what its tag asks, with not a won left over. Later tags only say \"the same as Minji\", \"5,000 more than Junho\" or \"twice Seoyeon\", and coins join in. Every one of the 30 stages has a real split.",
+  },
+  ja: {
+    title: "お年玉袋分け — お札と硬貨をドラッグして孫ごとにぴったりの金額に分ける無料のお正月お金パズル30ステージ",
+    description: "お正月の朝、おばあちゃんが孫たちのお年玉を袋に分けています！ 財布のお札と硬貨をドラッグして、袋ごとの金額にぴったり合わせ、1ウォンも残さないように。後半は「ミンジと同じ」「ジュノより5,000ウォン多く」「ソヨンの2倍」といった札や硬貨も登場。どの問題も本当に分けられる30ステージ。",
+  },
+  zh: {
+    title: "压岁钱红包 — 拖动纸币和硬币，把每个孙辈的红包装成正确金额的免费春节金钱谜题30关",
+    description: "春节早上，奶奶要把压岁钱分装进孙辈们的红包！把钱包里的纸币和硬币拖进红包，让每个红包正好等于标签上的金额，一分都不能剩。后面的标签只写“和敏智一样”“比俊浩多5,000”“是瑞妍的两倍”，硬币也会加入。30关每一题都真的能分完。",
+  },
+  fr: {
+    title: "Enveloppes du Nouvel An — Puzzle d'argent gratuit de Seollal : glissez billets et pièces pour que chaque enveloppe ait la bonne somme (30 niveaux)",
+    description: "C'est le matin de Seollal et Grand-mère remplit les enveloppes du Nouvel An ! Glissez billets et pièces de son portefeuille pour que chaque enveloppe contienne exactement la somme de son étiquette, sans laisser un seul won. Plus loin, les étiquettes disent seulement « comme Minji », « 5 000 de plus que Junho » ou « le double de Seoyeon », et les pièces s'en mêlent. Chacun des 30 niveaux a une vraie solution.",
+  },
+  es: {
+    title: "Sobres de Año Nuevo — Puzle de dinero gratis de Seollal: arrastra billetes y monedas para que cada sobre tenga la cantidad justa (30 niveles)",
+    description: "¡Es la mañana de Seollal y la abuela llena los sobres de Año Nuevo! Arrastra billetes y monedas de su cartera para que cada sobre tenga justo lo que pide su etiqueta, sin que sobre ni un won. Más adelante las etiquetas solo dicen «lo mismo que Minji», «5.000 más que Junho» o «el doble que Seoyeon», y llegan las monedas. Cada uno de los 30 niveles tiene un reparto real.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["sebaetdon-split"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <SebaetdonSplit client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="sebaetdon-split" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
