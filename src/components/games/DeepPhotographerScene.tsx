@@ -12,6 +12,7 @@ import {
 } from "../../lib/games/deep-photographer";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import PixelSkyBackground from "./PixelSkyBackground";
+import PixelMaterials, { PIXEL_SCENE_DPR } from "./PixelMaterials";
 import { SCENE_SKIES } from "../../lib/games/pixel-sprites";
 
 const SAND_MAP = "/games/deep-photographer-sand.jpg";
@@ -197,8 +198,9 @@ export default function DeepPhotographerScene({
 }) {
   const frameloop = usePlayFrameloop(!paused);
   return (
-    <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }} frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [CAMERA_POSES[0][0], CAMERA_POSES[0][1], CAMERA_POSES[0][2]], fov: 36 }}>
+    <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping, antialias: false }} frameloop={frameloop} shadows dpr={PIXEL_SCENE_DPR} className="pixelated" camera={{ position: [CAMERA_POSES[0][0], CAMERA_POSES[0][1], CAMERA_POSES[0][2]], fov: 36 }}>
       <PixelSkyBackground spec={SCENE_SKIES.deepPhotographer} />
+      <PixelMaterials />
       <ambientLight intensity={0.22} />
       <directionalLight position={[KEY_LIGHT[0] * 8, KEY_LIGHT[1] * 8, KEY_LIGHT[2] * 8]} intensity={1.6} castShadow shadow-mapSize={[1024, 1024]} />
       <FixedCamera view={view} />
