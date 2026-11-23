@@ -1,0 +1,247 @@
+{
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Game over": [
+"게임 오버",
+"ゲームオーバー",
+"Fin del juego",
+"游戏结束",
+"Partie terminée"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Score": [
+"점수",
+"スコア",
+"Puntos",
+"得分",
+"Score"
+],
+"Stage clear!": [
+"스테이지 클리어!",
+"ステージクリア！",
+"¡Etapa superada!",
+"过关！",
+"Niveau réussi !"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Time": [
+"시간",
+"時間",
+"Tiempo",
+"时间",
+"Temps"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+],
+"Time is up!": [
+"시간이 다 됐어요!",
+"時間切れ！",
+"¡Se acabó el tiempo!",
+"时间到！",
+"Temps écoulé !"
+],
+"Trap Stairs 3D": [
+"함정 계단 3D",
+"トラップ階段3D",
+"Escaleras Trampa 3D",
+"陷阱阶梯 3D",
+"Marches piégées 3D"
+],
+"A trap platformer. Every stage hides a nasty surprise; a trap you have seen once never fools you again.": [
+"함정 플랫포머예요. 단계마다 고약한 함정이 숨어 있고, 한 번 본 함정에는 다시 속지 않아요.",
+"罠だらけのアクション。どのステージにもいじわるな仕掛けがあり、一度見た罠にはもうだまされない。",
+"Un plataformas con trampas. Cada etapa esconde una sorpresa; una trampa que ya viste no vuelve a engañarte.",
+"陷阱平台游戏。每关都藏着坏心眼的机关，见过一次的陷阱就不会再上当。",
+"Un jeu de plateforme piégé. Chaque niveau cache une mauvaise surprise ; un piège déjà vu ne vous trompe plus."
+],
+"Reach the door. Trust nothing.": [
+"문까지 가요. 아무것도 믿지 마요.",
+"ドアまで行こう。何も信じるな。",
+"Llega a la puerta. No te fíes de nada.",
+"走到门口。什么都别信。",
+"Atteignez la porte. Ne vous fiez à rien."
+],
+"◀ ▶ to run, tap anywhere else to jump; a short tap is a low hop. Keys: arrows and Space.": [
+"◀ ▶로 달리고, 다른 곳을 탭하면 점프해요. 짧게 누르면 낮게 뛰어요. 키보드: 방향키와 스페이스.",
+"◀ ▶で走り、ほかの場所をタップでジャンプ。短く押すと低いジャンプ。キー：矢印とスペース。",
+"◀ ▶ para correr, toca en cualquier otro sitio para saltar; un toque corto es un saltito. Teclas: flechas y Espacio.",
+"◀ ▶ 奔跑，点其他地方跳跃；轻点是小跳。按键：方向键和空格。",
+"◀ ▶ pour courir, touchez ailleurs pour sauter ; une touche brève fait un petit saut. Touches : flèches et Espace."
+],
+"Fails": [
+"실패",
+"ミス",
+"Fallos",
+"失败",
+"Échecs"
+],
+"Jump": [
+"점프",
+"ジャンプ",
+"Saltar",
+"跳",
+"Sauter"
+],
+"The door ran away!": [
+"문이 도망갔어요!",
+"ドアが逃げた！",
+"¡La puerta se escapó!",
+"门跑掉了！",
+"La porte s'est enfuie !"
+],
+"Saw that coming?": [
+"그럴 줄 알았지?",
+"そう来ると思った？",
+"¿Lo veías venir?",
+"早就猜到了吧？",
+"Vous l'aviez vu venir ?"
+],
+"The stairs lie.": [
+"계단은 거짓말을 한다",
+"階段はウソをつく",
+"Las escaleras mienten.",
+"台阶会骗人",
+"Les marches mentent."
+],
+"Remember every trap you meet.": [
+"한 번 본 함정은 기억하자",
+"一度見た罠は覚えよう",
+"Recuerda cada trampa.",
+"见过的陷阱要记住",
+"Retenez chaque piège."
+],
+"This time for real.": [
+"이번엔 진짜 될 거야",
+"今度こそ本当に",
+"Esta vez sí.",
+"这次一定行",
+"Cette fois, c'est la bonne."
+],
+"Never trust the floor.": [
+"바닥을 믿지 마",
+"床を信じるな",
+"Nunca te fíes del suelo.",
+"别相信地板",
+"Ne faites jamais confiance au sol."
+],
+"Plain stairs": [
+"평범한 계단",
+"ふつうの階段",
+"Escaleras simples",
+"普通阶梯",
+"Marches simples"
+],
+"Tricky floors": [
+"수상한 바닥",
+"あやしい床",
+"Suelos traicioneros",
+"诡异地板",
+"Sols piégés"
+],
+"Hidden blocks": [
+"숨은 블록",
+"隠しブロック",
+"Bloques ocultos",
+"隐藏方块",
+"Blocs cachés"
+],
+"Falling blocks": [
+"떨어지는 블록",
+"落ちてくるブロック",
+"Bloques que caen",
+"坠落方块",
+"Blocs qui tombent"
+],
+"Spike roofs": [
+"가시 지붕",
+"トゲの天井",
+"Techos de pinchos",
+"尖刺屋顶",
+"Toits à pointes"
+]
+}
