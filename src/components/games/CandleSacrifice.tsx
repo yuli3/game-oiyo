@@ -501,7 +501,7 @@ export default function CandleSacrifice({ locale }: Props) {
                 type="button"
                 onClick={() => handleDraw('squirrel')}
                 disabled={state.squirrelsLeft <= 0}
-                className="rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground hover:bg-accent disabled:opacity-40"
+                className="game-btn px-3 py-2 text-xs"
               >
                 🐿️ {isKo ? `다람쥐 뽑기 (${state.squirrelsLeft})` : `Draw Squirrel (${state.squirrelsLeft})`}
               </button>
@@ -509,7 +509,7 @@ export default function CandleSacrifice({ locale }: Props) {
                 type="button"
                 onClick={() => handleDraw('main')}
                 disabled={state.mainDeck.length <= 0}
-                className="rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground hover:bg-accent disabled:opacity-40"
+                className="game-btn px-3 py-2 text-xs"
               >
                 🐺 {isKo ? `야수 덱 뽑기 (${state.mainDeck.length})` : `Draw Beast (${state.mainDeck.length})`}
               </button>
@@ -518,7 +518,7 @@ export default function CandleSacrifice({ locale }: Props) {
             <TiltBellButton
               onClick={handleRingBell}
               disabled={state.status !== 'player-turn'}
-              className="rounded-xl bg-primary px-5 py-2.5 text-sm font-extrabold text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-40"
+              className="game-btn game-btn-live px-5 py-2.5 text-sm"
             >
               🔔 {isKo ? '전투 종 울리기 (END TURN)' : 'RING COMBAT BELL (STRIKE)'}
             </TiltBellButton>

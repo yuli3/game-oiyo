@@ -538,13 +538,13 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
             <p className="mt-1 text-lg font-black text-foreground">{t.grades[villageGrade(villageScore(state))]}</p>
             <p className="mt-1 text-xs text-muted-foreground">{t.best} {Math.max(best, villageScore(state))}</p>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-              <TiltVillageButton type="button" onClick={restart} className="min-h-11 rounded-full bg-primary px-6 text-sm font-black text-primary-foreground shadow-md">
+              <TiltVillageButton type="button" onClick={restart} className="min-h-11 game-btn game-btn-live px-6 text-sm">
                 {t.again} ↺
               </TiltVillageButton>
               <TiltVillageButton
                 type="button"
                 onClick={handleShareCard}
-                className="min-h-11 rounded-full border border-border bg-secondary px-5 text-sm font-bold text-secondary-foreground hover:bg-secondary/80 flex items-center gap-1.5 shadow-sm"
+                className="min-h-11 game-btn px-5 text-sm flex items-center gap-1.5"
               >
                 {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Camera className="w-4 h-4" />}
                 <span>{isCopied ? "복사 완료!" : "결산 카드 공유"}</span>
@@ -615,7 +615,7 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
                   type="button"
                   disabled={waiting}
                   onClick={handleEndMonth}
-                  className="col-span-2 min-h-11 rounded-xl bg-primary px-3 py-2 text-sm font-black text-primary-foreground disabled:opacity-40 hover:bg-primary/90 transition-colors shadow-md"
+                  className="col-span-2 min-h-11 game-btn game-btn-live px-3 py-2 text-sm"
                 >
                   {t.endMonth}
                 </button>

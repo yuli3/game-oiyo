@@ -828,14 +828,14 @@ export default function PotionCraft({ locale: pageLocale }: { locale?: string } 
             <TiltPotionButton
               onClick={handleGrind}
               disabled={!activeIngredient || grindProgress >= 1}
-              className="flex-1 py-1.5 bg-muted hover:bg-muted/80 text-foreground font-bold text-xs rounded border border-border disabled:opacity-40"
+              className="flex-1 py-1.5 game-btn text-xs"
             >
               {t('🔨 빻기')}
             </TiltPotionButton>
             <TiltPotionButton
               onClick={handleAddToCauldron}
               disabled={!activeIngredient}
-              className="flex-1 py-1.5 bg-primary text-primary-foreground font-bold text-xs rounded disabled:opacity-40"
+              className="flex-1 py-1.5 game-btn game-btn-live text-xs"
             >
               {t('투입 ➔')}
             </TiltPotionButton>
@@ -886,14 +886,14 @@ export default function PotionCraft({ locale: pageLocale }: { locale?: string } 
             <TiltPotionButton
               onClick={handleStir}
               disabled={isFailed}
-              className="flex-1 py-1.5 bg-muted hover:bg-muted/80 text-foreground font-bold text-xs rounded border border-border disabled:opacity-40"
+              className="flex-1 py-1.5 game-btn text-xs"
             >
               {t('🥄 젓기')}
             </TiltPotionButton>
             <TiltPotionButton
               onClick={handleAddWater}
               disabled={isFailed}
-              className="flex-1 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold text-xs rounded disabled:opacity-40"
+              className="flex-1 py-1.5 game-btn text-xs"
             >
               {t('💧 물 붓기')}
             </TiltPotionButton>
@@ -917,7 +917,7 @@ export default function PotionCraft({ locale: pageLocale }: { locale?: string } 
           <TiltPotionButton
             onClick={handleBrewAndServe}
             disabled={isFailed || activeEffects.length === 0}
-            className="w-full py-2 bg-warning hover:bg-warning/90 text-warning-foreground font-black text-xs rounded-lg shadow-md transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-1.5"
+            className="w-full py-2 game-btn game-btn-live text-xs flex items-center justify-center gap-1.5"
           >
             <img
               src={POTION_CRAFT_SPRITES.flaskHealing}
