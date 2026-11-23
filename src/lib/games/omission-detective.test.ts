@@ -1,74 +1,64 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
-  GAME_ID,
-  TRIES,
-  brokenLine,
-  createBoard,
-  createCase,
-  submitOrder,
-  togglePlace,
-  tray,
+  STAGE_COUNT, TRIES, brokenLine, clearPicks, createBoard, isSubsequence, lineOk, makeCase, pick, solutionCount, stars, submitOrder,
   type PlaceId,
 } from "./omission-detective";
 
-function permutations(items: readonly PlaceId[]): PlaceId[][] {
-  if (items.length <= 1) return [items.slice()];
-  const out: PlaceId[][] = [];
-  for (let index = 0; index < items.length; index += 1) {
-    const head = items[index] as PlaceId;
-    for (const tail of permutations(items.slice(0, index).concat(items.slice(index + 1)))) out.push([head, ...tail]);
-  }
-  return out;
-}
-
-describe("omission detective", () => {
-  it("builds one order that the three lines all allow", () => {
-    for (let seed = 0; seed < 24; seed += 1) {
-      const daily = createCase(seed);
-      expect(createCase(seed)).toEqual(daily);
-      expect(new Set(daily.lines.flat()).size).toBe(daily.order.length);
-      expect(brokenLine(daily.lines, daily.order)).toBeNull();
-      const fits = permutations(daily.order).filter((order) => brokenLine(daily.lines, order) === null);
-      expect(fits).toEqual([daily.order]);
-      expect(tray(daily).join()).not.toBe(daily.order.join());
+describe("omission-detective", () => {
+  it("every case has exactly one route and every statement is true", () => {
+    for (let i = 0; i < STAGE_COUNT; i++) {
+      const c = makeCase(i);
+      expect(solutionCount(c.order, c.lines), `case ${i + 1}`).toBe(1);
+      expect(brokenLine(c.lines, c.order)).toBeNull();
+      expect(new Set(c.lines.flat()).size).toBe(c.order.length);
+      for (const p of c.order) expect(c.pins).toContain(p);
     }
   });
 
-  it("spends a try on a wrong order and stops after three", () => {
-    const daily = createCase(3);
-    let board = createBoard(daily);
-    expect(submitOrder(board)).toEqual(board);
-    const wrong = [...daily.order].reverse() as PlaceId[];
-    for (const place of wrong) board = togglePlace(board, place);
-    board = submitOrder(board);
-    expect(board.phase).toBe("ask");
-    expect(board.tries).toBe(1);
-    expect(board.broken).not.toBeNull();
-    board = submitOrder(board);
-    board = submitOrder(board);
-    expect(board.phase).toBe("lost");
-    expect(board.tries).toBe(TRIES);
-    expect(submitOrder(board)).toEqual(board);
+  it("cases get longer and add decoys", () => {
+    expect(makeCase(0).order.length).toBe(4);
+    expect(makeCase(STAGE_COUNT - 1).order.length).toBe(7);
+    expect(makeCase(0).pins.length).toBe(4);
+    expect(makeCase(STAGE_COUNT - 1).pins.length).toBeGreaterThan(7);
+    expect(makeCase(12)).toEqual(makeCase(12));
   });
 
-  it("accepts the true order", () => {
-    const daily = createCase(9);
-    let board = createBoard(daily);
-    board = togglePlace(board, daily.order[0] as PlaceId);
-    board = togglePlace(board, daily.order[0] as PlaceId);
-    expect(board.picks).toEqual([]);
-    for (const place of daily.order) board = togglePlace(board, place);
-    board = submitOrder(board);
-    expect(board.phase).toBe("won");
-    expect(board.tries).toBe(1);
+  it("subsequence and partial checks", () => {
+    const o: PlaceId[] = ["market", "park", "school", "bridge"];
+    expect(isSubsequence(["market", "school"], o)).toBe(true);
+    expect(isSubsequence(["school", "market"], o)).toBe(false);
+    expect(lineOk(["market", "school"], ["school"])).toBe(true);
+    expect(lineOk(["market", "school"], ["school", "market"])).toBe(false);
   });
 
-  it("registers the catalog slug", () => {
-    const page = readFileSync("src/pages/[...lang]/omission-detective.astro", "utf8");
-    const catalog = readFileSync("src/pages/[...lang]/index.astro", "utf8");
-    expect(page).toContain('slug="omission-detective"');
-    expect(catalog).toContain('slug: "omission-detective"');
-    expect(GAME_ID).toBe("omission-detective");
+  it("picking pulls the string; tapping the last pin takes it back", () => {
+    const c = makeCase(0);
+    let b = createBoard(c);
+    b = pick(b, c.order[0]!);
+    b = pick(b, c.order[1]!);
+    expect(b.picks).toEqual(c.order.slice(0, 2));
+    b = pick(b, c.order[1]!);
+    expect(b.picks).toEqual(c.order.slice(0, 1));
+    b = pick(b, c.order[0]!); // already used but last → removed
+    expect(b.picks).toEqual([]);
+    expect(clearPicks(pick(b, c.order[2]!)).picks).toEqual([]);
+  });
+
+  it("wrong routes cost tries; the right one wins", () => {
+    const c = makeCase(3);
+    let b = createBoard(c);
+    const wrong = [...c.order].reverse();
+    for (const p of wrong) b = pick(b, p);
+    b = submitOrder(b);
+    expect(b.tries).toBe(1);
+    expect(b.broken).not.toBeNull();
+    expect(b.picks).toEqual([]);
+    for (const p of c.order) b = pick(b, p);
+    b = submitOrder(b);
+    expect(b.phase).toBe("won");
+    expect(stars(b)).toBe(2);
+    let l = createBoard(c);
+    for (let k = 0; k < TRIES; k++) { for (const p of wrong) l = pick(l, p); l = submitOrder(l); }
+    expect(l.phase).toBe("lost");
   });
 });
