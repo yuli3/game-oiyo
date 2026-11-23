@@ -1,110 +1,89 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
-  DEALS,
+  FORGERY_FROM,
   GAME_ID,
-  answer,
+  STAGE_COUNT,
+  STRIKES,
   begin,
-  createPuzzle,
-  createRun,
-  distance,
-  expire,
-  legal,
-  type Answer,
-  type Deal,
+  judge,
+  makeStage,
+  newDesk,
+  ruleHolds,
+  stamp,
+  stars,
+  type Rule,
 } from "./monster-interview";
 
-const ANSWERS: Answer[] = ["H", "W", "R"];
-const PREFERS: Answer[][] = [
-  ["H", "W", "R"],
-  ["H", "R", "W"],
-  ["W", "H", "R"],
-  ["W", "R", "H"],
-  ["R", "H", "W"],
-  ["R", "W", "H"],
-];
-
-function permutations(prefix: Answer[] = []): Answer[][] {
-  if (prefix.length === 3) return [prefix];
-  return ANSWERS.filter((choice) => !prefix.includes(choice)).flatMap((choice) => permutations([...prefix, choice]));
-}
-
-const ORDERS = permutations();
-
-function puzzleOf(deal: Deal) {
-  return { seed: 1, rounds: [deal] };
-}
-
-function wins(deal: Deal): Answer[][] {
-  return ORDERS.filter((order) => {
-    let run = begin(createRun(puzzleOf(deal)));
-    for (const choice of order) {
-      run = answer(run, choice);
-      if (run.phase === "lost") return false;
-    }
-    return run.phase === "won";
-  });
-}
-
-function greedy(deal: Deal, prefer: readonly Answer[]): boolean {
-  let run = begin(createRun(puzzleOf(deal)));
-  for (let step = 0; step < 3; step += 1) {
-    const seat = run.seats[run.used.length]!;
-    const choice = prefer.find((label) => !run.used.includes(label) && legal(label, distance(seat, run.standard)));
-    if (!choice) return false;
-    run = answer(run, choice);
-    if (run.phase === "lost") return false;
-  }
-  return run.phase === "won";
-}
-
-describe("monster interview", () => {
-  it("has one winning order, and no preference clears every round of a day", () => {
-    expect(DEALS).toHaveLength(9);
-    for (const deal of DEALS) expect(wins(deal)).toHaveLength(1);
-    for (let seed = 0; seed < 18; seed += 1) {
-      const rounds = createPuzzle(seed).rounds;
-      expect(new Set(rounds.map((deal) => `${deal.standard}:${deal.seats.join("")}`)).size).toBe(3);
-      for (const prefer of PREFERS) {
-        expect(rounds.some((deal) => !greedy(deal, prefer))).toBe(true);
-      }
-      for (const order of ORDERS) {
-        expect(rounds.some((deal) => !wins(deal)[0] || wins(deal)[0]!.join("") !== order.join(""))).toBe(true);
-      }
-    }
-  });
-
-  it("opens the next seat only when hire flips the standard", () => {
-    const deal = DEALS[0]!;
-    expect(deal.seats).toEqual([0, 1, 2]);
-    const started = begin(createRun(puzzleOf(deal)));
-    const hired = answer(started, "H");
-    expect(hired.phase).toBe("play");
-    expect(hired.standard).toBe(2);
-    const held = answer(hired, "W");
-    expect(held.phase).toBe("lost");
-    const cleared = answer(answer(hired, "R"), "W");
-    expect(cleared.phase).toBe("won");
-    expect(cleared.kept).toBe(1);
-    expect(expire(started).phase).toBe("lost");
-    expect(expire(cleared)).toEqual(cleared);
-    expect(begin(cleared)).toEqual(cleared);
-  });
-
-  it("repeats the same three deals for a seed", () => {
-    for (let seed = 0; seed < 18; seed += 1) {
-      const puzzle = createPuzzle(seed);
-      expect(createPuzzle(seed)).toEqual(puzzle);
-      expect(puzzle.rounds).toHaveLength(3);
-      for (const deal of puzzle.rounds) expect(wins(deal)).toHaveLength(1);
-    }
-  });
-
-  it("registers the catalog slug", () => {
-    const page = readFileSync("src/pages/[...lang]/monster-interview.astro", "utf8");
-    const catalog = readFileSync("src/pages/[...lang]/index.astro", "utf8");
-    expect(page).toContain('slug="monster-interview"');
-    expect(catalog).toContain('slug: "monster-interview"');
+describe("monster interview desk", () => {
+  it("keeps the record id", () => {
     expect(GAME_ID).toBe("monster-interview");
+  });
+
+  it("ships 30 deterministic stages", () => {
+    expect(STAGE_COUNT).toBe(30);
+    expect(JSON.stringify(makeStage(4))).toBe(JSON.stringify(makeStage(4)));
+    expect(JSON.stringify(makeStage(4))).not.toBe(JSON.stringify(makeStage(5)));
+  });
+
+  it("never posts two rules about the same trait, and ramps up", () => {
+    for (let i = 0; i < STAGE_COUNT; i++) {
+      const s = makeStage(i);
+      const topics = s.rules.map((r) => r.kind.replace(/(AtLeast|AtMost|None|Some|Is|Not)$/, ""));
+      expect(new Set(topics).size).toBe(topics.length);
+      expect(s.rules.length).toBe(i < 5 ? 1 : i < 16 ? 2 : 3);
+      expect(s.forgery).toBe(i >= FORGERY_FROM);
+      expect(s.timeMs).toBeGreaterThanOrEqual(3500);
+    }
+  });
+
+  it("mixes hires and rejects every day, and forged resumes appear only after they open", () => {
+    for (let i = 0; i < STAGE_COUNT; i++) {
+      const s = makeStage(i);
+      const verdicts = s.candidates.map((c) => judge(s, c).verdict);
+      expect(verdicts).toContain("hire");
+      expect(verdicts).toContain("reject");
+      const forged = s.candidates.filter((c) => c.forged);
+      if (i < FORGERY_FROM) expect(forged.length).toBe(0);
+      for (const c of s.candidates) {
+        if (!c.forged) expect(c.resume).toEqual(c.monster);
+        else expect(c.resume).not.toEqual(c.monster);
+      }
+    }
+    const lateForged = Array.from({ length: STAGE_COUNT - FORGERY_FROM }, (_, k) => makeStage(FORGERY_FROM + k)).flatMap((s) => s.candidates.filter((c) => c.forged));
+    expect(lateForged.length).toBeGreaterThan(10);
+  });
+
+  it("a forged resume always passes the posted rules, so only the forgery check catches it", () => {
+    for (let i = FORGERY_FROM; i < STAGE_COUNT; i++) {
+      const s = makeStage(i);
+      for (const c of s.candidates.filter((x) => x.forged)) {
+        expect(s.rules.every((r: Rule) => ruleHolds(r, c.resume))).toBe(true);
+        expect(judge(s, c)).toEqual({ verdict: "reject", reason: "forged" });
+      }
+    }
+  });
+
+  it("a perfect desk clears with three stars; three wrong stamps fire you", () => {
+    let d = begin(newDesk(12));
+    for (const c of d.stage.candidates) d = stamp(d, judge(d.stage, c).verdict, 2000);
+    expect(d.status).toBe("won");
+    expect(stars(d)).toBe(3);
+    expect(d.bestCombo).toBe(d.stage.candidates.length);
+
+    let bad = begin(newDesk(12));
+    for (let k = 0; k < STRIKES; k++) {
+      const c = bad.stage.candidates[bad.at]!;
+      bad = stamp(bad, judge(bad.stage, c).verdict === "hire" ? "reject" : "hire");
+    }
+    expect(bad.status).toBe("lost");
+    expect(stars(bad)).toBe(0);
+  });
+
+  it("a timeout is a strike and ignores stamps outside play", () => {
+    const ready = newDesk(0);
+    expect(stamp(ready, "hire")).toBe(ready);
+    const d = stamp(begin(ready), "timeout");
+    expect(d.strikes).toBe(1);
+    expect(d.log[0]?.reason).toBe("timeout");
   });
 });
