@@ -500,7 +500,7 @@ public class GravityRollerPlayer : MonoBehaviour
     private void UpdateReady()
     {
         // Click, Space, Enter, or Arrow key to start
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || Input.GetMouseButtonDown(0) ||
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || OiyoPointerInput.GetMouseButtonDown(0) ||
             Input.GetAxisRaw("Horizontal") != 0f || Input.GetAxisRaw("Vertical") != 0f)
         {
             state = GameState.Playing;
@@ -529,10 +529,10 @@ public class GravityRollerPlayer : MonoBehaviour
         if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) inputRoll -= 1f;
         if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) inputRoll += 1f;
 
-        if (Input.GetMouseButton(0))
+        if (OiyoPointerInput.GetMouseButton(0))
         {
-            float normX = (Input.mousePosition.x / Screen.width - 0.5f) * 2f;
-            float normY = (Input.mousePosition.y / Screen.height - 0.5f) * 2f;
+            float normX = (OiyoPointerInput.mousePosition.x / Screen.width - 0.5f) * 2f;
+            float normY = (OiyoPointerInput.mousePosition.y / Screen.height - 0.5f) * 2f;
             if (Mathf.Abs(normX) > 0.1f) inputRoll = Mathf.Clamp(normX * 1.4f, -1f, 1f);
             if (Mathf.Abs(normY) > 0.1f) inputPitch = Mathf.Clamp(normY * 1.4f, -1f, 1f);
         }

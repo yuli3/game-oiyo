@@ -484,11 +484,11 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
 
     void HandlePointer(float dt)
     {
-        var ray = _cam.ScreenPointToRay(Input.mousePosition);
+        var ray = _cam.ScreenPointToRay(OiyoPointerInput.mousePosition);
         if (!new Plane(Vector3.up, Vector3.zero).Raycast(ray, out float enter)) return;
         Vector3 hit = ray.GetPoint(enter);
 
-        if (Input.GetMouseButtonDown(0) && Input.mousePosition.y < Screen.height - 85f)
+        if (OiyoPointerInput.GetMouseButtonDown(0) && OiyoPointerInput.mousePosition.y < Screen.height - 85f)
         {
             // Check rubber stamps on desk
             if (Vector2.Distance(new Vector2(hit.x, hit.z), new Vector2(6.4f, 1.3f)) < 1.3f)
@@ -518,13 +518,13 @@ public sealed class BorderInspectorPlayer : MonoBehaviour
                 }
             }
         }
-        else if (Input.GetMouseButton(0) && _dragged != null)
+        else if (OiyoPointerInput.GetMouseButton(0) && _dragged != null)
         {
             Vector3 nxt = hit + _dragOffset;
             _dragged.Pos = new Vector3(Mathf.Clamp(nxt.x, -6.5f, 4.2f), 0.45f, Mathf.Clamp(nxt.z, -3.8f, 2.8f));
             _dragged.Go.transform.position = _dragged.Pos;
         }
-        else if (Input.GetMouseButtonUp(0) && _dragged != null)
+        else if (OiyoPointerInput.GetMouseButtonUp(0) && _dragged != null)
         {
             _dragged.Pos.y = 0.14f + (_docs.Count * 0.01f);
             _dragged.Go.transform.position = _dragged.Pos;

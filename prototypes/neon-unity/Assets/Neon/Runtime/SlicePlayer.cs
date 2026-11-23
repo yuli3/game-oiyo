@@ -949,7 +949,14 @@ public sealed class SlicePlayer : MonoBehaviour
     }
     public void SetStick(Vector2 value, int id) { pointer = id; stick = Vector2.ClampMagnitude(value, 1); }
     public void EndStick(int id) { if (pointer == id) { pointer = -1; stick = Vector2.zero; } }
-    void OnApplicationFocus(bool focused) { if (!focused && run.Phase == Phase.Playing) { run.Pause(); ClearInput(); ShowPhase(true); } }
+    // In the web player the page iframe loses focus on any tap outside the game (full screen button,
+    // result card), so only a hidden tab (OnApplicationPause) pauses the run there (2026-11-23).
+    void OnApplicationFocus(bool focused) { if (!focused && !WebPlayer && run.Phase == Phase.Playing) { run.Pause(); ClearInput(); ShowPhase(true); } }
+    #if UNITY_WEBGL && !UNITY_EDITOR
+    const bool WebPlayer = true;
+    #else
+    const bool WebPlayer = false;
+    #endif
     void OnApplicationPause(bool paused) { if (paused && run.Phase == Phase.Playing) { run.Pause(); ClearInput(); ShowPhase(true); } }
 
     Transform Make(string name, Sprite sprite, Color color, float size)

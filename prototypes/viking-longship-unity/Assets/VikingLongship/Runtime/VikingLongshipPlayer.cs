@@ -352,9 +352,9 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
         if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) throttle -= 0.5f;
 
         // Pointer steering fallback
-        if (Input.GetMouseButton(1) || (Input.GetMouseButton(0) && Mathf.Abs(turn) < 0.01f && Mathf.Abs(throttle) < 0.01f))
+        if (OiyoPointerInput.GetMouseButton(1) || (OiyoPointerInput.GetMouseButton(0) && Mathf.Abs(turn) < 0.01f && Mathf.Abs(throttle) < 0.01f))
         {
-            var ray = _cam.ScreenPointToRay(Input.mousePosition);
+            var ray = _cam.ScreenPointToRay(OiyoPointerInput.mousePosition);
             if (new Plane(Vector3.up, Vector3.zero).Raycast(ray, out float enter))
             {
                 Vector3 target = ray.GetPoint(enter);
@@ -423,7 +423,7 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
             SpawnFoamBurst(_shipPos - fwd * 1.9f, 1);
         }
 
-        if ((Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0)) && _fireCooldown <= 0f)
+        if ((Input.GetKey(KeyCode.Space) || OiyoPointerInput.GetMouseButton(0)) && _fireCooldown <= 0f)
         {
             FireVolley();
             _fireCooldown = 0.32f;
@@ -433,7 +433,7 @@ public sealed class VikingLongshipPlayer : MonoBehaviour
     void FireVolley()
     {
         Vector3 aimDir = Quaternion.Euler(0f, _shipYaw, 0f) * Vector3.forward;
-        var ray = _cam.ScreenPointToRay(Input.mousePosition);
+        var ray = _cam.ScreenPointToRay(OiyoPointerInput.mousePosition);
         if (new Plane(Vector3.up, Vector3.zero).Raycast(ray, out float enter))
         {
             Vector3 pt = ray.GetPoint(enter) - _shipPos;

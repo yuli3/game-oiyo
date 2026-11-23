@@ -307,22 +307,22 @@ public class TownscaperIslandPlayer : MonoBehaviour
     void HandleCameraControls()
     {
         // Mouse Right-Click or Middle-Click drag to orbit
-        if (Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2))
+        if (OiyoPointerInput.GetMouseButtonDown(1) || OiyoPointerInput.GetMouseButtonDown(2))
         {
             isDraggingCam = true;
-            lastMousePos = Input.mousePosition;
+            lastMousePos = OiyoPointerInput.mousePosition;
         }
-        else if (Input.GetMouseButtonUp(1) || Input.GetMouseButtonUp(2))
+        else if (OiyoPointerInput.GetMouseButtonUp(1) || OiyoPointerInput.GetMouseButtonUp(2))
         {
             isDraggingCam = false;
         }
 
         if (isDraggingCam)
         {
-            Vector2 delta = (Vector2)Input.mousePosition - lastMousePos;
+            Vector2 delta = (Vector2)OiyoPointerInput.mousePosition - lastMousePos;
             camYaw += delta.x * 0.35f;
             camPitch = Mathf.Clamp(camPitch - delta.y * 0.25f, 20f, 75f);
-            lastMousePos = Input.mousePosition;
+            lastMousePos = OiyoPointerInput.mousePosition;
         }
 
         // Zoom with ScrollWheel
@@ -360,15 +360,15 @@ public class TownscaperIslandPlayer : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.M)) showStageSelectModal = !showStageSelectModal;
 
         // Left Click to Build or Demolish
-        if (Input.GetMouseButtonDown(0))
+        if (OiyoPointerInput.GetMouseButtonDown(0))
         {
             // Don't interact if clicking UI area
-            if (Input.mousePosition.y < 120 || Input.mousePosition.y > Screen.height - 70 || showStageSelectModal)
+            if (OiyoPointerInput.mousePosition.y < 120 || OiyoPointerInput.mousePosition.y > Screen.height - 70 || showStageSelectModal)
             {
                 return;
             }
 
-            Ray ray = mainCam.ScreenPointToRay(Input.mousePosition);
+            Ray ray = mainCam.ScreenPointToRay(OiyoPointerInput.mousePosition);
             if (RaycastGrid(ray, out int hitX, out int hitZ, out bool hitBuilding))
             {
                 if (isDemolishMode)

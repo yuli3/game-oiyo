@@ -822,11 +822,11 @@ public class SandBallsPlayer : MonoBehaviour
 
     void HandleCarveInput()
     {
-        if (Input.GetMouseButton(0))
+        if (OiyoPointerInput.GetMouseButton(0))
         {
-            if (Input.mousePosition.y < Screen.height - 130 && !showStageSelect)
+            if (OiyoPointerInput.mousePosition.y < Screen.height - 130 && !showStageSelect)
             {
-                Ray ray = mainCam.ScreenPointToRay(Input.mousePosition);
+                Ray ray = mainCam.ScreenPointToRay(OiyoPointerInput.mousePosition);
                 Plane boardPlane = new Plane(Vector3.forward, Vector3.zero);
                 float dist;
                 if (boardPlane.Raycast(ray, out dist))

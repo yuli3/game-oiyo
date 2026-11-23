@@ -117,3 +117,10 @@ export function hintCell(p: WalkPuzzle, arrows: Dir[]): number | null {
   const i = arrows.findIndex((d, c) => c !== p.goal && !p.locked[c] && d !== p.solution[c]);
   return i < 0 ? null : i;
 }
+
+/** Stage campaign (2026-11-23): 30 fixed boards, 4×4 → 5×5 → 6×6. */
+export const WALK_STAGES = 30;
+export function walkStage(index: number): { level: WalkLevel; seed: number } {
+  const i = Math.max(0, Math.min(WALK_STAGES - 1, Math.floor(index)));
+  return { level: i < 10 ? "easy" : i < 20 ? "medium" : "hard", seed: 31000 + i * 17 };
+}

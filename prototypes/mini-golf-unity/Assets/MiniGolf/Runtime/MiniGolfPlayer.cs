@@ -344,18 +344,18 @@ public class MiniGolfPlayer : MonoBehaviour
         // Mouse Drag Aiming (Slingshot)
         if (status == GameStatus.Aiming)
         {
-            if (Input.GetMouseButtonDown(0))
+            if (OiyoPointerInput.GetMouseButtonDown(0))
             {
-                if (Input.mousePosition.y > 100 && Input.mousePosition.y < Screen.height - 80)
+                if (OiyoPointerInput.mousePosition.y > 100 && OiyoPointerInput.mousePosition.y < Screen.height - 80)
                 {
                     status = GameStatus.Dragging;
-                    dragStartMousePos = Input.mousePosition;
+                    dragStartMousePos = OiyoPointerInput.mousePosition;
                 }
             }
         }
         else if (status == GameStatus.Dragging)
         {
-            Vector2 currentMouse = Input.mousePosition;
+            Vector2 currentMouse = OiyoPointerInput.mousePosition;
             Vector2 delta = dragStartMousePos - currentMouse; // Pullback direction
             float dragDist = delta.magnitude;
 
@@ -366,7 +366,7 @@ public class MiniGolfPlayer : MonoBehaviour
                 aimDirection = Quaternion.Euler(0, mainCam.transform.eulerAngles.y, 0) * worldDrag;
             }
 
-            if (Input.GetMouseButtonUp(0))
+            if (OiyoPointerInput.GetMouseButtonUp(0))
             {
                 if (aimPower > 0.05f)
                 {

@@ -18,7 +18,7 @@ public static class BeatSliceBuild
         PlayerSettings.companyName = "OIYO";
         PlayerSettings.productName = "Beat Slice 3D Unity";
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
-        PlayerSettings.runInBackground = false;
+        PlayerSettings.runInBackground = true; // keep running when the page iframe has no focus (2026-11-23)
         AssetDatabase.SaveAssets();
     }
 

@@ -1135,7 +1135,7 @@ public class BlockBlastPlayer : MonoBehaviour
     {
         if (state != GameState.Playing) return;
 
-        Vector3 mouseScreen = Input.mousePosition;
+        Vector3 mouseScreen = OiyoPointerInput.mousePosition;
         Plane boardPlane = new Plane(Vector3.forward, Vector3.zero);
         Ray ray = mainCam.ScreenPointToRay(mouseScreen);
         float enter;
@@ -1147,7 +1147,7 @@ public class BlockBlastPlayer : MonoBehaviour
         }
 
         // Pointer Down
-        if (Input.GetMouseButtonDown(0))
+        if (OiyoPointerInput.GetMouseButtonDown(0))
         {
             draggingSlot = -1;
             for (int i = 0; i < 3; i++)
@@ -1167,7 +1167,7 @@ public class BlockBlastPlayer : MonoBehaviour
         }
 
         // Pointer Drag
-        if (Input.GetMouseButton(0) && draggingSlot >= 0)
+        if (OiyoPointerInput.GetMouseButton(0) && draggingSlot >= 0)
         {
             HandPiece hp = handPieces[draggingSlot];
             dragCurrentWorldPos = worldPoint + dragOffset + new Vector3(0f, 1.2f, -0.6f); // Lift up for finger visibility
@@ -1197,7 +1197,7 @@ public class BlockBlastPlayer : MonoBehaviour
         }
 
         // Pointer Up
-        if (Input.GetMouseButtonUp(0) && draggingSlot >= 0)
+        if (OiyoPointerInput.GetMouseButtonUp(0) && draggingSlot >= 0)
         {
             HandPiece hp = handPieces[draggingSlot];
             PolyShape shape = hp.shape;

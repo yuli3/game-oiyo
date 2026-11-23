@@ -592,7 +592,7 @@ public class PaperFlightPlayer : MonoBehaviour
         planeObj.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 2f) * 3f);
 
         // Click / Space / Enter to launch
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || Input.GetMouseButtonDown(0))
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || OiyoPointerInput.GetMouseButtonDown(0))
         {
             state = GameState.Flying;
             currentSpeed = BaseCruiseSpeed;
@@ -615,10 +615,10 @@ public class PaperFlightPlayer : MonoBehaviour
         if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) pitchInput += 1f; // Pitch up (climb)
 
         // Mouse steering when dragging or button held
-        if (Input.GetMouseButton(0))
+        if (OiyoPointerInput.GetMouseButton(0))
         {
-            float normMouseX = (Input.mousePosition.x / Screen.width - 0.5f) * 2f;
-            float normMouseY = (Input.mousePosition.y / Screen.height - 0.5f) * 2f;
+            float normMouseX = (OiyoPointerInput.mousePosition.x / Screen.width - 0.5f) * 2f;
+            float normMouseY = (OiyoPointerInput.mousePosition.y / Screen.height - 0.5f) * 2f;
             if (Mathf.Abs(normMouseX) > 0.15f) steerX = Mathf.Clamp(normMouseX * 1.5f, -1f, 1f);
             if (Mathf.Abs(normMouseY) > 0.15f) pitchInput = Mathf.Clamp(-normMouseY * 1.5f, -1f, 1f);
         }

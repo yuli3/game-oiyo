@@ -1046,9 +1046,9 @@ public class BadNorthPlayer : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha3)) SelectSquad(2);
 
         // Click interaction
-        if (Input.GetMouseButtonDown(0))
+        if (OiyoPointerInput.GetMouseButtonDown(0))
         {
-            Ray ray = mainCam.ScreenPointToRay(Input.mousePosition);
+            Ray ray = mainCam.ScreenPointToRay(OiyoPointerInput.mousePosition);
             Plane groundPlane = new Plane(Vector3.up, new Vector3(0f, 0.4f, 0f));
             float enter;
 
