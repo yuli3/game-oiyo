@@ -132,6 +132,77 @@ const PUZZLES: readonly PuzzleDef[] = [
     outerEdges: maskExcept([[0, 1], [1, 4]]),
     innerEdges: maskExcept([[4, 1]]),
   },
+  // Stages 11-20 (2026-11-23): each keeps one shortest line, found by search and checked in the tests.
+  {
+    id: "glass-dawn",
+    outer: [empty, empty, empty, empty, "exit", empty, empty, empty],
+    inner: ["void", empty, empty, "exit", empty, empty, empty, empty],
+    outerEdges: maskExcept([[0, 1], [0, 4], [2, 4]]),
+    innerEdges: maskExcept([[3, 4]]),
+  },
+  {
+    id: "cold-pole",
+    outer: [empty, empty, "exit", empty, empty, empty, "crack", empty],
+    inner: [empty, empty, empty, empty, empty, "exit", "void", empty],
+    outerEdges: maskExcept([[0, 2]]),
+    innerEdges: ALL_EDGES,
+  },
+  {
+    id: "prism-belt",
+    outer: [empty, "crack", empty, empty, "exit", empty, empty, empty],
+    inner: [empty, empty, empty, "exit", empty, empty, empty, empty],
+    outerEdges: maskExcept([[0, 4], [2, 4], [6, 1]]),
+    innerEdges: ALL_EDGES,
+  },
+  {
+    id: "hollow-core",
+    outer: [empty, "exit", empty, empty, empty, "crack", empty, empty],
+    inner: [empty, empty, empty, "void", empty, empty, "exit", empty],
+    outerEdges: maskExcept([[0, 4], [2, 1]]),
+    innerEdges: maskExcept([[6, 1]]),
+  },
+  {
+    id: "frost-seam",
+    outer: [empty, empty, empty, "exit", empty, empty, empty, empty],
+    inner: [empty, empty, empty, empty, "exit", empty, "void", empty],
+    outerEdges: maskExcept([[0, 4], [2, 1], [6, 1]]),
+    innerEdges: ALL_EDGES,
+  },
+  {
+    id: "shard-ring",
+    outer: [empty, empty, empty, empty, "crack", empty, "exit", empty],
+    inner: [empty, "exit", empty, empty, empty, empty, empty, empty],
+    outerEdges: maskExcept([[0, 4], [6, 1]]),
+    innerEdges: maskExcept([[4, 2], [5, 2]]),
+  },
+  {
+    id: "mirror-sea",
+    outer: [empty, empty, empty, empty, empty, "exit", empty, empty],
+    inner: [empty, empty, "exit", "void", empty, empty, empty, empty],
+    outerEdges: maskExcept([[0, 2], [1, 4], [4, 1]]),
+    innerEdges: maskExcept([[0, 4], [5, 2]]),
+  },
+  {
+    id: "deep-facet",
+    outer: [empty, "crack", empty, "exit", empty, empty, empty, empty],
+    inner: [empty, empty, empty, empty, "exit", empty, empty, empty],
+    outerEdges: maskExcept([[0, 4], [1, 2], [6, 1]]),
+    innerEdges: maskExcept([[4, 1], [6, 1]]),
+  },
+  {
+    id: "twin-pole",
+    outer: [empty, empty, empty, "exit", empty, empty, empty, empty],
+    inner: [empty, empty, empty, empty, "exit", "void", empty, empty],
+    outerEdges: maskExcept([[0, 1], [3, 4], [4, 1]]),
+    innerEdges: ALL_EDGES,
+  },
+  {
+    id: "last-orbit",
+    outer: [empty, empty, "exit", empty, empty, empty, empty, empty],
+    inner: [empty, empty, empty, empty, empty, "exit", empty, empty],
+    outerEdges: maskExcept([[0, 2], [1, 4], [2, 1]]),
+    innerEdges: maskExcept([[0, 1], [3, 4]]),
+  },
 ];
 
 export const PUZZLE_COUNT = PUZZLES.length;
@@ -201,8 +272,18 @@ export function mixSeed(seed: number): number {
   return (t ^ (t >>> 14)) >>> 0;
 }
 
+/**
+ * The first ten boards keep their old seed mapping, so a shared seed still opens the same board.
+ * Stages 11+ live at their own seed block: STAGE_SEED_BASE + index.
+ */
+export const LEGACY_PUZZLE_COUNT = 10;
+export const STAGE_SEED_BASE = 0x5354_0000;
+
 export function puzzleIndexForSeed(seed: number): number {
-  return mixSeed(seed) % PUZZLES.length;
+  const whole = Number.isFinite(seed) ? Math.trunc(seed) : 0;
+  const offset = whole - STAGE_SEED_BASE;
+  if (offset >= LEGACY_PUZZLE_COUNT && offset < PUZZLES.length) return offset;
+  return mixSeed(seed) % LEGACY_PUZZLE_COUNT;
 }
 
 export function nextSeed(seed: number): number {
@@ -228,6 +309,7 @@ function makeState(puzzle: PuzzleDef, outer = 0, steps = 0): PlanetState {
 /** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
 export function seedForPuzzle(index: number): number {
   const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  if (target >= LEGACY_PUZZLE_COUNT) return STAGE_SEED_BASE + target;
   for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 

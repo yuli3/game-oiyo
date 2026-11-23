@@ -68,6 +68,17 @@ const PUZZLES: readonly PondDef[] = [
   { id: "stone-step", cells: [SPORE, EMPTY, LEGS, EMPTY, EMPTY], goal: [EMPTY, SPORE, LEGS, LEGS, EMPTY] },
   { id: "late-bloom", cells: [EMPTY, SPORE, EMPTY, EMPTY, EMPTY], goal: [SPORE, LEGS, LEGS, LEGS, SPORE] },
   { id: "long-drift", cells: [SPORE, EMPTY, EMPTY, EMPTY, EMPTY], goal: [EMPTY, SPORE, EMPTY, LEGS, EMPTY] },
+  // Stages 11-20 (2026-11-23): each keeps one shortest line, found by search and checked in the tests.
+  { id: "reed-bend", cells: [SPORE, SPORE, SPORE, EMPTY, SPORE], goal: [EMPTY, SPORE, LEGS, EMPTY, LEGS] },
+  { id: "still-eddy", cells: [LEGS, SPORE, SPORE, SPORE, SPORE], goal: [LEGS, LEGS, LEGS, LEGS, EMPTY] },
+  { id: "moth-crossing", cells: [SPORE, EMPTY, EMPTY, SPORE, SPORE], goal: [EMPTY, EMPTY, LEGS, SPORE, LEGS] },
+  { id: "lily-shift", cells: [EMPTY, SPORE, LEGS, EMPTY, EMPTY], goal: [EMPTY, SPORE, LEGS, LEGS, EMPTY] },
+  { id: "mud-flat", cells: [SPORE, SPORE, EMPTY, SPORE, SPORE], goal: [EMPTY, EMPTY, EMPTY, LEGS, LEGS] },
+  { id: "thin-ice", cells: [SPORE, EMPTY, SPORE, EMPTY, SPORE], goal: [LEGS, LEGS, LEGS, EMPTY, LEGS] },
+  { id: "far-bank", cells: [SPORE, EMPTY, SPORE, SPORE, SPORE], goal: [EMPTY, EMPTY, LEGS, EMPTY, LEGS] },
+  { id: "rain-ring", cells: [SPORE, SPORE, EMPTY, EMPTY, SPORE], goal: [EMPTY, EMPTY, LEGS, SPORE, LEGS] },
+  { id: "slow-bloom", cells: [EMPTY, EMPTY, LEGS, EMPTY, EMPTY], goal: [EMPTY, SPORE, LEGS, LEGS, EMPTY] },
+  { id: "night-pond", cells: [SPORE, EMPTY, EMPTY, EMPTY, EMPTY], goal: [EMPTY, EMPTY, SPORE, LEGS, EMPTY] },
 ];
 
 export const PUZZLE_COUNT = PUZZLES.length;
@@ -220,8 +231,18 @@ export function mixSeed(seed: number): number {
   return (t ^ (t >>> 14)) >>> 0;
 }
 
+/**
+ * The first ten boards keep their old seed mapping, so a shared seed still opens the same board.
+ * Stages 11+ live at their own seed block: STAGE_SEED_BASE + index.
+ */
+export const LEGACY_PUZZLE_COUNT = 10;
+export const STAGE_SEED_BASE = 0x5354_0000;
+
 export function puzzleIndexForSeed(seed: number): number {
-  return mixSeed(seed) % PUZZLES.length;
+  const whole = Number.isFinite(seed) ? Math.trunc(seed) : 0;
+  const offset = whole - STAGE_SEED_BASE;
+  if (offset >= LEGACY_PUZZLE_COUNT && offset < PUZZLES.length) return offset;
+  return mixSeed(seed) % LEGACY_PUZZLE_COUNT;
 }
 
 export function nextSeed(seed: number): number {
@@ -232,6 +253,7 @@ export function nextSeed(seed: number): number {
 /** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
 export function seedForPuzzle(index: number): number {
   const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  if (target >= LEGACY_PUZZLE_COUNT) return STAGE_SEED_BASE + target;
   for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 

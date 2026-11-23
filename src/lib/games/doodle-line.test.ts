@@ -38,6 +38,16 @@ const SOLUTIONS: Record<string, readonly Act[]> = {
   "full-wall": ["W", "W", "S", "E", "E", "E", "H"],
   "tight-ink": ["N", "W", "N", "E", "E", "E", "H"],
   "long-loop": ["N", "W", "W", "N", "E", "E", "E", "H"],
+  "quill-turn": ["E", "S", "W", "W", "W", "H"],
+  "margin-run": ["W", "N", "E", "E", "E", "H"],
+  "blot-gate": ["W", "N", "E", "E", "E", "H"],
+  "inkwell-bend": ["W", "S", "E", "E", "N", "E", "H"],
+  "page-fold": ["E", "N", "N", "W", "W", "W", "H"],
+  "smudge-loop": ["E", "S", "W", "S", "W", "W", "H"],
+  "pen-detour": ["E", "N", "W", "W", "S", "W", "H"],
+  "folio-wall": ["W", "W", "N", "E", "E", "N", "E", "H"],
+  "crease-line": ["W", "W", "S", "S", "E", "E", "E", "H"],
+  "last-stroke": ["W", "S", "E", "E", "N", "N", "E", "H"],
 };
 
 const CAUGHT: Record<string, readonly number[]> = {
@@ -50,7 +60,16 @@ const CAUGHT: Record<string, readonly number[]> = {
   "back-hook": [ABSENT, 2, 1, 1],
   "full-wall": [1, 1, 1, 2],
   "tight-ink": [0, 0, 0, 0],
-  "long-loop": [0, ABSENT, ABSENT, 0],
+  "long-loop": [0, ABSENT, ABSENT, 0],  "quill-turn": [1, 1, 0, 0],
+  "margin-run": [1, ABSENT, 1, 1],
+  "blot-gate": [0, ABSENT, ABSENT, 0],
+  "inkwell-bend": [0, ABSENT, 0, 0],
+  "page-fold": [0, ABSENT, 0, ABSENT],
+  "smudge-loop": [2, 2, 0, 0],
+  "pen-detour": [1, ABSENT, ABSENT, 0],
+  "folio-wall": [1, 1, ABSENT, 0],
+  "crease-line": [ABSENT, 0, ABSENT, 2],
+  "last-stroke": [1, 1, 0, 0],
 };
 
 function replay(id: string, actions: readonly Act[]): LineState {
@@ -58,7 +77,8 @@ function replay(id: string, actions: readonly Act[]): LineState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 400; seed += 1) {
+  for (let index = 0; index < PUZZLE_COUNT; index += 1) {
+    const seed = seedForPuzzle(index);
     if (createLine(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -158,8 +178,8 @@ describe("doodle line", () => {
     expect(east.dot(right)).toBeGreaterThan(west.dot(right));
   });
 
-  it("ships ten stages and opens each one from its own seed", () => {
-    expect(PUZZLE_COUNT).toBe(10);
+  it("ships twenty stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(20);
     for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
   });
 
@@ -276,6 +296,8 @@ describe("doodle line", () => {
       expect(page.caught).toHaveLength(COLS);
       seen.add(page.puzzleId);
     }
+    expect(seen).toEqual(new Set(Object.keys(SOLUTIONS).slice(0, 10)));
+    for (let i = 10; i < PUZZLE_COUNT; i += 1) seen.add(createLine(seedForPuzzle(i)).puzzleId);
     expect(seen).toEqual(new Set(Object.keys(SOLUTIONS)));
     expect(createLine(Number.NaN).puzzleId).toBe(createLine(0).puzzleId);
     expect(nextSeed(0)).toBe(nextSeed(0));

@@ -73,6 +73,9 @@ import TileRummyCanvas, { type TableFx } from "./TileRummyCanvas";
 import { MORE } from "./tile-rummy-copy";
 import { TILE_RUMMY_SPRITES, TILE_RUMMY_UI_SPRITES } from "../../lib/games/sprites";
 import { celebrate } from "../../lib/games/celebration";
+import StageBar from "./StageBar";
+import { finaleLabel, loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
+import { TILE_RUMMY_LEAGUE, TILE_RUMMY_LEAGUE_COUNT, TILE_RUMMY_LEAGUE_SLUG } from "../../lib/games/tile-rummy-league";
 
 const GAME_ID = "tile-rummy";
 /** dailyBestConditions is one cohort: one opponent, adept search, no hint or undo. */
@@ -81,8 +84,18 @@ const DAILY_LEVEL: AiLevel = 2;
 const THEME_KEY = "tile-rummy:theme";
 const MUTE_KEY = "tile-rummy:muted";
 
+/** League copy (stage range 2026-11-23). */
+const LEAGUE_COPY: Record<string, { tab: string; title: string; table: (rivals: number) => string; cleared: string; notYet: string; next: string }> = {
+  ko: { tab: "리그", title: "리그 20단계", table: (n) => `상대 ${n}명`, cleared: "리그 단계 통과!", notYet: "이기면 다음 단계가 열려요.", next: "다음 단계" },
+  en: { tab: "League", title: "League · 20 stages", table: (n) => `${n} rival${n > 1 ? "s" : ""}`, cleared: "League stage cleared!", notYet: "Win to clear this stage.", next: "Next stage" },
+  ja: { tab: "リーグ", title: "リーグ 20ステージ", table: (n) => `相手 ${n}人`, cleared: "リーグステージ突破!", notYet: "勝つとこのステージをクリアします。", next: "次のステージ" },
+  zh: { tab: "联赛", title: "联赛 20 关", table: (n) => `对手 ${n} 人`, cleared: "联赛关卡通过!", notYet: "获胜即可通过本关。", next: "下一关" },
+  fr: { tab: "Ligue", title: "Ligue · 20 niveaux", table: (n) => `${n} adversaire${n > 1 ? "s" : ""}`, cleared: "Niveau de ligue réussi !", notYet: "Gagnez pour valider ce niveau.", next: "Niveau suivant" },
+  es: { tab: "Liga", title: "Liga · 20 niveles", table: (n) => `${n} rival${n > 1 ? "es" : ""}`, cleared: "¡Nivel de liga superado!", notYet: "Gana para superar este nivel.", next: "Siguiente nivel" },
+};
+
 type Notice = PlayReject | "loose" | "dirty" | "not-a-meld" | "copied" | "copyFailed";
-type Setup = { mode: "match" | "daily" | "run"; opponents: OpponentCount; level: AiLevel };
+type Setup = { mode: "match" | "daily" | "run" | "league"; opponents: OpponentCount; level: AiLevel };
 type Phase = "title" | "setup" | "augment" | "countdown" | "play";
 type FxInput = { kind: "lay"; ids: number[]; combo: number } | { kind: "error" } | { kind: "win" };
 type Sfx = "tap" | "place" | "meld" | "error" | "draw" | "win" | "lose";
@@ -567,7 +580,7 @@ const COPY: Record<Locale, Copy> = {
 const COLOR_INDEX: Record<TileColor, number> = { crimson: 0, amber: 1, teal: 2, violet: 3 };
 const CONTROL = "min-h-11 min-w-11 whitespace-nowrap rounded-xl border px-3 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50";
 const PRIMARY = "min-h-11 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50";
-const OVERLAY = "absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 overflow-y-auto rounded-2xl bg-background/80 p-4 text-center backdrop-blur-sm";
+const OVERLAY = "absolute inset-0 z-10 flex flex-col items-center justify-center-safe gap-4 overflow-y-auto rounded-2xl bg-background/80 p-4 text-center backdrop-blur-sm";
 /** The title panel sits in flow over the dealt table, so its button is never cut off. */
 const TITLE_PANEL = "relative z-10 flex flex-col items-center justify-center gap-2 rounded-2xl bg-background/80 px-4 py-4 text-center backdrop-blur-sm";
 const THEMES: TableTheme[] = ["felt", "walnut", "midnight"];
@@ -699,6 +712,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const loc: Locale = locale in COPY ? (locale as Locale) : "en";
   const t = COPY[loc];
   const m = MORE[loc];
+  const lc = LEAGUE_COPY[loc] ?? LEAGUE_COPY.en;
   const reducedMotion = usePrefersReducedMotion();
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
   const [setup, setSetup] = useState<Setup>({ mode: "match", opponents: 1, level: 1 });
@@ -732,6 +746,9 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const [combo, setCombo] = useState(0);
   const [mulliganUsed, setMulliganUsed] = useState(false);
   const [sortMode, setSortMode] = useState<"color" | "value">("color");
+  const [league, setLeague] = useState<number | null>(null);
+  const [leagueCleared, setLeagueCleared] = useState<number[]>([]);
+  const [playedLeague, setPlayedLeague] = useState<number | null>(null);
   const prevOpenedRef = useRef(false);
   const recordedDeal = useRef<number | null>(null);
   const pendingSeed = useRef<number>(1);
@@ -811,6 +828,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   // Title screen: a dealt table sits behind it as the game's own art.
   useEffect(() => {
     const preview = createTileRummy({ seed: 20261021, opponents: 1 });
+    setLeagueCleared(loadClearedStages(TILE_RUMMY_LEAGUE_SLUG, TILE_RUMMY_LEAGUE_COUNT));
     setGame(preview);
     setDraft(freshDraft(preview));
     try { setRecord(getRecord(GAME_ID)); } catch { /* private mode */ }
@@ -852,7 +870,33 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     sfx("draw");
   };
 
+  const leagueIndex = league ?? nextOpenStage(leagueCleared, TILE_RUMMY_LEAGUE_COUNT);
+  const leagueTable = TILE_RUMMY_LEAGUE[leagueIndex];
+
+  const selectLeague = (index: number) => {
+    if (!TILE_RUMMY_LEAGUE[index]) return;
+    setLeague(index);
+    sfx("tap");
+  };
+
+  const startLeague = (index: number) => {
+    const stage = TILE_RUMMY_LEAGUE[index];
+    if (!stage) return;
+    const next: Setup = { mode: "league", opponents: stage.opponents, level: stage.level };
+    setLeague(index);
+    setSetup(next);
+    setPlayedLeague(index);
+    pendingSeed.current = stage.seed;
+    deal(next, stage.seed, null, stage.level);
+    countdown(() => undefined);
+  };
+
   const startSetup = () => {
+    if (setup.mode === "league") {
+      startLeague(leagueIndex);
+      return;
+    }
+    setPlayedLeague(null);
     if (setup.mode === "daily") {
       deal({ mode: "daily", opponents: 1, level: DAILY_LEVEL }, 0, null);
       countdown(() => undefined);
@@ -934,6 +978,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     try { setRecord(recordResult(GAME_ID, outcome)); } catch { /* best-effort */ }
     const elapsed = startedAt.current ? Math.max(0, Math.round((Date.now() - startedAt.current) / 1000)) : 0;
     emit("game_end", { mode: setup.mode, result: outcome, duration: elapsed });
+    if (outcome === "w" && playedLeague !== null) setLeagueCleared(markStageCleared(TILE_RUMMY_LEAGUE_SLUG, playedLeague, TILE_RUMMY_LEAGUE_COUNT));
     if (outcome === "w") {
       sfx("win");
       haptics.fire("win");
@@ -951,7 +996,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
         setNewBest(!previous || saved.value !== previous.value);
       } catch { /* best-effort */ }
     }
-  }, [dealId, emit, game, haptics, phase, pushFx, setup.mode, sfx]);
+  }, [dealId, emit, game, haptics, phase, playedLeague, pushFx, setup.mode, sfx]);
 
   useEffect(() => {
     if (!game) return;
@@ -1319,9 +1364,20 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
               <div className="flex flex-wrap justify-center gap-2" role="group" aria-label={t.match}>
                 <button type="button" onClick={() => setSetup((current) => ({ ...current, mode: "match" }))} aria-pressed={setup.mode === "match"} className={`${CONTROL} ${setup.mode === "match" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{t.match}</button>
                 <button type="button" data-tile-run onClick={() => setSetup((current) => ({ ...current, mode: "run" }))} aria-pressed={setup.mode === "run"} className={`${CONTROL} ${setup.mode === "run" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{t.runMode}</button>
+                <button type="button" data-tile-league-tab onClick={() => setSetup((current) => ({ ...current, mode: "league" }))} aria-pressed={setup.mode === "league"} className={`${CONTROL} ${setup.mode === "league" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{lc.tab}</button>
                 <button type="button" onClick={() => setSetup((current) => ({ ...current, mode: "daily" }))} aria-pressed={setup.mode === "daily"} className={`${CONTROL} ${setup.mode === "daily" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{t.daily}</button>
               </div>
-              {setup.mode !== "daily" ? (
+              {setup.mode === "league" ? (
+                <div className="w-full max-w-sm space-y-1" data-tile-league>
+                  <p className="text-xs font-black text-foreground">{lc.title}</p>
+                  <div className="max-h-28 overflow-y-auto">
+                    <StageBar count={TILE_RUMMY_LEAGUE_COUNT} current={leagueIndex} cleared={leagueCleared} locale={loc} onSelect={selectLeague} />
+                  </div>
+                  {leagueTable && (
+                    <p className="text-xs text-muted-foreground">{lc.table(leagueTable.opponents)} · {leagueTable.level === 1 ? t.level1 : leagueTable.level === 2 ? t.level2 : t.level3}</p>
+                  )}
+                </div>
+              ) : setup.mode !== "daily" ? (
                 <div className="flex flex-wrap justify-center gap-2">
                   <div className="inline-flex gap-1" role="group" aria-label={t.opponents}>
                     {([1, 2, 3] as OpponentCount[]).map((n) => (
@@ -1416,6 +1472,20 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
               <p className="text-4xl font-black text-foreground">{outcome === "w" ? t.win : outcome === "l" ? t.loss : t.drawGame}</p>
               <p className="text-3xl tracking-widest text-primary" aria-label={m.stars(stars)}>{"★".repeat(stars)}{"☆".repeat(3 - stars)}</p>
               {newBest && <p className="text-sm font-black text-primary">{m.newBest}</p>}
+              {playedLeague !== null && (
+                <div className="flex flex-col items-center gap-2" data-tile-league-result>
+                  <p className="text-sm font-black text-primary">{leagueCleared.includes(playedLeague) ? lc.cleared : lc.notYet}</p>
+                  {outcome === "w" && (
+                    <button
+                      type="button"
+                      onClick={() => startLeague(playedLeague + 1 < TILE_RUMMY_LEAGUE_COUNT ? playedLeague + 1 : nextOpenStage(leagueCleared, TILE_RUMMY_LEAGUE_COUNT))}
+                      className={PRIMARY}
+                    >
+                      {playedLeague + 1 < TILE_RUMMY_LEAGUE_COUNT ? lc.next : finaleLabel(loc)}
+                    </button>
+                  )}
+                </div>
+              )}
               <ul className="text-xs text-muted-foreground">
                 {game.hands.map((seat, index) => (
                   <li key={index}>{seatName(index)} · {t.penalty(handPenalty(seat))}</li>

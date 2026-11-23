@@ -28,7 +28,16 @@ const SOLUTIONS: Record<string, readonly Act[]> = {
   "echo-stone": ["swap", "up", "up", "swap", "down", "swap", "up", "swap", "up"],
   "night-shift": ["swap", "up", "swap", "up", "swap", "down", "up", "swap", "up"],
   "mote-loop": ["swap", "up", "swap", "up", "swap", "down", "up", "swap", "up"],
-  "hour-return": ["swap", "up", "up", "swap", "down", "swap", "up", "swap", "up"],
+  "hour-return": ["swap", "up", "up", "swap", "down", "swap", "up", "swap", "up"],  "late-bell": ["swap", "up", "up", "swap", "down", "swap", "up", "swap", "up"],
+  "hollow-floor": ["swap", "up", "up", "swap", "down", "swap", "up", "swap", "up"],
+  "hour-debt": ["swap", "up", "up", "swap", "down", "swap", "up", "swap", "up"],
+  "twin-stone": ["swap", "up", "swap", "up", "swap", "down", "swap", "up", "swap", "up"],
+  "mote-ladder": ["swap", "up", "swap", "down", "up", "up", "up", "swap", "down", "up"],
+  "dust-rise": ["swap", "up", "swap", "up", "swap", "down", "swap", "up", "swap", "up"],
+  "quiet-ferry": ["swap", "up", "swap", "down", "up", "up", "swap", "down", "up", "swap", "up"],
+  "double-hour": ["swap", "up", "swap", "down", "up", "swap", "up", "up", "swap", "down", "up"],
+  "drift-back": ["swap", "up", "swap", "down", "up", "up", "swap", "down", "up", "swap", "up"],
+  "last-dream": ["swap", "up", "swap", "down", "up", "up", "swap", "down", "swap", "up", "swap", "up"],
 };
 
 function replay(id: string, acts: readonly Act[]): DreamState {
@@ -36,7 +45,8 @@ function replay(id: string, acts: readonly Act[]): DreamState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 400; seed += 1) {
+  for (let index = 0; index < PUZZLE_COUNT; index += 1) {
+    const seed = seedForPuzzle(index);
     if (createDream(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -87,8 +97,8 @@ describe("dream elevator", () => {
     expect(CAMERA_POSES).toHaveLength(4);
   });
 
-  it("ships ten stages and opens each one from its own seed", () => {
-    expect(PUZZLE_COUNT).toBe(10);
+  it("ships twenty stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(20);
     for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
   });
 
@@ -178,6 +188,8 @@ describe("dream elevator", () => {
       expect(mixSeed(seed)).toBe(mixSeed(seed));
       seen.add(dream.puzzleId);
     }
+    expect(seen).toEqual(new Set(Object.keys(SOLUTIONS).slice(0, 10)));
+    for (let i = 10; i < PUZZLE_COUNT; i += 1) seen.add(createDream(seedForPuzzle(i)).puzzleId);
     expect(seen).toEqual(new Set(Object.keys(SOLUTIONS)));
     expect(createDream(Number.NaN).puzzleId).toBe(createDream(0).puzzleId);
     expect(nextSeed(0)).toBe(nextSeed(0));

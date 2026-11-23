@@ -36,6 +36,16 @@ const SOLUTIONS: Record<string, readonly AxisBit[]> = {
   "night-side": [4, 1, 2, 4, 2],
   "split-core": [4, 1, 2, 4, 2],
   "full-orbit": [2, 4, 1, 4, 2],
+  "glass-dawn": [2, 1, 2, 4, 1],
+  "cold-pole": [4, 1, 2, 4, 1],
+  "prism-belt": [2, 1, 4, 2, 1],
+  "hollow-core": [2, 4, 1, 4, 2],
+  "frost-seam": [2, 4, 2, 1, 2, 4],
+  "shard-ring": [1, 4, 2, 4, 1, 4],
+  "mirror-sea": [1, 2, 1, 4, 1, 2],
+  "deep-facet": [2, 4, 2, 1, 2, 4],
+  "twin-pole": [4, 2, 1, 2, 4, 2],
+  "last-orbit": [1, 2, 4, 2, 1, 2, 4],
 };
 
 function nearly(a: readonly number[], b: readonly number[], slack = 1e-6) {
@@ -48,7 +58,8 @@ function replay(seed: number, bits: readonly AxisBit[]): PlanetState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 400; seed += 1) {
+  for (let index = 0; index < PUZZLE_COUNT; index += 1) {
+    const seed = seedForPuzzle(index);
     if (createGlassPlanet(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -135,11 +146,13 @@ describe("glass planet", () => {
     expect(createGlassPlanet(Number.NaN).puzzleId).toBe(createGlassPlanet(0).puzzleId);
     expect(nextSeed(3)).toBe(mixSeed(4));
     const ids = new Set(Array.from({ length: 200 }, (_, seed) => createGlassPlanet(seed).puzzleId));
+    expect(ids).toEqual(new Set(Object.keys(SOLUTIONS).slice(0, 10)));
+    for (let i = 10; i < PUZZLE_COUNT; i += 1) ids.add(createGlassPlanet(seedForPuzzle(i)).puzzleId);
     expect(ids).toEqual(new Set(Object.keys(SOLUTIONS)));
   });
 
-  it("ships ten stages and opens each one from its own seed", () => {
-    expect(PUZZLE_COUNT).toBe(10);
+  it("ships twenty stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(20);
     for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
   });
 

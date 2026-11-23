@@ -37,6 +37,16 @@ const SOLUTIONS: Record<string, readonly Act[]> = {
   "far-door": ["H", "E", "H", "H", "E", "E"],
   "patient-bust": ["H", "H", "W", "H", "H", "W", "W"],
   "last-round": ["H", "H", "E", "H", "H", "E", "E"],
+  "night-lens": ["H", "H", "W", "H", "W", "W"],
+  "dust-cover": ["H", "H", "W", "W", "W", "W"],
+  "bust-shadow": ["H", "H", "H", "E", "H", "E"],
+  "quiet-vault": ["H", "E", "H", "E", "H", "E", "E"],
+  "mirror-room": ["H", "H", "E", "H", "H", "E", "E"],
+  "late-guard": ["H", "H", "H", "E", "H", "H", "E"],
+  "blue-gallery": ["H", "W", "H", "H", "H", "W", "W"],
+  "rope-line": ["H", "H", "W", "H", "H", "H", "W", "W"],
+  "marble-step": ["H", "H", "H", "W", "H", "H", "H", "W"],
+  "dawn-close": ["H", "H", "E", "H", "H", "H", "E", "E"],
 };
 
 function replay(id: string, actions: readonly Act[]): NightState {
@@ -44,7 +54,8 @@ function replay(id: string, actions: readonly Act[]): NightState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 400; seed += 1) {
+  for (let index = 0; index < PUZZLE_COUNT; index += 1) {
+    const seed = seedForPuzzle(index);
     if (createNight(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -150,8 +161,8 @@ describe("museum night", () => {
     expect(gazeVector(lensAt(2), focusAt(2))[1]).toBeLessThan(-0.9);
   });
 
-  it("ships ten stages and opens each one from its own seed", () => {
-    expect(PUZZLE_COUNT).toBe(10);
+  it("ships twenty stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(20);
     for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
   });
 
@@ -233,6 +244,8 @@ describe("museum night", () => {
       expect(night.seats.filter((token) => token === 0)).toHaveLength(1);
       seen.add(night.puzzleId);
     }
+    expect(seen).toEqual(new Set(Object.keys(SOLUTIONS).slice(0, 10)));
+    for (let i = 10; i < PUZZLE_COUNT; i += 1) seen.add(createNight(seedForPuzzle(i)).puzzleId);
     expect(seen).toEqual(new Set(Object.keys(SOLUTIONS)));
     expect(createNight(Number.NaN).puzzleId).toBe(createNight(0).puzzleId);
     expect(nextSeed(0)).toBe(nextSeed(0));

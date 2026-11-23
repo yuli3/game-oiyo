@@ -38,6 +38,16 @@ const SOLUTIONS: Record<string, readonly Act[]> = {
   "stone-step": ["C", "C", "G", "L", "G", "G", "G"],
   "late-bloom": ["G", "G", "G", "L", "L", "L", "C"],
   "long-drift": ["C", "G", "G", "G", "L", "G", "G"],
+  "reed-bend": ["G", "L", "G", "L", "G", "G"],
+  "still-eddy": ["G", "G", "L", "L", "L", "G"],
+  "moth-crossing": ["G", "L", "G", "G", "G", "L"],
+  "lily-shift": ["C", "C", "G", "L", "G", "G", "G"],
+  "mud-flat": ["G", "L", "G", "L", "G", "G", "G"],
+  "thin-ice": ["G", "L", "G", "L", "L", "L", "G"],
+  "far-bank": ["G", "L", "G", "L", "G", "G", "G"],
+  "rain-ring": ["G", "G", "G", "L", "G", "G", "G", "L"],
+  "slow-bloom": ["C", "C", "C", "G", "L", "G", "G", "G"],
+  "night-pond": ["C", "G", "G", "G", "L", "G", "G", "G"],
 };
 
 function replay(id: string, actions: readonly Act[]): PondState {
@@ -45,7 +55,8 @@ function replay(id: string, actions: readonly Act[]): PondState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 400; seed += 1) {
+  for (let index = 0; index < PUZZLE_COUNT; index += 1) {
+    const seed = seedForPuzzle(index);
     if (createPond(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -150,8 +161,8 @@ describe("ink ecology", () => {
     expect(tip.distanceTo(focus)).toBeLessThan(base.distanceTo(focus));
   });
 
-  it("ships ten stages and opens each one from its own seed", () => {
-    expect(PUZZLE_COUNT).toBe(10);
+  it("ships twenty stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(20);
     for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
   });
 
@@ -244,6 +255,8 @@ describe("ink ecology", () => {
       expect(pond.goal).toHaveLength(POND);
       seen.add(pond.puzzleId);
     }
+    expect(seen).toEqual(new Set(Object.keys(SOLUTIONS).slice(0, 10)));
+    for (let i = 10; i < PUZZLE_COUNT; i += 1) seen.add(createPond(seedForPuzzle(i)).puzzleId);
     expect(seen).toEqual(new Set(Object.keys(SOLUTIONS)));
     expect(createPond(Number.NaN).puzzleId).toBe(createPond(0).puzzleId);
     expect(nextSeed(0)).toBe(nextSeed(0));

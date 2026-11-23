@@ -34,6 +34,16 @@ const SOLUTIONS: Record<string, readonly Dir[]> = {
   anchor: ["right", "right", "down", "left", "down", "left", "down"],
   "deep-well": ["up", "left", "up", "left", "left", "down", "down", "right"],
   midnight: ["right", "right", "up", "left", "up", "left", "up", "right"],
+  "shepherd-moon": ["left", "down", "right", "right", "down", "left"],
+  "wool-cloud": ["down", "left", "down", "right", "down", "right"],
+  "bell-star": ["left", "left", "down", "right", "down", "left"],
+  "quiet-fold": ["down", "left", "up", "left", "down", "left", "down"],
+  "river-crossing": ["left", "up", "right", "up", "left", "up", "left"],
+  "north-pen": ["right", "left", "up", "right", "right", "up", "left"],
+  "comet-gate": ["up", "right", "right", "down", "left", "down", "left"],
+  "dawn-flock": ["down", "right", "right", "up", "left", "up", "left", "up"],
+  "twin-lantern": ["down", "right", "up", "up", "right", "right", "down", "left"],
+  "high-pasture": ["down", "down", "right", "right", "up", "left", "up", "right"],
 };
 
 function replay(id: string, dirs: readonly Dir[]): SkyState {
@@ -42,7 +52,8 @@ function replay(id: string, dirs: readonly Dir[]): SkyState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 400; seed += 1) {
+  for (let index = 0; index < PUZZLE_COUNT; index += 1) {
+    const seed = seedForPuzzle(index);
     if (createConstellation(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -120,8 +131,8 @@ describe("constellation shepherd", () => {
     expect(ropesCross(ropeBetween(0, 2), ropeBetween(0, 6))).toBe(false);
   });
 
-  it("ships ten stages and opens each one from its own seed", () => {
-    expect(PUZZLE_COUNT).toBe(10);
+  it("ships twenty stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(20);
     for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
   });
 
@@ -210,6 +221,8 @@ describe("constellation shepherd", () => {
       expect(mixSeed(seed)).toBe(mixSeed(seed));
       seen.add(sky.puzzleId);
     }
+    expect(seen).toEqual(new Set(Object.keys(SOLUTIONS).slice(0, 10)));
+    for (let i = 10; i < PUZZLE_COUNT; i += 1) seen.add(createConstellation(seedForPuzzle(i)).puzzleId);
     expect(seen).toEqual(new Set(Object.keys(SOLUTIONS)));
     expect(createConstellation(Number.NaN).puzzleId).toBe(createConstellation(0).puzzleId);
     expect(nextSeed(0)).toBe(nextSeed(0));

@@ -23,7 +23,6 @@ import {
   STEP_CAP,
   beatVisitors,
   createNight,
-  nextSeed,
   playerAt,
   resign,
   stepNight,
@@ -886,7 +885,7 @@ export default function MuseumNight({ locale = "en" }: { locale?: Locale }) {
           className={controlClass("quiet")}
           onClick={() => {
             arm();
-            load(nextSeed(seed));
+            load(seedForPuzzle(puzzleIndexForSeed(seed) + 1));
           }}
         >
           {copy.next}

@@ -23,7 +23,6 @@ import {
   STEP_CAP,
   createReverseDungeon,
   forwardDir,
-  nextSeed,
   resign,
   rotateSlice,
   stepAdventurer,
@@ -791,7 +790,7 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
               className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow-sm hover:bg-primary/90 transition-colors"
               onClick={() => {
                 arm();
-                load(nextSeed(seed));
+                load(seedForPuzzle(puzzleIndexForSeed(seed) + 1));
               }}
             >
               {copy.next}
@@ -887,7 +886,7 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
           className={controlClass("quiet")}
           onClick={() => {
             arm();
-            load(nextSeed(seed));
+            load(seedForPuzzle(puzzleIndexForSeed(seed) + 1));
           }}
         >
           {copy.next}

@@ -28,7 +28,6 @@ import {
   STONE,
   colOf,
   createLine,
-  nextSeed,
   rejectReason,
   resign,
   stepLine,
@@ -907,7 +906,7 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
               className="flex-1 py-3 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:bg-primary/90 transition-colors"
               onClick={() => {
                 arm();
-                load(nextSeed(seed));
+                load(seedForPuzzle(puzzleIndexForSeed(seed) + 1));
               }}
             >
               {copy.next}
@@ -1028,7 +1027,7 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
           className={controlClass("quiet")}
           onClick={() => {
             arm();
-            load(nextSeed(seed));
+            load(seedForPuzzle(puzzleIndexForSeed(seed) + 1));
           }}
         >
           {copy.next}

@@ -35,6 +35,16 @@ const SOLUTIONS: Record<string, readonly Action[]> = {
   overspeed: ["power+", "pitch-", "land"],
   icing: ["bank+", "power+", "pitch-", "land"],
   "last-light": ["bank-", "power+", "pitch-", "land"],
+  "tail-wind": ["bank+", "power+", "land"],
+  "fog-bank": ["pitch+", "power-", "land"],
+  "low-pass": ["bank-", "pitch+", "land"],
+  "side-slip": ["bank+", "pitch+", "power-", "land"],
+  "rough-air": ["bank+", "pitch-", "power+", "land"],
+  "dusk-glide": ["bank+", "power+", "pitch-", "land"],
+  "crab-landing": ["bank-", "power+", "pitch-", "land"],
+  "wind-shear": ["bank+", "pitch+", "power-", "land"],
+  "dead-stick": ["bank+", "pitch-", "power+", "land"],
+  "home-runway": ["bank+", "pitch-", "power-", "land"],
 };
 
 function replay(id: string, actions: readonly Action[]): PilotState {
@@ -42,7 +52,8 @@ function replay(id: string, actions: readonly Action[]): PilotState {
 }
 
 function seedFor(id: string): number {
-  for (let seed = 0; seed < 400; seed += 1) {
+  for (let index = 0; index < PUZZLE_COUNT; index += 1) {
+    const seed = seedForPuzzle(index);
     if (createPilot(seed).puzzleId === id) return seed;
   }
   throw new Error(`no seed for ${id}`);
@@ -199,8 +210,8 @@ describe("blind pilot", () => {
     expect(resign(won)).toBe(won);
   });
 
-  it("ships ten stages and opens each one from its own seed", () => {
-    expect(PUZZLE_COUNT).toBe(10);
+  it("ships twenty stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(20);
     for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
   });
 
@@ -212,6 +223,8 @@ describe("blind pilot", () => {
       expect(mixSeed(seed)).toBe(mixSeed(seed));
       seen.add(flight.puzzleId);
     }
+    expect(seen).toEqual(new Set(Object.keys(SOLUTIONS).slice(0, 10)));
+    for (let i = 10; i < PUZZLE_COUNT; i += 1) seen.add(createPilot(seedForPuzzle(i)).puzzleId);
     expect(seen).toEqual(new Set(Object.keys(SOLUTIONS)));
     expect(createPilot(Number.NaN).puzzleId).toBe(createPilot(0).puzzleId);
     expect(nextSeed(0)).toBe(nextSeed(0));

@@ -25,7 +25,6 @@ import {
   STEP_CAP,
   createConstellation,
   lineStar,
-  nextSeed,
   openDirs,
   resign,
   stepDir,
@@ -809,7 +808,7 @@ export default function ConstellationShepherd({ locale = "en" }: { locale?: Loca
           className={controlClass("quiet")}
           onClick={() => {
             arm();
-            load(nextSeed(seed));
+            load(seedForPuzzle(puzzleIndexForSeed(seed) + 1));
           }}
         >
           {copy.next}
