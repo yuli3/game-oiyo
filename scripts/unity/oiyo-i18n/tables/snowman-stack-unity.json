@@ -1,0 +1,226 @@
+{
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Game over": [
+"게임 오버",
+"ゲームオーバー",
+"Fin del juego",
+"游戏结束",
+"Partie terminée"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Score": [
+"점수",
+"スコア",
+"Puntos",
+"得分",
+"Score"
+],
+"Stage clear!": [
+"스테이지 클리어!",
+"ステージクリア！",
+"¡Etapa superada!",
+"过关！",
+"Niveau réussi !"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Time": [
+"시간",
+"時間",
+"Tiempo",
+"时间",
+"Temps"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+],
+"Time is up!": [
+"시간이 다 됐어요!",
+"時間切れ！",
+"¡Se acabó el tiempo!",
+"时间到！",
+"Temps écoulé !"
+],
+"Snowman Stack 3D": [
+"눈사람 쌓기 3D",
+"雪だるまスタック3D",
+"Apila el Muñeco de Nieve 3D",
+"堆雪人 3D",
+"Pile de bonhomme de neige 3D"
+],
+"Drop snowballs from a swinging trolley and build a snowman that stands.": [
+"흔들리는 수레에서 눈덩이를 떨어뜨려 쓰러지지 않는 눈사람을 쌓아요.",
+"揺れるトロッコから雪玉を落として、倒れない雪だるまを作ろう。",
+"Suelta bolas de nieve desde un carro que se balancea y construye un muñeco que se tenga en pie.",
+"从摇摆的小车上投下雪球，堆出一个站得稳的雪人。",
+"Lâchez des boules de neige depuis un chariot qui oscille et bâtissez un bonhomme qui tient debout."
+],
+"Tap to drop the snowball from the trolley": [
+"탭하면 수레에서 눈덩이가 떨어져요",
+"タップでトロッコから雪玉を落とす",
+"Toca para soltar la bola del carro",
+"点按让小车投下雪球",
+"Touchez pour lâcher la boule du chariot"
+],
+"Centre each piece on the one below. The snowman must stand still at the end.": [
+"아래 조각 한가운데에 올려요. 마지막에 눈사람이 가만히 서 있어야 해요.",
+"下の玉の真ん中に乗せよう。最後に雪だるまが静かに立っていればクリア。",
+"Centra cada pieza sobre la de abajo. Al final el muñeco debe quedarse quieto.",
+"每块都对准下面那块的中心。最后雪人要稳稳站住。",
+"Centrez chaque pièce sur celle du dessous. À la fin, le bonhomme doit rester immobile."
+],
+"A snowball missed the snowman.": [
+"눈덩이가 눈사람을 비켜 갔어요.",
+"雪玉が雪だるまから外れました。",
+"Una bola no cayó sobre el muñeco.",
+"雪球没落在雪人上。",
+"Une boule a manqué le bonhomme."
+],
+"The snowman tipped over!": [
+"눈사람이 넘어졌어요!",
+"雪だるまが倒れた！",
+"¡El muñeco se cayó!",
+"雪人倒了！",
+"Le bonhomme est tombé !"
+],
+"Perfect!": [
+"완벽해요!",
+"パーフェクト！",
+"¡Perfecto!",
+"完美！",
+"Parfait !"
+],
+"Pieces left": [
+"남은 조각",
+"残り",
+"Quedan",
+"剩余",
+"Restantes"
+],
+"Height": [
+"높이",
+"高さ",
+"Altura",
+"高度",
+"Hauteur"
+],
+"Wind": [
+"바람",
+"風",
+"Viento",
+"风",
+"Vent"
+],
+"Wobble": [
+"흔들림",
+"ぐらつき",
+"Bamboleo",
+"晃动",
+"Oscillation"
+],
+"Snowy field": [
+"눈 덮인 들판",
+"雪の野原",
+"Campo nevado",
+"雪原",
+"Champ enneigé"
+],
+"Tree stump": [
+"나무 그루터기",
+"切り株",
+"Tocón",
+"树桩",
+"Souche"
+],
+"Frozen pond": [
+"얼어붙은 연못",
+"凍った池",
+"Estanque helado",
+"冰冻池塘",
+"Étang gelé"
+]
+}

@@ -58,6 +58,11 @@ BUILDS = {
     "neon-katana-unity": ("neon-katana", "NeonKatana/Runtime/NeonKatanaPlayer.cs", T, "state, score"),
     "shadow-dodge-unity": ("shadow-dodge", "ShadowDodge/Runtime/ShadowDodgePlayer.cs", T, "state, score"),
     "whack-a-mole-unity": ("whack-a-mole", "WhackAMole/Runtime/WhackAMolePlayer.cs", T, "state, score"),
+    "finger-hockey-unity": ("finger-hockey", "FingerHockey/Runtime/FingerHockeyPlayer.cs", T, "state, score"),
+    "spin-sumo-unity": ("spin-sumo", "SpinSumo/Runtime/SpinSumoPlayer.cs", T, "state, score"),
+    "snowman-stack-unity": ("snowman-stack", "SnowmanStack/Runtime/SnowmanStackPlayer.cs", T, "state, score"),
+    "line-surf-unity": ("line-surf", "LineSurf/Runtime/LineSurfPlayer.cs", T, "state, score"),
+    "dot-runner-unity": ("dot-runner", "DotRunner/Runtime/DotRunnerPlayer.cs", T, "state, score"),
 }
 
 MARK = "OiyoResult."
