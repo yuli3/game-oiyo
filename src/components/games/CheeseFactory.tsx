@@ -24,12 +24,15 @@ import { GameStatTile } from '../ui/game/GameStatTile';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
+import { cheeseCopy, type CheeseCopy } from './cheese-factory-copy';
 
 function TiltCheeseVarietyButton({
   vKey,
   canAfford,
   onSpawn,
+  t,
 }: {
+  t: CheeseCopy;
   vKey: CheeseVariety;
   canAfford: boolean;
   onSpawn: (key: CheeseVariety) => void;
@@ -51,7 +54,7 @@ function TiltCheeseVarietyButton({
       style={{ '--card-tilt': transformCss } as React.CSSProperties}
       className="will-change-transform transform-(--card-tilt) flex flex-col items-center justify-center h-auto"
     >
-      <span className="font-medium">{def.name.split(' ')[0]}</span>
+      <span className="font-medium">{t.varieties[vKey]}</span>
       <span className="text-muted-foreground text-xs">
         {def.baseMilkCost}L • ${def.basePrice}
       </span>
@@ -59,7 +62,10 @@ function TiltCheeseVarietyButton({
   );
 }
 
-export default function CheeseFactory() {
+export default function CheeseFactory({ locale = 'en' }: { locale?: string }) {
+  const t = cheeseCopy(locale);
+  const stationNamesRef = useRef(t.stations);
+  stationNamesRef.current = t.stations;
   const [gameState, setGameState] = useState<CheeseFactoryGameState>(() =>
     createCheeseFactoryGame(300)
   );
@@ -205,7 +211,7 @@ export default function CheeseFactory() {
         ctx.fillStyle = '#e2e8f0';
         ctx.font = 'bold 10px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText(station.name.split(' ')[0], sx + sw / 2, sy - 7);
+        ctx.fillText(stationNamesRef.current[station.id] ?? station.name.split(' ')[0], sx + sw / 2, sy - 7);
 
         // Station level badge
         ctx.fillStyle = '#fcd34d';
@@ -287,7 +293,7 @@ export default function CheeseFactory() {
 
   const handleShareReport = () => {
     MobileHapticsPro.success();
-    const text = `🧀 [Cheese Factory Tycoon Report]\n• Revenue: $${gameState.totalRevenueEarned} (${gameState.totalCheesesShipped} wheels shipped)\n• Cash: $${gameState.cash}\n• Active Vat Entities: ${activeCheeses}\n• Cellar Temp: ${gameState.cellarTemp.toFixed(1)}°C\nPlay on game.oiyo.net!`;
+    const text = t.report({ revenue: gameState.totalRevenueEarned, wheels: gameState.totalCheesesShipped, cash: gameState.cash, active: activeCheeses, temp: gameState.cellarTemp.toFixed(1) });
     shareText(text);
   };
 
@@ -298,14 +304,14 @@ export default function CheeseFactory() {
         <div className="flex items-center gap-3">
           <img src={CHEESE_FACTORY_SPRITES.wheel} alt="" className="size-10 object-contain drop-shadow-sm" />
           <div>
-            <h2 className="text-sm font-bold text-foreground">Artisan Alpine Cheese Factory</h2>
-            <p className="text-xs text-muted-foreground">ECS Coagulation Vats & Autonomous Boid AGV Logistics</p>
+            <h2 className="text-sm font-bold text-foreground">{t.title}</h2>
+            <p className="text-xs text-muted-foreground">{t.subtitle}</p>
           </div>
         </div>
         {gameState.totalCheesesShipped >= 5 && (
           <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1 border border-primary/30">
             <img src={CHEESE_FACTORY_SPRITES.trophy} alt="" className="size-6 object-contain animate-bounce" />
-            <span className="text-xs font-bold text-primary">Master Fromager</span>
+            <span className="text-xs font-bold text-primary">{t.master}</span>
           </div>
         )}
       </div>
@@ -314,24 +320,24 @@ export default function CheeseFactory() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <GameStatTile
           icon="💰"
-          label="Treasury Cash"
+          label={t.cash}
           value={`$${gameState.cash}`}
           highlight={gameState.cash > 500}
         />
         <GameStatTile
           icon="🥛"
-          label="Raw Alpine Milk"
+          label={t.milk}
           value={`${Math.floor(gameState.milkInventory)}L`}
           highlight={gameState.milkInventory < 30}
         />
         <GameStatTile
           icon="🧀"
-          label="Shipped Cheeses"
+          label={t.shipped}
           value={`${gameState.totalCheesesShipped}`}
         />
         <GameStatTile
           icon="🌡️"
-          label="Cellar Temp"
+          label={t.cellarTemp}
           value={`${gameState.cellarTemp.toFixed(1)}°C`}
         />
       </div>
@@ -347,10 +353,10 @@ export default function CheeseFactory() {
           />
           <div className="absolute top-2 left-2 flex gap-1 items-center bg-background/80 backdrop-blur-sm rounded p-1">
             <Badge variant="outline">
-              AGV Fleet: {gameState.bots.length} Boids
+              {t.fleet(gameState.bots.length)}
             </Badge>
             <Badge variant="outline">
-              ECS Entities: {activeCheeses}
+              {t.inVats(activeCheeses)}
             </Badge>
           </div>
         </div>
@@ -363,10 +369,10 @@ export default function CheeseFactory() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <div>
                 <h2 className="text-base font-semibold text-foreground">
-                  Artisan Cheese Production Vats
+                  {t.vatsTitle}
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Allocate raw milk to start coagulation and aging pipelines.
+                  {t.vatsHint}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -375,7 +381,7 @@ export default function CheeseFactory() {
                   size="sm"
                   onClick={handleShareReport}
                 >
-                  {copied ? 'Copied Report!' : 'Share Factory Stats'}
+                  {copied ? t.copied : t.share}
                 </Button>
               </div>
             </div>
@@ -390,6 +396,7 @@ export default function CheeseFactory() {
                     vKey={vKey}
                     canAfford={canAfford}
                     onSpawn={handleSpawnBatch}
+                    t={t}
                   />
                 );
               })}
@@ -402,10 +409,10 @@ export default function CheeseFactory() {
               {/* Cellar Climate Control */}
               <div className="flex flex-col gap-2 p-3 rounded-lg bg-muted/40 border border-border">
                 <span className="text-xs font-medium text-foreground">
-                  Cellar Climate Regulation
+                  {t.climateTitle}
                 </span>
                 <p className="text-xs text-muted-foreground">
-                  Fine-tune cellar ambient temperature to maximize curing speed for target variety.
+                  {t.climateHint}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <Button
@@ -413,7 +420,7 @@ export default function CheeseFactory() {
                     size="sm"
                     onClick={() => handleAdjustTemp(-1)}
                   >
-                    -1°C Cooler
+                    {t.cooler}
                   </Button>
                   <span className="font-mono text-sm px-2 text-foreground">
                     {gameState.targetCellarTemp}°C
@@ -423,7 +430,7 @@ export default function CheeseFactory() {
                     size="sm"
                     onClick={() => handleAdjustTemp(1)}
                   >
-                    +1°C Warmer
+                    {t.warmer}
                   </Button>
                 </div>
               </div>
@@ -431,7 +438,7 @@ export default function CheeseFactory() {
               {/* Industrial Automation Upgrades */}
               <div className="flex flex-col gap-2 p-3 rounded-lg bg-muted/40 border border-border">
                 <span className="text-xs font-medium text-foreground">
-                  Automation & Expansion Upgrades
+                  {t.upgradesTitle}
                 </span>
                 <div className="flex flex-col gap-1.5">
                   {gameState.upgrades.map((u) => {
@@ -441,10 +448,10 @@ export default function CheeseFactory() {
                         key={u.id}
                         className="flex items-center justify-between gap-2 text-xs"
                       >
-                        <span className="truncate text-muted-foreground">{u.name}</span>
+                        <span className="truncate text-muted-foreground">{t.upgrades[u.id] ?? u.name}</span>
                         {u.purchased ? (
                           <Badge variant="secondary">
-                            Installed
+                            {t.installed}
                           </Badge>
                         ) : (
                           <Button
