@@ -1,0 +1,317 @@
+{
+"+25 HEALTH": [
+"체력 +25",
+"体力 +25",
+"+25 SALUD",
+"生命 +25",
+"+25 SANTÉ"
+],
+"ASSAULT BUGGY": [
+"돌격 버기",
+"突撃バギー",
+"BUGGY DE ASALTO",
+"突击越野车",
+"BUGGY D'ASSAUT"
+],
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Ashen Front": [
+"애셴 전선",
+"灰の戦線",
+"Frente de Ceniza",
+"灰烬前线",
+"Front cendré"
+],
+"BOMB": [
+"폭탄",
+"ボム",
+"BOMBA",
+"炸弹",
+"BOMBE"
+],
+"BOMBS": [
+"폭탄",
+"爆弾",
+"BOMBAS",
+"炸弹",
+"BOMBES"
+],
+"BUGGY": [
+"버기",
+"バギー",
+"BUGGY",
+"越野车",
+"BUGGY"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"EXIT": [
+"내리기",
+"降りる",
+"BAJAR",
+"下车",
+"DESCENDRE"
+],
+"Ember Works": [
+"잿불 공장",
+"残り火工廠",
+"Fundición Ascua",
+"余烬工厂",
+"Forges ardentes"
+],
+"FIRE": [
+"사격",
+"射撃",
+"FUEGO",
+"射击",
+"TIR"
+],
+"Frost Pass": [
+"서리 고개",
+"霜の峠",
+"Paso Helado",
+"冰霜山口",
+"Col du givre"
+],
+"GO!": [
+"전진!",
+"進め！",
+"¡ADELANTE!",
+"前进！",
+"EN AVANT !"
+],
+"HEAVY MACHINE GUN!": [
+"헤비 머신건!",
+"ヘビーマシンガン！",
+"¡AMETRALLADORA PESADA!",
+"重机枪！",
+"MITRAILLEUSE LOURDE !"
+],
+"HEAVY MG": [
+"헤비 머신건",
+"ヘビーMG",
+"AMETR. PESADA",
+"重机枪",
+"MITRAILLEUSE"
+],
+"Iron Tempest 3D": [
+"아이언 템페스트 3D",
+"アイアン・テンペスト 3D",
+"Iron Tempest 3D",
+"钢铁风暴 3D",
+"Iron Tempest 3D"
+],
+"JUMP": [
+"점프",
+"ジャンプ",
+"SALTAR",
+"跳",
+"SAUT"
+],
+"Kills": [
+"처치",
+"撃破",
+"Bajas",
+"击杀",
+"Victimes"
+],
+"MISSION COMPLETE": [
+"작전 완료",
+"作戦完了",
+"MISIÓN CUMPLIDA",
+"任务完成",
+"MISSION ACCOMPLIE"
+],
+"Mission {0}": [
+"임무 {0}",
+"任務{0}",
+"Misión {0}",
+"任务 {0}",
+"Mission {0}"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Night Rail": [
+"야간 철로",
+"夜の鉄路",
+"Vía Nocturna",
+"夜间铁路",
+"Rail de nuit"
+],
+"Pads to run and crouch, FIRE to shoot, JUMP, BOMB to throw. Keys: A/D, W/Space, S, J fire, K bomb, E buggy.": [
+"패드로 달리고 숙여요. 사격·점프·폭탄 버튼을 써요. 키: A/D, W/Space, S, J 사격, K 폭탄, E 버기.",
+"パッドで走る・伏せる。射撃・ジャンプ・爆弾ボタン。キー: A/D、W/Space、S、J 射撃、K 爆弾、E バギー。",
+"Botones para correr y agacharte, FUEGO, SALTO y BOMBA. Teclas: A/D, W/Espacio, S, J fuego, K bomba, E buggy.",
+"用方向键奔跑和下蹲，射击、跳跃、扔炸弹。按键：A/D，W/空格，S，J 射击，K 炸弹，E 越野车。",
+"Pavés pour courir et s'accroupir, TIR, SAUT, BOMBE. Touches : A/D, W/Espace, S, J tir, K bombe, E buggy."
+],
+"Par {0}": [
+"기준 {0}",
+"目標 {0}",
+"Par {0}",
+"标准 {0}",
+"Par {0}"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Pine Ridge": [
+"소나무 능선",
+"松の尾根",
+"Cresta de Pinos",
+"松林山脊",
+"Crête des pins"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Push through the front and wreck the War Train": [
+"전선을 뚫고 전쟁열차를 부숴요",
+"戦線を突破し戦闘列車を破壊せよ",
+"Atraviesa el frente y destruye el Tren de Guerra",
+"突破前线，摧毁战争列车",
+"Percez le front et détruisez le Train de guerre"
+],
+"RIFLE": [
+"소총",
+"ライフル",
+"FUSIL",
+"步枪",
+"FUSIL"
+],
+"ROCKET LAUNCHER!": [
+"로켓 런처!",
+"ロケットランチャー！",
+"¡LANZACOHETES!",
+"火箭筒！",
+"LANCE-ROQUETTES !"
+],
+"ROCKETS": [
+"로켓",
+"ロケット",
+"COHETES",
+"火箭",
+"ROQUETTES"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Rejouer"
+],
+"Ruined City": [
+"폐허 도시",
+"廃墟の街",
+"Ciudad en Ruinas",
+"废墟之城",
+"Ville en ruine"
+],
+"Run, jump and blast through 30 fronts. Grab heavy weapons, crack the bunkers and bring down the War Train.": [
+"30개 전선을 달리고 뛰며 돌파해요. 중화기를 얻고 벙커를 부수고 전쟁열차를 쓰러뜨려요.",
+"30の戦線を走り、跳び、撃ち抜け。重火器を拾い、陣地を砕き、戦闘列車を倒そう。",
+"Corre, salta y arrasa 30 frentes. Toma armas pesadas, revienta búnkeres y derriba el Tren de Guerra.",
+"奔跑、跳跃、轰穿 30 条前线。夺取重武器，炸开碉堡，击垮战争列车。",
+"Courez, sautez et dévastez 30 fronts. Saisissez les armes lourdes, brisez les bunkers et abattez le Train de guerre."
+],
+"SOLDIER DOWN": [
+"전투 불능",
+"戦闘不能",
+"SOLDADO CAÍDO",
+"士兵倒下",
+"SOLDAT À TERRE"
+],
+"Score": [
+"점수",
+"スコア",
+"Puntos",
+"得分",
+"Score"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"The front held this time.": [
+"이번에는 전선을 뚫지 못했어요.",
+"今回は戦線を破れませんでした。",
+"Esta vez el frente resistió.",
+"这次前线没能突破。",
+"Le front a tenu cette fois."
+],
+"Time": [
+"시간",
+"時間",
+"Tiempo",
+"时间",
+"Temps"
+],
+"WAR TRAIN": [
+"전쟁열차",
+"戦闘列車",
+"TREN DE GUERRA",
+"战争列车",
+"TRAIN DE GUERRE"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+]
+}
