@@ -144,7 +144,7 @@ public class BeatSlicePlayer : MonoBehaviour
     {
         new TrackData {
             id = 1,
-            nameKo = "네온 제네시스", nameEn = "Neon Genesis", nameJa = "ネオン・ジェネシス", nameEs = "Génesis de Neón",
+            nameKo = "네온 프렐류드", nameEn = "Neon Prelude", nameJa = "ネオン・プレリュード", nameEs = "Preludio de Neón",
             descKo = "완만한 하우스 템포에서 양손 레이저 세이버의 기본 슬라이스를 익히세요.",
             descEn = "Master basic dual-saber slicing to a steady house groove.",
             descJa = "穏やかなハウステンポで両手セーバーの基本スライスを習得しましょう。",

@@ -90,7 +90,8 @@ public class PeglinRoguePlayer : MonoBehaviour
     private int playerHp = 100;
     private int maxPlayerHp = 100;
     private int playerShield = 0;
-    private int currentStageIdx = 0; // 0 to 11 (12 stages)
+    private Vector2 stageSelectScroll;
+    private int currentStageIdx = 0; // 0 to 29 (30 stages)
 
     private int enemyHp;
     private int enemyMaxHp;
@@ -139,7 +140,7 @@ public class PeglinRoguePlayer : MonoBehaviour
     private AudioClip sndVictory;
     private AudioClip[] sndPegChimes;
 
-    // 12 Mandatory Stages (User Rule: At least 10 stages)
+    // 30 Stages
     private StageDef[] stages = new StageDef[]
     {
         new StageDef { stageNum = 1, name = "Jelly Slime", titleKo = "숲의 젤리 슬라임", maxHp = 120, attack = 8, shield = 0, turnsToAttack = 3, bossColor = new Color(0.2f, 0.85f, 0.3f), isBoss = false },
@@ -153,7 +154,26 @@ public class PeglinRoguePlayer : MonoBehaviour
         new StageDef { stageNum = 9, name = "Rune Guardian Golem", titleKo = "고대 룬 수호 골렘", maxHp = 1550, attack = 55, shield = 250, turnsToAttack = 3, bossColor = new Color(0.15f, 0.75f, 0.85f), isBoss = false },
         new StageDef { stageNum = 10, name = "Crimson Wyrm [FINAL BOSS]", titleKo = "진홍빛 화룡 드래곤 [최종보스]", maxHp = 2300, attack = 75, shield = 200, turnsToAttack = 2, bossColor = new Color(0.9f, 0.15f, 0.15f), isBoss = true },
         new StageDef { stageNum = 11, name = "Void Behemoth [SECRET]", titleKo = "심연의 공허 베히모스 [시크릿]", maxHp = 3400, attack = 95, shield = 350, turnsToAttack = 2, bossColor = new Color(0.2f, 0.05f, 0.35f), isBoss = true },
-        new StageDef { stageNum = 12, name = "Celestial Arbiter [MASTER]", titleKo = "천상의 중재자 대심판 [마스터]", maxHp = 5200, attack = 125, shield = 500, turnsToAttack = 2, bossColor = new Color(0.95f, 0.85f, 0.3f), isBoss = true }
+        new StageDef { stageNum = 12, name = "Celestial Arbiter [MASTER]", titleKo = "천상의 중재자 대심판 [마스터]", maxHp = 5200, attack = 125, shield = 500, turnsToAttack = 2, bossColor = new Color(0.95f, 0.85f, 0.3f), isBoss = true },
+        // 13-30: three shots before a lethal strike; needed damage per shot rises from 2,900 to 4,515 (bosses +8%)
+        new StageDef { stageNum = 13, name = "Frost Revenant", titleKo = "서리 망령", maxHp = 7850, attack = 130, shield = 850, turnsToAttack = 3, bossColor = new Color(0.6f, 0.85f, 1f), isBoss = false },
+        new StageDef { stageNum = 14, name = "Bramble Hydra", titleKo = "가시덤불 히드라", maxHp = 8100, attack = 135, shield = 900, turnsToAttack = 3, bossColor = new Color(0.35f, 0.55f, 0.2f), isBoss = false },
+        new StageDef { stageNum = 15, name = "Iron Colossus [BOSS]", titleKo = "강철 거신 [보스]", maxHp = 9000, attack = 140, shield = 1000, turnsToAttack = 3, bossColor = new Color(0.55f, 0.6f, 0.65f), isBoss = true },
+        new StageDef { stageNum = 16, name = "Storm Harpy", titleKo = "폭풍 하피", maxHp = 8600, attack = 145, shield = 950, turnsToAttack = 3, bossColor = new Color(0.45f, 0.5f, 0.85f), isBoss = false },
+        new StageDef { stageNum = 17, name = "Mire Witch", titleKo = "늪지 마녀", maxHp = 8850, attack = 150, shield = 1000, turnsToAttack = 3, bossColor = new Color(0.4f, 0.5f, 0.3f), isBoss = false },
+        new StageDef { stageNum = 18, name = "Bone Drake", titleKo = "뼈 비룡", maxHp = 9100, attack = 155, shield = 1000, turnsToAttack = 3, bossColor = new Color(0.9f, 0.88f, 0.8f), isBoss = false },
+        new StageDef { stageNum = 19, name = "Ember Djinn", titleKo = "불씨 정령", maxHp = 9350, attack = 160, shield = 1050, turnsToAttack = 3, bossColor = new Color(1f, 0.5f, 0.15f), isBoss = false },
+        new StageDef { stageNum = 20, name = "Abyssal Kraken [BOSS]", titleKo = "심해 크라켄 [보스]", maxHp = 10400, attack = 165, shield = 1150, turnsToAttack = 3, bossColor = new Color(0.15f, 0.3f, 0.55f), isBoss = true },
+        new StageDef { stageNum = 21, name = "Crystal Basilisk", titleKo = "수정 바실리스크", maxHp = 9900, attack = 170, shield = 1100, turnsToAttack = 3, bossColor = new Color(0.55f, 0.9f, 0.85f), isBoss = false },
+        new StageDef { stageNum = 22, name = "Plague Monarch", titleKo = "역병 군주", maxHp = 10100, attack = 175, shield = 1150, turnsToAttack = 3, bossColor = new Color(0.5f, 0.6f, 0.15f), isBoss = false },
+        new StageDef { stageNum = 23, name = "Thunder Roc", titleKo = "천둥 거조", maxHp = 10400, attack = 180, shield = 1150, turnsToAttack = 3, bossColor = new Color(0.95f, 0.9f, 0.35f), isBoss = false },
+        new StageDef { stageNum = 24, name = "Clockwork Titan", titleKo = "태엽 거인", maxHp = 10650, attack = 185, shield = 1200, turnsToAttack = 3, bossColor = new Color(0.8f, 0.6f, 0.3f), isBoss = false },
+        new StageDef { stageNum = 25, name = "Eclipse Chimera [BOSS]", titleKo = "일식 키메라 [보스]", maxHp = 11800, attack = 190, shield = 1300, turnsToAttack = 3, bossColor = new Color(0.3f, 0.15f, 0.25f), isBoss = true },
+        new StageDef { stageNum = 26, name = "Sand Leviathan", titleKo = "모래 리바이어던", maxHp = 11150, attack = 195, shield = 1250, turnsToAttack = 3, bossColor = new Color(0.85f, 0.7f, 0.45f), isBoss = false },
+        new StageDef { stageNum = 27, name = "Starfall Sentinel", titleKo = "유성 파수꾼", maxHp = 11450, attack = 200, shield = 1250, turnsToAttack = 3, bossColor = new Color(0.65f, 0.55f, 1f), isBoss = false },
+        new StageDef { stageNum = 28, name = "Obsidian Lich", titleKo = "흑요석 리치", maxHp = 11700, attack = 205, shield = 1300, turnsToAttack = 3, bossColor = new Color(0.2f, 0.15f, 0.3f), isBoss = false },
+        new StageDef { stageNum = 29, name = "Dawnbreaker Seraph", titleKo = "새벽을 가르는 세라프", maxHp = 11900, attack = 210, shield = 1350, turnsToAttack = 3, bossColor = new Color(1f, 0.8f, 0.6f), isBoss = false },
+        new StageDef { stageNum = 30, name = "Primordial Orb Sovereign [GRAND FINALE]", titleKo = "태초의 구슬 군주 [그랜드 피날레]", maxHp = 13200, attack = 215, shield = 1450, turnsToAttack = 3, bossColor = new Color(1f, 0.95f, 0.6f), isBoss = true }
     };
 
     void Awake()
@@ -835,7 +855,7 @@ public class PeglinRoguePlayer : MonoBehaviour
 
         if (currentStageIdx >= stages.Length - 1)
         {
-            ShowBanner(U("★ CONGRATULATIONS! ALL 12 STAGES CLEARED! ★"), 6.0f);
+            ShowBanner(U("★ CONGRATULATIONS! ALL 30 STAGES CLEARED! ★"), 6.0f);
         }
         else
         {
@@ -925,7 +945,7 @@ public class PeglinRoguePlayer : MonoBehaviour
 
         // Center Status / Turn Combo
         GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(250));
-        GUILayout.Label(U("<color=#facc15><b>STAGE ") + (currentStageIdx + 1) + "/12</b></color>: " + T(stages[currentStageIdx].titleKo, stages[currentStageIdx].name));
+        GUILayout.Label(U("<color=#facc15><b>STAGE ") + (currentStageIdx + 1) + "/" + stages.Length + "</b></color>: " + T(stages[currentStageIdx].titleKo, stages[currentStageIdx].name));
         string critTag = isCritActive ? U(" <color=#fde047>[CRIT x2!]</color>") : "";
         GUILayout.Label(U("🎯 Turn Dmg: <b>") + turnBaseDamage + "</b> (" + turnHits + U(" hits)") + critTag);
         GUILayout.EndVertical();
@@ -941,7 +961,7 @@ public class PeglinRoguePlayer : MonoBehaviour
         GUILayout.EndVertical();
 
         // Stage Select Toggle Button
-        if (GUILayout.Button(U("🗺️ STAGES\n(1~12)"), GUILayout.Width(85), GUILayout.Height(50)))
+        if (GUILayout.Button(U("🗺️ STAGES\n(1~30)"), GUILayout.Width(85), GUILayout.Height(50)))
         {
             showStageSelect = !showStageSelect;
         }
@@ -994,7 +1014,7 @@ public class PeglinRoguePlayer : MonoBehaviour
             GUILayout.Space(12);
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button(currentStageIdx < 11 ? U("▶ NEXT STAGE (") + (currentStageIdx + 2) + ")" : U("🏆 PLAY AGAIN"), GUILayout.Width(170), GUILayout.Height(40)))
+            if (GUILayout.Button(currentStageIdx < stages.Length - 1 ? U("▶ NEXT STAGE (") + (currentStageIdx + 2) + ")" : U("🏆 PLAY AGAIN"), GUILayout.Width(170), GUILayout.Height(40)))
             {
                 NextStage();
             }
@@ -1025,14 +1045,16 @@ public class PeglinRoguePlayer : MonoBehaviour
             GUILayout.EndArea();
         }
 
-        // 12-Stage Select Modal (User Rule: Minimum 10 stages accessible)
+        // 30-Stage Select Modal: 4 columns with scrolling
         if (showStageSelect)
         {
             Rect modalRect = new Rect(Screen.width * 0.5f - 260, 110, 520, 420);
-            GUI.Box(modalRect, U("<b>SELECT STAGE (1~12)</b>"));
+            GUI.Box(modalRect, U("<b>SELECT STAGE (1~30)</b>"));
             GUILayout.BeginArea(new Rect(modalRect.x + 15, modalRect.y + 35, modalRect.width - 30, modalRect.height - 45));
 
-            int colsCount = 2;
+            var cellStyle = new GUIStyle(GUI.skin.button) { wordWrap = true, fontSize = 10 };
+            stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, GUILayout.Height(320));
+            int colsCount = 4;
             for (int i = 0; i < stages.Length; i += colsCount)
             {
                 GUILayout.BeginHorizontal();
@@ -1042,9 +1064,9 @@ public class PeglinRoguePlayer : MonoBehaviour
                     if (idx < stages.Length)
                     {
                         var st = stages[idx];
-                        string bossTag = st.isBoss ? U(" ★ BOSS") : "";
-                        string btnText = U("<b>Stage ") + st.stageNum + "</b>: " + T(st.titleKo, st.name) + bossTag + "\n(HP: " + st.maxHp + U(" | Atk: ") + st.attack + ")";
-                        if (GUILayout.Button(btnText, GUILayout.Height(50)))
+                        string bossTag = st.isBoss ? " ★" : "";
+                        string btnText = "<b>#" + st.stageNum + "</b> " + T(st.titleKo, st.name) + bossTag + "\nHP " + st.maxHp;
+                        if (GUILayout.Button(btnText, cellStyle, GUILayout.Width(112), GUILayout.Height(72)))
                         {
                             showStageSelect = false;
                             InitStage(idx);
@@ -1054,6 +1076,7 @@ public class PeglinRoguePlayer : MonoBehaviour
                 GUILayout.EndHorizontal();
                 GUILayout.Space(4);
             }
+            GUILayout.EndScrollView();
 
             GUILayout.Space(8);
             if (GUILayout.Button(U("× CLOSE"), GUILayout.Height(30)))
