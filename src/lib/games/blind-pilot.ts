@@ -85,6 +85,17 @@ const PUZZLES: readonly PuzzleDef[] = [
   { id: "overspeed", pitch: 1, bank: 0, power: -1, dead: "power", stuck: 1 },
   { id: "icing", pitch: 1, bank: -1, power: -1, dead: "bank", stuck: 1 },
   { id: "last-light", pitch: 1, bank: 1, power: -1, dead: "pitch", stuck: -1 },
+  // Stages 11-20 (2026-11-23): each keeps one shortest line, found by search and checked in the tests.
+  { id: "tail-wind", pitch: -1, bank: -1, power: -1, dead: "pitch", stuck: 0 },
+  { id: "fog-bank", pitch: -1, bank: 0, power: 1, dead: "pitch", stuck: 1 },
+  { id: "low-pass", pitch: -1, bank: 1, power: 0, dead: "bank", stuck: -1 },
+  { id: "side-slip", pitch: -1, bank: -1, power: 1, dead: "pitch", stuck: 0 },
+  { id: "rough-air", pitch: 0, bank: -1, power: -1, dead: "pitch", stuck: 1 },
+  { id: "dusk-glide", pitch: 1, bank: -1, power: -1, dead: "bank", stuck: 0 },
+  { id: "crab-landing", pitch: 1, bank: 1, power: -1, dead: "bank", stuck: 0 },
+  { id: "wind-shear", pitch: -1, bank: -1, power: 1, dead: "power", stuck: -1 },
+  { id: "dead-stick", pitch: 0, bank: -1, power: -1, dead: "power", stuck: 1 },
+  { id: "home-runway", pitch: 1, bank: -1, power: 1, dead: "pitch", stuck: -1 },
 ];
 
 export const PUZZLE_COUNT = PUZZLES.length;
@@ -183,8 +194,18 @@ export function mixSeed(seed: number): number {
   return (t ^ (t >>> 14)) >>> 0;
 }
 
+/**
+ * The first ten boards keep their old seed mapping, so a shared seed still opens the same board.
+ * Stages 11+ live at their own seed block: STAGE_SEED_BASE + index.
+ */
+export const LEGACY_PUZZLE_COUNT = 10;
+export const STAGE_SEED_BASE = 0x5354_0000;
+
 export function puzzleIndexForSeed(seed: number): number {
-  return mixSeed(seed) % PUZZLES.length;
+  const whole = Number.isFinite(seed) ? Math.trunc(seed) : 0;
+  const offset = whole - STAGE_SEED_BASE;
+  if (offset >= LEGACY_PUZZLE_COUNT && offset < PUZZLES.length) return offset;
+  return mixSeed(seed) % LEGACY_PUZZLE_COUNT;
 }
 
 export function nextSeed(seed: number): number {
@@ -211,6 +232,7 @@ function makeState(puzzle: PuzzleDef, steps = 0, attitude?: { pitch: Trim; bank:
 /** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
 export function seedForPuzzle(index: number): number {
   const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  if (target >= LEGACY_PUZZLE_COUNT) return STAGE_SEED_BASE + target;
   for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
