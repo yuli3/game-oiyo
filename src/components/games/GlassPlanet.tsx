@@ -24,7 +24,6 @@ import {
   STEP_CAP,
   axisOpen,
   createGlassPlanet,
-  nextSeed,
   resign,
   stepAxis,
   type AxisBit,
@@ -782,7 +781,7 @@ export default function GlassPlanet({ locale = "en" }: { locale?: Locale }) {
           onClick={() => {
             arm();
             MobileHapticsPro.light();
-            load(nextSeed(seed));
+            load(seedForPuzzle(puzzleIndexForSeed(seed) + 1));
           }}
         >
           {copy.next}
