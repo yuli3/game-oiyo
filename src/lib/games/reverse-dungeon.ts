@@ -174,6 +174,127 @@ export const PUZZLES: readonly PuzzleDef[] = [
       "step",
     ],
   },
+  // Stages 11-20 (2026-11-23): four turns and one step, each the one shortest line.
+  {
+    id: "moss-gate",
+    rooms: [0, XM | YM, 0, 0, XP, 0, YM, XP],
+    tags: [empty, "trap", empty, "trap", "exit", empty, empty, "trap"],
+    solution: [
+      { axis: "y", layer: 0, turn: -1 },
+      { axis: "y", layer: 0, turn: -1 },
+      { axis: "z", layer: 1, turn: 1 },
+      { axis: "x", layer: 0, turn: 1 },
+      "step",
+    ],
+  },
+  {
+    id: "bone-bridge",
+    rooms: [0, ZP, 0, 0, XP, XP | YP | ZP, 0, XP],
+    tags: [empty, "exit", "trap", empty, "trap", empty, empty, empty],
+    solution: [
+      { axis: "z", layer: 1, turn: -1 },
+      { axis: "x", layer: 1, turn: 1 },
+      { axis: "z", layer: 0, turn: -1 },
+      { axis: "x", layer: 0, turn: 1 },
+      "step",
+    ],
+  },
+  {
+    id: "ash-stair",
+    rooms: [XP | ZM, ZP | ZM, 0, XP | ZP, YP, YM, XP | YP, 0],
+    tags: ["exit", empty, "trap", "trap", "trap", empty, "trap", empty],
+    solution: [
+      { axis: "x", layer: 1, turn: 1 },
+      { axis: "y", layer: 0, turn: 1 },
+      { axis: "x", layer: 1, turn: -1 },
+      { axis: "z", layer: 0, turn: -1 },
+      "step",
+    ],
+  },
+  {
+    id: "lantern-drop",
+    rooms: [0, YM, YM, YM, ZP, 0, 0, 0],
+    tags: [empty, "trap", "exit", empty, "trap", empty, "trap", "trap"],
+    solution: [
+      { axis: "x", layer: 1, turn: 1 },
+      { axis: "z", layer: 1, turn: -1 },
+      { axis: "x", layer: 1, turn: 1 },
+      { axis: "y", layer: 0, turn: 1 },
+      "step",
+    ],
+  },
+  {
+    id: "iron-cage",
+    rooms: [0, 0, XM, 0, 0, XM, 0, XM],
+    tags: [empty, "trap", "trap", empty, "trap", empty, "trap", "exit"],
+    solution: [
+      { axis: "y", layer: 1, turn: -1 },
+      { axis: "x", layer: 1, turn: 1 },
+      { axis: "y", layer: 0, turn: 1 },
+      { axis: "z", layer: 1, turn: 1 },
+      "step",
+    ],
+  },
+  {
+    id: "echo-hall",
+    rooms: [0, 0, 0, 0, ZM, ZP, ZM, 0],
+    tags: [empty, "trap", empty, "trap", "exit", "trap", empty, "trap"],
+    solution: [
+      { axis: "y", layer: 1, turn: 1 },
+      { axis: "x", layer: 1, turn: -1 },
+      { axis: "y", layer: 1, turn: 1 },
+      { axis: "z", layer: 0, turn: 1 },
+      "step",
+    ],
+  },
+  {
+    id: "dust-crypt",
+    rooms: [ZM, XM | YP | YM, 0, 0, XP | YM, XP, XP | YM, 0],
+    tags: [empty, "trap", empty, empty, "exit", empty, empty, empty],
+    solution: [
+      { axis: "y", layer: 0, turn: -1 },
+      { axis: "y", layer: 0, turn: -1 },
+      { axis: "z", layer: 1, turn: 1 },
+      { axis: "x", layer: 0, turn: 1 },
+      "step",
+    ],
+  },
+  {
+    id: "ember-well",
+    rooms: [0, 0, 0, 0, YP, XM, 0, 0],
+    tags: [empty, empty, "trap", empty, "exit", empty, empty, empty],
+    solution: [
+      { axis: "x", layer: 0, turn: 1 },
+      { axis: "x", layer: 0, turn: 1 },
+      { axis: "z", layer: 1, turn: -1 },
+      { axis: "y", layer: 0, turn: -1 },
+      "step",
+    ],
+  },
+  {
+    id: "crown-vault",
+    rooms: [XM, 0, YP | YM, XP | YM, XP, 0, 0, YP | ZM],
+    tags: [empty, "trap", "exit", empty, "trap", empty, empty, "trap"],
+    solution: [
+      { axis: "x", layer: 1, turn: 1 },
+      { axis: "z", layer: 1, turn: -1 },
+      { axis: "x", layer: 1, turn: 1 },
+      { axis: "y", layer: 0, turn: 1 },
+      "step",
+    ],
+  },
+  {
+    id: "last-door",
+    rooms: [0, YP, XP | YP, ZP, ZP, XP, XP, 0],
+    tags: [empty, "exit", "trap", empty, empty, empty, "trap", empty],
+    solution: [
+      { axis: "y", layer: 1, turn: 1 },
+      { axis: "x", layer: 1, turn: -1 },
+      { axis: "y", layer: 0, turn: 1 },
+      { axis: "x", layer: 0, turn: -1 },
+      "step",
+    ],
+  },
 ];
 
 export const PUZZLE_COUNT = PUZZLES.length;
@@ -298,8 +419,18 @@ export function mixSeed(seed: number): number {
   return (t ^ (t >>> 14)) >>> 0;
 }
 
+/**
+ * The first ten boards keep their old seed mapping, so a shared seed still opens the same board.
+ * Stages 11+ live at their own seed block: STAGE_SEED_BASE + index.
+ */
+export const LEGACY_PUZZLE_COUNT = 10;
+export const STAGE_SEED_BASE = 0x5244_0000;
+
 export function puzzleIndexForSeed(seed: number): number {
-  return mixSeed(seed) % PUZZLES.length;
+  const whole = Number.isFinite(seed) ? Math.trunc(seed) : 0;
+  const offset = whole - STAGE_SEED_BASE;
+  if (offset >= LEGACY_PUZZLE_COUNT && offset < PUZZLES.length) return offset;
+  return mixSeed(seed) % LEGACY_PUZZLE_COUNT;
 }
 
 export function nextSeed(seed: number): number {
@@ -323,6 +454,7 @@ function makeState(puzzle: PuzzleDef, hero: readonly [number, number, number] = 
 /** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
 export function seedForPuzzle(index: number): number {
   const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  if (target >= LEGACY_PUZZLE_COUNT) return STAGE_SEED_BASE + target;
   for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 

@@ -2,8 +2,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   KEY_LIGHT,
+  LEGACY_PUZZLE_COUNT,
   PUZZLES,
   PUZZLE_COUNT,
+  STAGE_SEED_BASE,
   STEP_CAP,
   applyMove,
   cellCenter,
@@ -68,7 +70,8 @@ describe("reverse dungeon", () => {
     expect(mixSeed(3)).toBe(mixSeed(3));
     const seen = new Set<number>();
     for (let seed = 0; seed < 200; seed += 1) seen.add(puzzleIndexForSeed(seed));
-    expect(seen.size).toBe(PUZZLES.length);
+    expect(seen.size).toBe(LEGACY_PUZZLE_COUNT);
+    expect(Math.max(...seen)).toBe(LEGACY_PUZZLE_COUNT - 1);
     expect(nextSeed(4)).toBe(nextSeed(4));
     expect(puzzleIndexForSeed(nextSeed(4))).toBeGreaterThanOrEqual(0);
   });
@@ -96,6 +99,16 @@ describe("reverse dungeon", () => {
       "far-wheel",
       "roof-turn",
       "pit-corner",
+      "moss-gate",
+      "bone-bridge",
+      "ash-stair",
+      "lantern-drop",
+      "iron-cage",
+      "echo-hall",
+      "dust-crypt",
+      "ember-well",
+      "crown-vault",
+      "last-door",
     ]);
     for (let index = 0; index < PUZZLES.length; index += 1) {
       const solved = replayPuzzle(index);
@@ -108,12 +121,20 @@ describe("reverse dungeon", () => {
     }
   });
 
-  it("ships ten stages and opens each one from its own seed", () => {
-    expect(PUZZLE_COUNT).toBe(10);
+  it("ships twenty stages and opens each one from its own seed", () => {
+    expect(PUZZLE_COUNT).toBe(20);
     for (let i = 0; i < PUZZLE_COUNT; i += 1) expect(puzzleIndexForSeed(seedForPuzzle(i))).toBe(i);
   });
 
-  it("keeps the stage 5-10 solutions as the one shortest line", () => {
+  it("keeps old seeds on the first ten boards and gives stages 11+ their own seeds", () => {
+    const legacy = [0, 1, 2, 7, 42, 199, 123456, 2 ** 31];
+    for (const seed of legacy) expect(puzzleIndexForSeed(seed)).toBe(mixSeed(seed) % LEGACY_PUZZLE_COUNT);
+    for (let i = 0; i < LEGACY_PUZZLE_COUNT; i += 1) expect(seedForPuzzle(i)).toBeLessThan(200);
+    expect(seedForPuzzle(10)).toBe(STAGE_SEED_BASE + 10);
+    expect(puzzleIndexForSeed(STAGE_SEED_BASE + PUZZLE_COUNT)).toBeLessThan(LEGACY_PUZZLE_COUNT);
+  });
+
+  it("keeps the stage 5-20 solutions as the one shortest line", () => {
     const moves: Move[] = ["step"];
     for (const axis of ["x", "y", "z"] as const) for (const layer of [0, 1] as const) for (const turn of [1, -1] as const) moves.push({ axis, layer, turn });
     const key = (state: DungeonState) => fingerprint({ ...state, steps: 0 });
