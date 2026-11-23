@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SheepHerd from "../../components/games/SheepHerd";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "양떼 몰이 — 강아지로 양떼를 우리에 모는 무료 2027 양띠 해 게임 30단계",
+    description: "손가락으로 강아지를 움직이면 양들이 도망치며 무리 지어 움직여요. 양을 직접 건드리지 않고 서 있는 자리만으로 양떼 전체를 우리 문으로 몰아 보세요. 소나무·얼음 연못·깊은 눈·고집 센 흑염소까지 30단계.",
+  },
+  en: {
+    title: "Snowfield Sheepdog — Free flock-herding game for the 2027 Year of the Sheep (30 stages)",
+    description: "Move the dog with your finger and the sheep flee and bunch up as a flock. You never touch a sheep: steer the whole flock to the gate just by where you stand. 30 stages with pine trees, a frozen pond, deep snow and a stubborn black goat.",
+  },
+  ja: {
+    title: "ひつじ追い — 犬で羊の群れを囲いへ追い込む無料の2027年ひつじ年ゲーム30ステージ",
+    description: "指で犬を動かすと、羊は逃げながら群れで動きます。羊には触れず、立つ位置だけで群れ全体を囲いの門へ導きましょう。松の木、凍った池、深い雪、頑固な黒ヤギまで30ステージ。",
+  },
+  zh: {
+    title: "雪原牧羊犬 — 用小狗把羊群赶进羊圈的免费2027羊年游戏30关",
+    description: "用手指移动小狗，羊会四散躲开又聚成一群。不用碰任何一只羊，只靠站位就把整群羊赶进门。共30关，有松树、结冰的池塘、深雪和倔强的黑山羊。",
+  },
+  fr: {
+    title: "Chien de berger des neiges — Jeu gratuit de rassemblement de moutons pour l'année de la Chèvre 2027 (30 niveaux)",
+    description: "Déplacez le chien du doigt : les moutons le fuient et restent en troupeau. Vous ne touchez jamais un mouton, vous guidez tout le troupeau vers la porte rien qu'avec votre position. 30 niveaux avec sapins, étang gelé, neige profonde et une chèvre têtue.",
+  },
+  es: {
+    title: "Perro pastor en la nieve — Juego gratis de pastoreo para el año de la Cabra 2027 (30 niveles)",
+    description: "Mueve al perro con el dedo: las ovejas huyen y se agrupan en rebaño. Nunca tocas una oveja; guías a todo el rebaño hasta la puerta solo con tu posición. 30 niveles con pinos, un estanque helado, nieve profunda y una cabra testaruda.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["sheep-herd"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <SheepHerd client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="sheep-herd" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
