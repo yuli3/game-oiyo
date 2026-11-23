@@ -2,7 +2,7 @@
 // Every sprite here was drawn for OIYO from scratch as a character map.
 // Keys: '.' transparent, other letters map to the sprite's palette.
 
-import type { BackdropSpec, PixelArt } from "./pixel-kit";
+import { parseHex, type BackdropSpec, type PixelArt } from "./pixel-kit";
 
 // ─── Snake garden ───────────────────────────────────────────────────────────
 
@@ -693,3 +693,184 @@ export const SCENE_SKIES = {
   museumNight: { sky: ["#0a0c10", "#0e1117", "#12161e"], tiles: { size: 14, line: "#06080b", alt: "#0c0f15" }, seed: 52 },
   glassPlanet: { sky: ["#03060a", "#081018", "#0d1a24", "#122430"], stars: 1.4, starColor: "#cffafe", orb: { x: 0.82, y: 0.22, r: 9, color: "#5eead4", glow: "#0f766e" }, seed: 53 },
 } satisfies Record<string, BackdropSpec>;
+
+// ─── Hexa Sort: hex tiles and board sockets ─────────────────────────────────
+
+/** Lighten (f > 1) or darken (f < 1) a hex colour. */
+export function shadeHex(hex: string, f: number): string {
+  const { r, g, b } = parseHex(hex);
+  const c = (v: number) => Math.max(0, Math.min(255, Math.round(f >= 1 ? v + (255 - v) * (f - 1) : v * f)));
+  return `#${[c(r), c(g), c(b)].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
+/** Pointy-top hexagon mask, half-width a: (2a+1) wide. */
+function hexMask(a: number): boolean[][] {
+  const b = Math.round((a * 2) / Math.sqrt(3));
+  const rows: boolean[][] = [];
+  for (let y = 0; y <= 2 * b; y += 1) {
+    const dy = Math.abs(y - b);
+    const half = dy <= b / 2 ? a : (a * (b - dy)) / (b / 2);
+    rows.push(Array.from({ length: 2 * a + 1 }, (_, x) => Math.abs(x - a) <= half + 0.01));
+  }
+  return rows;
+}
+
+function outline(grid: string[][], mark: string): void {
+  const h = grid.length;
+  const w = grid[0].length;
+  const filled = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && grid[y][x] !== ".";
+  const edge: Array<[number, number]> = [];
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      if (filled(x, y) && (!filled(x - 1, y) || !filled(x + 1, y) || !filled(x, y - 1) || !filled(x, y + 1))) edge.push([x, y]);
+    }
+  }
+  for (const [x, y] of edge) grid[y][x] = mark;
+}
+
+const hexTileCache = new Map<string, PixelArt>();
+/** A stackable hex tile: lit top face, two-tone side, dark outline. */
+export function hexTile(base: string, a = 11, depth = 4): PixelArt {
+  const key = `${base}:${a}:${depth}`;
+  const hit = hexTileCache.get(key);
+  if (hit) return hit;
+  const mask = hexMask(a);
+  const fh = mask.length;
+  const grid = Array.from({ length: fh + depth }, () => Array.from({ length: 2 * a + 1 }, () => "."));
+  for (let d = depth; d >= 1; d -= 1) {
+    mask.forEach((row, y) => row.forEach((on, x) => { if (on) grid[y + d][x] = x < a ? "S" : "s"; }));
+  }
+  // Bevel band lit from the top left, darker to the bottom right, then a gloss spot.
+  const inner = hexMask(a - 3);
+  const ib = (inner.length - 1) / 2;
+  const ob = (fh - 1) / 2;
+  const inInner = (x: number, y: number) => {
+    const iy = y - (ob - ib);
+    const ix = x - 3;
+    return iy >= 0 && iy < inner.length && ix >= 0 && ix <= 2 * (a - 3) && inner[iy][ix];
+  };
+  mask.forEach((row, y) =>
+    row.forEach((on, x) => {
+      if (!on) return;
+      grid[y][x] = inInner(x, y) ? "t" : (x - a) + (y - ob) * 1.1 < 0 ? "h" : "d";
+    }),
+  );
+  const gy = Math.round(ob - ib) + 2;
+  for (const [dx, dy] of [[5, 0], [6, 0], [4, 1], [5, 1], [4, 2]]) grid[gy + dy][dx] = "w";
+  outline(grid, "o");
+  const art: PixelArt = {
+    rows: grid.map((r) => r.join("")),
+    palette: {
+      o: shadeHex(base, 0.32),
+      S: shadeHex(base, 0.5),
+      s: shadeHex(base, 0.7),
+      t: base,
+      h: shadeHex(base, 1.4),
+      d: shadeHex(base, 0.85),
+      w: "#ffffff",
+    },
+  };
+  hexTileCache.set(key, art);
+  return art;
+}
+
+/** Empty board socket: a carved stone ring with a shadowed hollow. */
+export const HEX_SOCKET: PixelArt = (() => {
+  const a = 15;
+  const mask = hexMask(a);
+  const inner = hexMask(a - 3);
+  const fh = mask.length;
+  const depth = 2;
+  const grid = Array.from({ length: fh + depth }, () => Array.from({ length: 2 * a + 1 }, () => "."));
+  for (let d = depth; d >= 1; d -= 1) mask.forEach((row, y) => row.forEach((on, x) => { if (on) grid[y + d][x] = "k"; }));
+  mask.forEach((row, y) => row.forEach((on, x) => { if (on) grid[y][x] = y < fh / 2 ? "l" : "r"; }));
+  const dy = (fh - inner.length) / 2;
+  inner.forEach((row, y) =>
+    row.forEach((on, x) => {
+      if (!on) return;
+      const shadow = y < 2 || !inner[y - 2][x] || x === 0 || !row[x - 1];
+      grid[y + dy][x + 3] = shadow ? "k" : (x * 3 + y * 5) % 11 === 0 ? "m" : "i";
+    }),
+  );
+  outline(grid, "o");
+  return {
+    rows: grid.map((r) => r.join("")),
+    palette: { o: "#1c130b", k: "#2e2015", l: "#a08667", r: "#7d6650", i: "#3b2a1c", m: "#45321f" },
+  };
+})();
+
+/** Warm wooden tea-table under the Hexa Sort board. */
+export const HEXA_TABLE: BackdropSpec = {
+  sky: ["#2a1b12", "#33221a", "#3d2a1d", "#4a3322"],
+  tiles: { size: 18, line: "#1c120b", alt: "#3a271a" },
+  seed: 61,
+};
+
+Object.assign(ALL_PIXEL_SPRITES, { HEX_SOCKET, HEX_TILE_SAMPLE: hexTile("#ef4444") });
+
+// ─── Chef Physics: stove, pan, steak ────────────────────────────────────────
+
+export const FLAME_A: PixelArt = {
+  palette: { r: "#ef4444", y: "#f59e0b", w: "#fef3c7" },
+  rows: ["...r...", "..rr...", "..ryr..", ".ryyr.r", ".ryyyrr", "ryywyyr", "ryywwyr", ".rywwr.", "..rrr.."],
+};
+export const FLAME_B: PixelArt = { palette: FLAME_A.palette, rows: FLAME_A.rows.map((r) => [...r].reverse().join("")) };
+export const FLAME_OFF: PixelArt = { palette: { r: "#9ca3af", y: "#d1d5db", w: "#e5e7eb" }, rows: FLAME_A.rows };
+
+export const DROPLET: PixelArt = {
+  palette: { b: "#0ea5e9", l: "#e0f2fe", o: "#075985" },
+  rows: ["..o..", ".obo.", ".obo.", "obbbo", "olbbo", "olbbo", ".ooo."],
+};
+export const DROPLET_OFF: PixelArt = { palette: { b: "#d1d5db", l: "#f3f4f6", o: "#9ca3af" }, rows: DROPLET.rows };
+
+export const SKILLET: PixelArt = {
+  palette: { k: "#0b0f17", m: "#374151", l: "#6b7280", h: "#7c4a1e", H: "#4a2a10" },
+  rows: [
+    "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkk..........",
+    "kllllllllllllllllllllllllllllkkkkkkkkkkk",
+    ".kmmmmmmmmmmmmmmmmmmmmmmmmmmkkhhhhhhhhhk",
+    "..kmmmmmmmmmmmmmmmmmmmmmmmmk.kHHHHHHHHHk",
+    "...kkkkkkkkkkkkkkkkkkkkkkkk...kkkkkkkkkk",
+  ],
+};
+
+export const STEAK: PixelArt = {
+  palette: { o: "#450a0a", m: "#f87171", f: "#fde7d9", g: "#3f1d0b" },
+  rows: [
+    "...oooooooo...",
+    ".oommmmmmmmoo.",
+    "ommmmfmmmmmmmo",
+    "ommmmmmffmmmmo",
+    "omfmmmmmmmmmmo",
+    "ommmmmmmmfmmmo",
+    ".oommmmmmmmoo.",
+    "...oooooooo...",
+  ],
+};
+const STEAK_SEARED: PixelArt = {
+  palette: STEAK.palette,
+  rows: [
+    "...oooooooo...",
+    ".oommgmmmgmoo.",
+    "ommmgfmmgmmmmo",
+    "ommgmmmgfmmmmo",
+    "omfmmmgmmmgmmo",
+    "ommmmgmmmgmmmo",
+    ".oommmmmgmmoo.",
+    "...oooooooo...",
+  ],
+};
+/** Steak coloured by heat bin 0 raw, 1 seared, 2 charred. */
+export const STEAK_BY_HEAT: readonly PixelArt[] = [
+  STEAK,
+  { rows: STEAK_SEARED.rows, palette: { o: "#3b1306", m: "#b45309", f: "#fcd9b6", g: "#451a03" } },
+  { rows: STEAK_SEARED.rows, palette: { o: "#0c0a09", m: "#57300f", f: "#a16207", g: "#1c0f05" } },
+];
+
+export const KITCHEN_WALL: BackdropSpec = {
+  sky: ["#e7e0d2", "#ded5c4", "#d3c8b4"],
+  tiles: { size: 12, line: "#b9ad96", alt: "#e2dacb" },
+  seed: 62,
+};
+
+Object.assign(ALL_PIXEL_SPRITES, { FLAME_A, FLAME_B, FLAME_OFF, DROPLET, DROPLET_OFF, SKILLET, STEAK, STEAK_SEARED });
