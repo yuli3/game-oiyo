@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { recordAchievementEvent, recordOpened } from "@/lib/games/records";
 import { installRunXp } from "@/lib/games/run-xp";
 import { parsePrototypeResult, savePrototypeResult } from "@/lib/games/prototype-result-bridge";
+import ResultToolNudge from "./ResultToolNudge";
 import { STUDIO_ENGINE_VERSION, StudioEngineMonitor, type StudioEngineSnapshot } from "@/lib/games/studio-engine-runtime";
 
 export default function GamePlayBeacon({ slug, prototype = false }: { slug: string; prototype?: boolean }) {
@@ -127,9 +128,12 @@ export default function GamePlayBeacon({ slug, prototype = false }: { slug: stri
     };
   }, [prototype, slug]);
 
-  if (!gizmoVisible || !snapshot) return null;
+  // After a finished run, one small calculator card (ResultToolNudge.tsx).
+  if (!gizmoVisible || !snapshot) return <ResultToolNudge />;
 
   return (
+    <>
+    <ResultToolNudge />
     <div
       data-testid="studio-engine-gizmo-hud"
       className="fixed bottom-4 right-4 z-50 rounded-xl border border-border bg-card/95 px-3 py-2 text-xs text-foreground shadow-lg backdrop-blur"
@@ -146,5 +150,6 @@ export default function GamePlayBeacon({ slug, prototype = false }: { slug: stri
         <span>DPR≤{snapshot.quality.recommendedDprCap}</span>
       </div>
     </div>
+    </>
   );
 }
