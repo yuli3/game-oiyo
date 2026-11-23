@@ -1,0 +1,226 @@
+{
+"All 30 ponds": [
+"연못 30곳 전체",
+"全30の池",
+"Los 30 estanques",
+"全部 30 个池塘",
+"Les 30 étangs"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Best streak {0}": [
+"최고 연속 {0}",
+"最高連続 {0}",
+"Mejor racha {0}",
+"最高连击 {0}",
+"Meilleure série {0}"
+],
+"Cat Fishing": [
+"고양이 낚시",
+"ねこ釣り",
+"Pesca gatuna",
+"猫咪钓鱼",
+"Pêche au chat"
+],
+"Catch all {0} koi in {1} s": [
+"{1}초 안에 잉어 {0}마리를 모두 잡아요",
+"{1}秒以内にコイ{0}匹をすべて捕まえよう",
+"Atrapa las {0} carpas en {1} s",
+"在 {1} 秒内抓住全部 {0} 条锦鲤",
+"Attrapez les {0} carpes en {1} s"
+],
+"Choose a pond": [
+"연못을 골라요",
+"池を選ぶ",
+"Elige un estanque",
+"选择池塘",
+"Choisissez un étang"
+],
+"Ice laser! Every fish is frozen for 3 s": [
+"얼음 레이저! 모든 물고기가 3초 동안 멈춰요",
+"氷レーザー！すべての魚が3秒止まります",
+"¡Láser de hielo! Todos los peces se congelan 3 s",
+"冰冻激光！所有鱼冻住 3 秒",
+"Laser glacé ! Tous les poissons gèlent 3 s"
+],
+"Ice": [
+"얼음",
+"氷",
+"Hielo",
+"冰冻",
+"Glace"
+],
+"Leave the spiky puffers alone!": [
+"가시 복어는 건드리지 마세요!",
+"トゲのフグには触らないで！",
+"¡No toques los peces globo con púas!",
+"别碰带刺的河豚！",
+"Ne touchez pas aux poissons-globes !"
+],
+"Next pond": [
+"다음 연못",
+"次の池",
+"Siguiente estanque",
+"下一个池塘",
+"Étang suivant"
+],
+"Ouch! A puffer: -{0} s": [
+"아야! 복어예요: -{0}초",
+"痛っ！フグだ：-{0}秒",
+"¡Ay! Un pez globo: -{0} s",
+"哎哟！是河豚：-{0} 秒",
+"Aïe ! Un poisson-globe : -{0} s"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play pond {0}": [
+"{0}번 연못 시작",
+"池{0}をプレイ",
+"Jugar estanque {0}",
+"开始第 {0} 个池塘",
+"Jouer l'étang {0}"
+],
+"Pond cleared!": [
+"연못 클리어!",
+"池クリア！",
+"¡Estanque despejado!",
+"池塘清空！",
+"Étang vidé !"
+],
+"Pond list": [
+"연못 목록",
+"池リスト",
+"Lista de estanques",
+"池塘列表",
+"Liste des étangs"
+],
+"Pond {0}": [
+"{0}번 연못",
+"池 {0}",
+"Estanque {0}",
+"第 {0} 个池塘",
+"Étang {0}"
+],
+"Pond": [
+"연못",
+"池",
+"Estanque",
+"池塘",
+"Étang"
+],
+"Restart": [
+"다시 시작",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 하기",
+"もう一度",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Score": [
+"점수",
+"スコア",
+"Puntos",
+"得分",
+"Score"
+],
+"Swat every koi out of the pond before the clock runs out. Shy fish flee your paw.": [
+"시간이 끝나기 전에 연못의 잉어를 모두 낚아채요. 겁 많은 물고기는 발을 피해 도망가요.",
+"時間切れになる前に池のコイを全部すくい上げよう。臆病な魚は肉球から逃げます。",
+"Saca todas las carpas del estanque antes de que se acabe el tiempo. Los peces tímidos huyen de tu pata.",
+"在时间结束前把池里的锦鲤全部拍出来。胆小的鱼会躲开你的爪子。",
+"Sortez toutes les carpes de l'étang avant la fin du temps. Les poissons timides fuient votre patte."
+],
+"Tap a fish to swat it out of the pond.": [
+"물고기를 톡 눌러 연못 밖으로 낚아채요.",
+"魚をタップして池からすくい上げよう。",
+"Toca un pez para sacarlo del estanque.",
+"点击鱼把它拍出池塘。",
+"Touchez un poisson pour le sortir de l'étang."
+],
+"Time's up!": [
+"시간 끝!",
+"時間切れ！",
+"¡Se acabó el tiempo!",
+"时间到！",
+"Temps écoulé !"
+],
+"You cleared all 30 ponds!": [
+"연못 30곳을 모두 클리어했어요!",
+"全30の池をクリアしました！",
+"¡Despejaste los 30 estanques!",
+"你清空了全部 30 个池塘！",
+"Vous avez vidé les 30 étangs !"
+],
+"{0} in a row!": [
+"{0}연속!",
+"{0}連続！",
+"¡{0} seguidos!",
+"{0} 连击！",
+"{0} d'affilée !"
+],
+"{0} koi got away": [
+"잉어 {0}마리가 도망갔어요",
+"コイが{0}匹逃げました",
+"Se escaparon {0} carpas",
+"有 {0} 条锦鲤溜走了",
+"{0} carpes se sont échappées"
+],
+"{0} koi": [
+"잉어 {0}마리",
+"コイ{0}匹",
+"{0} carpas",
+"{0} 条锦鲤",
+"{0} carpes"
+],
+"{0} misses": [
+"헛손질 {0}번",
+"空振り{0}回",
+"{0} fallos",
+"落空 {0} 次",
+"{0} ratés"
+],
+"{0} s": [
+"{0}초",
+"{0}秒",
+"{0} s",
+"{0} 秒",
+"{0} s"
+],
+"Koi": [
+"잉어",
+"コイ",
+"Carpas",
+"锦鲤",
+"Carpes"
+],
+"Time": [
+"시간",
+"時間",
+"Tiempo",
+"时间",
+"Temps"
+]
+}
