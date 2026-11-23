@@ -147,11 +147,12 @@ public class WhackAMolePlayer : MonoBehaviour
     private int currentStageIdx = 0;
     private bool isEndlessMode = false;
     private bool showStageSelect = false;
+    private Vector2 stageSelectScroll;
 
     // Audio
     private AudioSource sfxSource;
 
-    // Stages (12 Stages)
+    // Stages (30 Stages)
     private List<StageDef> stages = new List<StageDef>();
 
     private void Awake()
@@ -345,6 +346,277 @@ public class WhackAMolePlayer : MonoBehaviour
             targetScore = 13000,
             moleSpeed = 2.0f,
             spawnInterval = 0.55f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = true
+        });
+
+        // Stages 13-30: +600 target, +0.03 mole speed, -0.008 s spawn gap per stage; a boss every 5th stage
+        // Stage 13
+        stages.Add(new StageDef
+        {
+            stageNum = 13,
+            name = new LocalizedText("Stage 13: 달빛 밭", "Stage 13: Moonlit Field", "Stage 13: 月夜の畑", "Etapa 13: Campo a la Luz de la Luna"),
+            briefing = new LocalizedText("더 빨라진 두더지를 잡아 13,600점을 달성하세요!", "Catch even faster moles and score 13,600 pts!", "さらに速いモグラを叩いて13,600点を達成しましょう！", "¡Golpea topos aún más rápidos y logra 13,600 pts!"),
+            targetScore = 13600,
+            moleSpeed = 2.03f,
+            spawnInterval = 0.542f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = false
+        });
+
+        // Stage 14
+        stages.Add(new StageDef
+        {
+            stageNum = 14,
+            name = new LocalizedText("Stage 14: 당근 창고 소동", "Stage 14: Carrot Barn Ruckus", "Stage 14: ニンジン倉庫の騒ぎ", "Etapa 14: Alboroto en el Granero"),
+            briefing = new LocalizedText("더 빨라진 두더지를 잡아 14,200점을 달성하세요!", "Catch even faster moles and score 14,200 pts!", "さらに速いモグラを叩いて14,200点を達成しましょう！", "¡Golpea topos aún más rápidos y logra 14,200 pts!"),
+            targetScore = 14200,
+            moleSpeed = 2.06f,
+            spawnInterval = 0.534f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = false
+        });
+
+        // Stage 15
+        stages.Add(new StageDef
+        {
+            stageNum = 15,
+            name = new LocalizedText("Stage 15: 땅굴 왕자의 습격 [보스]", "Stage 15: Burrow Prince Raid [Boss]", "Stage 15: 穴掘り王子の襲撃 [ボス]", "Etapa 15: Asalto del Príncipe Excavador [Jefe]"),
+            briefing = new LocalizedText("보스 두더지가 섞여 나와요. 14,800점을 달성하세요!", "A boss mole joins the field. Score 14,800 pts!", "ボスモグラが混ざって出現！14,800点を達成しましょう！", "¡Un topo jefe entra en el campo! Logra 14,800 pts."),
+            targetScore = 14800,
+            moleSpeed = 2.09f,
+            spawnInterval = 0.526f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = true
+        });
+
+        // Stage 16
+        stages.Add(new StageDef
+        {
+            stageNum = 16,
+            name = new LocalizedText("Stage 16: 비 오는 진흙밭", "Stage 16: Rainy Mud Patch", "Stage 16: 雨のぬかるみ畑", "Etapa 16: Lodazal Lluvioso"),
+            briefing = new LocalizedText("더 빨라진 두더지를 잡아 15,400점을 달성하세요!", "Catch even faster moles and score 15,400 pts!", "さらに速いモグラを叩いて15,400点を達成しましょう！", "¡Golpea topos aún más rápidos y logra 15,400 pts!"),
+            targetScore = 15400,
+            moleSpeed = 2.12f,
+            spawnInterval = 0.518f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = false
+        });
+
+        // Stage 17
+        stages.Add(new StageDef
+        {
+            stageNum = 17,
+            name = new LocalizedText("Stage 17: 쌍둥이 폭탄 골목", "Stage 17: Twin Fuse Alley", "Stage 17: 双子爆弾横丁", "Etapa 17: Callejón de Mechas Gemelas"),
+            briefing = new LocalizedText("더 빨라진 두더지를 잡아 16,000점을 달성하세요!", "Catch even faster moles and score 16,000 pts!", "さらに速いモグラを叩いて16,000点を達成しましょう！", "¡Golpea topos aún más rápidos y logra 16,000 pts!"),
+            targetScore = 16000,
+            moleSpeed = 2.15f,
+            spawnInterval = 0.510f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = false
+        });
+
+        // Stage 18
+        stages.Add(new StageDef
+        {
+            stageNum = 18,
+            name = new LocalizedText("Stage 18: 철모 부대 행진", "Stage 18: Hard Hat Parade", "Stage 18: 鉄兜隊の行進", "Etapa 18: Desfile de Cascos"),
+            briefing = new LocalizedText("더 빨라진 두더지를 잡아 16,600점을 달성하세요!", "Catch even faster moles and score 16,600 pts!", "さらに速いモグラを叩いて16,600点を達成しましょう！", "¡Golpea topos aún más rápidos y logra 16,600 pts!"),
+            targetScore = 16600,
+            moleSpeed = 2.18f,
+            spawnInterval = 0.502f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = false
+        });
+
+        // Stage 19
+        stages.Add(new StageDef
+        {
+            stageNum = 19,
+            name = new LocalizedText("Stage 19: 황금 수확제", "Stage 19: Golden Harvest Fair", "Stage 19: 黄金の収穫祭", "Etapa 19: Feria de la Cosecha Dorada"),
+            briefing = new LocalizedText("더 빨라진 두더지를 잡아 17,200점을 달성하세요!", "Catch even faster moles and score 17,200 pts!", "さらに速いモグラを叩いて17,200点を達成しましょう！", "¡Golpea topos aún más rápidos y logra 17,200 pts!"),
+            targetScore = 17200,
+            moleSpeed = 2.21f,
+            spawnInterval = 0.494f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = false
+        });
+
+        // Stage 20
+        stages.Add(new StageDef
+        {
+            stageNum = 20,
+            name = new LocalizedText("Stage 20: 두더지 여왕의 정원 [보스]", "Stage 20: Mole Queen's Garden [Boss]", "Stage 20: モグラ女王の庭 [ボス]", "Etapa 20: Jardín de la Reina Topo [Jefe]"),
+            briefing = new LocalizedText("보스 두더지가 섞여 나와요. 17,800점을 달성하세요!", "A boss mole joins the field. Score 17,800 pts!", "ボスモグラが混ざって出現！17,800点を達成しましょう！", "¡Un topo jefe entra en el campo! Logra 17,800 pts."),
+            targetScore = 17800,
+            moleSpeed = 2.24f,
+            spawnInterval = 0.486f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = true
+        });
+
+        // Stage 21
+        stages.Add(new StageDef
+        {
+            stageNum = 21,
+            name = new LocalizedText("Stage 21: 번개 손목 훈련", "Stage 21: Lightning Wrist Drill", "Stage 21: 稲妻リストドリル", "Etapa 21: Entrenamiento Muñeca Relámpago"),
+            briefing = new LocalizedText("더 빨라진 두더지를 잡아 18,400점을 달성하세요!", "Catch even faster moles and score 18,400 pts!", "さらに速いモグラを叩いて18,400点を達成しましょう！", "¡Golpea topos aún más rápidos y logra 18,400 pts!"),
+            targetScore = 18400,
+            moleSpeed = 2.27f,
+            spawnInterval = 0.478f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = false
+        });
+
+        // Stage 22
+        stages.Add(new StageDef
+        {
+            stageNum = 22,
+            name = new LocalizedText("Stage 22: 반딧불 밤 농장", "Stage 22: Firefly Night Farm", "Stage 22: ホタルの夜の農場", "Etapa 22: Granja Nocturna de Luciérnagas"),
+            briefing = new LocalizedText("더 빨라진 두더지를 잡아 19,000점을 달성하세요!", "Catch even faster moles and score 19,000 pts!", "さらに速いモグラを叩いて19,000点を達成しましょう！", "¡Golpea topos aún más rápidos y logra 19,000 pts!"),
+            targetScore = 19000,
+            moleSpeed = 2.30f,
+            spawnInterval = 0.470f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = false
+        });
+
+        // Stage 23
+        stages.Add(new StageDef
+        {
+            stageNum = 23,
+            name = new LocalizedText("Stage 23: 폭탄 지뢰밭", "Stage 23: Fuse Minefield", "Stage 23: 爆弾地雷原", "Etapa 23: Campo de Mechas"),
+            briefing = new LocalizedText("더 빨라진 두더지를 잡아 19,600점을 달성하세요!", "Catch even faster moles and score 19,600 pts!", "さらに速いモグラを叩いて19,600点を達成しましょう！", "¡Golpea topos aún más rápidos y logra 19,600 pts!"),
+            targetScore = 19600,
+            moleSpeed = 2.33f,
+            spawnInterval = 0.462f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = false
+        });
+
+        // Stage 24
+        stages.Add(new StageDef
+        {
+            stageNum = 24,
+            name = new LocalizedText("Stage 24: 15연속 콤보 도전", "Stage 24: 15-Combo Challenge", "Stage 24: 15連続コンボ挑戦", "Etapa 24: Desafío de 15 Combos"),
+            briefing = new LocalizedText("더 빨라진 두더지를 잡아 20,200점을 달성하세요!", "Catch even faster moles and score 20,200 pts!", "さらに速いモグラを叩いて20,200点を達成しましょう！", "¡Golpea topos aún más rápidos y logra 20,200 pts!"),
+            targetScore = 20200,
+            moleSpeed = 2.36f,
+            spawnInterval = 0.454f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = false
+        });
+
+        // Stage 25
+        stages.Add(new StageDef
+        {
+            stageNum = 25,
+            name = new LocalizedText("Stage 25: 땅굴 장군의 요새 [보스]", "Stage 25: Burrow General's Fort [Boss]", "Stage 25: 穴掘り将軍の砦 [ボス]", "Etapa 25: Fuerte del General Excavador [Jefe]"),
+            briefing = new LocalizedText("보스 두더지가 섞여 나와요. 20,800점을 달성하세요!", "A boss mole joins the field. Score 20,800 pts!", "ボスモグラが混ざって出現！20,800点を達成しましょう！", "¡Un topo jefe entra en el campo! Logra 20,800 pts."),
+            targetScore = 20800,
+            moleSpeed = 2.39f,
+            spawnInterval = 0.446f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = true
+        });
+
+        // Stage 26
+        stages.Add(new StageDef
+        {
+            stageNum = 26,
+            name = new LocalizedText("Stage 26: 눈보라 들판", "Stage 26: Blizzard Field", "Stage 26: 吹雪の畑", "Etapa 26: Campo de Ventisca"),
+            briefing = new LocalizedText("더 빨라진 두더지를 잡아 21,400점을 달성하세요!", "Catch even faster moles and score 21,400 pts!", "さらに速いモグラを叩いて21,400点を達成しましょう！", "¡Golpea topos aún más rápidos y logra 21,400 pts!"),
+            targetScore = 21400,
+            moleSpeed = 2.42f,
+            spawnInterval = 0.438f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = false
+        });
+
+        // Stage 27
+        stages.Add(new StageDef
+        {
+            stageNum = 27,
+            name = new LocalizedText("Stage 27: 초음속 두더지", "Stage 27: Supersonic Moles", "Stage 27: 超音速モグラ", "Etapa 27: Topos Supersónicos"),
+            briefing = new LocalizedText("더 빨라진 두더지를 잡아 22,000점을 달성하세요!", "Catch even faster moles and score 22,000 pts!", "さらに速いモグラを叩いて22,000点を達成しましょう！", "¡Golpea topos aún más rápidos y logra 22,000 pts!"),
+            targetScore = 22000,
+            moleSpeed = 2.45f,
+            spawnInterval = 0.430f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = false
+        });
+
+        // Stage 28
+        stages.Add(new StageDef
+        {
+            stageNum = 28,
+            name = new LocalizedText("Stage 28: 마지막 수확", "Stage 28: Last Harvest", "Stage 28: 最後の収穫", "Etapa 28: Última Cosecha"),
+            briefing = new LocalizedText("더 빨라진 두더지를 잡아 22,600점을 달성하세요!", "Catch even faster moles and score 22,600 pts!", "さらに速いモグラを叩いて22,600点を達成しましょう！", "¡Golpea topos aún más rápidos y logra 22,600 pts!"),
+            targetScore = 22600,
+            moleSpeed = 2.48f,
+            spawnInterval = 0.422f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = false
+        });
+
+        // Stage 29
+        stages.Add(new StageDef
+        {
+            stageNum = 29,
+            name = new LocalizedText("Stage 29: 망치 장인의 시험", "Stage 29: Hammer Artisan Trial", "Stage 29: ハンマー職人の試練", "Etapa 29: Prueba del Artesano del Mazo"),
+            briefing = new LocalizedText("더 빨라진 두더지를 잡아 23,200점을 달성하세요!", "Catch even faster moles and score 23,200 pts!", "さらに速いモグラを叩いて23,200点を達成しましょう！", "¡Golpea topos aún más rápidos y logra 23,200 pts!"),
+            targetScore = 23200,
+            moleSpeed = 2.51f,
+            spawnInterval = 0.414f,
+            allowBombs = true,
+            allowHardHat = true,
+            isMegaField = true,
+            hasBoss = false
+        });
+
+        // Stage 30
+        stages.Add(new StageDef
+        {
+            stageNum = 30,
+            name = new LocalizedText("Stage 30: 땅속 황제의 왕좌 [그랜드 피날레]", "Stage 30: Underground Emperor's Throne [Grand Finale]", "Stage 30: 地底皇帝の玉座 [グランドフィナーレ]", "Etapa 30: Trono del Emperador Subterráneo [Gran Final]"),
+            briefing = new LocalizedText("보스 두더지가 섞여 나와요. 23,800점을 달성하세요!", "A boss mole joins the field. Score 23,800 pts!", "ボスモグラが混ざって出現！23,800点を達成しましょう！", "¡Un topo jefe entra en el campo! Logra 23,800 pts."),
+            targetScore = 23800,
+            moleSpeed = 2.54f,
+            spawnInterval = 0.406f,
             allowBombs = true,
             allowHardHat = true,
             isMegaField = true,
@@ -1080,23 +1352,27 @@ public class WhackAMolePlayer : MonoBehaviour
         GUI.Box(new Rect(Screen.width * 0.5f - 240, Screen.height * 0.5f - 230, 480, 460), "");
         GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 220, Screen.height * 0.5f - 210, 440, 420));
 
-        string mapHeader = U("<b><color=#00f0ff>Select Stage (12 Stages)</color></b>");
+        string mapHeader = U("<b><color=#00f0ff>Select Stage (30 Stages)</color></b>");
         GUILayout.Label(mapHeader, GUILayout.Height(30));
 
+        // 4 columns, scrolling for all 30 stages
+        var cellStyle = new GUIStyle(GUI.skin.button) { wordWrap = true, fontSize = 11 };
+        stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, GUILayout.Height(250));
         for (int i = 0; i < stages.Count; i++)
         {
-            if (i % 2 == 0) GUILayout.BeginHorizontal();
+            if (i % 4 == 0) GUILayout.BeginHorizontal();
 
             StageDef s = stages[i];
-            string btnLabel = string.Format("#{0} {1}", s.stageNum, s.name.Get(currentLang).Split(':')[1].Trim());
-            if (GUILayout.Button(btnLabel, GUILayout.Height(42)))
+            string btnLabel = string.Format("#{0} {1}", s.stageNum, s.name.Get(currentLang).Split(':', '：')[1].Trim());
+            if (GUILayout.Button(btnLabel, cellStyle, GUILayout.Width(98), GUILayout.Height(60)))
             {
                 isEndlessMode = false;
                 LoadStage(i);
             }
 
-            if (i % 2 == 1 || i == stages.Count - 1) GUILayout.EndHorizontal();
+            if (i % 4 == 3 || i == stages.Count - 1) GUILayout.EndHorizontal();
         }
+        GUILayout.EndScrollView();
 
         GUILayout.Space(8);
 
@@ -1165,7 +1441,7 @@ public class WhackAMolePlayer : MonoBehaviour
         }
         else
         {
-            string masterTxt = U("★ All 12 Stages Mastered! ★");
+            string masterTxt = U("★ All 30 Stages Mastered! ★");
             GUILayout.Label(masterTxt, GUILayout.Height(36));
         }
 
