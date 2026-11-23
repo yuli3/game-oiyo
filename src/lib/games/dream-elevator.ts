@@ -121,6 +121,67 @@ const PUZZLES: readonly PuzzleDef[] = [
     slots: ["mote", "hour", null, "stone"],
     seals: ["lobby", "mote", "hour", "mote"],
   },
+  // Stages 11-20 (2026-11-23): longer rides, each one shortest ride found by search and checked in the tests.
+  {
+    id: "late-bell",
+    hand: null,
+    slots: ["stone", "mote", "hour", null],
+    seals: ["lobby", "stone", "mote", "stone"],
+  },
+  {
+    id: "hollow-floor",
+    hand: null,
+    slots: ["mote", "stone", null, "hour"],
+    seals: ["lobby", "mote", "stone", "mote"],
+  },
+  {
+    id: "hour-debt",
+    hand: null,
+    slots: ["hour", "stone", null, "mote"],
+    seals: ["lobby", "hour", "stone", "hour"],
+  },
+  {
+    id: "twin-stone",
+    hand: null,
+    slots: ["stone", "mote", "hour", null],
+    seals: ["lobby", "stone", "stone", "mote"],
+  },
+  {
+    id: "mote-ladder",
+    hand: null,
+    slots: ["stone", "hour", null, "mote"],
+    seals: ["lobby", "hour", "hour", "mote"],
+  },
+  {
+    id: "dust-rise",
+    hand: null,
+    slots: ["mote", "hour", "stone", null],
+    seals: ["lobby", "mote", "mote", "hour"],
+  },
+  {
+    id: "quiet-ferry",
+    hand: null,
+    slots: ["stone", "mote", "hour", null],
+    seals: ["lobby", "mote", "hour", "mote"],
+  },
+  {
+    id: "double-hour",
+    hand: null,
+    slots: ["mote", "hour", null, "stone"],
+    seals: ["lobby", "hour", "mote", "stone"],
+  },
+  {
+    id: "drift-back",
+    hand: null,
+    slots: ["stone", "hour", "mote", null],
+    seals: ["lobby", "hour", "mote", "hour"],
+  },
+  {
+    id: "last-dream",
+    hand: null,
+    slots: ["stone", "mote", "hour", null],
+    seals: ["lobby", "mote", "stone", "mote"],
+  },
 ];
 
 export const PUZZLE_COUNT = PUZZLES.length;
@@ -194,8 +255,18 @@ export function mixSeed(seed: number): number {
   return (t ^ (t >>> 14)) >>> 0;
 }
 
+/**
+ * The first ten boards keep their old seed mapping, so a shared seed still opens the same board.
+ * Stages 11+ live at their own seed block: STAGE_SEED_BASE + index.
+ */
+export const LEGACY_PUZZLE_COUNT = 10;
+export const STAGE_SEED_BASE = 0x5354_0000;
+
 export function puzzleIndexForSeed(seed: number): number {
-  return mixSeed(seed) % PUZZLES.length;
+  const whole = Number.isFinite(seed) ? Math.trunc(seed) : 0;
+  const offset = whole - STAGE_SEED_BASE;
+  if (offset >= LEGACY_PUZZLE_COUNT && offset < PUZZLES.length) return offset;
+  return mixSeed(seed) % LEGACY_PUZZLE_COUNT;
 }
 
 export function nextSeed(seed: number): number {
@@ -221,6 +292,7 @@ function makeState(puzzle: PuzzleDef, steps = 0, floor = 0, hand: Relic | null =
 /** Smallest seed that opens stage `index`, so a stage button reuses the seed path (address, share card). */
 export function seedForPuzzle(index: number): number {
   const target = ((Math.trunc(index) % PUZZLES.length) + PUZZLES.length) % PUZZLES.length;
+  if (target >= LEGACY_PUZZLE_COUNT) return STAGE_SEED_BASE + target;
   for (let seed = 0; ; seed += 1) if (puzzleIndexForSeed(seed) === target) return seed;
 }
 
