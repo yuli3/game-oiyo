@@ -1,0 +1,366 @@
+{
+"All 30 trips": [
+"출조 30회 전체",
+"全30回の釣行",
+"Las 30 salidas",
+"全部 30 次出海",
+"Les 30 sorties"
+],
+"BITE! Tap now!": [
+"입질! 지금 눌러요!",
+"アタリ！今タップ！",
+"¡PICA! ¡Toca ya!",
+"咬钩了！快点！",
+"Ça mord ! Touchez !"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Bait": [
+"미끼",
+"エサ",
+"Cebo",
+"鱼饵",
+"Appâts"
+],
+"CAST": [
+"던지기",
+"投げる",
+"LANZAR",
+"抛竿",
+"LANCER"
+],
+"Cast, hook the bite and win the tug of war: 30 trips from the shallows to the abyss.": [
+"찌를 던지고, 입질에 챔질하고, 줄다리기에서 이겨요. 연안에서 심연까지 30번 출조해요.",
+"投げて、アタリで合わせて、綱引きに勝とう。沿岸から深淵まで30回の釣行。",
+"Lanza, clava la picada y gana el tira y afloja: 30 salidas de la costa al abismo.",
+"抛竿、咬钩时扬竿、赢下拉锯战：从浅海到深渊共 30 次出海。",
+"Lancez, ferrez la touche et gagnez le bras de fer : 30 sorties de la côte aux abysses."
+],
+"Choose a trip": [
+"출조를 골라요",
+"釣行を選ぶ",
+"Elige una salida",
+"选择出海",
+"Choisissez une sortie"
+],
+"Distance": [
+"거리",
+"距離",
+"Distancia",
+"距离",
+"Distance"
+],
+"Dot Fishing": [
+"도트 피싱",
+"ドットフィッシング",
+"Dot Fishing",
+"点点钓鱼",
+"Dot Fishing"
+],
+"FIGHTING": [
+"저항 중",
+"抵抗中",
+"LUCHANDO",
+"挣扎中",
+"IL LUTTE"
+],
+"Fish book {0}/30": [
+"물고기 도감 {0}/30",
+"魚図鑑 {0}/30",
+"Libro de peces {0}/30",
+"鱼类图鉴 {0}/30",
+"Carnet de pêche {0}/30"
+],
+"Fish": [
+"물고기",
+"魚",
+"Peces",
+"鱼",
+"Poissons"
+],
+"Gold": [
+"골드",
+"ゴールド",
+"Oro",
+"金币",
+"Or"
+],
+"HOOK": [
+"챔질",
+"合わせ",
+"CLAVAR",
+"扬竿",
+"FERRER"
+],
+"Hold to reel it in": [
+"꾹 눌러 릴을 감아요",
+"長押しでリールを巻こう",
+"Mantén pulsado para recoger",
+"按住收线",
+"Maintenez pour mouliner"
+],
+"Hooked: {0}!": [
+"걸렸어요: {0}!",
+"ヒット：{0}！",
+"¡Enganchado: {0}!",
+"上钩了：{0}！",
+"Ferré : {0} !"
+],
+"It's fighting! Ease off the reel": [
+"저항해요! 손을 떼고 버텨요",
+"暴れてる！リールを緩めて",
+"¡Está luchando! Suelta el carrete",
+"它在挣扎！先松开收线",
+"Il se débat ! Relâchez le moulinet"
+],
+"Land {0} fish. The last one is the {1}.": [
+"물고기 {0}마리를 낚아요. 마지막은 {1}예요.",
+"魚を{0}匹釣ろう。最後は{1}です。",
+"Pesca {0} peces. El último es: {1}.",
+"钓上 {0} 条鱼，最后一条是{1}。",
+"Pêchez {0} poissons. Le dernier : {1}."
+],
+"New in your fish book!": [
+"도감에 새로 올렸어요!",
+"図鑑に新登録！",
+"¡Nuevo en tu libro!",
+"图鉴新收录！",
+"Nouveau dans le carnet !"
+],
+"Next trip": [
+"다음 출조",
+"次の釣行",
+"Siguiente salida",
+"下一次出海",
+"Sortie suivante"
+],
+"Out of bait!": [
+"미끼가 떨어졌어요!",
+"エサ切れ！",
+"¡Sin cebo!",
+"鱼饵用完了！",
+"Plus d'appâts !"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"REEL": [
+"릴 감기",
+"巻く",
+"RECOGER",
+"收线",
+"MOULINER"
+],
+"Restart": [
+"다시 시작",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 하기",
+"もう一度",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Snap! The line broke": [
+"툭! 낚싯줄이 끊어졌어요",
+"プツッ！糸が切れた",
+"¡Zas! Se rompió el sedal",
+"啪！鱼线断了",
+"Clac ! La ligne a cassé"
+],
+"Stamina": [
+"체력",
+"スタミナ",
+"Aguante",
+"体力",
+"Endurance"
+],
+"Start trip {0}": [
+"{0}번째 출조 시작",
+"釣行{0}を始める",
+"Empezar salida {0}",
+"开始第 {0} 次出海",
+"Commencer la sortie {0}"
+],
+"Tap the sea to cast": [
+"바다를 눌러 찌를 던져요",
+"海をタップして投げよう",
+"Toca el mar para lanzar",
+"点击海面抛竿",
+"Touchez la mer pour lancer"
+],
+"Target": [
+"목표",
+"ターゲット",
+"Objetivo",
+"目标",
+"Cible"
+],
+"Tension": [
+"장력",
+"テンション",
+"Tensión",
+"张力",
+"Tension"
+],
+"Too early! The fish got spooked": [
+"너무 빨라요! 물고기가 놀라 도망갔어요",
+"早すぎ！魚が驚いて逃げた",
+"¡Demasiado pronto! El pez se asustó",
+"太早了！鱼被吓跑了",
+"Trop tôt ! Le poisson a fui"
+],
+"Too late! It stole the bait": [
+"너무 늦었어요! 미끼만 뺏겼어요",
+"遅すぎ！エサだけ取られた",
+"¡Demasiado tarde! Se llevó el cebo",
+"太晚了！鱼饵被偷走了",
+"Trop tard ! Il a volé l'appât"
+],
+"Trip complete!": [
+"출조 성공!",
+"釣行成功！",
+"¡Salida completada!",
+"出海成功！",
+"Sortie réussie !"
+],
+"Trip list": [
+"출조 목록",
+"釣行リスト",
+"Lista de salidas",
+"出海列表",
+"Liste des sorties"
+],
+"Trip {0}": [
+"{0}번째 출조",
+"釣行 {0}",
+"Salida {0}",
+"第 {0} 次出海",
+"Sortie {0}"
+],
+"Trip": [
+"출조",
+"釣行",
+"Salida",
+"出海",
+"Sortie"
+],
+"Wait for the bite...": [
+"입질을 기다려요...",
+"アタリを待とう...",
+"Espera la picada...",
+"等待咬钩……",
+"Attendez la touche..."
+],
+"You finished all 30 trips!": [
+"30번의 출조를 모두 마쳤어요!",
+"全30回の釣行を達成しました！",
+"¡Completaste las 30 salidas!",
+"你完成了全部 30 次出海！",
+"Vous avez fini les 30 sorties !"
+],
+"hold": [
+"누르기",
+"長押し",
+"mantén",
+"按住",
+"maintenir"
+],
+"{0} baits wasted": [
+"버린 미끼 {0}개",
+"無駄にしたエサ {0}",
+"{0} cebos perdidos",
+"浪费鱼饵 {0} 个",
+"{0} appâts perdus"
+],
+"{0} baits. Tap to cast, tap again when it bites, then hold to reel and let go when it fights.": [
+"미끼 {0}개. 눌러서 던지고, 입질이 오면 다시 누르고, 꾹 눌러 감다가 물고기가 저항하면 손을 떼요.",
+"エサ{0}個。タップで投げ、アタリでもう一度タップ、長押しで巻いて、暴れたら離そう。",
+"{0} cebos. Toca para lanzar, toca otra vez al picar, mantén para recoger y suelta cuando luche.",
+"{0} 个鱼饵。点击抛竿，咬钩时再点一次，按住收线，鱼挣扎时松开。",
+"{0} appâts. Touchez pour lancer, retouchez à la touche, maintenez pour mouliner et relâchez quand il lutte."
+],
+"{0} more fish needed": [
+"물고기 {0}마리가 더 필요해요",
+"あと{0}匹必要",
+"Faltan {0} peces",
+"还差 {0} 条鱼",
+"Encore {0} poissons"
+],
+"{0} new in the book": [
+"도감 새 기록 {0}",
+"図鑑新登録 {0}",
+"{0} nuevos en el libro",
+"图鉴新增 {0}",
+"{0} nouveaux au carnet"
+],
+"{0} snapped lines": [
+"끊어진 줄 {0}번",
+"糸切れ {0}回",
+"{0} sedales rotos",
+"断线 {0} 次",
+"{0} lignes cassées"
+],
+"Shallow Coast": [
+"얕은 연안",
+"浅い沿岸",
+"Costa poco profunda",
+"浅海海岸",
+"Côte peu profonde"
+],
+"Coral Reef": [
+"산호초",
+"サンゴ礁",
+"Arrecife de coral",
+"珊瑚礁",
+"Récif corallien"
+],
+"Deep Sea": [
+"심해",
+"深海",
+"Mar profundo",
+"深海",
+"Haute mer"
+],
+"Abyssal Trench": [
+"심연 해구",
+"深淵の海溝",
+"Fosa abisal",
+"深渊海沟",
+"Fosse abyssale"
+],
+"Bamboo Rod": [
+"대나무 낚싯대",
+"竹竿",
+"Caña de bambú",
+"竹制鱼竿",
+"Canne en bambou"
+],
+"Fiberglass Rod": [
+"유리섬유 로드",
+"グラスファイバーロッド",
+"Caña de fibra de vidrio",
+"玻璃纤维鱼竿",
+"Canne en fibre de verre"
+]
+}
