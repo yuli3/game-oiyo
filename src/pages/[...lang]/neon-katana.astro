@@ -1,4 +1,5 @@
 ---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import NeonKatana from "../../components/games/NeonKatana";
 import { locales } from "../../lib/i18n";
@@ -43,7 +44,9 @@ const m = meta[locale] ?? meta.en;
 
 <BaseLayout title={m.title} description={m.description} heading={m.title}>
   <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
-    <NeonKatana client:load locale={locale} />
+    <UnityMainShell slug="neon-katana" build="neon-katana-unity" locale={locale} name={m.title.split(" — ")[0]} poster="/games/unity-posters/neon-katana.webp">
+      <NeonKatana client:visible locale={locale} />
+    </UnityMainShell>
     <div class="mx-auto max-w-3xl px-4 mt-8">
       <GameGuide slug="neon-katana" locale={locale} name={m.title.split(" — ")[0]} />
     </div>
