@@ -104,6 +104,7 @@ public class CaveDashPlayer : MonoBehaviour
     private int currentStageIndex = 0;
     private bool isEndless = false;
     private bool showStageSelect = false;
+    private Vector2 stageSelectScroll;
 
     // Ship mechanics
     private GameObject shipRoot;
@@ -154,7 +155,7 @@ public class CaveDashPlayer : MonoBehaviour
     private ParticleSystem thrustParticles;
     private ParticleSystem sparkParticles;
 
-    // 12 Defined Stages
+    // 12 hand-made stages; 13-30 are appended by AddAdvancedStages()
     private StageData[] stages = new StageData[]
     {
         new StageData {
@@ -305,6 +306,7 @@ public class CaveDashPlayer : MonoBehaviour
         InitCavePool();
 
         bestScore = PlayerPrefs.GetInt("CaveDash_BestScore", 0);
+        AddAdvancedStages();
         ResetToStage(0);
     }
 
@@ -1296,7 +1298,7 @@ public class CaveDashPlayer : MonoBehaviour
 
         GUILayout.BeginArea(new Rect(r.x + 20, r.y + 15, r.width - 40, r.height - 30));
         GUI.color = Color.yellow;
-        GUILayout.Label($"<size=23><b>🏆 {GetText("12스테이지 전 구역 제패!", "ALL 12 STAGES CONQUERED!", "全12ステージ制覇！", "¡TODAS LAS ETAPAS SUPERADAS!")}</b></size>", GUILayout.Height(34));
+        GUILayout.Label($"<size=23><b>🏆 {GetText("30스테이지 전 구역 제패!", "ALL 30 STAGES CONQUERED!", "全30ステージ制覇！", "¡LAS 30 ETAPAS SUPERADAS!")}</b></size>", GUILayout.Height(34));
         GUI.color = Color.white;
 
         GUILayout.Space(8);
@@ -1332,7 +1334,7 @@ public class CaveDashPlayer : MonoBehaviour
         GUILayout.BeginArea(new Rect(r.x + 15, r.y + 15, r.width - 30, r.height - 30));
         GUILayout.BeginHorizontal();
         GUI.color = Color.cyan;
-        GUILayout.Label($"<size=20><b>{GetText("스테이지 선택 (12 Stages)", "Select Stage (12 Stages)", "ステージ選択 (全12ステージ)", "Seleccionar Etapa (12 Etapas)")}</b></size>");
+        GUILayout.Label($"<size=20><b>{GetText("스테이지 선택 (30 Stages)", "Select Stage (30 Stages)", "ステージ選択 (全30ステージ)", "Seleccionar Etapa (30 Etapas)")}</b></size>");
         GUI.color = Color.white;
         GUILayout.FlexibleSpace();
         if (GUILayout.Button("×", GUILayout.Width(35), GUILayout.Height(28)))
@@ -1343,8 +1345,10 @@ public class CaveDashPlayer : MonoBehaviour
 
         GUILayout.Space(10);
 
-        // 4x3 Grid of 12 Stages
-        for (int row = 0; row < 3; row++)
+        // 4 columns, scrolling for all 30 stages
+        float btnW = (r.width - 30f - 24f - 4 * 6f) / 4f;
+        stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, false, true);
+        for (int row = 0; row * 4 < stages.Length; row++)
         {
             GUILayout.BeginHorizontal();
             for (int col = 0; col < 4; col++)
@@ -1356,7 +1360,7 @@ public class CaveDashPlayer : MonoBehaviour
                     GUI.color = idx == currentStageIndex ? Color.cyan : Color.white;
 
                     string btnText = $"<b>{U("Stage")} {stg.id}</b>\n<size=11>{GetStageName(stg)}</size>";
-                    if (GUILayout.Button(btnText, GUILayout.Height(85), GUILayout.Width((r.width - 50) / 4f)))
+                    if (GUILayout.Button(btnText, GUILayout.Height(64), GUILayout.Width(btnW)))
                     {
                         showStageSelect = false;
                         isEndless = false;
@@ -1369,8 +1373,97 @@ public class CaveDashPlayer : MonoBehaviour
             GUILayout.Space(6);
         }
 
+        GUILayout.EndScrollView();
+
         GUI.color = Color.white;
         GUILayout.EndArea();
+    }
+
+    // Stages 13-30 keep climbing from stage 12: longer runs, faster flight, a slightly narrower
+    // and wavier cave, and stacked hazards. Every fifth stage is a Wyrm chase with a wider cave.
+    private void AddAdvancedStages()
+    {
+        if (stages.Length > 12) return;
+        string[][] names = new string[][]
+        {
+            new[] { "Sapphire Sinkhole", "사파이어 싱크홀", "サファイアの陥没穴", "Sima de Zafiro" },
+            new[] { "Howling Chimney", "울부짖는 굴뚝", "咆哮の煙突洞", "Chimenea Aullante" },
+            new[] { "Boss: Wyrm Ambush", "보스: 지룡의 매복", "ボス：地龍の待ち伏せ", "Jefe: Emboscada del Gusano" },
+            new[] { "Flipside Galleries", "뒤집힌 회랑", "反転する回廊", "Galerías Invertidas" },
+            new[] { "Ember Lattice", "불씨 격자", "残り火の格子", "Celosía de Brasas" },
+            new[] { "Collapsing Halls", "무너지는 대전당", "崩れゆく大広間", "Salones Derrumbados" },
+            new[] { "Storm Laser Array", "폭풍 레이저 배열", "嵐のレーザー列", "Matriz Láser Tormenta" },
+            new[] { "Boss: Twin-Coil Wyrm", "보스: 쌍둥이 똬리 지룡", "ボス：双巻きの地龍", "Jefe: Gusano de Doble Espiral" },
+            new[] { "Frozen Geode", "얼어붙은 정동", "凍てつく晶洞", "Geoda Helada" },
+            new[] { "Inverted Rapids", "역류 급류", "逆流の急流", "Rápidos Invertidos" },
+            new[] { "Obsidian Needle Run", "흑요석 바늘길", "黒曜石の針路", "Paso de Agujas de Obsidiana" },
+            new[] { "Echoing Catacombs", "메아리 지하묘지", "こだまする地下墓所", "Catacumbas del Eco" },
+            new[] { "Boss: Molten Wyrm", "보스: 용암 지룡", "ボス：溶岩の地龍", "Jefe: Gusano Fundido" },
+            new[] { "Gale Fault Line", "강풍 단층선", "強風の断層線", "Falla de Vendaval" },
+            new[] { "Prism Overload", "프리즘 과부하", "プリズム過負荷", "Sobrecarga Prismática" },
+            new[] { "Mantle Breach", "맨틀 균열", "マントルの裂け目", "Brecha del Manto" },
+            new[] { "Singularity Shaft", "특이점 수직굴", "特異点の縦穴", "Pozo de Singularidad" },
+            new[] { "Boss: Wyrm of the Core", "보스: 핵의 지룡", "ボス：核の地龍", "Jefe: Gusano del Núcleo" },
+        };
+        var list = new List<StageData>(stages);
+        for (int k = 1; k <= names.Length; k++)
+        {
+            int n = 12 + k;
+            bool boss = n % 5 == 0;
+            int m = k % 4; // rotate hazard sets between bosses
+            var src = stages[(k - 1) % 12];
+            float t = k / 18f;
+            var stg = new StageData
+            {
+                id = n,
+                nameEn = names[k - 1][0], nameKo = names[k - 1][1], nameJa = names[k - 1][2], nameEs = names[k - 1][3],
+                targetDistance = 3300f + k * 150f,              // 3450 .. 6000 m
+                baseSpeed = 29f + k * 0.28f,                    // 29.3 .. 34.0
+                caveGap = (boss ? 5.6f : 4.6f) - k * 0.025f,    // 4.58 .. 4.15 (boss +1.0)
+                waveAmp = 3.8f + k * 0.012f,                     // 3.8 .. 4.0
+                waveFreq = 0.1f + k * 0.0003f,
+                hasWind = boss ? k >= 13 : (m == 1 || m == 3 || k >= 14),
+                hasGravityFlip = boss ? k >= 8 : (m == 0 || m == 3 || k >= 15),
+                hasMovingLasers = boss ? k >= 3 : (m != 0 || k >= 10),
+                hasFallingDebris = boss ? k >= 18 : (m == 0 || m == 2 || k >= 12),
+                isBoss = boss,
+                ambientColor = src.ambientColor,
+                caveColor = Color.Lerp(src.caveColor, new Color(0.55f, 0.18f, 0.2f), t * 0.4f),
+                crystalColor = src.crystalColor
+            };
+            if (boss)
+            {
+                stg.ambientColor = new Color(0.45f, 0.08f, 0.08f);
+                stg.caveColor = new Color(0.6f, 0.15f, 0.12f);
+                stg.crystalColor = new Color(1f, 0.25f + t * 0.4f, 0.2f);
+            }
+            stg.descEn = AdvancedDesc(stg, "Fly {0} m at {1:0.0} m/s through a {2:0.0} m gap.", "en");
+            stg.descKo = AdvancedDesc(stg, "{0}m를 {1:0.0}m/s로, 폭 {2:0.0}m 통로를 비행하세요.", "ko");
+            stg.descJa = AdvancedDesc(stg, "{0}mを{1:0.0}m/sで、幅{2:0.0}mの通路を飛び抜けましょう。", "ja");
+            stg.descEs = AdvancedDesc(stg, "Vuela {0} m a {1:0.0} m/s por un paso de {2:0.0} m.", "es");
+            list.Add(stg);
+        }
+        stages = list.ToArray();
+    }
+
+    private string AdvancedDesc(StageData s, string fmt, string code)
+    {
+        // English text goes through the zh/fr table at stage-build time, like the hand-made stages do.
+        var parts = new List<string>();
+        if (s.isBoss) parts.Add(Hz(code, "Wyrm chase", "지룡 추격", "地龍の追撃", "persecución del gusano"));
+        if (s.hasWind) parts.Add(Hz(code, "wind", "돌풍", "突風", "viento"));
+        if (s.hasGravityFlip) parts.Add(Hz(code, "gravity flips", "중력 역전", "重力反転", "gravedad invertida"));
+        if (s.hasMovingLasers) parts.Add(Hz(code, "lasers", "레이저", "レーザー", "láseres"));
+        if (s.hasFallingDebris) parts.Add(Hz(code, "falling debris", "낙석", "落石", "derrumbes"));
+        string head = string.Format(code == "en" ? OiyoI18n.En(fmt) : fmt, s.targetDistance.ToString("0"), s.baseSpeed, s.caveGap);
+        string label = code == "ko" ? "위험" : code == "ja" ? "危険" : code == "es" ? "Peligros" : OiyoI18n.En("Hazards");
+        string sep = code == "ja" ? "・" : ", ";
+        return parts.Count == 0 ? head : head + " " + label + ": " + string.Join(sep, parts);
+    }
+
+    private static string Hz(string code, string en, string ko, string ja, string es)
+    {
+        return code == "ko" ? ko : code == "ja" ? ja : code == "es" ? es : OiyoI18n.En(en);
     }
 
     private string GetText(string ko, string en, string ja, string es)
