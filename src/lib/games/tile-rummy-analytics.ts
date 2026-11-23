@@ -9,7 +9,7 @@ export type TileRummyAnalyticsEvent =
   | "share_click"
   | "retry_click";
 
-export type TileRummyAnalyticsMode = "match" | "daily" | "run";
+export type TileRummyAnalyticsMode = "match" | "daily" | "run" | "league";
 
 const ALLOWED = new Set(["game_id", "mode", "result", "duration", "id", "tier"]);
 
