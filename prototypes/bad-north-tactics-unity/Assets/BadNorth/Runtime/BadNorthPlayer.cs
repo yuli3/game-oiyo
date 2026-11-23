@@ -145,6 +145,8 @@ public class BadNorthPlayer : MonoBehaviour
         public int houseCount;
         public bool hasBerserkers;
         public bool hasBoss;
+        public float berserkerChance; // 0 = 0.28 (islands 1-12)
+        public float waveDelay;       // 0 = 9 s (islands 1-12)
     }
 
     // Grid Dimensions
@@ -201,13 +203,14 @@ public class BadNorthPlayer : MonoBehaviour
     private int raidersSlain = 0;
     private int currentStageIdx = 0;
     private bool showArchipelagoModal = false;
+    private Vector2 stageSelectScroll;
     private bool isEndlessMode = false;
     private float shakeTrauma = 0f;
 
     // Audio
     private AudioSource sfxSource;
 
-    // Stages (12 Islands)
+    // Stages (30 Islands)
     private List<StageDef> stages = new List<StageDef>();
 
     private void Awake()
@@ -337,8 +340,8 @@ public class BadNorthPlayer : MonoBehaviour
         stages.Add(new StageDef
         {
             islandNum = 10,
-            name = new LocalizedText("Island 10: 얄의 대함대 [최종보스]", "Island 10: Jarl Ragnar's Armada [Final Boss]", "Island 10: ヤールの巨大艦隊 [最終ボス]", "Isla 10: Armada del Jarl [Jefe Final]"),
-            briefing = new LocalizedText("전설적인 바이킹 사령관 '얄 라그나르'의 본대 함대를 격파하세요!", "Defeat the legendary Viking commander Jarl Ragnar and his elite army!", "伝説的なバイキング総司令官『ヤール・ラグナル』の本隊を撃破しましょう！", "¡Derrota al legendario comandante Jarl Ragnar y su ejército!"),
+            name = new LocalizedText("Island 10: 얄의 대함대 [최종보스]", "Island 10: Storm Jarl's Armada [Final Boss]", "Island 10: ヤールの巨大艦隊 [最終ボス]", "Isla 10: Armada del Jarl [Jefe Final]"),
+            briefing = new LocalizedText("전설적인 약탈자 사령관 '폭풍의 얄'의 본대 함대를 격파하세요!", "Defeat the legendary raider commander, the Storm Jarl, and his elite army!", "伝説の略奪者総司令官『嵐のヤール』の本隊を撃破しましょう！", "¡Derrota al legendario comandante Jarl de la Tormenta y su ejército!"),
             waveCount = 6,
             houseCount = 3,
             hasBerserkers = true,
@@ -361,12 +364,248 @@ public class BadNorthPlayer : MonoBehaviour
         stages.Add(new StageDef
         {
             islandNum = 12,
-            name = new LocalizedText("Island 12: 발할라의 최후 항전 [마스터]", "Island 12: Valhalla's Last Stand [Master]", "Island 12: ヴァルハラの最終抗戦 [マスター]", "Isla 12: Última Resistencia en Valhalla"),
+            name = new LocalizedText("Island 12: 북방 전당의 최후 항전 [마스터]", "Island 12: Northern Hall's Last Stand [Master]", "Island 12: 北の大広間の最終抗戦 [マスター]", "Isla 12: Última Resistencia del Salón del Norte"),
             briefing = new LocalizedText("모든 가옥을 온전히 보존하며 7파도의 초대형 침략군을 전멸시키세요!", "Achieve a perfect defense protecting all houses against 7 brutal waves!", "全家屋を無傷で守り抜き、7波の超大型侵略軍を全滅させましょう！", "¡Logra una defensa perfecta protegiendo todas las casas en 7 oleadas!"),
             waveCount = 7,
             houseCount = 3,
             hasBerserkers = true,
             hasBoss = true
+        });
+
+        // 13-30: waves 7 -> 9, berserker chance +1%p and wave gap -0.1 s per island after island 12 (46%, 7.2 s at 30)
+        // Island 13
+        stages.Add(new StageDef
+        {
+            islandNum = 13,
+            name = new LocalizedText("Island 13: 물개 바위 포구", "Island 13: Seal Rock Haven", "Island 13: アザラシ岩の港", "Isla 13: Puerto de la Roca de Focas"),
+            briefing = new LocalizedText("7파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 7 raider waves and protect all 3 houses!", "7波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 7 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 7,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.29f,
+            waveDelay = 8.9f
+        });
+        // Island 14
+        stages.Add(new StageDef
+        {
+            islandNum = 14,
+            name = new LocalizedText("Island 14: 유목 모래톱", "Island 14: Driftwood Spit", "Island 14: 流木の砂州", "Isla 14: Lengua de Madera Flotante"),
+            briefing = new LocalizedText("7파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 7 raider waves and protect all 3 houses!", "7波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 7 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 7,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.3f,
+            waveDelay = 8.8f
+        });
+        // Island 15
+        stages.Add(new StageDef
+        {
+            islandNum = 15,
+            name = new LocalizedText("Island 15: 약탈 기함 [보스]", "Island 15: Raider Flagship [Boss]", "Island 15: 略奪旗艦 [ボス]", "Isla 15: Buque Insignia Saqueador [Jefe]"),
+            briefing = new LocalizedText("7파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 7 raider waves and protect all 3 houses!", "7波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 7 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 7,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.31f,
+            waveDelay = 8.7f
+        });
+        // Island 16
+        stages.Add(new StageDef
+        {
+            islandNum = 16,
+            name = new LocalizedText("Island 16: 바다쇠오리 절벽", "Island 16: Puffin Cliffs", "Island 16: ツノメドリの崖", "Isla 16: Acantilados de Frailecillos"),
+            briefing = new LocalizedText("7파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 7 raider waves and protect all 3 houses!", "7波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 7 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 7,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.32f,
+            waveDelay = 8.6f
+        });
+        // Island 17
+        stages.Add(new StageDef
+        {
+            islandNum = 17,
+            name = new LocalizedText("Island 17: 고래뼈 만", "Island 17: Whalebone Bay", "Island 17: 鯨骨の湾", "Isla 17: Bahía de Hueso de Ballena"),
+            briefing = new LocalizedText("7파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 7 raider waves and protect all 3 houses!", "7波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 7 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 7,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.33f,
+            waveDelay = 8.5f
+        });
+        // Island 18
+        stages.Add(new StageDef
+        {
+            islandNum = 18,
+            name = new LocalizedText("Island 18: 조수 웅덩이 계단", "Island 18: Tidepool Steps", "Island 18: 潮だまりの段丘", "Isla 18: Escalones de Pozas"),
+            briefing = new LocalizedText("8파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 8 raider waves and protect all 3 houses!", "8波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 8 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 8,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.34f,
+            waveDelay = 8.4f
+        });
+        // Island 19
+        stages.Add(new StageDef
+        {
+            islandNum = 19,
+            name = new LocalizedText("Island 19: 잿빛 봉화대", "Island 19: Ashen Beacon", "Island 19: 灰の烽火台", "Isla 19: Faro de Ceniza"),
+            briefing = new LocalizedText("8파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 8 raider waves and protect all 3 houses!", "8波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 8 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 8,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.35f,
+            waveDelay = 8.3f
+        });
+        // Island 20
+        stages.Add(new StageDef
+        {
+            islandNum = 20,
+            name = new LocalizedText("Island 20: 쌍둥이 함선 포위전 [보스]", "Island 20: Twin Longship Siege [Boss]", "Island 20: 双子艦の包囲戦 [ボス]", "Isla 20: Asedio de Naves Gemelas [Jefe]"),
+            briefing = new LocalizedText("8파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 8 raider waves and protect all 3 houses!", "8波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 8 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 8,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.36f,
+            waveDelay = 8.2f
+        });
+        // Island 21
+        stages.Add(new StageDef
+        {
+            islandNum = 21,
+            name = new LocalizedText("Island 21: 다시마 숲 해안", "Island 21: Kelp Forest Shore", "Island 21: 昆布の森の浜", "Isla 21: Costa del Bosque de Algas"),
+            briefing = new LocalizedText("8파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 8 raider waves and protect all 3 houses!", "8波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 8 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 8,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.37f,
+            waveDelay = 8.1f
+        });
+        // Island 22
+        stages.Add(new StageDef
+        {
+            islandNum = 22,
+            name = new LocalizedText("Island 22: 바다제비 바위", "Island 22: Storm Petrel Rocks", "Island 22: ウミツバメの岩場", "Isla 22: Rocas del Petrel"),
+            briefing = new LocalizedText("8파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 8 raider waves and protect all 3 houses!", "8波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 8 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 8,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.38f,
+            waveDelay = 8.0f
+        });
+        // Island 23
+        stages.Add(new StageDef
+        {
+            islandNum = 23,
+            name = new LocalizedText("Island 23: 달빛 협만", "Island 23: Moonlit Fjord", "Island 23: 月明かりのフィヨルド", "Isla 23: Fiordo a la Luz de la Luna"),
+            briefing = new LocalizedText("8파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 8 raider waves and protect all 3 houses!", "8波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 8 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 8,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.39f,
+            waveDelay = 7.9f
+        });
+        // Island 24
+        stages.Add(new StageDef
+        {
+            islandNum = 24,
+            name = new LocalizedText("Island 24: 철빛 해안 초소", "Island 24: Iron Shore Watch", "Island 24: 鉄色の海岸見張り", "Isla 24: Guardia de la Costa de Hierro"),
+            briefing = new LocalizedText("9파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 9 raider waves and protect all 3 houses!", "9波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 9 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 9,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.4f,
+            waveDelay = 7.8f
+        });
+        // Island 25
+        stages.Add(new StageDef
+        {
+            islandNum = 25,
+            name = new LocalizedText("Island 25: 회색 돛 대함대 [보스]", "Island 25: Grey Sail Armada [Boss]", "Island 25: 灰色帆の大艦隊 [ボス]", "Isla 25: Armada de Velas Grises [Jefe]"),
+            briefing = new LocalizedText("9파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 9 raider waves and protect all 3 houses!", "9波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 9 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 9,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.41f,
+            waveDelay = 7.7f
+        });
+        // Island 26
+        stages.Add(new StageDef
+        {
+            islandNum = 26,
+            name = new LocalizedText("Island 26: 동상 암초", "Island 26: Frostbite Skerry", "Island 26: 凍てつく岩礁", "Isla 26: Escollo Helado"),
+            briefing = new LocalizedText("9파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 9 raider waves and protect all 3 houses!", "9波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 9 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 9,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.42f,
+            waveDelay = 7.6f
+        });
+        // Island 27
+        stages.Add(new StageDef
+        {
+            islandNum = 27,
+            name = new LocalizedText("Island 27: 북풍의 관문", "Island 27: Northwind Gate", "Island 27: 北風の関門", "Isla 27: Puerta del Viento Norte"),
+            briefing = new LocalizedText("9파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 9 raider waves and protect all 3 houses!", "9波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 9 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 9,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.43f,
+            waveDelay = 7.5f
+        });
+        // Island 28
+        stages.Add(new StageDef
+        {
+            islandNum = 28,
+            name = new LocalizedText("Island 28: 검은 물결 섬", "Island 28: Black Tide Isle", "Island 28: 黒い潮の島", "Isla 28: Isla de la Marea Negra"),
+            briefing = new LocalizedText("9파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 9 raider waves and protect all 3 houses!", "9波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 9 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 9,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.44f,
+            waveDelay = 7.4f
+        });
+        // Island 29
+        stages.Add(new StageDef
+        {
+            islandNum = 29,
+            name = new LocalizedText("Island 29: 마지막 등불 섬", "Island 29: Last Lantern Isle", "Island 29: 最後の灯の島", "Isla 29: Isla del Último Farol"),
+            briefing = new LocalizedText("9파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 9 raider waves and protect all 3 houses!", "9波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 9 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 9,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.45f,
+            waveDelay = 7.3f
+        });
+        // Island 30
+        stages.Add(new StageDef
+        {
+            islandNum = 30,
+            name = new LocalizedText("Island 30: 방파제의 왕관 [그랜드 피날레]", "Island 30: Crown of the Sea Wall [Grand Finale]", "Island 30: 防波堤の王冠 [グランドフィナーレ]", "Isla 30: Corona del Rompeolas [Gran Final]"),
+            briefing = new LocalizedText("9파도의 약탈군을 막고 가옥 3채를 지키세요!", "Hold off 9 raider waves and protect all 3 houses!", "9波の略奪軍を退け、家屋3軒を守りましょう！", "¡Resiste 9 oleadas de saqueadores y protege las 3 casas!"),
+            waveCount = 9,
+            houseCount = 3,
+            hasBerserkers = true,
+            hasBoss = true,
+            berserkerChance = 0.46f,
+            waveDelay = 7.2f
         });
     }
 
@@ -545,6 +784,7 @@ public class BadNorthPlayer : MonoBehaviour
         state = GameState.Playing;
         currentWave = 0;
         totalWavesInStage = stage.waveCount;
+        nextWaveDelay = stage.waveDelay > 0f ? stage.waveDelay : 9f;
         waveTimer = 3.5f; // Initial grace period
         allWavesSpawned = false;
         raidersSlain = 0;
@@ -977,7 +1217,7 @@ public class BadNorthPlayer : MonoBehaviour
                     unit.maxHp = 300f;
                     unit.speed = 1.3f;
                 }
-                else if (stage.hasBerserkers && UnityEngine.Random.value < 0.28f)
+                else if (stage.hasBerserkers && UnityEngine.Random.value < (stage.berserkerChance > 0f ? stage.berserkerChance : 0.28f))
                 {
                     unit.type = RaiderType.Berserker;
                     unit.hp = 140f;
@@ -1707,23 +1947,28 @@ public class BadNorthPlayer : MonoBehaviour
         GUI.Box(box, "");
         GUILayout.BeginArea(ModalInner(box));
 
-        string mapHeader = U("<b><color=#00f0ff>Archipelago - Select Island (12 Stages)</color></b>");
+        string mapHeader = U("<b><color=#00f0ff>Archipelago - Select Island (30 Stages)</color></b>");
         GUILayout.Label(mapHeader, GUILayout.Height(30));
 
+        // 4 columns, scrolling for all 30 islands
+        var cellStyle = new GUIStyle(GUI.skin.button) { wordWrap = true, fontSize = 11 };
+        float cellW = Mathf.Floor((ModalInner(box).width - 40f) / 4f);
+        stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, GUILayout.Height(Mathf.Min(300f, box.height - 140f)));
         for (int i = 0; i < stages.Count; i++)
         {
-            if (i % 2 == 0) GUILayout.BeginHorizontal();
+            if (i % 4 == 0) GUILayout.BeginHorizontal();
 
             StageDef s = stages[i];
-            string btnLabel = string.Format("#{0} {1}", s.islandNum, s.name.Get(currentLang).Split(':')[1].Trim());
-            if (GUILayout.Button(btnLabel, GUILayout.Height(42)))
+            string btnLabel = string.Format("#{0} {1}", s.islandNum, s.name.Get(currentLang).Split(':', '：')[1].Trim());
+            if (GUILayout.Button(btnLabel, cellStyle, GUILayout.Width(cellW), GUILayout.Height(60)))
             {
                 isEndlessMode = false;
                 LoadIsland(i);
             }
 
-            if (i % 2 == 1 || i == stages.Count - 1) GUILayout.EndHorizontal();
+            if (i % 4 == 3 || i == stages.Count - 1) GUILayout.EndHorizontal();
         }
+        GUILayout.EndScrollView();
 
         GUILayout.Space(8);
 
@@ -1758,7 +2003,7 @@ public class BadNorthPlayer : MonoBehaviour
         }
         else
         {
-            string finaleTxt = U("★ All 12 Islands Saved! Victory! ★");
+            string finaleTxt = U("★ All 30 Islands Saved! Victory! ★");
             GUILayout.Label(finaleTxt, GUILayout.Height(36));
         }
 
