@@ -15,6 +15,8 @@ import {
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { PLINKO_SPRITES } from '../../lib/games/sprites';
+import { drawBackdrop, drawSprite } from '../../lib/games/pixel-kit';
+import { ARCADE_CABINET, DROP_BALL, PEG } from '../../lib/games/pixel-sprites';
 
 function TiltPlinkoButton({
     children,
@@ -275,20 +277,20 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             const ctx = canvasRef.current?.getContext('2d');
             if (!ctx) return;
             ctx.clearRect(0, 0, BOARD_W, BOARD_H);
-            ctx.fillStyle = '#cbd5e1';
-            for (const d of dividers) ctx.fillRect(d.position.x - 2, BOARD_H - SLOT_ZONE_H, 4, SLOT_ZONE_H);
-            ctx.fillStyle = '#94a3b8';
-            for (const p of pegBodies) {
-                ctx.beginPath();
-                ctx.arc(p.position.x, p.position.y, PEG_R, 0, Math.PI * 2);
-                ctx.fill();
+            drawBackdrop(ctx, BOARD_W, BOARD_H, ARCADE_CABINET, 4);
+            // pocket floor and brass dividers
+            ctx.fillStyle = '#12061f';
+            ctx.fillRect(0, BOARD_H - SLOT_ZONE_H, BOARD_W, SLOT_ZONE_H);
+            for (const d of dividers) {
+                ctx.fillStyle = '#a16207';
+                ctx.fillRect(Math.round(d.position.x) - 3, BOARD_H - SLOT_ZONE_H, 6, SLOT_ZONE_H);
+                ctx.fillStyle = '#facc15';
+                ctx.fillRect(Math.round(d.position.x) - 3, BOARD_H - SLOT_ZONE_H, 2, SLOT_ZONE_H);
             }
+            for (const p of pegBodies) drawSprite(ctx, PEG, p.position.x, p.position.y, { scale: 2 });
             const ball = ballRef.current;
             if (ball) {
-                ctx.fillStyle = '#f59e0b';
-                ctx.beginPath();
-                ctx.arc(ball.position.x, ball.position.y, BALL_R, 0, Math.PI * 2);
-                ctx.fill();
+                drawSprite(ctx, DROP_BALL, ball.position.x, ball.position.y, { scale: 2 });
             }
         };
         let lastDraw = performance.now();

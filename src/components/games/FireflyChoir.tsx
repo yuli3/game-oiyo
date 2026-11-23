@@ -21,6 +21,8 @@ import {
   playComboSfx,
 } from "../../lib/games/engine-suite-unified";
 import { FIREFLY_CHOIR_SPRITES } from "../../lib/games/sprites";
+import { drawBackdrop, spriteDataUrl } from "../../lib/games/pixel-kit";
+import { FIREFLY_DIM, FIREFLY_LIT, MEADOW_NIGHT } from "../../lib/games/pixel-sprites";
 import {
   FLIES,
   GAME_ID,
@@ -248,6 +250,28 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
   const { shakeCssVars, addTrauma } = useGameJuicePro();
   const [dateKey, setDateKey] = useState<string | null>(null);
   const [run, setRun] = useState<Run | null>(null);
+  const meadowRef = useRef<HTMLCanvasElement | null>(null);
+  const [flyArt, setFlyArt] = useState<{ lit: string; dim: string }>({ lit: "", dim: "" });
+  useEffect(() => {
+    setFlyArt({ lit: spriteDataUrl(FIREFLY_LIT, 4), dim: spriteDataUrl(FIREFLY_DIM, 4) });
+  }, []);
+  const hasRun = run !== null;
+  useEffect(() => {
+    const canvas = meadowRef.current;
+    if (!canvas) return;
+    const paint = () => {
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      canvas.width = Math.round(rect.width);
+      canvas.height = Math.round(rect.height);
+      const ctx = canvas.getContext("2d");
+      if (ctx) drawBackdrop(ctx, canvas.width, canvas.height, MEADOW_NIGHT, 4);
+    };
+    paint();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(paint) : null;
+    ro?.observe(canvas);
+    return () => ro?.disconnect();
+  }, [hasRun]);
   const [attempt, setAttempt] = useState(0);
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [best, setBest] = useState<BestRecord | null>(null);
@@ -404,7 +428,9 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="relative overflow-hidden rounded-2xl border border-border">
+            <canvas ref={meadowRef} aria-hidden="true" className="pointer-events-none absolute inset-0 size-full" />
+            <div className="relative grid grid-cols-3 gap-1 px-2 pb-10 pt-4">
               {run.puzzle.flies.map((fly, index) => {
                 const lit = blinks(fly.period, run.tick);
                 const grouped = run.partner[index] !== null;
@@ -417,28 +443,35 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
                     onClick={() => onPair(index)}
                     aria-pressed={selected}
                     aria-label={`${t.fly(index + 1)}. ${lit ? t.lit : t.dim}. ${grouped ? t.grouped : t.open}`}
-                    className={`relative flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-2xl border p-3 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 transition-all ${
+                    className={`relative flex min-h-28 flex-col items-center justify-center gap-1 rounded-2xl border-2 p-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-80 transition-all ${index % 2 === 1 ? "translate-y-6" : ""} ${
                       selected
-                        ? "border-primary bg-primary/20 text-foreground ring-2 ring-primary shadow-lg scale-105"
-                        : lit
-                          ? "border-primary/80 bg-primary/10 text-foreground ring-1 ring-primary/40 shadow-md shadow-primary/20"
-                          : "border-border bg-card text-muted-foreground hover:border-primary/50"
+                        ? "border-warning bg-warning/15 scale-105"
+                        : grouped
+                          ? "border-warning/40 bg-transparent"
+                          : "border-transparent bg-transparent hover:border-warning/40"
                     }`}
                   >
                     {lit && (
-                      <span className="absolute inset-0 rounded-2xl bg-primary/10 animate-pulse pointer-events-none" />
+                      <span className="pointer-events-none absolute inset-3 rounded-full bg-warning/25 blur-md motion-safe:animate-pulse" />
                     )}
                     <div className="relative">
-                      <img
-                        src={lit ? FIREFLY_CHOIR_SPRITES.lit : FIREFLY_CHOIR_SPRITES.dim}
-                        alt=""
-                        className={`size-9 object-contain transition-transform duration-300 ${lit ? "scale-115 drop-shadow-md" : "opacity-60"}`}
-                      />
+                      {flyArt.lit ? (
+                        <img
+                          src={lit ? flyArt.lit : flyArt.dim}
+                          alt=""
+                          width={48}
+                          height={48}
+                          draggable={false}
+                          className={`size-12 transition-transform duration-300 motion-reduce:transition-none ${lit ? "-translate-y-1 scale-110" : ""}`}
+                        />
+                      ) : (
+                        <img src={lit ? FIREFLY_CHOIR_SPRITES.lit : FIREFLY_CHOIR_SPRITES.dim} alt="" className="size-12 object-contain" />
+                      )}
                     </div>
-                    <div className="flex items-center gap-1 font-mono text-xs font-bold text-foreground">
+                    <div className="flex items-center gap-1 font-mono text-xs font-bold text-warning">
                       <span>{t.fly(index + 1)}</span>
                       {mark && (
-                        <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-xs text-primary font-black">
+                        <span className="rounded-full bg-warning px-1.5 py-0.5 text-xs font-black text-warning-foreground">
                           #{mark}
                         </span>
                       )}
@@ -446,6 +479,7 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
                   </TiltFireflyButton>
                 );
               })}
+            </div>
             </div>
             {run.phase === "ready" ? (
               <TiltFireflyButton
