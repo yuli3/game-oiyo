@@ -1,0 +1,280 @@
+{
+  "schema": "oiyo-portal-catalog-v1",
+  "note": "Unity WebGL builds that can be uploaded to third-party web game portals (CrazyGames, itch.io, GameDistribution). Titles and copy are written for portal listings. Only games with original names and designs are listed; builds whose design follows a commercial game are left out on purpose. Controls text is read from src/data/game-guides.ts (how.en) at package time so it matches the game.",
+  "developer": "OIYO",
+  "games": [
+    {
+      "slug": "snowman-stack",
+      "build": "snowman-stack-unity",
+      "page": "snowman-stack",
+      "title": "Snowman Stack 3D",
+      "short": "Drop snowballs from a swinging sled and build a snowman that stays up.",
+      "description": "Drop snowballs from a swinging sled and stack a snowman that stays standing. Snow sticks, the centre of mass tips, and wind and a frozen pond join in as the stages go on.",
+      "genre": "Casual",
+      "tags": [
+        "stacking",
+        "physics",
+        "winter",
+        "one button",
+        "casual"
+      ],
+      "orientation": "both"
+    },
+    {
+      "slug": "firefly-keeper",
+      "build": "firefly-keeper-unity",
+      "page": "firefly-keeper",
+      "title": "Firefly Keeper",
+      "short": "Lead a glowing trail of fireflies through a moonless wood to light the lanterns.",
+      "description": "Lead a glowing trail of fireflies through a moonless wood and light every lantern. Dodge shadows, open charm gates, ride the wind and face the Newmoon Shadow across twelve nights.",
+      "genre": "Puzzle",
+      "tags": [
+        "puzzle",
+        "action",
+        "atmospheric",
+        "stealth",
+        "story"
+      ],
+      "orientation": "landscape"
+    },
+    {
+      "slug": "spin-sumo",
+      "build": "spin-sumo-unity",
+      "page": "spin-sumo",
+      "title": "Spin Sumo 3D",
+      "short": "One-button spinning top duel for one or two players.",
+      "description": "Hold to aim and charge, release to dash, and knock the other top out of the ring. Ice, wind, holes and turntables across many arenas against the computer, or two players on one screen.",
+      "genre": "Two Player",
+      "tags": [
+        "2 player",
+        "one button",
+        "physics",
+        "arena",
+        "local multiplayer"
+      ],
+      "orientation": "both",
+      "cover": "/games/unity-posters/spin-sumo.webp"
+    },
+    {
+      "slug": "paper-flight",
+      "build": "paper-flight-unity",
+      "page": "paper-flight-3d",
+      "title": "Paper Flight 3D",
+      "short": "Glide a paper plane on rising thermals through five landscapes.",
+      "description": "Trim your glide, surf rising thermals and thread golden boost rings as a paper plane drifts across five landscapes. Lift and drag decide how far you fly.",
+      "genre": "Simulation",
+      "tags": [
+        "flying",
+        "3d",
+        "relaxing",
+        "physics",
+        "endless"
+      ],
+      "orientation": "landscape"
+    },
+    {
+      "slug": "cave-dash",
+      "build": "cave-dash-unity",
+      "page": "cave-dash",
+      "title": "Cave Dash 3D",
+      "short": "Tap to lift your ship and thread the gaps between cave walls.",
+      "description": "Tap to lift your ship and thread the gaps between the walls. The cave keeps speeding up, so every run is one more try.",
+      "genre": "Casual",
+      "tags": [
+        "one button",
+        "endless",
+        "arcade",
+        "reflex",
+        "high score"
+      ],
+      "orientation": "both"
+    },
+    {
+      "slug": "neon-katana",
+      "build": "neon-katana-unity",
+      "page": "neon-katana",
+      "title": "Neon Katana: Parry Master",
+      "short": "Time your katana to deflect incoming rounds, then dash through the wave.",
+      "description": "Deflect incoming rounds with precise katana timing, build your meter and unleash a blade dash through each enemy wave on a neon rooftop.",
+      "genre": "Action",
+      "tags": [
+        "timing",
+        "reflex",
+        "cyberpunk",
+        "sword",
+        "arcade"
+      ],
+      "orientation": "landscape"
+    },
+    {
+      "slug": "beat-slice",
+      "build": "beat-slice-unity",
+      "page": "beat-slice-3d",
+      "title": "Beat Slice 3D",
+      "short": "Slice beat blocks in time with the music on a neon highway.",
+      "description": "Race down a neon highway and slice the beat blocks in half as they arrive on the rhythm.",
+      "genre": "Rhythm",
+      "tags": [
+        "rhythm",
+        "music",
+        "neon",
+        "3d",
+        "reflex"
+      ],
+      "orientation": "landscape"
+    },
+    {
+      "slug": "mini-golf",
+      "build": "mini-golf-unity",
+      "page": "mini-golf-3d",
+      "title": "Mini Golf 3D",
+      "short": "Voxel mini golf with bunkers, water and tricky slopes.",
+      "description": "Aim, set your power and sink each putt across voxel courses with sand bunkers, water hazards and tricky slopes.",
+      "genre": "Sports",
+      "tags": [
+        "golf",
+        "3d",
+        "physics",
+        "casual",
+        "sports"
+      ],
+      "orientation": "both"
+    },
+    {
+      "slug": "viking-longship",
+      "build": "viking-longship-unity",
+      "page": "viking-longship",
+      "title": "Viking Longship: Valhalla Seas",
+      "short": "Trim your sail, fight sea serpents and light three runestones.",
+      "description": "Trim your sail to the wind, explore an island chain, harpoon sea serpents and light three ancient runestones to open the way to Valhalla.",
+      "genre": "Adventure",
+      "tags": [
+        "sailing",
+        "vikings",
+        "3d",
+        "adventure",
+        "survival"
+      ],
+      "orientation": "landscape"
+    },
+    {
+      "slug": "sushi-conveyor",
+      "build": "sushi-conveyor-unity",
+      "page": "sushi-conveyor",
+      "title": "Conveyor Sushi Bar",
+      "short": "Make nigiri, keep the belt full and serve customers before they leave.",
+      "description": "Run a busy conveyor sushi bar. Make fresh nigiri, keep the belt stocked, watch each customer's patience and chain orders into fever combos.",
+      "genre": "Management",
+      "tags": [
+        "cooking",
+        "time management",
+        "restaurant",
+        "casual",
+        "tycoon"
+      ],
+      "orientation": "both"
+    },
+    {
+      "slug": "cat-fishing",
+      "build": "cat-fishing-unity",
+      "page": "cat-fishing",
+      "title": "Cat Fishing",
+      "short": "Tap the darting fish and catch them all before time runs out.",
+      "description": "Help a hungry cat tap the darting fish. On higher levels the fish flee from your finger, so chase your best time.",
+      "genre": "Casual",
+      "tags": [
+        "cat",
+        "reflex",
+        "tap",
+        "casual",
+        "kids friendly"
+      ],
+      "orientation": "both"
+    },
+    {
+      "slug": "star-blaster",
+      "build": "star-blaster-unity",
+      "page": "star-blaster",
+      "title": "Star Blaster 3D",
+      "short": "Steer your ship, auto-fire and survive the waves.",
+      "description": "Drag to steer while your ship fires on its own. Survive wave after wave and chase a new high score.",
+      "genre": "Shooter",
+      "tags": [
+        "space",
+        "shooter",
+        "arcade",
+        "waves",
+        "high score"
+      ],
+      "orientation": "portrait"
+    },
+    {
+      "slug": "orbital-defense",
+      "build": "orbital-defense-unity",
+      "page": "orbital-defense-3d",
+      "title": "Orbital Defense 3D",
+      "short": "Place satellites on planetary orbits to stop alien fleets.",
+      "description": "Deploy laser, plasma and missile satellites along rings around your planet and hold off alien fleets in real-time 3D tower defense.",
+      "genre": "Strategy",
+      "tags": [
+        "tower defense",
+        "space",
+        "strategy",
+        "3d",
+        "waves"
+      ],
+      "orientation": "landscape"
+    },
+    {
+      "slug": "gravity-roller",
+      "build": "gravity-roller-unity",
+      "page": "gravity-roller-3d",
+      "title": "Gravity Roller 3D",
+      "short": "Tilt the labyrinth, roll the marble, collect the gems.",
+      "description": "Tilt a 3D labyrinth board, roll the marble past the holes, collect the emerald gems and reach the exit portal.",
+      "genre": "Puzzle",
+      "tags": [
+        "marble",
+        "labyrinth",
+        "physics",
+        "3d",
+        "puzzle"
+      ],
+      "orientation": "both"
+    },
+    {
+      "slug": "emberdeep",
+      "build": "emberdeep-unity",
+      "page": "emberdeep",
+      "title": "Emberdeep",
+      "short": "Fantasy beat 'em up with combos, spells, dodges and branching dungeons.",
+      "description": "A single-player fantasy action RPG. Chain four-hit combos, cast spells, dodge, move between lanes and choose your path through branching dungeons.",
+      "genre": "Action",
+      "tags": [
+        "beat em up",
+        "rpg",
+        "fantasy",
+        "pixel art",
+        "dungeon"
+      ],
+      "orientation": "landscape"
+    },
+    {
+      "slug": "iron-tempest",
+      "build": "iron-tempest-unity",
+      "page": "iron-tempest",
+      "title": "Iron Tempest",
+      "short": "Pixel-art run-and-gun with heavy weapons and a giant war train boss.",
+      "description": "An explosive pixel-art run-and-gun. Grab heavy weapon drops, blow apart the battlefield, ride an assault vehicle and take down a colossal war train.",
+      "genre": "Shooter",
+      "tags": [
+        "run and gun",
+        "pixel art",
+        "action",
+        "shooter",
+        "boss"
+      ],
+      "orientation": "landscape"
+    }
+  ]
+}
