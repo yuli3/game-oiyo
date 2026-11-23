@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TtakjiFlip from "../../components/games/TtakjiFlip";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "딱지치기 — 아래로 휙 쓸어 내 딱지로 상대 딱지를 뒤집는 무료 설날 민속놀이 게임 30단계",
+    description: "골목에 놓인 상대 딱지를 내 딱지로 내리쳐 뒤집어요! 화면을 아래로 휙 쓸고 손을 떼면 그 자리에 쓴 속도만큼 세게 딱! 모서리 바로 안쪽을 쳐야 바람이 들어가 넘어가고, 너무 세면 튕겨 나가요. 비스듬한 딱지, 두 번 접은 딱지, 빙판에서 미끄러지는 딱지까지 30단계.",
+  },
+  en: {
+    title: "Ttakji Flip — Free Seollal folk game: swipe down to slam your folded tile and flip your rival's (30 stages)",
+    description: "Slam your folded paper tile onto your rival's in a winter alley and flip it over! Swipe down and let go: your tile lands where your finger leaves, as hard as you swiped. Hit just inside an edge so the gust gets under it; slam too hard and you bounce off. 30 stages with tilted tiles, double-folded tiles and tiles sliding on ice.",
+  },
+  ja: {
+    title: "タクチめんこ — 下へスワイプして自分のめんこを叩きつけ、相手のめんこをめくる無料のお正月遊びゲーム30ステージ",
+    description: "路地に置かれた相手のめんこを、自分のめんこで叩いてめくろう！ 下へさっとスワイプして指を離すと、その場所にスワイプの速さでバシッ。縁のすぐ内側を叩けば風が入ってひっくり返り、強すぎると跳ねてしまいます。斜めのめんこ、二重折りのめんこ、氷の上を滑るめんこまで30ステージ。",
+  },
+  zh: {
+    title: "拍纸板 — 向下一划用自己的折纸板砸翻对手纸板的免费春节民俗游戏30关",
+    description: "用自己的折纸板砸向巷子里对手的纸板，把它掀翻！向下一划再松手，纸板就以划动的速度砸在松手的位置。砸在边缘内侧一点点，风钻进去才能翻面；太用力就会弹开。还有斜放的、双层折的、在冰上滑动的纸板，共30关。",
+  },
+  fr: {
+    title: "Ttakji retourné — Jeu traditionnel gratuit du Nouvel An : glissez vers le bas pour retourner le carré du rival (30 niveaux)",
+    description: "Abattez votre carré de papier plié sur celui du rival dans une ruelle d'hiver et retournez-le ! Glissez vers le bas puis lâchez : votre carré tombe là où le doigt quitte l'écran, aussi fort que le geste. Frappez juste à l'intérieur d'un bord pour que le souffle passe dessous ; trop fort, vous rebondissez. 30 niveaux avec carrés de biais, carrés doublés et carrés qui glissent sur la glace.",
+  },
+  es: {
+    title: "Ttakji al revés — Juego tradicional gratis de Año Nuevo: desliza hacia abajo para voltear el cuadro del rival (30 niveles)",
+    description: "¡Estampa tu cuadro de papel doblado sobre el del rival en un callejón invernal y voltéalo! Desliza hacia abajo y suelta: tu cuadro cae donde el dedo deja la pantalla, tan fuerte como deslizaste. Golpea justo dentro de un borde para que la ráfaga lo levante; demasiado fuerte y rebotas. 30 niveles con cuadros torcidos, cuadros de doble pliegue y cuadros que resbalan en el hielo.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["ttakji-flip"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <TtakjiFlip client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="ttakji-flip" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
