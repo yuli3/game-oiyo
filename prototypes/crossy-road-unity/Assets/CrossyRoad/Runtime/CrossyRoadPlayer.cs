@@ -153,13 +153,14 @@ public class CrossyRoadPlayer : MonoBehaviour
     private int currentStageIdx = 0;
     private bool isEndlessMode = false;
     private bool showStageSelect = false;
+    private Vector2 stageSelectScroll;
     private LocalizedText deathCauseText = null;
     private float shakeTrauma = 0f;
 
     // Audio
     private AudioSource sfxSource;
 
-    // Stages (12 Stages)
+    // Stages (30 Stages)
     private List<StageDef> stages = new List<StageDef>();
 
     private void Awake()
@@ -218,7 +219,7 @@ public class CrossyRoadPlayer : MonoBehaviour
         stages.Add(new StageDef
         {
             stageNum = 4,
-            name = new LocalizedText("Stage 4: KTX 고속철도 질주", "Stage 4: Bullet Train Junction", "Stage 4: 新幹線高速交差", "Etapa 4: Cruce de Tren Bala"),
+            name = new LocalizedText("Stage 4: 고속열차 건널목 질주", "Stage 4: Bullet Train Junction", "Stage 4: 高速列車の踏切", "Etapa 4: Cruce de Tren Bala"),
             briefing = new LocalizedText("적색 경보등이 켜지면 멈추고 고속 열차를 피해 55m에 도달하세요!", "Watch the red signal bells and dodge bullet trains to reach 55m!", "赤信号が鳴ったら停止し、高速列車を避けて55mに到達しましょう！", "¡Atento a la señal roja y esquiva los trenes bala hasta 55m!"),
             targetDistance = 55,
             requiredCoins = 0,
@@ -290,7 +291,7 @@ public class CrossyRoadPlayer : MonoBehaviour
         stages.Add(new StageDef
         {
             stageNum = 10,
-            name = new LocalizedText("Stage 10: 초고속 신칸센 특급 [최종보스]", "Stage 10: Shinkansen Express [Boss]", "Stage 10: 超高速新幹線特急 [最終ボス]", "Etapa 10: Expreso Shinkansen [Jefe Final]"),
+            name = new LocalizedText("Stage 10: 초고속 탄환 특급 [최종보스]", "Stage 10: Bullet Express [Boss]", "Stage 10: 超高速弾丸特急 [最終ボス]", "Etapa 10: Expreso Bala [Jefe Final]"),
             briefing = new LocalizedText("연속 3개 레일에서 쏟아지는 고속 열차를 돌파하고 125m를 달성하세요!", "Dodge 3 consecutive high-speed railway tracks to reach 125m!", "連続する3本のレールから現れる高速列車を突破し、125mを達成しましょう！", "¡Supera 3 vías consecutivas de trenes bala y alcanza 125m!"),
             targetDistance = 125,
             requiredCoins = 0,
@@ -315,11 +316,211 @@ public class CrossyRoadPlayer : MonoBehaviour
         {
             stageNum = 12,
             name = new LocalizedText("Stage 12: 궁극의 로드 마스터 [마스터 피날레]", "Stage 12: Ultimate Road Master [Finale]", "Stage 12: 究極のロードマスター [フィナーレ]", "Etapa 12: Maestro Supremo del Camino [Final]"),
-            briefing = new LocalizedText("차량, 급류, 고속열차의 대혼란을 뚫고 160m를 돌파하여 전설이 되세요!", "Survive the ultimate onslaught of cars, rapids, and bullet trains to reach 160m!", "車、急流、新幹線のカオスを乗り越えて160mを突破しましょう！", "¡Supera el caos supremo de autos, rápidos y trenes hasta 160m!"),
+            briefing = new LocalizedText("차량, 급류, 고속열차의 대혼란을 뚫고 160m를 돌파하여 전설이 되세요!", "Survive the ultimate onslaught of cars, rapids, and bullet trains to reach 160m!", "車、急流、高速列車のカオスを乗り越えて160mを突破しましょう！", "¡Supera el caos supremo de autos, rápidos y trenes hasta 160m!"),
             targetDistance = 160,
             requiredCoins = 12,
             vehicleSpeedScale = 1.9f,
             trainFrequency = 2.4f
+        });
+
+        // 13-30: +10 m, vehicle speed +0.03 and train frequency +0.05 per stage after stage 12
+        // Stage 13
+        stages.Add(new StageDef
+        {
+            stageNum = 13,
+            name = new LocalizedText("Stage 13: 새벽 시장 골목", "Stage 13: Dawn Market Street", "Stage 13: 夜明けの市場通り", "Etapa 13: Calle del Mercado al Alba"),
+            briefing = new LocalizedText("더 빨라진 차량과 열차를 피해 170m를 달성하세요!", "Dodge faster cars and trains to reach 170m!", "さらに速い車と列車をかわして170mを達成しましょう！", "¡Esquiva autos y trenes más rápidos hasta 170m!"),
+            targetDistance = 170,
+            requiredCoins = 0,
+            vehicleSpeedScale = 1.93f,
+            trainFrequency = 2.45f
+        });
+        // Stage 14
+        stages.Add(new StageDef
+        {
+            stageNum = 14,
+            name = new LocalizedText("Stage 14: 운하 수문 건너기", "Stage 14: Canal Lock Crossing", "Stage 14: 運河の水門渡り", "Etapa 14: Cruce de la Esclusa"),
+            briefing = new LocalizedText("더 빨라진 차량과 열차를 피해 180m를 달성하세요!", "Dodge faster cars and trains to reach 180m!", "さらに速い車と列車をかわして180mを達成しましょう！", "¡Esquiva autos y trenes más rápidos hasta 180m!"),
+            targetDistance = 180,
+            requiredCoins = 0,
+            vehicleSpeedScale = 1.96f,
+            trainFrequency = 2.5f
+        });
+        // Stage 15
+        stages.Add(new StageDef
+        {
+            stageNum = 15,
+            name = new LocalizedText("Stage 15: 화물 조차장 돌파 [보스]", "Stage 15: Freight Yard Rush [Boss]", "Stage 15: 貨物操車場突破 [ボス]", "Etapa 15: Patio de Carga [Jefe]"),
+            briefing = new LocalizedText("더 빨라진 차량과 열차를 피해 190m를 달성하세요!", "Dodge faster cars and trains to reach 190m!", "さらに速い車と列車をかわして190mを達成しましょう！", "¡Esquiva autos y trenes más rápidos hasta 190m!"),
+            targetDistance = 190,
+            requiredCoins = 0,
+            vehicleSpeedScale = 1.99f,
+            trainFrequency = 2.55f
+        });
+        // Stage 16
+        stages.Add(new StageDef
+        {
+            stageNum = 16,
+            name = new LocalizedText("Stage 16: 단풍 가로수길", "Stage 16: Autumn Leaf Avenue", "Stage 16: 紅葉の並木道", "Etapa 16: Avenida de Hojas Otoñales"),
+            briefing = new LocalizedText("더 빨라진 차량과 열차를 피해 200m를 달성하세요!", "Dodge faster cars and trains to reach 200m!", "さらに速い車と列車をかわして200mを達成しましょう！", "¡Esquiva autos y trenes más rápidos hasta 200m!"),
+            targetDistance = 200,
+            requiredCoins = 0,
+            vehicleSpeedScale = 2.02f,
+            trainFrequency = 2.6f
+        });
+        // Stage 17
+        stages.Add(new StageDef
+        {
+            stageNum = 17,
+            name = new LocalizedText("Stage 17: 항구 도개교", "Stage 17: Harbor Drawbridge", "Stage 17: 港の跳ね橋", "Etapa 17: Puente Levadizo del Puerto"),
+            briefing = new LocalizedText("더 빨라진 차량과 열차를 피해 210m를 달성하세요!", "Dodge faster cars and trains to reach 210m!", "さらに速い車と列車をかわして210mを達成しましょう！", "¡Esquiva autos y trenes más rápidos hasta 210m!"),
+            targetDistance = 210,
+            requiredCoins = 0,
+            vehicleSpeedScale = 2.05f,
+            trainFrequency = 2.65f
+        });
+        // Stage 18
+        stages.Add(new StageDef
+        {
+            stageNum = 18,
+            name = new LocalizedText("Stage 18: 동전 협곡 달리기", "Stage 18: Coin Canyon Run", "Stage 18: コイン渓谷ラン", "Etapa 18: Cañón de las Monedas"),
+            briefing = new LocalizedText("코인 13개 이상을 모으고 220m를 달성하세요!", "Collect at least 13 coins and reach 220m!", "コインを13枚以上集めて220mを達成しましょう！", "¡Recoge al menos 13 monedas y llega a 220m!"),
+            targetDistance = 220,
+            requiredCoins = 13,
+            vehicleSpeedScale = 2.08f,
+            trainFrequency = 2.7f
+        });
+        // Stage 19
+        stages.Add(new StageDef
+        {
+            stageNum = 19,
+            name = new LocalizedText("Stage 19: 장마 수로", "Stage 19: Monsoon Floodway", "Stage 19: 梅雨の放水路", "Etapa 19: Canal del Monzón"),
+            briefing = new LocalizedText("더 빨라진 차량과 열차를 피해 230m를 달성하세요!", "Dodge faster cars and trains to reach 230m!", "さらに速い車と列車をかわして230mを達成しましょう！", "¡Esquiva autos y trenes más rápidos hasta 230m!"),
+            targetDistance = 230,
+            requiredCoins = 0,
+            vehicleSpeedScale = 2.11f,
+            trainFrequency = 2.75f
+        });
+        // Stage 20
+        stages.Add(new StageDef
+        {
+            stageNum = 20,
+            name = new LocalizedText("Stage 20: 쌍둥이 선로 건널목 [보스]", "Stage 20: Twin Rail Crossing [Boss]", "Stage 20: 双子線路の踏切 [ボス]", "Etapa 20: Cruce de Vías Gemelas [Jefe]"),
+            briefing = new LocalizedText("더 빨라진 차량과 열차를 피해 240m를 달성하세요!", "Dodge faster cars and trains to reach 240m!", "さらに速い車と列車をかわして240mを達成しましょう！", "¡Esquiva autos y trenes más rápidos hasta 240m!"),
+            targetDistance = 240,
+            requiredCoins = 0,
+            vehicleSpeedScale = 2.14f,
+            trainFrequency = 2.8f
+        });
+        // Stage 21
+        stages.Add(new StageDef
+        {
+            stageNum = 21,
+            name = new LocalizedText("Stage 21: 신기루 고속도로", "Stage 21: Mirage Highway", "Stage 21: 蜃気楼ハイウェイ", "Etapa 21: Autopista del Espejismo"),
+            briefing = new LocalizedText("코인 14개 이상을 모으고 250m를 달성하세요!", "Collect at least 14 coins and reach 250m!", "コインを14枚以上集めて250mを達成しましょう！", "¡Recoge al menos 14 monedas y llega a 250m!"),
+            targetDistance = 250,
+            requiredCoins = 14,
+            vehicleSpeedScale = 2.17f,
+            trainFrequency = 2.85f
+        });
+        // Stage 22
+        stages.Add(new StageDef
+        {
+            stageNum = 22,
+            name = new LocalizedText("Stage 22: 등불 밤다리", "Stage 22: Lantern Night Bridge", "Stage 22: 灯籠の夜橋", "Etapa 22: Puente de Farolillos"),
+            briefing = new LocalizedText("더 빨라진 차량과 열차를 피해 260m를 달성하세요!", "Dodge faster cars and trains to reach 260m!", "さらに速い車と列車をかわして260mを達成しましょう！", "¡Esquiva autos y trenes más rápidos hasta 260m!"),
+            targetDistance = 260,
+            requiredCoins = 0,
+            vehicleSpeedScale = 2.2f,
+            trainFrequency = 2.9f
+        });
+        // Stage 23
+        stages.Add(new StageDef
+        {
+            stageNum = 23,
+            name = new LocalizedText("Stage 23: 빙하 해빙 급류", "Stage 23: Glacier Melt Rapids", "Stage 23: 雪解けの急流", "Etapa 23: Rápidos del Deshielo"),
+            briefing = new LocalizedText("더 빨라진 차량과 열차를 피해 270m를 달성하세요!", "Dodge faster cars and trains to reach 270m!", "さらに速い車と列車をかわして270mを達成しましょう！", "¡Esquiva autos y trenes más rápidos hasta 270m!"),
+            targetDistance = 270,
+            requiredCoins = 0,
+            vehicleSpeedScale = 2.23f,
+            trainFrequency = 2.95f
+        });
+        // Stage 24
+        stages.Add(new StageDef
+        {
+            stageNum = 24,
+            name = new LocalizedText("Stage 24: 천둥 요금소", "Stage 24: Thunder Toll Plaza", "Stage 24: 雷鳴の料金所", "Etapa 24: Peaje del Trueno"),
+            briefing = new LocalizedText("코인 15개 이상을 모으고 280m를 달성하세요!", "Collect at least 15 coins and reach 280m!", "コインを15枚以上集めて280mを達成しましょう！", "¡Recoge al menos 15 monedas y llega a 280m!"),
+            targetDistance = 280,
+            requiredCoins = 15,
+            vehicleSpeedScale = 2.26f,
+            trainFrequency = 3.0f
+        });
+        // Stage 25
+        stages.Add(new StageDef
+        {
+            stageNum = 25,
+            name = new LocalizedText("Stage 25: 심야 화물 특급 [보스]", "Stage 25: Night Freight Express [Boss]", "Stage 25: 深夜貨物特急 [ボス]", "Etapa 25: Expreso de Carga Nocturno [Jefe]"),
+            briefing = new LocalizedText("더 빨라진 차량과 열차를 피해 290m를 달성하세요!", "Dodge faster cars and trains to reach 290m!", "さらに速い車と列車をかわして290mを達成しましょう！", "¡Esquiva autos y trenes más rápidos hasta 290m!"),
+            targetDistance = 290,
+            requiredCoins = 0,
+            vehicleSpeedScale = 2.29f,
+            trainFrequency = 3.05f
+        });
+        // Stage 26
+        stages.Add(new StageDef
+        {
+            stageNum = 26,
+            name = new LocalizedText("Stage 26: 태풍 둑길", "Stage 26: Typhoon Causeway", "Stage 26: 台風の堤防道", "Etapa 26: Calzada del Tifón"),
+            briefing = new LocalizedText("더 빨라진 차량과 열차를 피해 300m를 달성하세요!", "Dodge faster cars and trains to reach 300m!", "さらに速い車と列車をかわして300mを達成しましょう！", "¡Esquiva autos y trenes más rápidos hasta 300m!"),
+            targetDistance = 300,
+            requiredCoins = 0,
+            vehicleSpeedScale = 2.32f,
+            trainFrequency = 3.1f
+        });
+        // Stage 27
+        stages.Add(new StageDef
+        {
+            stageNum = 27,
+            name = new LocalizedText("Stage 27: 화산재 도로", "Stage 27: Volcano Ash Road", "Stage 27: 火山灰の道", "Etapa 27: Camino de Ceniza"),
+            briefing = new LocalizedText("코인 16개 이상을 모으고 310m를 달성하세요!", "Collect at least 16 coins and reach 310m!", "コインを16枚以上集めて310mを達成しましょう！", "¡Recoge al menos 16 monedas y llega a 310m!"),
+            targetDistance = 310,
+            requiredCoins = 16,
+            vehicleSpeedScale = 2.35f,
+            trainFrequency = 3.15f
+        });
+        // Stage 28
+        stages.Add(new StageDef
+        {
+            stageNum = 28,
+            name = new LocalizedText("Stage 28: 오로라 빙판 건너기", "Stage 28: Aurora Ice Crossing", "Stage 28: オーロラ氷原横断", "Etapa 28: Cruce Helado de la Aurora"),
+            briefing = new LocalizedText("더 빨라진 차량과 열차를 피해 320m를 달성하세요!", "Dodge faster cars and trains to reach 320m!", "さらに速い車と列車をかわして320mを達成しましょう！", "¡Esquiva autos y trenes más rápidos hasta 320m!"),
+            targetDistance = 320,
+            requiredCoins = 0,
+            vehicleSpeedScale = 2.38f,
+            trainFrequency = 3.2f
+        });
+        // Stage 29
+        stages.Add(new StageDef
+        {
+            stageNum = 29,
+            name = new LocalizedText("Stage 29: 끝없는 출근길", "Stage 29: Endless Rush Hour", "Stage 29: 終わらないラッシュ", "Etapa 29: Hora Punta Sin Fin"),
+            briefing = new LocalizedText("더 빨라진 차량과 열차를 피해 330m를 달성하세요!", "Dodge faster cars and trains to reach 330m!", "さらに速い車と列車をかわして330mを達成しましょう！", "¡Esquiva autos y trenes más rápidos hasta 330m!"),
+            targetDistance = 330,
+            requiredCoins = 0,
+            vehicleSpeedScale = 2.41f,
+            trainFrequency = 3.25f
+        });
+        // Stage 30
+        stages.Add(new StageDef
+        {
+            stageNum = 30,
+            name = new LocalizedText("Stage 30: 대횡단 왕관 [그랜드 피날레]", "Stage 30: Grand Crossing Crown [Grand Finale]", "Stage 30: 大横断の王冠 [グランドフィナーレ]", "Etapa 30: Corona del Gran Cruce [Gran Final]"),
+            briefing = new LocalizedText("코인 18개 이상을 모으고 340m를 달성하세요!", "Collect at least 18 coins and reach 340m!", "コインを18枚以上集めて340mを達成しましょう！", "¡Recoge al menos 18 monedas y llega a 340m!"),
+            targetDistance = 340,
+            requiredCoins = 18,
+            vehicleSpeedScale = 2.44f,
+            trainFrequency = 3.3f
         });
     }
 
@@ -973,7 +1174,7 @@ public class CrossyRoadPlayer : MonoBehaviour
                     {
                         if (Mathf.Abs(currentPos.x - lane.trainX) < 8.5f)
                         {
-                            TriggerGameOver(new LocalizedText("초고속 열차에 치였습니다!", "Hit by a high-speed bullet train!", "超高速新幹線に衝突しました！", "¡Impactado por el tren bala!"));
+                            TriggerGameOver(new LocalizedText("초고속 열차에 치였습니다!", "Hit by a high-speed bullet train!", "超高速列車に衝突しました！", "¡Impactado por el tren bala!"));
                             PlayTone(120f, 0.5f, "noise");
                             shakeTrauma = 0.8f;
                         }
@@ -1185,23 +1386,27 @@ public class CrossyRoadPlayer : MonoBehaviour
         GUI.Box(new Rect(Screen.width * 0.5f - 240, Screen.height * 0.5f - 230, 480, 460), "");
         GUILayout.BeginArea(new Rect(Screen.width * 0.5f - 220, Screen.height * 0.5f - 210, 440, 420));
 
-        string mapHeader = U("<b><color=#00f0ff>Select Stage (12 Stages)</color></b>");
+        string mapHeader = U("<b><color=#00f0ff>Select Stage (30 Stages)</color></b>");
         GUILayout.Label(mapHeader, GUILayout.Height(30));
 
+        // 4 columns, scrolling for all 30 stages
+        var cellStyle = new GUIStyle(GUI.skin.button) { wordWrap = true, fontSize = 11 };
+        stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, GUILayout.Height(250));
         for (int i = 0; i < stages.Count; i++)
         {
-            if (i % 2 == 0) GUILayout.BeginHorizontal();
+            if (i % 4 == 0) GUILayout.BeginHorizontal();
 
             StageDef s = stages[i];
-            string btnLabel = string.Format("#{0} {1}", s.stageNum, s.name.Get(currentLang).Split(':')[1].Trim());
-            if (GUILayout.Button(btnLabel, GUILayout.Height(42)))
+            string btnLabel = string.Format("#{0} {1}", s.stageNum, s.name.Get(currentLang).Split(':', '：')[1].Trim());
+            if (GUILayout.Button(btnLabel, cellStyle, GUILayout.Width(98), GUILayout.Height(60)))
             {
                 isEndlessMode = false;
                 LoadStage(i);
             }
 
-            if (i % 2 == 1 || i == stages.Count - 1) GUILayout.EndHorizontal();
+            if (i % 4 == 3 || i == stages.Count - 1) GUILayout.EndHorizontal();
         }
+        GUILayout.EndScrollView();
 
         GUILayout.Space(8);
 
@@ -1273,7 +1478,7 @@ public class CrossyRoadPlayer : MonoBehaviour
         }
         else
         {
-            string masterTxt = U("★ All 12 Stages Mastered! ★");
+            string masterTxt = U("★ All 30 Stages Mastered! ★");
             GUILayout.Label(masterTxt, GUILayout.Height(36));
         }
 
