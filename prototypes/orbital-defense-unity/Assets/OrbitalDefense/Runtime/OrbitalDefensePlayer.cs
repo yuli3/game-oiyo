@@ -38,6 +38,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
         public bool hasHeavy;
         public bool hasFast;
         public bool isBossStage;
+        public float bossHealth; // 0 = the hand-made sectors' 2200 / 4000
         public Color spaceColor;
         public Color planetColor;
     }
@@ -97,6 +98,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
     private int currentStageIndex = 0;
     private bool isEndless = false;
     private bool showStageSelect = false;
+    private Vector2 stageSelectScroll;
 
     // Planet Stats
     private GameObject planetRoot;
@@ -144,7 +146,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
     private float threatSpawnTimer = 0f;
 
-    // 12 Defined Stages
+    // 12 hand-made sectors; 13-30 are appended by AddAdvancedStages()
     private StageData[] stages = new StageData[]
     {
         new StageData {
@@ -295,6 +297,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
         CreateParticleSystems();
 
         bestScore = PlayerPrefs.GetInt("OrbitalDefense_BestScore", 0);
+        AddAdvancedStages();
         ResetToStage(0);
     }
 
@@ -528,7 +531,8 @@ public class OrbitalDefensePlayer : MonoBehaviour
         bossMothership = new GameObject("BossMothership");
         bossAngle = 0f;
         bossMothership.transform.position = new Vector3(0, 0, 13.5f);
-        bossMaxHp = stages[currentStageIndex].id == 12 ? 4000f : 2200f;
+        var bossStage = stages[currentStageIndex];
+        bossMaxHp = bossStage.bossHealth > 0f ? bossStage.bossHealth : (bossStage.id == 12 ? 4000f : 2200f);
         bossHp = bossMaxHp;
 
         // Painted saucer (child of the root, so the root's turning spins it)
@@ -1276,7 +1280,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
         GUILayout.BeginArea(new Rect(r.x + 20, r.y + 15, r.width - 40, r.height - 30));
         GUI.color = Color.yellow;
-        GUILayout.Label($"<size=23><b>🏆 {GetText("12섹터 은하계 완전 수호!", "ALL 12 SECTORS DEFENDED!", "全12セクター完全防衛！", "¡TODOS LOS SECTORES DEFENDIDOS!")}</b></size>", GUILayout.Height(34));
+        GUILayout.Label($"<size=23><b>🏆 {GetText("30섹터 은하계 완전 수호!", "ALL 30 SECTORS DEFENDED!", "全30セクター完全防衛！", "¡LOS 30 SECTORES DEFENDIDOS!")}</b></size>", GUILayout.Height(34));
         GUI.color = Color.white;
 
         GUILayout.Space(8);
@@ -1312,7 +1316,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
         GUILayout.BeginArea(new Rect(r.x + 15, r.y + 15, r.width - 30, r.height - 30));
         GUILayout.BeginHorizontal();
         GUI.color = Color.cyan;
-        GUILayout.Label($"<size=20><b>{GetText("섹터 선택 (12 Sectors)", "Select Sector (12 Sectors)", "セクター選択 (全12セクター)", "Seleccionar Sector (12 Sectores)")}</b></size>");
+        GUILayout.Label($"<size=20><b>{GetText("섹터 선택 (30 Sectors)", "Select Sector (30 Sectors)", "セクター選択 (全30セクター)", "Seleccionar Sector (30 Sectores)")}</b></size>");
         GUI.color = Color.white;
         GUILayout.FlexibleSpace();
         if (GUILayout.Button("×", GUILayout.Width(35), GUILayout.Height(28)))
@@ -1323,7 +1327,10 @@ public class OrbitalDefensePlayer : MonoBehaviour
 
         GUILayout.Space(10);
 
-        for (int row = 0; row < 3; row++)
+        // 4 columns, scrolling for all 30 sectors
+        float btnW = (r.width - 30f - 24f - 4 * 6f) / 4f;
+        stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, false, true);
+        for (int row = 0; row * 4 < stages.Length; row++)
         {
             GUILayout.BeginHorizontal();
             for (int col = 0; col < 4; col++)
@@ -1335,7 +1342,7 @@ public class OrbitalDefensePlayer : MonoBehaviour
                     GUI.color = idx == currentStageIndex ? Color.cyan : Color.white;
 
                     string btnText = $"<b>{U("Sector")} {stg.id}</b>\n<size=11>{GetStageName(stg)}</size>\n<size=10>{F("{0} Kills", stg.targetEnemies)}</size>";
-                    if (GUILayout.Button(btnText, GUILayout.Height(85), GUILayout.Width((r.width - 50) / 4f)))
+                    if (GUILayout.Button(btnText, GUILayout.Height(72), GUILayout.Width(btnW)))
                     {
                         showStageSelect = false;
                         isEndless = false;
@@ -1348,8 +1355,75 @@ public class OrbitalDefensePlayer : MonoBehaviour
             GUILayout.Space(6);
         }
 
+        GUILayout.EndScrollView();
+
         GUI.color = Color.white;
         GUILayout.EndArea();
+    }
+
+    // Sectors 13-30 keep climbing from sector 12: more kills, faster spawns and threats.
+    // Every fifth sector is a mothership fight with a tougher hull (4600 .. 7000 HP).
+    private void AddAdvancedStages()
+    {
+        if (stages.Length > 12) return;
+        string[][] names = new string[][]
+        {
+            new[] { "Ion Storm Frontier", "이온 폭풍 전선", "イオン嵐の前線", "Frontera de Tormenta Iónica" },
+            new[] { "Shattered Moonbelt", "부서진 달띠", "砕けた月の帯", "Cinturón Lunar Roto" },
+            new[] { "Boss: Twin Dread Carrier", "보스: 쌍둥이 공포 모함", "ボス：双子の恐怖母艦", "Jefe: Portanaves Gemelo" },
+            new[] { "Comet Tail Gauntlet", "혜성 꼬리 시련", "彗星の尾の試練", "Desafío de la Cola de Cometa" },
+            new[] { "Raider Picket Line", "약탈선 경계선", "略奪艦の哨戒線", "Línea de Piquete Saqueadora" },
+            new[] { "Cruiser Phalanx", "순양함 방진", "巡洋艦の方陣", "Falange de Cruceros" },
+            new[] { "Nebula Blackout", "성운 정전", "星雲ブラックアウト", "Apagón Nebular" },
+            new[] { "Boss: Siege Mothership", "보스: 공성 모함", "ボス：攻城母艦", "Jefe: Nave Nodriza de Asedio" },
+            new[] { "Red Giant Flare", "적색거성 플레어", "赤色巨星のフレア", "Llamarada de Gigante Roja" },
+            new[] { "Hailstorm Barrage", "우박 폭격", "雹の弾幕", "Andanada de Granizo" },
+            new[] { "Phantom Drone Tide", "유령 드론 물결", "幻影ドローンの潮流", "Marea de Drones Fantasma" },
+            new[] { "Iron Wall Armada", "철벽 함대", "鉄壁艦隊", "Armada Muro de Hierro" },
+            new[] { "Boss: Void Leviathan", "보스: 공허의 리바이어선", "ボス：虚空のリヴァイアサン", "Jefe: Leviatán del Vacío" },
+            new[] { "Pulsar Crossfire", "펄서 십자포화", "パルサー十字砲火", "Fuego Cruzado de Púlsar" },
+            new[] { "Wormhole Spillway", "웜홀 배수로", "ワームホールの放水路", "Aliviadero de Agujero de Gusano" },
+            new[] { "Dark Matter Rain", "암흑물질 비", "暗黒物質の雨", "Lluvia de Materia Oscura" },
+            new[] { "Last Orbit Line", "최후의 궤도선", "最後の軌道線", "Última Línea Orbital" },
+            new[] { "Boss: Galaxy Devourer", "보스: 은하 포식자", "ボス：銀河を喰らう者", "Jefe: Devorador de Galaxias" },
+        };
+        var list = new List<StageData>(stages);
+        for (int k = 1; k <= names.Length; k++)
+        {
+            int n = 12 + k;
+            bool boss = n % 5 == 0;
+            var src = stages[(k - 1) % 12];
+            var stg = new StageData
+            {
+                id = n,
+                nameEn = names[k - 1][0], nameKo = names[k - 1][1], nameJa = names[k - 1][2], nameEs = names[k - 1][3],
+                targetEnemies = 210 + k * 10,                          // 220 .. 390
+                spawnInterval = (0.62f - k * 0.008f) * (boss ? 1.25f : 1f), // 0.61 .. 0.48 (bosses slower)
+                enemySpeed = 4.4f + k * 0.05f,                         // 4.45 .. 5.3
+                hasFast = true,
+                hasHeavy = true,
+                isBossStage = boss,
+                bossHealth = boss ? 4000f + (n / 5 - 2) * 600f + (n == 30 ? 600f : 0f) : 0f, // 4600, 5200, 5800, 7000
+                spaceColor = boss ? new Color(0.3f, 0.03f, 0.06f) : src.spaceColor,
+                planetColor = src.planetColor
+            };
+            if (boss)
+            {
+                stg.descEn = string.Format(OiyoI18n.En("Sector {0}: sink a mothership with {1} HP while {2} threats close in."), n, stg.bossHealth, stg.targetEnemies);
+                stg.descKo = string.Format("{0}섹터: 적 {2}기가 몰려오는 동안 HP {1} 모함을 격침하세요.", n, stg.bossHealth, stg.targetEnemies);
+                stg.descJa = string.Format("セクター{0}：敵{2}機が迫る中、HP {1}の母艦を撃沈せよ。", n, stg.bossHealth, stg.targetEnemies);
+                stg.descEs = string.Format("Sector {0}: hunde una nave nodriza de {1} PV mientras llegan {2} amenazas.", n, stg.bossHealth, stg.targetEnemies);
+            }
+            else
+            {
+                stg.descEn = string.Format(OiyoI18n.En("Sector {0}: intercept {1} threats arriving every {2:0.00} s at speed {3:0.0}."), n, stg.targetEnemies, stg.spawnInterval, stg.enemySpeed);
+                stg.descKo = string.Format("{0}섹터: {2:0.00}초마다 속도 {3:0.0}로 오는 적 {1}기를 요격하세요.", n, stg.targetEnemies, stg.spawnInterval, stg.enemySpeed);
+                stg.descJa = string.Format("セクター{0}：{2:0.00}秒ごとに速度{3:0.0}で来る敵{1}機を迎撃せよ。", n, stg.targetEnemies, stg.spawnInterval, stg.enemySpeed);
+                stg.descEs = string.Format("Sector {0}: intercepta {1} amenazas cada {2:0.00} s a velocidad {3:0.0}.", n, stg.targetEnemies, stg.spawnInterval, stg.enemySpeed);
+            }
+            list.Add(stg);
+        }
+        stages = list.ToArray();
     }
 
     private string GetText(string ko, string en, string ja, string es)

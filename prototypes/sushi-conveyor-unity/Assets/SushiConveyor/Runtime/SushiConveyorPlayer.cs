@@ -37,7 +37,7 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         public float Cooldown;
     }
 
-    const int TotalStages = 12;
+    const int TotalStages = 30;
     readonly string[] _stageNames =
     {
         "Stage 1: Morning Prep",
@@ -51,8 +51,35 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         "Stage 9: Ginza Night Shift",
         "Stage 10: Omakase Rush",
         "Stage 11: Michelin Audit",
-        "Stage 12: Grand Itamae"
+        "Stage 12: Grand Itamae",
+        // 13-30: the formulas below keep climbing from stage 12 (see Goal/Patience/BeltSpeed)
+        "Stage 13: Tsukiji Dawn Run",
+        "Stage 14: Rainy Day Rush",
+        "Stage 15: Sakura Festival",
+        "Stage 16: Double Belt Drill",
+        "Stage 17: Tourist Bus Arrival",
+        "Stage 18: Critic's Table",
+        "Stage 19: Late Train Crowd",
+        "Stage 20: Omakase Marathon",
+        "Stage 21: Summer Fireworks",
+        "Stage 22: Food Blogger Week",
+        "Stage 23: Typhoon Night",
+        "Stage 24: Sumo Banquet",
+        "Stage 25: All-VIP Counter",
+        "Stage 26: Year-End Party",
+        "Stage 27: New Year Feast",
+        "Stage 28: Three-Star Inspection",
+        "Stage 29: Itamae Championship",
+        "Stage 30: Legendary Sushi Master"
     };
+
+    // Stages 1-12 keep their original numbers; from 13 the goal, patience and belt speed
+    // keep climbing more gently, and more seats turn VIP.
+    static int StageGoal(int st) => st <= 12 ? 300 + (st - 1) * 200 : 2500 + (st - 12) * 90;
+    static float StageBeltSpeed(int st) => st <= 12 ? 0.065f + (st - 1) * 0.008f : 0.153f + (st - 12) * 0.004f;
+    static float PatienceFloor(int st) => st <= 12 ? 14f : 14f - (st - 12) * 0.15f;
+    static bool SeatIsVip(int st, int seat) => (st >= 4 && seat == 1) || (st >= 10 && seat == 2) || (st >= 18 && seat == 3) || (st >= 25 && seat == 0);
+    Vector2 _stageMapScroll;
 
     Camera _cam;
     readonly List<Plate> _plates = new List<Plate>();
@@ -238,7 +265,7 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         _cash = 0;
         _streak = 0;
         _missedOrders = 0;
-        _goalCash = 300 + (_stage - 1) * 200;
+        _goalCash = StageGoal(_stage);
         _stageTimeLeft = 80f;
         _stageCleared = false;
         _stageFailed = false;
@@ -249,13 +276,13 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         {
             var d = _diners[i];
             d.Active = i < activeSeats;
-            d.IsVip = (_stage >= 4 && i == 1) || (_stage >= 10 && i == 2);
+            d.IsVip = SeatIsVip(_stage, i);
             d.Body.SetActive(d.Active);
             d.Body.GetComponent<Renderer>().material = d.IsVip ? _vipMat : _dinerMat;
             d.Wanted = Topping.None;
             d.Cooldown = 0.6f + i * 0.9f;
         }
-        SetBanner(F("Stage {0}/12 ({1}): Goal ¥{2}", _stage, U(_stageNames[_stage - 1]), _goalCash));
+        SetBanner(F("Stage {0}/30 ({1}): Goal ¥{2}", _stage, U(_stageNames[_stage - 1]), _goalCash));
     }
 
     void SetBanner(string msg)
@@ -354,7 +381,7 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         if (_bannerTimer > 0f) _bannerTimer -= dt;
 
         // Animate belt slats
-        float beltSpeed = 0.065f + (_stage - 1) * 0.008f;
+        float beltSpeed = StageBeltSpeed(_stage);
         for (int i = 0; i < _beltSlats.Count; i++)
         {
             float st = ((i / (float)_beltSlats.Count) + Time.time * beltSpeed) % 1f;
@@ -486,7 +513,7 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
                 if (d.Cooldown <= 0f)
                 {
                     d.Wanted = PickStageTopping();
-                    d.MaxPatience = Mathf.Max(14f, (d.IsVip ? 19f : 26f) - _stage * 0.7f);
+                    d.MaxPatience = Mathf.Max(PatienceFloor(_stage), (d.IsVip ? 19f : 26f) - _stage * 0.7f);
                     d.Patience = d.MaxPatience;
                 }
             }
@@ -515,26 +542,31 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
         GUI.Label(new Rect(26, 38, 620, 20),
             F("Time Left: {0}s  •  Streak: x{1}  •  Missed: {2}/{3}  •  Board: {4} {5}", Mathf.CeilToInt(_stageTimeLeft), _streak, _missedOrders, MaxMissed, _hasRice ? U("Rice✓") : U("Empty"), _prepTopping != Topping.None ? "+ " + _prepTopping : ""));
 
-        if (GUI.Button(new Rect(Screen.width - 170, 16, 144, 38), _showStageMap ? U("Close Stages") : U("12 Stages Map")))
+        if (GUI.Button(new Rect(Screen.width - 170, 16, 144, 38), _showStageMap ? U("Close Stages") : U("30 Stages Map")))
         {
             _showStageMap = !_showStageMap;
         }
 
         if (_showStageMap)
         {
-            GUI.Box(new Rect(Screen.width * 0.5f - 280, 90, 560, 320), "");
-            GUI.Label(new Rect(Screen.width * 0.5f - 260, 100, 520, 26), U("SELECT SUSHI BAR STAGE (STAGES 1 - 12)"), bold);
+            // 4 columns, scrolling for all 30 stages
+            float mh = Mathf.Min(420f, Screen.height - 110f);
+            GUI.Box(new Rect(Screen.width * 0.5f - 300, 90, 600, mh), "");
+            GUI.Label(new Rect(Screen.width * 0.5f - 280, 100, 560, 26), U("SELECT SUSHI BAR STAGE (STAGES 1 - 30)"), bold);
+            int rows = (TotalStages + 3) / 4;
+            var view = new Rect(Screen.width * 0.5f - 290, 134, 580, mh - 54);
+            var cell = new GUIStyle(GUI.skin.button) { wordWrap = true, fontSize = 11 };
+            _stageMapScroll = GUI.BeginScrollView(view, _stageMapScroll, new Rect(0, 0, 560, rows * 64), false, true);
             for (int i = 0; i < TotalStages; i++)
             {
-                int col = i % 3;
-                int row = i / 3;
-                float bx = Screen.width * 0.5f - 260 + col * 176;
-                float by = 138 + row * 64;
-                if (GUI.Button(new Rect(bx, by, 166, 54), F("{0}\nGoal ¥{1}", U(_stageNames[i]), 300 + i * 200)))
+                int col = i % 4;
+                int row = i / 4;
+                if (GUI.Button(new Rect(col * 140, row * 64, 134, 58), F("{0}\nGoal ¥{1}", U(_stageNames[i]), StageGoal(i + 1)), cell))
                 {
                     StartStage(i + 1);
                 }
             }
+            GUI.EndScrollView();
             return;
         }
 
@@ -578,7 +610,7 @@ public sealed class SushiConveyorPlayer : MonoBehaviour
                 {
                     StartStage(_stage + 1);
                 }
-                if (GUI.Button(new Rect(Screen.width * 0.5f + 10, Screen.height * 0.5f + 16, 140, 34), U("12 Stages Map")))
+                if (GUI.Button(new Rect(Screen.width * 0.5f + 10, Screen.height * 0.5f + 16, 140, 34), U("30 Stages Map")))
                 {
                     _showStageMap = true;
                 }

@@ -31,7 +31,7 @@ public sealed class CozyGliderPlayer : MonoBehaviour
         public GameObject Go;
     }
 
-    const int TotalStages = 12;
+    const int TotalStages = 30;
     readonly string[] _stageNames =
     {
         "Stage 1: Hawk Peak Valley",
@@ -45,8 +45,40 @@ public sealed class CozyGliderPlayer : MonoBehaviour
         "Stage 9: Stormy Summit Pass",
         "Stage 10: Celestial Cloud Ring",
         "Stage 11: Falcon Dive Gauntlet",
-        "Stage 12: Grand Albatross Odyssey"
+        "Stage 12: Grand Albatross Odyssey",
+        // 13-30: the Stage* helpers below keep climbing from stage 12
+        "Stage 13: Misty Fjord Run",
+        "Stage 14: Lantern Lake Loop",
+        "Stage 15: Twin Waterfall Gate",
+        "Stage 16: Kite Festival Skies",
+        "Stage 17: Rocky Arch Slalom",
+        "Stage 18: Owl Moon Glide",
+        "Stage 19: Lavender Field Drift",
+        "Stage 20: Thunderhead Crossing",
+        "Stage 21: Glacier Spine Ridge",
+        "Stage 22: Coral Reef Coast",
+        "Stage 23: Volcano Updraft",
+        "Stage 24: Bamboo Forest Weave",
+        "Stage 25: Aurora Night Flight",
+        "Stage 26: Canyon Needle Run",
+        "Stage 27: Monsoon Front",
+        "Stage 28: Sky Temple Steps",
+        "Stage 29: Jet Stream Edge",
+        "Stage 30: Endless Horizon Voyage"
     };
+
+    // Stages 1-12 keep their original formulas. From 13 the course keeps growing (more rings,
+    // longer legs, wider sweeps), the launch height and ring size shrink a little,
+    // feathers drop from 6 to 4 and thermals thin out from stage 24.
+    static float StageStartAlt(int st) => st <= 12 ? 28f + st * 1.5f : 46f - (st - 12) * 0.5f;
+    static int StageFeathers(int st) => st <= 12 ? 3 + st / 4 : 6 - (st - 12) / 9;
+    static int StageRingCount(int st) => st <= 12 ? 5 + st / 2 : 11 + (st - 12) / 3;
+    static float StageForwardStep(int st) => st <= 12 ? 32f + st * 2f : 56f + (st - 12) * 0.8f;
+    static float StageSweep(int st) => st <= 12 ? 14f + st * 1.5f : 32f + (st - 12) * 0.6f;
+    static float StageElev(int st) => st <= 12 ? 6f : 6f + (st - 12) * 0.2f;
+    static int StageThermalEvery(int st) => st < 24 ? 3 : 4;
+    static float StageRingRadius(int st) => st <= 12 ? 3.8f : 3.8f - (st - 12) * 0.03f;
+    Vector2 _stageMapScroll;
 
     Camera _cam;
     Transform _gliderRoot;
@@ -251,7 +283,7 @@ public sealed class CozyGliderPlayer : MonoBehaviour
     void StartStage(int st)
     {
         _stage = Mathf.Clamp(st, 1, TotalStages);
-        _gliderPos = new Vector3(0f, 28f + _stage * 1.5f, 0f);
+        _gliderPos = new Vector3(0f, StageStartAlt(_stage), 0f);
         _pitch = 4f;
         _yaw = 0f;
         _roll = 0f;
@@ -259,14 +291,14 @@ public sealed class CozyGliderPlayer : MonoBehaviour
 
         _ringsCleared = 0;
         _stageTimer = 0f;
-        _maxFeathers = 3 + (_stage / 4);
+        _maxFeathers = StageFeathers(_stage);
         _feathers = _maxFeathers;
         _stageCleared = false;
         _stageFailed = false;
         _showStageMap = false;
 
         GenerateCourseForStage(_stage);
-        SetBanner(F("Stage {0}/12: {1}", _stage, U(_stageNames[_stage - 1])));
+        SetBanner(F("Stage {0}/30: {1}", _stage, U(_stageNames[_stage - 1])));
     }
 
     void GenerateCourseForStage(int st)
@@ -278,14 +310,14 @@ public sealed class CozyGliderPlayer : MonoBehaviour
         _rings.Clear();
         _thermals.Clear();
 
-        int ringCount = 5 + (st / 2);
-        float forwardStep = 32f + st * 2f;
+        int ringCount = StageRingCount(st);
+        float forwardStep = StageForwardStep(st);
         Vector3 cur = _gliderPos + new Vector3(0f, -2f, 28f);
 
         for (int i = 0; i < ringCount; i++)
         {
-            float sweep = Mathf.Sin((i + st) * 0.85f) * (14f + st * 1.5f);
-            float elev = Mathf.Cos(i * 0.9f) * 6f;
+            float sweep = Mathf.Sin((i + st) * 0.85f) * StageSweep(st);
+            float elev = Mathf.Cos(i * 0.9f) * StageElev(st);
             cur = new Vector3(sweep, Mathf.Clamp(cur.y + elev, 10f, 48f), cur.z + forwardStep);
 
             var ringGo = ArtQuad($"Ring_{i + 1}", _ringMat);
@@ -295,7 +327,7 @@ public sealed class CozyGliderPlayer : MonoBehaviour
             _rings.Add(new RingItem { Pos = cur, Collected = false, Go = ringGo });
 
             // Place a thermal every few rings
-            if (i % 3 == 1)
+            if (i % StageThermalEvery(st) == 1)
             {
                 Vector3 thPos = cur - new Vector3(sweep * 0.3f, cur.y * 0.5f, forwardStep * 0.4f);
                 var thGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -420,7 +452,7 @@ public sealed class CozyGliderPlayer : MonoBehaviour
             if (r.Collected) continue;
 
             float dist = Vector3.Distance(_gliderPos, r.Pos);
-            if (dist < 3.8f)
+            if (dist < StageRingRadius(_stage))
             {
                 r.Collected = true;
                 r.Go.GetComponent<Renderer>().material = _ringDoneMat;
@@ -476,26 +508,31 @@ public sealed class CozyGliderPlayer : MonoBehaviour
         GUI.Label(new Rect(26, 38, 620, 20),
             F("Speed: {0:0.0} m/s  •  Alt: {1:0} m  •  Feathers: 🪶 {2}/{3}  •  Time: {4:0.0}s", _speed, _gliderPos.y, _feathers, _maxFeathers, _stageTimer));
 
-        if (GUI.Button(new Rect(Screen.width - 170, 16, 144, 38), _showStageMap ? U("Close Stages") : U("12 Stages Map")))
+        if (GUI.Button(new Rect(Screen.width - 170, 16, 144, 38), _showStageMap ? U("Close Stages") : U("30 Stages Map")))
         {
             _showStageMap = !_showStageMap;
         }
 
         if (_showStageMap)
         {
-            GUI.Box(new Rect(Screen.width * 0.5f - 280, 80, 560, 330), "");
-            GUI.Label(new Rect(Screen.width * 0.5f - 260, 90, 520, 26), U("SELECT GLIDER EXPEDITION (STAGES 1 - 12)"), bold);
+            // 4 columns, scrolling for all 30 stages
+            float mh = Mathf.Min(430f, Screen.height - 100f);
+            GUI.Box(new Rect(Screen.width * 0.5f - 300, 80, 600, mh), "");
+            GUI.Label(new Rect(Screen.width * 0.5f - 280, 90, 560, 26), U("SELECT GLIDER EXPEDITION (STAGES 1 - 30)"), bold);
+            var cell = new GUIStyle(GUI.skin.button) { wordWrap = true, fontSize = 11 };
+            int rows = (TotalStages + 3) / 4;
+            var view = new Rect(Screen.width * 0.5f - 290, 124, 580, mh - 54);
+            _stageMapScroll = GUI.BeginScrollView(view, _stageMapScroll, new Rect(0, 0, 560, rows * 64), false, true);
             for (int i = 0; i < TotalStages; i++)
             {
-                int col = i % 3;
-                int row = i / 3;
-                float bx = Screen.width * 0.5f - 260 + col * 176;
-                float by = 126 + row * 64;
-                if (GUI.Button(new Rect(bx, by, 166, 54), F("{0}\nFeathers: {1}", U(_stageNames[i]), 3 + (i / 4))))
+                int col = i % 4;
+                int row = i / 4;
+                if (GUI.Button(new Rect(col * 140, row * 64, 134, 58), F("{0}\nFeathers: {1}", U(_stageNames[i]), StageFeathers(i + 1)), cell))
                 {
                     StartStage(i + 1);
                 }
             }
+            GUI.EndScrollView();
             return;
         }
 
@@ -518,7 +555,7 @@ public sealed class CozyGliderPlayer : MonoBehaviour
                 {
                     StartStage(_stage + 1);
                 }
-                if (GUI.Button(new Rect(Screen.width * 0.5f + 10, Screen.height * 0.5f + 16, 140, 34), U("12 Stages Map")))
+                if (GUI.Button(new Rect(Screen.width * 0.5f + 10, Screen.height * 0.5f + 16, 140, 34), U("30 Stages Map")))
                 {
                     _showStageMap = true;
                 }
