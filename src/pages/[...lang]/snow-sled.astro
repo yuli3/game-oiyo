@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SnowSled from "../../components/games/SnowSled";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "눈썰매 깃발 레이스 — 손가락으로 썰매를 몰아 깃발 사이를 지나는 무료 겨울 레이스 30코스",
+    description: "손가락을 좌우로 끌어 썰매를 몰고 빨강·파랑 깃발 사이를 지나세요. 소나무와 눈사람은 피하고, 복주머니를 줍고, 점프대로 날아오르세요. 30개 코스마다 목표 시간이 있어 ‘한 번만 더’가 멈추지 않아요.",
+  },
+  en: {
+    title: "Snow Sled Slalom — Free winter racing game: steer your sled through the flags (30 courses)",
+    description: "Drag left and right to steer the sled between the red and blue flags. Dodge pines and snowmen, grab lucky pouches and launch off ramps. Each of the 30 courses has a par time to beat, so it is always one more run.",
+  },
+  ja: {
+    title: "雪そりフラッグレース — 指でそりを操り旗の間を抜ける無料の冬レース30コース",
+    description: "指を左右にドラッグしてそりを操り、赤と青の旗の間を抜けましょう。松と雪だるまをよけ、福袋を拾い、ジャンプ台で飛び上がれ。30コースすべてに目標タイムがあり、つい「もう1回」。",
+  },
+  zh: {
+    title: "雪橇旗门赛 — 用手指操控雪橇穿过旗门的免费冬季竞速游戏30条赛道",
+    description: "左右拖动手指操控雪橇，从红蓝旗之间穿过。避开松树和雪人，捡福袋，从跳台上飞起来。30条赛道都有目标时间，让人忍不住“再来一次”。",
+  },
+  fr: {
+    title: "Slalom en luge — Course d'hiver gratuite : guidez la luge entre les drapeaux (30 pistes)",
+    description: "Glissez à gauche et à droite pour guider la luge entre les drapeaux rouges et bleus. Évitez sapins et bonshommes de neige, ramassez les bourses porte-bonheur et sautez sur les tremplins. Chaque piste a un temps à battre : encore une descente !",
+  },
+  es: {
+    title: "Slalom en trineo — Carrera de invierno gratis: guía el trineo entre las banderas (30 pistas)",
+    description: "Arrastra a izquierda y derecha para guiar el trineo entre las banderas roja y azul. Esquiva pinos y muñecos de nieve, recoge bolsitas de la suerte y salta en las rampas. Cada una de las 30 pistas tiene un tiempo que batir: siempre una bajada más.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["snow-sled"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <SnowSled client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="snow-sled" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

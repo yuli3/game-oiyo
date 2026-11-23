@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import KiteTangle from "../../components/games/KiteTangle";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "엉킨 연줄 풀기 — 연을 끌어 엇갈린 줄을 모두 푸는 무료 대보름 퍼즐 30단계",
+    description: "대보름 밤하늘에서 연줄이 엉켜 버렸어요. 연을 손가락으로 끌어 옮기면 엇갈린 줄은 빨갛게, 풀린 줄은 하얗게 보입니다. 6개에서 22개 연까지 30단계, 정답 모양이 하나가 아니라 자기만의 방법으로 풀 수 있어요.",
+  },
+  en: {
+    title: "Kite Tangle — Free untangling puzzle: drag the kites until no strings cross (30 skies)",
+    description: "The kite strings got knotted under the full-moon sky. Drag the kites with your finger: crossing strings glow red and free ones turn white. 30 skies from 6 to 22 kites, and there is no single answer, so you untangle it your own way.",
+  },
+  ja: {
+    title: "凧糸ほどき — 凧をドラッグして交差した糸をすべてほどく無料パズル30ステージ",
+    description: "満月の夜空で凧糸が絡まってしまいました。凧を指でドラッグすると、交差した糸は赤く、ほどけた糸は白く見えます。凧6個から22個まで30ステージ、正解の形はひとつではなく自分なりに解けます。",
+  },
+  zh: {
+    title: "解风筝线 — 拖动风筝解开所有交叉线的免费谜题30关",
+    description: "元宵满月的夜空中，风筝线缠在了一起。用手指拖动风筝，交叉的线显示为红色，解开的线变成白色。从6只到22只风筝共30关，答案不止一种，可以用自己的方式解开。",
+  },
+  fr: {
+    title: "Fils emmêlés — Puzzle gratuit : déplacez les cerfs-volants jusqu'à ce qu'aucun fil ne se croise (30 ciels)",
+    description: "Les fils des cerfs-volants se sont emmêlés sous la pleine lune. Faites glisser les cerfs-volants : les fils qui se croisent brillent en rouge, les fils libres deviennent blancs. 30 ciels de 6 à 22 cerfs-volants, sans solution unique : démêlez à votre façon.",
+  },
+  es: {
+    title: "Hilos enredados — Puzle gratis: mueve las cometas hasta que ningún hilo se cruce (30 cielos)",
+    description: "Los hilos de las cometas se enredaron bajo la luna llena. Arrastra las cometas con el dedo: los hilos que se cruzan brillan en rojo y los libres se vuelven blancos. 30 cielos de 6 a 22 cometas, sin una única solución: desenreda a tu manera.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["kite-tangle"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <KiteTangle client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="kite-tangle" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
