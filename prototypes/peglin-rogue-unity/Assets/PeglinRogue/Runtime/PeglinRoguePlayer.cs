@@ -519,7 +519,7 @@ public class PeglinRoguePlayer : MonoBehaviour
     void UpdateAimingInput()
     {
         // Follow mouse/touch pointer
-        Ray ray = mainCam.ScreenPointToRay(Input.mousePosition);
+        Ray ray = mainCam.ScreenPointToRay(OiyoPointerInput.mousePosition);
         Plane boardPlane = new Plane(Vector3.forward, Vector3.zero);
         float dist;
         if (boardPlane.Raycast(ray, out dist))
@@ -536,9 +536,9 @@ public class PeglinRoguePlayer : MonoBehaviour
         }
 
         // Fire on click/tap (unless clicking GUI buttons)
-        if (Input.GetMouseButtonDown(0))
+        if (OiyoPointerInput.GetMouseButtonDown(0))
         {
-            if (Input.mousePosition.y < Screen.height - 130 && !showStageSelect)
+            if (OiyoPointerInput.mousePosition.y < Screen.height - 130 && !showStageSelect)
             {
                 FireBall();
             }
