@@ -67,6 +67,7 @@ BUILDS = {
     "grappling-boss-unity": ("grappling-boss", "GrapplingBoss/Runtime/GrapplingBossPlayer.cs", T, "state, score"),
     "cyber-track-unity": ("cyber-track", "CyberTrack/Runtime/CyberTrackPlayer.cs", T, "state, score"),
     "trap-stairs-unity": ("trap-stairs", "TrapStairs/Runtime/TrapStairsPlayer.cs", T, "state, score"),
+    "night-horde-unity": ("night-horde", "NightHorde/Runtime/NightHordePlayer.cs", T, "state, score"),
 }
 
 MARK = "OiyoResult."
