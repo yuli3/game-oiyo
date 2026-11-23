@@ -76,6 +76,11 @@ BUILDS = {
     "cat-fishing-unity": ("cat-fishing", "CatFishing/Runtime/CatFishingPlayer.cs", T, "state, score"),
     "dot-fishing-unity": ("dot-fishing", "DotFishing/Runtime/DotFishingPlayer.cs", T, "state, gold"),
     "emberdeep-unity": ("emberdeep", "Emberdeep/Runtime/EmberdeepPlayer.cs", T, "state, score"),
+    "jwibul-spin-unity": ("jwibul-spin", "JwibulSpin/Runtime/JwibulSpinPlayer.cs", T, "state, starsWon"),
+    "snowball-fight-unity": ("snowball-fight", "SnowballFight/Runtime/SnowballFightPlayer.cs", T, "state, starsWon"),
+    "snow-sled-unity": ("snow-sled", "SnowSled/Runtime/SnowSledPlayer.cs", T, "state, starsWon"),
+    "neol-jump-unity": ("neol-jump", "NeolJump/Runtime/NeolJumpPlayer.cs", T, "state, starsWon"),
+    "tuho-toss-unity": ("tuho-toss", "TuhoToss/Runtime/TuhoTossPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."
