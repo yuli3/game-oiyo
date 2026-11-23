@@ -465,7 +465,7 @@ public class ChaosKitchenPlayer : MonoBehaviour
         {
             InteractNearestStation();
         }
-        if (Input.GetKeyDown(KeyCode.Q) || Input.GetMouseButtonDown(1))
+        if (Input.GetKeyDown(KeyCode.Q) || OiyoPointerInput.GetMouseButtonDown(1))
         {
             ThrowHeldItem();
         }
@@ -478,9 +478,9 @@ public class ChaosKitchenPlayer : MonoBehaviour
         float ix = Input.GetAxisRaw("Horizontal");
         float iy = Input.GetAxisRaw("Vertical");
 
-        if (Input.GetMouseButton(0) && GUIUtility.hotControl == 0 && Input.mousePosition.y < Screen.height - 68f)
+        if (OiyoPointerInput.GetMouseButton(0) && GUIUtility.hotControl == 0 && OiyoPointerInput.mousePosition.y < Screen.height - 68f)
         {
-            Vector3 wp = _cam.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 wp = _cam.ScreenToWorldPoint(OiyoPointerInput.mousePosition);
             Vector2 d = new Vector2(wp.x - _chefPos.x, wp.y - _chefPos.y);
             if (d.magnitude > 0.25f)
             {

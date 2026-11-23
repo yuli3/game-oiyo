@@ -726,7 +726,7 @@ public class BeatSlicePlayer : MonoBehaviour
 
         if (state == GameState.Ready)
         {
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+            if (Input.GetKeyDown(KeyCode.Space) || OiyoPointerInput.GetMouseButtonDown(0))
             {
                 state = GameState.Playing;
             }
@@ -768,7 +768,7 @@ public class BeatSlicePlayer : MonoBehaviour
         saberRightPrevPos = saberRightPos;
 
         // Mouse & Touch Control
-        Vector3 mouseScreen = Input.mousePosition;
+        Vector3 mouseScreen = OiyoPointerInput.mousePosition;
         Ray ray = mainCam.ScreenPointToRay(mouseScreen);
         Plane plane = new Plane(Vector3.forward, new Vector3(0, 0, -1.0f));
         float dist;

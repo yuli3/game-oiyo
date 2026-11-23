@@ -597,7 +597,7 @@ public class AimTrainerPlayer : MonoBehaviour
 
     private void UpdateCrosshairPosition()
     {
-        Ray ray = mainCam.ScreenPointToRay(Input.mousePosition);
+        Ray ray = mainCam.ScreenPointToRay(OiyoPointerInput.mousePosition);
         Plane plane = new Plane(Vector3.forward, new Vector3(0f, 0f, TargetPlaneZ - 0.2f));
         if (plane.Raycast(ray, out float enter))
         {
@@ -620,7 +620,7 @@ public class AimTrainerPlayer : MonoBehaviour
 
     private void HandleShootingInput()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (OiyoPointerInput.GetMouseButtonDown(0))
         {
             Shoot();
         }

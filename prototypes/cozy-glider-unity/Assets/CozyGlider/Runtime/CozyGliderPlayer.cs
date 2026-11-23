@@ -410,7 +410,7 @@ public sealed class CozyGliderPlayer : MonoBehaviour
         if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) rollInput += 1f;  // Bank turn right
 
         // Feather Flap Boost
-        if ((Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)) && _feathers > 0)
+        if ((Input.GetKeyDown(KeyCode.Space) || OiyoPointerInput.GetMouseButtonDown(0)) && _feathers > 0)
         {
             _feathers--;
             _speed = Mathf.Min(32f, _speed + 7.5f);

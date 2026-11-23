@@ -900,7 +900,7 @@ public class WhackAMolePlayer : MonoBehaviour
 
     private void HandlePlayerInput()
     {
-        Ray ray = mainCam.ScreenPointToRay(Input.mousePosition);
+        Ray ray = mainCam.ScreenPointToRay(OiyoPointerInput.mousePosition);
         Plane tablePlane = new Plane(Vector3.up, new Vector3(0f, 0.4f, 0f));
         float enter;
 
@@ -910,7 +910,7 @@ public class WhackAMolePlayer : MonoBehaviour
             targetMalletPos = hitPoint + new Vector3(0f, 1.8f, -0.6f);
 
             // Left Click / Tap -> Strike!
-            if (Input.GetMouseButtonDown(0) && state == GameState.Playing && !isSwinging)
+            if (OiyoPointerInput.GetMouseButtonDown(0) && state == GameState.Playing && !isSwinging)
             {
                 TriggerMalletSwing(hitPoint);
             }

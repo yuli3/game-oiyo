@@ -18,7 +18,7 @@ public static class WhackAMoleBuild
         PlayerSettings.companyName = "OIYO";
         PlayerSettings.productName = "Whack A Mole 3D Unity";
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
-        PlayerSettings.runInBackground = false;
+        PlayerSettings.runInBackground = true; // keep running when the page iframe has no focus (2026-11-23)
         AssetDatabase.SaveAssets();
     }
 
