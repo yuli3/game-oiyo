@@ -10,6 +10,8 @@ import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { CameraShake2D, HitStopController } from "../../lib/games/game-juice";
 import { getSpriteUrl, RHYTHM_TAP_UI_SPRITES } from "../../lib/games/sprites";
+import { drawBackdrop, drawSprite } from "../../lib/games/pixel-kit";
+import { CONCERT_STAGE, PAD, laneNote } from "../../lib/games/pixel-sprites";
 import {
   GOOD_MS,
   beatToSeconds,
@@ -300,36 +302,38 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
     }
 
     // draw
-    ctx.fillStyle = "#0b1020"; ctx.fillRect(0, 0, W, H);
+    drawBackdrop(ctx, W, H, CONCERT_STAGE, 4);
     ctx.save();
     if (cameraShakeRef.current.trauma > 0) {
       ctx.translate(cameraShakeRef.current.x, cameraShakeRef.current.y);
     }
-    // lanes
+    // lanes: dark glass strips with pixel spotlights when hit
     for (let l = 0; l < LANES; l++) {
-      ctx.fillStyle = l % 2 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.06)";
-      ctx.fillRect(l * LANE_W, 0, LANE_W, H);
+      ctx.fillStyle = l % 2 ? "rgba(15,10,36,0.45)" : "rgba(15,10,36,0.3)";
+      ctx.fillRect(l * LANE_W + 4, 0, LANE_W - 8, H);
+      ctx.fillStyle = "rgba(196,181,253,0.18)";
+      ctx.fillRect(l * LANE_W + 4, 0, 2, H);
       if (gs.flash[l] > 0) {
-        ctx.fillStyle = `hsla(${LANE_HUE[l]} 80% 60% / ${gs.flash[l] / 20})`;
-        ctx.fillRect(l * LANE_W, 0, LANE_W, H);
+        ctx.fillStyle = `hsla(${LANE_HUE[l]} 85% 65% / ${gs.flash[l] / 26})`;
+        for (let k = 0; k < 6; k++) {
+          const spread = 4 + k * 4;
+          ctx.fillRect(l * LANE_W + LANE_W / 2 - spread, HIT_Y - (k + 1) * 60, spread * 2, 60);
+        }
         gs.flash[l] -= 1;
       }
     }
-    // hit line
-    ctx.fillStyle = "rgba(196,181,253,0.9)";
-    ctx.fillRect(0, HIT_Y - 2, W, 4);
+    // hit line: pixel drum pads
+    ctx.fillStyle = "rgba(196,181,253,0.55)";
+    for (let x = 0; x < W; x += 8) ctx.fillRect(x, HIT_Y - 1, 4, 2);
     for (let l = 0; l < LANES; l++) {
-      ctx.strokeStyle = "rgba(196,181,253,0.5)"; ctx.lineWidth = 2;
-      ctx.strokeRect(l * LANE_W + 8, HIT_Y - 14, LANE_W - 16, 28);
+      drawSprite(ctx, PAD, l * LANE_W + LANE_W / 2, HIT_Y, { scale: 4 });
     }
     // Notes. Position is derived from the time left until the note is due, so
     // it is identical at 60Hz and 120Hz and never drifts from the judgement.
     for (const n of gs.notes) {
       const progress = noteProgress(n.seconds, gs.songSeconds, gs.approachSeconds);
       if (progress < 0) continue; // still in the lead-in, not on screen yet
-      ctx.fillStyle = `hsl(${LANE_HUE[n.lane]} 70% 58%)`;
-      const x = n.lane * LANE_W + 8;
-      ctx.fillRect(x, HIT_Y * progress - 12, LANE_W - 16, 24);
+      drawSprite(ctx, laneNote(n.lane), n.lane * LANE_W + LANE_W / 2, HIT_Y * progress, { scale: 4 });
     }
     // judge text
     if (gs.judgeT > 0) {

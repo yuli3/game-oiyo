@@ -10,10 +10,12 @@ import { useOutcomeRecord } from "../../lib/games/use-run-record";
 import { finaleLabel, loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
 import { normalizeGameLocale } from "../../lib/games/game-text";
 import {
-  GATE_HALF, GATE_THICK, HOCKEY_SLUG, MALLET_R, PUCK_R, TABLES, TABLE_COUNT, TABLE_H, TABLE_W, gateX, inOvertime, matchWinner, newMatch, setTarget, stepMatch, timeLeft,
+  GATE_HALF, GATE_THICK, HOCKEY_SLUG, PUCK_R, TABLES, TABLE_COUNT, TABLE_H, TABLE_W, gateX, inOvertime, matchWinner, newMatch, setTarget, stepMatch, timeLeft,
   type Match,
 } from "../../lib/games/finger-hockey";
 import type { Locale } from "../../lib/i18n";
+import { drawBackdrop, drawSprite } from "../../lib/games/pixel-kit";
+import { HOCKEY_SHADOW, HOCKEY_BUMPER, HOCKEY_MALLET_BLUE, HOCKEY_MALLET_RED, HOCKEY_PUCK, ICE_RINK, ICE_RINK_SLICK } from "../../lib/games/pixel-sprites";
 
 type L = "ko" | "en" | "ja" | "zh" | "fr" | "es";
 
@@ -152,11 +154,11 @@ export default function FingerHockey({ locale: pageLocale }: { locale?: string }
       });
       const ctx = canvasRef.current?.getContext("2d");
       if (ctx) {
-        ctx.fillStyle = t.friction > 0.9 ? "#0b2a3a" : "#0d1b2a";
-        ctx.fillRect(0, 0, TABLE_W, TABLE_H);
+        ctx.imageSmoothingEnabled = false;
+        drawBackdrop(ctx, TABLE_W, TABLE_H, t.friction > 0.9 ? ICE_RINK_SLICK : ICE_RINK, 4);
         // air holes
-        ctx.fillStyle = "rgba(255,255,255,0.05)";
-        for (let y = 16; y < TABLE_H; y += 24) for (let x = 16; x < TABLE_W; x += 24) ctx.fillRect(x, y, 2, 2);
+        ctx.fillStyle = "rgba(255,255,255,0.1)";
+        for (let y = 16; y < TABLE_H; y += 24) for (let x = 16; x < TABLE_W; x += 24) ctx.fillRect(x, y, 4, 4);
         ctx.strokeStyle = "rgba(255,255,255,0.25)";
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -183,12 +185,7 @@ export default function FingerHockey({ locale: pageLocale }: { locale?: string }
         ctx.clearRect(TABLE_W / 2 - gw / 2, 0, gw, 4);
         ctx.clearRect(TABLE_W / 2 - gw / 2, TABLE_H - 4, gw, 4);
         // bumpers and gate
-        for (const b of t.bumpers) {
-          ctx.fillStyle = "#ffd43b";
-          ctx.beginPath();
-          ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-          ctx.fill();
-        }
+        for (const b of t.bumpers) drawSprite(ctx, HOCKEY_BUMPER, b.x, b.y, { scale: (b.r * 2) / 10 });
         if (t.gate) {
           const gx = gateX(m.time);
           ctx.fillStyle = "#e599f7";
@@ -213,31 +210,11 @@ export default function FingerHockey({ locale: pageLocale }: { locale?: string }
           ctx.arc(x, y, PUCK_R * (k / tr.length), 0, Math.PI * 2);
           ctx.fill();
         }));
-        for (const p of m.pucks) {
-          ctx.fillStyle = "#f8f9fa";
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, PUCK_R, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = "#ced4da";
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, PUCK_R - 4, 0, Math.PI * 2);
-          ctx.stroke();
-        }
+        for (const p of m.pucks) drawSprite(ctx, HOCKEY_PUCK, p.x, p.y, { scale: 3 });
         // mallets
         m.mallets.forEach((mal, s) => {
-          const col = s === 0 ? "#fa5252" : "#339af0";
-          ctx.shadowBlur = 16;
-          ctx.shadowColor = col;
-          ctx.fillStyle = col;
-          ctx.beginPath();
-          ctx.arc(mal.x, mal.y, MALLET_R, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.shadowBlur = 0;
-          ctx.fillStyle = "rgba(255,255,255,0.35)";
-          ctx.beginPath();
-          ctx.arc(mal.x, mal.y, MALLET_R * 0.45, 0, Math.PI * 2);
-          ctx.fill();
+          drawSprite(ctx, HOCKEY_SHADOW, mal.x + 3, mal.y + 5, { scale: 3, alpha: 0.35 });
+          drawSprite(ctx, s === 0 ? HOCKEY_MALLET_RED : HOCKEY_MALLET_BLUE, mal.x, mal.y, { scale: 3 });
         });
         // scores on the table edges
         ctx.font = "bold 40px system-ui, sans-serif";

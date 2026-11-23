@@ -612,19 +612,19 @@ export default function StanleyChoice({ locale: pageLocale }: { locale?: string 
       {/* Decision Choice Buttons */}
       {!currentEnding && (
         <div className="w-full max-w-2xl mt-2 flex flex-col gap-2">
-          {currentRoom.options.map((option) => (
+          {currentRoom.options.map((option, optionIndex) => (
             <TiltStanleyButton
               key={option.id}
               type="button"
               onClick={() => handleSelectOption(option.id)}
               onMouseEnter={() => setHoveredOptionId(option.id)}
               onMouseLeave={() => setHoveredOptionId(null)}
-              className="w-full text-left p-3 rounded-xl border border-border bg-card/80 hover:bg-primary/10 hover:border-primary transition-all text-sm font-semibold flex items-center justify-between group shadow-sm"
+              className="game-btn w-full text-left p-3 text-sm flex items-center gap-3 group"
             >
-              <span className="text-foreground group-hover:text-primary transition-colors">
-                👉 {t(option.label)}
+              <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-sm border-2 border-foreground bg-warning font-mono text-sm font-black text-warning-foreground">
+                {optionIndex + 1}
               </span>
-              <span className="text-xs text-muted-foreground font-mono">{t("선택")}</span>
+              <span className="flex-1 text-foreground">{t(option.label)}</span>
             </TiltStanleyButton>
           ))}
         </div>

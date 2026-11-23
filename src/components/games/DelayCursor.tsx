@@ -15,6 +15,8 @@ import { createHaptics } from "../../lib/games/haptics";
 import { useCardTiltPro, MobileHapticsPro, useGameJuicePro } from "../../lib/games/engine-suite-unified";
 import { celebrate } from "../../lib/games/celebration";
 import { DELAY_CURSOR_SPRITES } from "../../lib/games/sprites";
+import PixelImg from "../ui/game/PixelImg";
+import { LAB_FLOOR, LAB_GHOST_PLATE, LAB_PLATE, LAB_WALL } from "../../lib/games/pixel-sprites";
 import {
   GAME_ID,
   LIMIT,
@@ -355,7 +357,7 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
             <div className="space-y-1">
               <div className="flex justify-between text-xs font-bold text-muted-foreground">
                 <span className="tabular-nums text-foreground">{t.seconds(run.elapsed)}</span>
-                <span>{Math.max(0, LIMIT - run.elapsed)}s remaining</span>
+                <span className="tabular-nums" aria-hidden="true">⌛ {Math.max(0, LIMIT - run.elapsed)}</span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                 <div
@@ -373,7 +375,7 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
               <span className="inline-flex items-center gap-2"><img src={DELAY_CURSOR_SPRITES.ghost} alt="" className="size-4 object-contain" />{t.then}</span>
             </div>
             <div
-              className="mx-auto grid w-full max-w-sm touch-none grid-cols-5 gap-1.5 select-none"
+              className="mx-auto grid w-full max-w-sm touch-none grid-cols-5 gap-0 overflow-hidden rounded-xl border-4 border-border select-none"
               onPointerDown={(event) => { point.current = { x: event.clientX, y: event.clientY }; }}
               onPointerUp={(event) => {
                 if (!point.current) return;
@@ -387,30 +389,21 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
               {run.puzzle.grid.map((cell, index) => {
                 const isLive = index === run.at;
                 const isGhost = index === ghost;
-                const tone = cell === 1
-                  ? "bg-muted opacity-80"
-                  : isLive
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
-                    : isGhost
-                      ? "bg-chart-1/40 text-foreground ring-1 ring-chart-1/60"
-                      : index === run.puzzle.livePlate
-                        ? "bg-primary/20 text-primary border border-primary/40"
-                        : index === run.puzzle.ghostPlate
-                          ? "bg-chart-1/25 text-chart-1 border border-chart-1/40"
-                          : "border border-border bg-card text-foreground";
+                const ring = isLive && isGhost ? "ring-4 ring-inset ring-chart-1" : isLive ? "ring-2 ring-inset ring-primary" : isGhost ? "ring-2 ring-inset ring-chart-1/70" : "";
                 return (
-                  <div key={index} className={`flex aspect-square items-center justify-center rounded-lg text-sm font-black transition-all ${isLive && isGhost ? "ring-2 ring-chart-1 scale-105" : ""} ${tone}`}>
+                  <div key={index} className={`relative flex aspect-square items-center justify-center text-sm font-black ${ring}`}>
+                    <PixelImg art={cell === 1 ? LAB_WALL : LAB_FLOOR} className="pointer-events-none absolute inset-0 size-full" />
+                    {index === run.puzzle.livePlate && cell !== 1 ? (
+                      <PixelImg art={LAB_PLATE} className="pointer-events-none absolute inset-2 h-auto w-auto" />
+                    ) : null}
+                    {index === run.puzzle.ghostPlate && cell !== 1 ? (
+                      <PixelImg art={LAB_GHOST_PLATE} className="pointer-events-none absolute inset-2 h-auto w-auto" />
+                    ) : null}
                     {isLive ? (
-                      <img src={DELAY_CURSOR_SPRITES.live} alt="●" className="size-6 object-contain drop-shadow-sm" />
+                      <img src={DELAY_CURSOR_SPRITES.live} alt="●" className="relative size-8 object-contain drop-shadow-md" />
                     ) : isGhost ? (
-                      <img src={DELAY_CURSOR_SPRITES.ghost} alt="○" className="size-6 object-contain opacity-90" />
-                    ) : cell === 1 ? (
-                      <span className="size-2 rounded-sm bg-muted-foreground/30" />
-                    ) : index === run.puzzle.livePlate ? (
-                      <img src={DELAY_CURSOR_SPRITES.plate} alt="⚡" className="size-5 object-contain opacity-80" />
-                    ) : index === run.puzzle.ghostPlate ? (
-                      <span className="text-xs font-bold opacity-60">⌛</span>
-                    ) : ""}
+                      <img src={DELAY_CURSOR_SPRITES.ghost} alt="○" className="relative size-8 object-contain opacity-80" />
+                    ) : null}
                   </div>
                 );
               })}

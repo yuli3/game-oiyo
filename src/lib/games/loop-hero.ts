@@ -20,6 +20,8 @@ export type TileId =
   | 'mountain_peak'
   | 'oblivion';
 
+import { loopCopy, type LoopCopy } from './loop-hero-copy';
+
 export interface CardDef {
   id: string;
   tileId: TileId;
@@ -199,7 +201,10 @@ export class LoopHeroEngine {
   public gameOver = false;
   public victory = false;
 
-  constructor() {
+  public readonly copy: LoopCopy;
+
+  constructor(locale?: string) {
+    this.copy = loopCopy(locale);
     this.grid = Array.from({ length: this.height }, () =>
       Array.from({ length: this.width }, () => ({ tileId: 'empty' as TileId }))
     );
@@ -273,7 +278,7 @@ export class LoopHeroEngine {
 
     const starterSword: Equipment = {
       id: 'sword_starter',
-      name: 'Rusty Shortsword',
+      name: this.copy.starterSword,
       slot: 'weapon',
       level: 1,
       rarity: 'common',
@@ -418,7 +423,7 @@ export class LoopHeroEngine {
               }
             }
           }
-          this.addFloatingText('Mountain Peak Formed! (+120 HP)', x + 1, y + 1, '#fbbf24');
+          this.addFloatingText(this.copy.fx.peak, x + 1, y + 1, '#fbbf24');
           return;
         }
       }
@@ -510,7 +515,7 @@ export class LoopHeroEngine {
     if (type === 'slime') {
       newMonster = {
         id: `slime_${Date.now()}_${Math.random()}`,
-        name: 'Slime',
+        name: this.copy.monsters.slime,
         type: 'slime',
         hp: Math.round(25 * loopScale),
         maxHp: Math.round(25 * loopScale),
@@ -523,7 +528,7 @@ export class LoopHeroEngine {
     } else if (type === 'ratwolf') {
       newMonster = {
         id: `ratwolf_${Date.now()}_${Math.random()}`,
-        name: 'Ratwolf',
+        name: this.copy.monsters.ratwolf,
         type: 'ratwolf',
         hp: Math.round(45 * loopScale),
         maxHp: Math.round(45 * loopScale),
@@ -536,7 +541,7 @@ export class LoopHeroEngine {
     } else if (type === 'skeleton') {
       newMonster = {
         id: `skel_${Date.now()}_${Math.random()}`,
-        name: 'Skeleton',
+        name: this.copy.monsters.skeleton,
         type: 'skeleton',
         hp: Math.round(60 * loopScale),
         maxHp: Math.round(60 * loopScale),
@@ -549,7 +554,7 @@ export class LoopHeroEngine {
     } else {
       newMonster = {
         id: `vamp_${Date.now()}_${Math.random()}`,
-        name: 'Vampire',
+        name: this.copy.monsters.vampire,
         type: 'vampire',
         hp: Math.round(85 * loopScale),
         maxHp: Math.round(85 * loopScale),
@@ -645,7 +650,7 @@ export class LoopHeroEngine {
       const healed = Math.min(morningHeal, this.heroStats.maxHp - this.heroStats.hp);
       this.heroStats.hp += healed;
       const heroPos = this.roadPath[this.heroRoadIndex];
-      this.addFloatingText(`+${healed} HP Morning`, heroPos.x, heroPos.y, '#4ade80');
+      this.addFloatingText(this.copy.fx.morning(healed), heroPos.x, heroPos.y, '#4ade80');
     }
   }
 
@@ -712,7 +717,7 @@ export class LoopHeroEngine {
         const campfireHeal = Math.round(this.heroStats.maxHp * 0.2);
         this.heroStats.hp = Math.min(this.heroStats.maxHp, this.heroStats.hp + campfireHeal);
         const campCoord = this.roadPath[0];
-        this.addFloatingText(`Campfire Rest: +${campfireHeal} HP`, campCoord.x, campCoord.y, '#f59e0b');
+        this.addFloatingText(this.copy.fx.campfire(campfireHeal), campCoord.x, campCoord.y, '#f59e0b');
 
         // Rewarded with bonus card on loop completion
         this.grantRandomCard();
@@ -735,7 +740,7 @@ export class LoopHeroEngine {
     if (this.hasVampireMansionAdjacentToRoad(roadIndex)) {
       const vampire: Monster = {
         id: `vampire_guest_${Date.now()}`,
-        name: 'Lord Vampire',
+        name: this.copy.monsters.lord,
         type: 'vampire',
         hp: Math.round(90 * (1 + (this.loopCount - 1) * 0.3)),
         maxHp: Math.round(90 * (1 + (this.loopCount - 1) * 0.3)),
@@ -750,7 +755,7 @@ export class LoopHeroEngine {
 
     this.activeMonsters = monsters;
     const pos = this.roadPath[roadIndex];
-    this.addFloatingText('BATTLE!', pos.x, pos.y, '#ef4444');
+    this.addFloatingText(this.copy.fx.battle, pos.x, pos.y, '#ef4444');
     this.screenShake = 3;
   }
 
@@ -796,7 +801,7 @@ export class LoopHeroEngine {
     target.hp -= finalDmg;
     this.screenShake = isCrit ? 5 : 2;
 
-    const text = isCrit ? `-${finalDmg} CRIT!` : `-${finalDmg}`;
+    const text = isCrit ? this.copy.fx.crit(finalDmg) : `-${finalDmg}`;
     this.addFloatingText(text, pos.x + 0.3, pos.y - 0.2, isCrit ? '#f59e0b' : '#f87171');
 
     // Vampirism life steal
@@ -827,12 +832,12 @@ export class LoopHeroEngine {
       this.heroStats.hp = 0;
       this.gameOver = true;
       this.inCombat = false;
-      this.addFloatingText('HERO DEFEATED', pos.x, pos.y, '#e11d48');
+      this.addFloatingText(this.copy.fx.defeated, pos.x, pos.y, '#e11d48');
     }
   }
 
   private onMonsterDefeated(monster: Monster, pos: GridCoord): void {
-    this.addFloatingText(`${monster.name} Slain`, pos.x, pos.y + 0.2, '#fbbf24');
+    this.addFloatingText(this.copy.fx.slain(monster.name), pos.x, pos.y + 0.2, '#fbbf24');
 
     // Loot drops
     const dropsEquipment = Math.random() < 0.65;
@@ -880,22 +885,12 @@ export class LoopHeroEngine {
       regen = Math.round((0.2 + level * 0.1) * 10) / 10;
     }
 
-    const adjectives: Record<Equipment['rarity'], string[]> = {
-      common: ['Iron', 'Sturdy', 'Worn', 'Bronze'],
-      rare: ['Knightly', 'Obsidian', 'Silver', 'Tempered'],
-      epic: ['Celestial', 'Vampiric', 'Dragonforged', 'Mythic'],
-    };
+    const adjectives = this.copy.adjectives;
     const adj = adjectives[rarity][Math.floor(Math.random() * adjectives[rarity].length)];
-    const slotNames: Record<EquipSlot, string> = {
-      weapon: 'Sword',
-      shield: 'Kite Shield',
-      armor: 'Platebody',
-      ring: 'Band',
-    };
 
     const item: Equipment = {
       id: `loot_${Date.now()}_${Math.random()}`,
-      name: `${adj} ${slotNames[slot]} Lv.${level}`,
+      name: this.copy.lootName(adj, this.copy.slotItems[slot], level),
       slot,
       level,
       rarity,
@@ -908,7 +903,7 @@ export class LoopHeroEngine {
 
     this.inventory.push(item);
     const heroPos = this.roadPath[this.heroRoadIndex];
-    this.addFloatingText(`Found ${item.name}!`, heroPos.x, heroPos.y, '#38bdf8');
+    this.addFloatingText(this.copy.fx.found(item.name), heroPos.x, heroPos.y, '#38bdf8');
   }
 
   public grantRandomCard(): void {

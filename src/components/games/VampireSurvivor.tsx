@@ -22,6 +22,8 @@ import { useArcadePortal } from '@/lib/games/arcade-portal';
 import { celebrate } from '@/lib/games/celebration';
 import { loadHighScore, saveHighScore } from '@/lib/games/game-save';
 import { VAMPIRE_SURVIVOR_SPRITES } from '@/lib/games/sprites';
+import { drawSprite } from '@/lib/games/pixel-kit';
+import { BAT_A, BAT_B, GEM, GEM_GREEN, GEM_RED, GHOST, GOLEM, GRAVE_TILE, GRAVESTONE, KNIFE, MAGE, SKELETON, SPARK_BOLT, TOME } from '@/lib/games/pixel-sprites';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -389,26 +391,22 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
       juiceRef.current.camera.applyToContext(ctx, width / 2, height / 2);
       ctx.translate(-camX, -camY);
 
-      // 1. Grid Background
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-      ctx.lineWidth = 1;
-      const gridSize = 64;
-      const startX = Math.floor(camX / gridSize) * gridSize;
-      const endX = startX + width + gridSize;
-      const startY = Math.floor(camY / gridSize) * gridSize;
-      const endY = startY + height + gridSize;
-
-      for (let x = startX; x <= endX; x += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(x, startY);
-        ctx.lineTo(x, endY);
-        ctx.stroke();
+      // 1. Graveyard floor: 64px pixel tiles + seeded gravestones
+      const tile = 64;
+      const tx0 = Math.floor(camX / tile) - 1;
+      const ty0 = Math.floor(camY / tile) - 1;
+      const tx1 = Math.ceil((camX + width) / tile) + 1;
+      const ty1 = Math.ceil((camY + height) / tile) + 1;
+      for (let ty = ty0; ty <= ty1; ty++) {
+        for (let tx = tx0; tx <= tx1; tx++) {
+          drawSprite(ctx, GRAVE_TILE, tx * tile, ty * tile, { scale: 4, center: false, flipX: false });
+        }
       }
-      for (let y = startY; y <= endY; y += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(startX, y);
-        ctx.lineTo(endX, y);
-        ctx.stroke();
+      for (let ty = ty0; ty <= ty1; ty++) {
+        for (let tx = tx0; tx <= tx1; tx++) {
+          const hsh = ((tx * 73856093) ^ (ty * 19349663)) >>> 0;
+          if (hsh % 11 === 0) drawSprite(ctx, GRAVESTONE, tx * tile + 20 + (hsh % 24), ty * tile + 24 + ((hsh >>> 4) % 20), { scale: 3 });
+        }
       }
 
       // 2. Arena Boundary
@@ -429,121 +427,58 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
         ctx.stroke();
       }
 
-      // 4. Holy Bible Orbit
+      // 4. Orbiting tomes
       const books = engine.getBibleBookPositions();
-      for (const b of books) {
-        ctx.save();
-        ctx.translate(b.x, b.y);
-        ctx.fillStyle = '#f59e0b';
-        ctx.fillRect(-7, -9, 14, 18);
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(-7, -9, 14, 18);
-        ctx.restore();
-      }
+      for (const b of books) drawSprite(ctx, TOME, b.x, b.y, { scale: 2 });
 
       // 5. XP Gems
       for (const gem of engine.gems) {
-        ctx.save();
-        ctx.translate(gem.x, gem.y);
-        ctx.fillStyle = gem.color === 'red' ? '#ef4444' : gem.color === 'green' ? '#22c55e' : '#3b82f6';
-        ctx.beginPath();
-        ctx.moveTo(0, -gem.radius);
-        ctx.lineTo(gem.radius, 0);
-        ctx.lineTo(0, gem.radius);
-        ctx.lineTo(-gem.radius, 0);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
+        drawSprite(ctx, gem.color === 'red' ? GEM_RED : gem.color === 'green' ? GEM_GREEN : GEM, gem.x, gem.y, { scale: 2 });
       }
 
       // 6. Projectiles
       for (const proj of engine.projectiles) {
-        ctx.save();
-        ctx.translate(proj.x, proj.y);
         if (proj.type === 'missile') {
-          ctx.fillStyle = '#60a5fa';
-          ctx.beginPath();
-          ctx.arc(0, 0, proj.radius, 0, Math.PI * 2);
-          ctx.fill();
+          drawSprite(ctx, SPARK_BOLT, proj.x, proj.y, { scale: 3 });
         } else if (proj.type === 'knife') {
-          ctx.fillStyle = '#e2e8f0';
-          const angle = Math.atan2(proj.vy, proj.vx);
-          ctx.rotate(angle);
-          ctx.fillRect(-8, -2, 16, 4);
+          drawSprite(ctx, KNIFE, proj.x, proj.y, { scale: 2, rotate: Math.atan2(proj.vy, proj.vx) });
         } else if (proj.type === 'lightning') {
-          ctx.strokeStyle = '#facc15';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(0, -30);
-          ctx.lineTo(0, 0);
-          ctx.stroke();
+          ctx.save();
+          ctx.fillStyle = '#fde047';
+          const zx = Math.round(proj.x);
+          const zy = Math.round(proj.y);
+          ctx.fillRect(zx - 2, zy - 30, 4, 10);
+          ctx.fillRect(zx + 2, zy - 22, 4, 10);
+          ctx.fillRect(zx - 2, zy - 14, 4, 14);
+          ctx.restore();
         }
-        ctx.restore();
       }
 
-      // 7. Enemies
+      // 7. Enemies (pixel sprites, flip to face the hero)
+      const flap = Math.floor(time / 140) % 2 === 0;
       for (const enemy of engine.enemies) {
-        ctx.save();
-        ctx.translate(enemy.x, enemy.y);
-
-        if (enemy.type === 'bat') {
-          ctx.fillStyle = '#a855f7';
-          ctx.beginPath();
-          ctx.arc(0, 0, enemy.radius, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (enemy.type === 'skeleton') {
-          ctx.fillStyle = '#e2e8f0';
-          ctx.beginPath();
-          ctx.arc(0, 0, enemy.radius, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (enemy.type === 'ghost') {
-          ctx.fillStyle = 'rgba(56, 189, 248, 0.7)';
-          ctx.beginPath();
-          ctx.arc(0, 0, enemy.radius, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (enemy.type === 'golem') {
-          ctx.fillStyle = '#64748b';
-          ctx.beginPath();
-          ctx.arc(0, 0, enemy.radius, 0, Math.PI * 2);
-          ctx.fill();
-        }
+        const flipX = enemy.x > p.playerX;
+        const bob = Math.round(Math.sin(time / 200 + enemy.x) * 2);
+        if (enemy.type === 'bat') drawSprite(ctx, flap ? BAT_A : BAT_B, enemy.x, enemy.y + bob, { scale: 2, flipX });
+        else if (enemy.type === 'skeleton') drawSprite(ctx, SKELETON, enemy.x, enemy.y, { scale: 2, flipX });
+        else if (enemy.type === 'ghost') drawSprite(ctx, GHOST, enemy.x, enemy.y + bob, { scale: 2, flipX, alpha: 0.85 });
+        else if (enemy.type === 'golem') drawSprite(ctx, GOLEM, enemy.x, enemy.y, { scale: 3, flipX });
 
         // Mini HP bar for tanky enemies
         if (enemy.maxHp > 30) {
           const hpPct = Math.max(0, enemy.hp / enemy.maxHp);
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-          ctx.fillRect(-12, -enemy.radius - 8, 24, 4);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+          ctx.fillRect(Math.round(enemy.x) - 12, Math.round(enemy.y) - enemy.radius - 12, 24, 4);
           ctx.fillStyle = '#ef4444';
-          ctx.fillRect(-12, -enemy.radius - 8, 24 * hpPct, 4);
+          ctx.fillRect(Math.round(enemy.x) - 12, Math.round(enemy.y) - enemy.radius - 12, Math.round(24 * hpPct), 4);
         }
-
-        ctx.restore();
       }
 
-      // 8. Player Hero
-      ctx.save();
-      ctx.translate(p.playerX, p.playerY);
-
-      // Facing indicator
-      ctx.rotate(p.playerFacingAngle);
-      ctx.fillStyle = '#3b82f6';
-      ctx.beginPath();
-      ctx.arc(0, 0, 14, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Wand/Staff direction line
-      ctx.strokeStyle = '#93c5fd';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(8, 0);
-      ctx.lineTo(20, 0);
-      ctx.stroke();
-
-      ctx.restore();
+      // 8. Player Hero: hooded mage, faces where they aim
+      const facingLeft = Math.cos(p.playerFacingAngle) < 0;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.fillRect(Math.round(p.playerX) - 10, Math.round(p.playerY) + 14, 20, 4);
+      drawSprite(ctx, MAGE, p.playerX, p.playerY, { scale: 2, flipX: facingLeft });
 
       // 9. GameJuice Particles & Floating Combat Text
       juiceRef.current.render(ctx);

@@ -30,6 +30,7 @@ import {
   saveArcadePassProgress,
 } from '../../lib/games/arcade-pass';
 import type { Locale } from '../../lib/i18n';
+import { skiffCopy } from '../../lib/games/ftl-mini-copy';
 
 function TiltFTLButton({
   children,
@@ -82,6 +83,7 @@ interface SpaceParticle {
 }
 
 export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
+  const t = skiffCopy(locale);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<FTLEngine | null>(null);
@@ -106,7 +108,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
   const [playerFreePower, setPlayerFreePower] = useState(1);
   const [playerTotalPower, setPlayerTotalPower] = useState(10);
 
-  const [enemyName, setEnemyName] = useState('Rust Scout');
+  const [enemyName, setEnemyName] = useState('');
   const [enemyHull, setEnemyHull] = useState(12);
   const [enemyMaxHull, setEnemyMaxHull] = useState(12);
   const [enemyShields, setEnemyShields] = useState(1);
@@ -209,7 +211,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
 
   // Initialize engine
   useEffect(() => {
-    engineRef.current = new FTLEngine();
+    engineRef.current = new FTLEngine(locale);
     syncSnapshot();
     lastTimeRef.current = performance.now();
 
@@ -287,7 +289,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
 
   const handleRestart = () => {
     MobileHapticsPro.medium();
-    engineRef.current = new FTLEngine();
+    engineRef.current = new FTLEngine(locale);
     setSelectedCrewId(null);
     setSelectedWeaponId(null);
     syncSnapshot();
@@ -665,8 +667,8 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
           <div className="flex flex-col min-w-32">
             <div className="flex justify-between text-xs font-bold items-center">
               <span className="text-primary flex items-center gap-1">
-                <img src={FTL_MINI_SPRITES.cruiser} alt="Skiff Cruiser" className="size-4 object-contain inline-block" />
-                USS Antigravity
+                <img src={FTL_MINI_SPRITES.cruiser} alt={t.ui.cruiserAlt} className="size-4 object-contain inline-block" />
+                {t.playerShip}
               </span>
               <span>{playerHull}/{playerMaxHull}</span>
             </div>
@@ -684,7 +686,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
           </div>
 
           <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-            <span>Eva: {playerEvasion}%</span>
+            <span>{t.ui.eva(playerEvasion)}</span>
             <span>⚡ {playerFreePower}/{playerTotalPower}</span>
           </div>
         </div>
@@ -692,11 +694,11 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
         {/* Resources & Sector */}
         <div className="flex items-center gap-3 text-xs font-bold">
           <span className="text-warning flex items-center gap-1">
-            <img src={FTL_MINI_SPRITES.scrap} alt="Scrap" className="size-3.5 object-contain inline-block" />
-            {scrap} Scrap
+            <img src={FTL_MINI_SPRITES.scrap} alt="" className="size-3.5 object-contain inline-block" />
+            {t.ui.scrap(scrap)}
           </span>
-          <span className="text-destructive">🚀 {missiles} Missiles</span>
-          <span className="text-foreground">Sector {sector} / {STAR_SKIFF_MAX_SECTOR}</span>
+          <span className="text-destructive">🚀 {t.ui.missiles(missiles)}</span>
+          <span className="text-foreground">{t.ui.sector(sector, STAR_SKIFF_MAX_SECTOR)}</span>
         </div>
 
         {/* Enemy Status HUD */}
@@ -716,7 +718,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
           <div className="flex items-center gap-1.5 ml-2">
             <TiltFTLButton
               onClick={togglePause}
-              aria-label={isPaused ? "Play" : "Pause"}
+              aria-label={isPaused ? t.ui.play : t.ui.pause}
               className="p-2 rounded-lg border border-border bg-card text-foreground hover:bg-muted"
             >
               {isPaused ? <Play className="size-4 text-primary" /> : <Pause className="size-4" />}
@@ -724,7 +726,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
 
             <TiltFTLButton
               onClick={cycleGameSpeed}
-              aria-label="Speed"
+              aria-label={t.ui.speed}
               className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 ${
                 gameSpeed === 2 ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground'
               }`}
@@ -737,7 +739,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
                 MobileHapticsPro.selection();
                 setSoundEnabled(!soundEnabled);
               }}
-              aria-label={soundEnabled ? "Mute" : "Unmute"}
+              aria-label={soundEnabled ? t.ui.mute : t.ui.unmute}
               className="p-2 rounded-lg border border-border bg-card text-foreground hover:bg-muted"
             >
               {soundEnabled ? (
@@ -749,7 +751,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
 
             <TiltFTLButton
               onClick={handleRestart}
-              aria-label="Restart"
+              aria-label={t.ui.restart}
               className="p-2 rounded-lg border border-border bg-card text-foreground hover:bg-muted"
             >
               <RotateCcw className="size-4" />
@@ -783,8 +785,8 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
           <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-background/90 border border-primary/50 px-4 py-1.5 rounded-full shadow-lg text-xs font-bold text-primary flex items-center gap-1.5 pointer-events-none animate-bounce">
             <Sparkles className="size-3.5" />
             {selectedCrewId
-              ? 'Click any Player room to dispatch crew member'
-              : 'Click any Enemy room to target weapon'}
+              ? t.ui.crewHint
+              : t.ui.weaponHint}
           </div>
         )}
 
@@ -795,21 +797,21 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
               <>
                 <img
                   src={FTL_MINI_SPRITES.trophy}
-                  alt="Galaxy Saver Trophy"
+                  alt={t.ui.trophyAlt}
                   className="size-20 animate-bounce drop-shadow-xl mb-1 object-contain"
                 />
                 <h2 className="text-3xl font-black text-primary tracking-wider">
-                  ALL {STAR_SKIFF_MAX_SECTOR} SECTORS CLEARED
+                  {t.ui.cleared(STAR_SKIFF_MAX_SECTOR)}
                 </h2>
                 <p className="text-muted-foreground text-xs max-w-sm text-center">
-                  You beat the last enemy ship and crossed every sector.
+                  {t.ui.clearedBody}
                 </p>
               </>
             ) : (
               <>
-                <h2 className="text-3xl font-black text-destructive tracking-wider">HULL BREACH - SHIP LOST</h2>
+                <h2 className="text-3xl font-black text-destructive tracking-wider">{t.ui.lost}</h2>
                 <p className="text-muted-foreground text-xs max-w-sm text-center">
-                  Your ship was torn apart by enemy fire in Sector {sector}.
+                  {t.ui.lostBody(sector)}
                 </p>
               </>
             )}
@@ -817,7 +819,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
               onClick={handleRestart}
               className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-lg hover:bg-primary/90 flex items-center gap-2"
             >
-              <RotateCcw className="size-4" /> Recommission Starship
+              <RotateCcw className="size-4" /> {t.ui.recommission}
             </TiltFTLButton>
           </div>
         )}
@@ -829,10 +831,10 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
         <div className="flex flex-col bg-card/60 border border-border p-3 rounded-xl gap-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-              Reactor Systems
+              {t.ui.reactor}
             </span>
             <span className="text-xs text-primary font-bold">
-              ⚡ {playerFreePower} Free
+              {t.ui.free(playerFreePower)}
             </span>
           </div>
 
@@ -849,12 +851,14 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
                   </span>
                   <TiltFTLButton
                     onClick={() => handleAllocatePower(room.id, -1)}
+                    aria-label={t.ui.less(room.name)}
                     className="size-5 flex items-center justify-center bg-card border border-border rounded text-xs font-bold hover:bg-muted"
                   >
                     -
                   </TiltFTLButton>
                   <TiltFTLButton
                     onClick={() => handleAllocatePower(room.id, 1)}
+                    aria-label={t.ui.more(room.name)}
                     className="size-5 flex items-center justify-center bg-primary/20 text-primary border border-primary/40 rounded text-xs font-bold hover:bg-primary/30"
                   >
                     +
@@ -869,9 +873,9 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
         <div className="flex flex-col bg-card/60 border border-border p-3 rounded-xl gap-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-              Weapon Arsenal
+              {t.ui.arsenal}
             </span>
-            <span className="text-xs text-muted-foreground">Click to target</span>
+            <span className="text-xs text-muted-foreground">{t.ui.tapTarget}</span>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -892,12 +896,12 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-foreground flex items-center gap-1">
-                      <img src={FTL_MINI_SPRITES.laser} alt="Laser" className="size-3.5 object-contain inline-block" />
+                      <img src={FTL_MINI_SPRITES.laser} alt="" className="size-3.5 object-contain inline-block" />
                       {weapon.name}
                     </span>
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Crosshair className="size-3" />
-                      {targetRoom ? targetRoom.name : 'No Target'}
+                      {targetRoom ? targetRoom.name : t.ui.noTarget}
                     </span>
                   </div>
 
@@ -919,9 +923,9 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Crew Manifest
+                {t.ui.crewTitle}
               </span>
-              <span className="text-xs text-muted-foreground">Click to move</span>
+              <span className="text-xs text-muted-foreground">{t.ui.tapMove}</span>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -947,7 +951,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
                       {crew.name}
                     </span>
                     <span className="text-muted-foreground">
-                      {currentRoom ? currentRoom.name : 'Transit'}
+                      {currentRoom ? currentRoom.name : t.ui.transit}
                     </span>
                   </TiltFTLButton>
                 );
@@ -959,7 +963,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
           <div className="flex items-center gap-2 pt-2 border-t border-border/40">
             <div className="flex-1 flex flex-col">
               <div className="flex justify-between text-xs font-bold text-info">
-                <span>Warp Drive</span>
+                <span>{t.ui.warpDrive}</span>
                 <span>{playerFtl}%</span>
               </div>
               <div className="w-full bg-muted h-2 rounded-full overflow-hidden mt-1 border border-border/40">
@@ -979,7 +983,7 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
                   : 'bg-muted text-muted-foreground opacity-50 cursor-not-allowed'
               }`}
             >
-              Warp Jump
+              {t.ui.warpJump}
             </TiltFTLButton>
           </div>
         </div>

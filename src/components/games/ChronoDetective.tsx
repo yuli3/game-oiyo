@@ -112,10 +112,8 @@ function TiltMemoryTabButton({
         MobileHapticsPro.light();
         onClick();
       }}
-      className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition will-change-transform transform-(--card-tilt) ${
-        isSelected
-          ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-          : 'border-border bg-background text-foreground hover:bg-accent'
+      className={`game-btn px-3 py-1.5 text-xs will-change-transform transform-(--card-tilt) ${
+        isSelected ? 'game-btn-live' : ''
       }`}
     >
       {label}
@@ -227,14 +225,14 @@ export default function ChronoDetective({ locale }: Props) {
           <button
             type="button"
             onClick={handleAutoSolve}
-            className="rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground hover:bg-accent"
+            className="game-btn game-btn-live px-3 py-2 text-xs"
           >
             {isKo ? '⚡ 회중시계 진실 계시 (자동 추리)' : '⚡ Reveal True Fates (Auto-Deduce)'}
           </button>
           <button
             type="button"
             onClick={() => setState(createChronoDetectiveState())}
-            className="rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold hover:bg-accent"
+            className="game-btn px-3 py-2 text-xs"
           >
             {isKo ? '초기화' : 'Reset'}
           </button>
@@ -313,14 +311,12 @@ export default function ChronoDetective({ locale }: Props) {
                       MobileHapticsPro.light();
                       setState(inspectSceneClue(state, clue.id));
                     }}
-                    className={`flex w-full items-center justify-between rounded-xl border p-3 text-left text-xs font-bold transition ${
-                      inspected
-                        ? 'border-primary bg-primary/15 text-foreground'
-                        : 'border-border bg-secondary text-secondary-foreground hover:bg-accent'
+                    className={`game-btn flex w-full items-center justify-between p-3 text-left text-xs ${
+                      inspected ? '' : 'game-btn-live'
                     }`}
                   >
                     <span>{isKo ? clue.labelKo : clue.labelEn}</span>
-                    <span className="text-primary">
+                    <span>
                       {inspected
                         ? isKo
                           ? '✓ 단서 확보됨'
