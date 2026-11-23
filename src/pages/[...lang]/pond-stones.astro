@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PondStones from "../../components/games/PondStones";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "얼음 돌 밀기 — 당겨 던지고 문질러 미는 무료 겨울 연못 물리 게임 30단계 + 둘이 한 폰으로",
+    description: "뒤로 당겼다 놓아 돌을 얼음 위로 미끄러뜨리고, 돌 앞 얼음을 손가락으로 문질러 더 멀리 보내세요. 회전을 걸면 돌이 휘어 막는 돌을 돌아갑니다. 눈 더미·얼어붙은 바위까지 30단계, 폰 하나로 둘이서 하는 대결도 있어요.",
+  },
+  en: {
+    title: "Pond Stones — Free winter pond physics game: pull, slide and rub the ice (30 stages + 2P on one phone)",
+    description: "Pull back and let go to slide a stone across the ice, then rub the ice ahead of it with your finger to carry it further. Add spin to curl it around guard stones. 30 stages with snow patches and frozen rocks, plus a two-player match on one phone.",
+  },
+  ja: {
+    title: "氷の石すべらせ — 引いて投げて氷をこする無料の冬の池物理ゲーム30ステージ＋スマホ1台で2人",
+    description: "引いて離すと石が氷の上を滑り、石の前の氷を指でこするともっと遠くへ進みます。回転をかけると石が曲がってじゃまな石を回り込みます。雪だまりや凍った岩まで30ステージ、スマホ1台の2人対戦もあります。",
+  },
+  zh: {
+    title: "冰湖推石 — 拉、滑、擦冰面的免费冬季冰湖物理游戏30关 + 双人一部手机",
+    description: "往后拉再松手，石头就会在冰上滑出去；用手指摩擦它前面的冰面，它能滑得更远。加上旋转，石头会拐弯绕过挡路的石头。共30关，有积雪和冻住的石块，还有一部手机的双人对战。",
+  },
+  fr: {
+    title: "Pierres sur l'étang — Jeu de physique d'hiver gratuit : tirer, glisser, frotter la glace (30 niveaux + à deux sur un téléphone)",
+    description: "Tirez puis lâchez pour faire glisser une pierre sur la glace, et frottez la glace devant elle pour l'emmener plus loin. Donnez de l'effet pour contourner les pierres de garde. 30 niveaux avec tas de neige et rochers gelés, plus un duel à deux sur un téléphone.",
+  },
+  es: {
+    title: "Piedras en el estanque — Juego de física invernal gratis: tira, desliza y frota el hielo (30 niveles + dos en un móvil)",
+    description: "Tira hacia atrás y suelta para deslizar una piedra por el hielo, y frota el hielo delante para llevarla más lejos. Dale giro para rodear las piedras guardia. 30 niveles con montones de nieve y rocas heladas, más un duelo a dos en un móvil.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["pond-stones"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <PondStones client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="pond-stones" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

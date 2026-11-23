@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SnowflakeCut from "../../components/games/SnowflakeCut";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "눈송이 오리기 — 접은 종이를 그어 오려 똑같은 눈송이를 만드는 무료 퍼즐 30단계",
+    description: "여러 번 접은 종이를 손가락으로 쓱 그으면 오려지고, 펼친 눈송이가 바로 보여요. 목표 눈송이와 똑같이 만들어 보세요. 4번 접기에서 진짜 눈송이처럼 6번 접기까지 30단계, 가위질을 적게 할수록 별이 많아요.",
+  },
+  en: {
+    title: "Paper Snowflake — Free fold-and-cut puzzle: snip the folded paper to match the snowflake (30 stages)",
+    description: "Swipe across the folded paper to snip it, and see the unfolded snowflake right away. Make yours match the target. 30 stages from a 4-way fold to a true 6-way snowflake fold; fewer snips earn more stars.",
+  },
+  ja: {
+    title: "雪の結晶きりがみ — 折った紙を切ってお手本の結晶を作る無料パズル30ステージ",
+    description: "何度も折った紙を指でなぞると切れて、広げた結晶がすぐに見えます。お手本と同じ形にしましょう。4つ折りから本物の雪のような6つ折りまで30ステージ。切る回数が少ないほど星が増えます。",
+  },
+  zh: {
+    title: "剪雪花 — 在折好的纸上剪出一模一样雪花的免费谜题30关",
+    description: "手指划过折好的纸就能剪开，展开的雪花立刻显示出来。把它剪得和目标一模一样。从四折到像真雪花一样的六折共30关，剪的刀数越少星越多。",
+  },
+  fr: {
+    title: "Flocon de papier — Puzzle gratuit de pliage-découpage : reproduisez le flocon (30 niveaux)",
+    description: "Glissez sur le papier plié pour le découper et voyez aussitôt le flocon déplié. Rendez-le identique au modèle. 30 niveaux, du pliage en 4 au vrai flocon plié en 6 ; moins de coups de ciseaux, plus d'étoiles.",
+  },
+  es: {
+    title: "Copo de papel — Puzle gratis de doblar y cortar: recorta el papel para igualar el copo (30 niveles)",
+    description: "Desliza sobre el papel doblado para recortarlo y mira al instante el copo desplegado. Haz que sea igual al modelo. 30 niveles, del doblado en 4 al auténtico copo doblado en 6; menos cortes, más estrellas.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["snowflake-cut"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <SnowflakeCut client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="snowflake-cut" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
