@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 207종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 207종." },
-  en: { title: "OIYO Arcade — 207 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 207 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム207種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム207種。" },
-  zh: { title: "OIYO 街机 — 无需安装的207款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，207款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 207 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 207 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 207 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 207 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 210종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 210종." },
+  en: { title: "OIYO Arcade — 210 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 210 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム210種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム210種。" },
+  zh: { title: "OIYO 街机 — 无需安装的210款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，210款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 210 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 210 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 210 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 210 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 207종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "207 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム207種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的207款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "207 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "207 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 210종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "210 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム210種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的210款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "210 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "210 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -261,6 +261,9 @@ const GAMES: Game[] = [
   { slug: "top-whip", emoji: "🌀", cat: "arcade", name: { ko: "팽이치기", en: "Top Whip", ja: "ムチごま", zh: "抽陀螺", fr: "Toupie au fouet", es: "Trompo al látigo" } },
   { slug: "ondol-flue", emoji: "🔥", cat: "puzzle", name: { ko: "온돌 구들 잇기", en: "Ondol Flue", ja: "オンドルの煙道", zh: "暖炕烟道", fr: "Conduits d'ondol", es: "Conductos del ondol" } },
   { slug: "tteok-slice", emoji: "🍲", cat: "arcade", name: { ko: "떡국 떡 썰기", en: "Tteok Slice", ja: "トックの餅切り", zh: "切年糕片", fr: "Tranches de tteok", es: "Rodajas de tteok" } },
+  { slug: "ttakji-flip", emoji: "🟥", cat: "arcade", name: { ko: "딱지치기", en: "Ttakji Flip", ja: "タクチめんこ", zh: "拍纸板", fr: "Ttakji retourné", es: "Ttakji al revés" } },
+  { slug: "gotgam-mobile", emoji: "🟠", cat: "puzzle", name: { ko: "곶감 모빌", en: "Gotgam Mobile", ja: "干し柿モビール", zh: "柿饼风铃", fr: "Mobile de kakis", es: "Móvil de caquis" } },
+  { slug: "gonggi-toss", emoji: "🪨", cat: "arcade", name: { ko: "공기놀이", en: "Gonggi Toss", ja: "コンギ遊び", zh: "抓石子", fr: "Gonggi", es: "Gonggi" } },
   { slug: "advent-puzzles", emoji: "🎄", cat: "puzzle", name: { ko: "어드벤트 퍼즐 달력", en: "Advent Puzzle Calendar", ja: "アドベント・パズルカレンダー", zh: "降临节谜题日历", fr: "Calendrier de l'Avent à énigmes", es: "Calendario de Adviento de puzles" } },
   { slug: "sunlit-glass", emoji: "🪟", cat: "puzzle", name: { ko: "햇살 스테인드글라스", en: "Sunlit Glass", ja: "陽だまりステンドグラス", zh: "阳光彩绘玻璃", fr: "Vitrail au soleil", es: "Vitral al Sol" } },
   { slug: "finger-hockey", emoji: "🏒", cat: "arcade", name: { ko: "손가락 에어하키", en: "Finger Air Hockey", ja: "指先エアホッケー", zh: "指尖桌上冰球", fr: "Air hockey du bout des doigts", es: "Air Hockey con el Dedo" } },
@@ -325,6 +328,42 @@ const newReleasesLabel: Record<Locale, { sectionTitle: string; badge: string; su
 const newReleaseLabels = newReleasesLabel[locale] ?? newReleasesLabel.en;
 
 const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; desc: Record<Locale, string> }> = [
+  {
+    slug: "ttakji-flip",
+    tag: { ko: "설날 민속놀이", en: "Seollal folk game", ja: "お正月の伝承遊び", zh: "春节民俗游戏", fr: "Jeu traditionnel du Nouvel An", es: "Juego tradicional de Año Nuevo" },
+    desc: {
+      ko: "딱! 상대 딱지를 뒤집어요",
+      en: "Slam and flip the tile",
+      ja: "バシッとめんこをめくる",
+      zh: "啪！砸翻对手纸板",
+      fr: "Frappez, retournez",
+      es: "Golpea y voltea",
+    },
+  },
+  {
+    slug: "gotgam-mobile",
+    tag: { ko: "설날 균형 퍼즐", en: "Seollal balance puzzle", ja: "お正月のバランスパズル", zh: "春节平衡谜题", fr: "Puzzle d'équilibre du Nouvel An", es: "Puzle de equilibrio de Año Nuevo" },
+    desc: {
+      ko: "곶감으로 대나무 수평 맞추기",
+      en: "Balance the persimmon rods",
+      ja: "干し柿で竹を水平に",
+      zh: "用柿饼让竹竿平衡",
+      fr: "Équilibrez les tiges de kakis",
+      es: "Equilibra las varas de caquis",
+    },
+  },
+  {
+    slug: "gonggi-toss",
+    tag: { ko: "설날 민속놀이", en: "Seollal folk game", ja: "お正月の伝承遊び", zh: "春节民俗游戏", fr: "Jeu traditionnel du Nouvel An", es: "Juego tradicional de Año Nuevo" },
+    desc: {
+      ko: "던지고 줍고 받고",
+      en: "Toss, scoop, catch",
+      ja: "投げて拾ってキャッチ",
+      zh: "抛、捡、接",
+      fr: "Lancer, ramasser, rattraper",
+      es: "Lanza, recoge, atrapa",
+    },
+  },
   {
     slug: "top-whip",
     tag: { ko: "겨울 민속놀이", en: "Winter folk game", ja: "冬の伝承遊び", zh: "冬季民俗游戏", fr: "Jeu d'hiver traditionnel", es: "Juego tradicional de invierno" },

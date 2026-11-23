@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GonggiToss from "../../components/games/GonggiToss";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "공기놀이 — 공깃돌을 던지고 떠 있는 동안 돌을 주워 받는 무료 설날 손놀림 게임 30단계",
+    description: "설날 오후 따뜻한 방바닥에서 공기놀이 한 판! 위로 튕겨 공깃돌을 던지고, 떠 있는 동안 바닥의 돌을 톡톡 주운 뒤, 내려오는 공깃돌을 딱 맞춰 받아요. 1단 한 알, 2단 두 알, 3단 세 알·한 알, 4단 네 알. 뒤로 갈수록 단을 이어 하고 받는 순간이 짧아지는 30단계.",
+  },
+  en: {
+    title: "Gonggi Toss — Free Seollal reflex game: toss the stone, scoop the others while it flies, then catch it (30 stages)",
+    description: "A Seollal afternoon of gonggi on the warm floor! Flick up to toss the mother stone, tap to scoop stones off the floor while it flies, then catch it right as it lands. Step 1 picks one at a time, step 2 two, step 3 three then one, step 4 all four. 30 stages that chain steps and shorten the catch.",
+  },
+  ja: {
+    title: "コンギ遊び — 石を投げ、浮いている間にほかの石を拾ってキャッチする無料のお正月反射神経ゲーム30ステージ",
+    description: "ソルラルの午後、暖かい床でコンギを一勝負！ 上へはじいて親石を投げ、浮いている間に床の石をトントン拾い、落ちてくる親石をぴったりキャッチ。1段は1個、2段は2個、3段は3個と1個、4段は4個。後半は段が続き、キャッチの瞬間が短くなる30ステージ。",
+  },
+  zh: {
+    title: "抓石子 — 抛起石子，在它落下前捡起地上的石子再接住的免费春节反应游戏30关",
+    description: "春节午后，在温暖的炕上来一局抓石子！向上一弹抛起母石，趁它在空中点地上的石子捡起来，再在它落下时稳稳接住。第1段捡一颗，第2段两颗，第3段三颗再一颗，第4段四颗。越往后要连着玩几段、接住的时机越短，共30关。",
+  },
+  fr: {
+    title: "Gonggi — Jeu de réflexes gratuit du Nouvel An : lancez le caillou, ramassez les autres, rattrapez-le (30 niveaux)",
+    description: "Un après-midi de Seollal à jouer au gonggi sur le sol chauffé ! Glissez vers le haut pour lancer le caillou, touchez les cailloux au sol pour les ramasser pendant qu'il vole, puis rattrapez-le juste à l'atterrissage. Étape 1 : un par un, étape 2 : deux, étape 3 : trois puis un, étape 4 : les quatre. 30 niveaux qui enchaînent les étapes et raccourcissent le rattrapage.",
+  },
+  es: {
+    title: "Gonggi — Juego de reflejos gratis de Año Nuevo: lanza la piedra, recoge las otras y atrápala (30 niveles)",
+    description: "¡Una tarde de Seollal jugando gonggi en el suelo cálido! Desliza hacia arriba para lanzar la piedra, toca para recoger piedras del suelo mientras vuela y atrápala justo al caer. Paso 1: de una en una, paso 2: dos, paso 3: tres y una, paso 4: las cuatro. 30 niveles que encadenan pasos y acortan la atrapada.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["gonggi-toss"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <GonggiToss client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="gonggi-toss" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

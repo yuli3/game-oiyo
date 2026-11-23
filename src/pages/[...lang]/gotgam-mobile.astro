@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GotgamMobile from "../../components/games/GotgamMobile";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "곶감 모빌 — 처마 밑 대나무에 곶감을 걸어 수평을 맞추는 무료 설날 균형 퍼즐 30단계",
+    description: "설 앞둔 한옥 처마 밑, 대나무 장대에 곶감을 말려요. 바구니의 곶감을 끌어 고리에 걸고, 대나무마다 '무게 × 거리'가 양쪽이 같도록 맞추면 장대가 수평으로 멈춰요. 대나무에 대나무가 매달리고, 미리 묶인 곶감과 고리를 차지한 까치까지 30단계. 모든 퍼즐은 실제 정답에서 만들었어요.",
+  },
+  en: {
+    title: "Gotgam Mobile — Free Seollal balance puzzle: hang drying persimmons so every bamboo rod hangs level (30 stages)",
+    description: "Under a hanok eave before Seollal, persimmons dry on bamboo rods. Drag each one from the basket onto a hook and balance weight × distance on both sides of every rod until they all hang level. 30 stages with rods hanging from rods, persimmons already tied on and magpies taking hooks. Every puzzle is built from a real answer.",
+  },
+  ja: {
+    title: "干し柿モビール — 軒下の竹に干し柿を掛けて水平にする無料のお正月バランスパズル30ステージ",
+    description: "お正月前の韓屋の軒下で、竹ざおに干し柿を干します。かごの干し柿を引いてフックに掛け、竹ごとに左右の「重さ×距離」をそろえると、竹がぴたりと水平に。竹に竹がぶら下がり、最初から結ばれた柿や、フックを占領するカササギまで30ステージ。どのパズルも本物の正解から作っています。",
+  },
+  zh: {
+    title: "柿饼风铃 — 在屋檐下的竹竿上挂柿饼、让每根竹竿保持水平的免费春节平衡谜题30关",
+    description: "春节前的韩屋屋檐下，竹竿上晾着柿饼。把篮子里的柿饼拖到挂钩上，让每根竹竿两边的「重量×距离」相等，竹竿就会稳稳地水平。还有竹竿挂竹竿、提前绑好的柿饼和占着挂钩的喜鹊，共30关。每道谜题都是从真实答案做出来的。",
+  },
+  fr: {
+    title: "Mobile de kakis — Puzzle d'équilibre gratuit du Nouvel An : suspendez les kakis pour que chaque tige soit droite (30 niveaux)",
+    description: "Sous l'avant-toit d'une maison hanok avant Seollal, des kakis sèchent sur des tiges de bambou. Glissez chacun du panier vers un crochet et équilibrez poids × distance des deux côtés de chaque tige jusqu'à ce que tout soit droit. 30 niveaux avec des tiges suspendues à d'autres, des kakis déjà noués et des pies sur les crochets. Chaque puzzle est construit à partir d'une vraie solution.",
+  },
+  es: {
+    title: "Móvil de caquis — Puzle de equilibrio gratis de Año Nuevo: cuelga los caquis para que cada vara quede nivelada (30 niveles)",
+    description: "Bajo el alero de una casa hanok antes de Seollal, los caquis se secan en varas de bambú. Arrastra cada uno de la cesta a un gancho y equilibra peso × distancia a ambos lados de cada vara hasta que todas queden niveladas. 30 niveles con varas colgadas de varas, caquis ya atados y urracas ocupando ganchos. Cada puzle se construye a partir de una solución real.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["gotgam-mobile"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <GotgamMobile client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="gotgam-mobile" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
