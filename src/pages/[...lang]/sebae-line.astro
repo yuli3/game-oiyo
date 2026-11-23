@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SebaeLine from "../../components/games/SebaeLine";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "세배 줄 서기 — 단서로 가족 자리를 찾는 무료 설날 논리 퍼즐 30단계",
+    description: "할아버지는 끝, 막내는 엄마 바로 왼쪽… 가족들의 바람을 단서로 읽고 세배 줄을 맞춰 보세요. 4명에서 8명까지 30단계, 답은 언제나 하나예요.",
+  },
+  en: {
+    title: "New Year Bow Line-up — Free logic puzzle: seat the family from clues (30 stages)",
+    description: "Grandpa wants an end, the baby wants to be right left of Mom… Read the family's wishes as clues and get the New Year's bow line right. 30 stages from 4 to 8 people, always exactly one answer.",
+  },
+  ja: {
+    title: "新年のあいさつ並び — 手がかりで家族の並び順を当てる無料の論理パズル30ステージ",
+    description: "おじいちゃんは端、弟はママのすぐ左……家族の希望を手がかりに、新年のあいさつの列を整えましょう。4人から8人まで30ステージ、答えはいつもひとつ。",
+  },
+  zh: {
+    title: "拜年排排站 — 根据线索排好一家人位置的免费逻辑谜题30关",
+    description: "爷爷要站在一端，弟弟要紧挨在妈妈左边……把家人的心愿当成线索，排好拜年的队伍。从4人到8人共30关，答案永远只有一个。",
+  },
+  fr: {
+    title: "La rangée du salut du Nouvel An — Casse-tête logique gratuit : placez la famille d'après les indices (30 niveaux)",
+    description: "Papi veut un bout, Tom veut être juste à gauche de Maman… Lisez les souhaits de la famille comme des indices et formez la rangée du salut. 30 niveaux de 4 à 8 personnes, toujours une seule solution.",
+  },
+  es: {
+    title: "La fila de la reverencia de Año Nuevo — Puzle lógico gratis: coloca a la familia con pistas (30 niveles)",
+    description: "El abuelo quiere un extremo, Pablo quiere estar justo a la izquierda de Mamá… Lee los deseos de la familia como pistas y forma la fila de la reverencia. 30 niveles de 4 a 8 personas, siempre con una única solución.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["sebae-line"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <SebaeLine client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="sebae-line" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
