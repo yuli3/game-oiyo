@@ -39,6 +39,7 @@ public class StarBlasterPlayer : MonoBehaviour
         public bool hasStealth;
         public bool hasShieldDrones;
         public bool isBossStage;
+        public float bossHealth; // 0 = the hand-made stages' 1500 / 3000
         public Color nebulaColor;
     }
 
@@ -99,6 +100,7 @@ public class StarBlasterPlayer : MonoBehaviour
     private int currentStageIndex = 0;
     private bool isEndless = false;
     private bool showStageSelect = false;
+    private Vector2 stageSelectScroll;
 
     // Player stats
     private GameObject playerShip;
@@ -148,7 +150,7 @@ public class StarBlasterPlayer : MonoBehaviour
 
     private float enemySpawnTimer = 0f;
 
-    // 12 Defined Stages
+    // 12 hand-made stages; 13-30 are appended by AddAdvancedStages()
     private StageData[] stages = new StageData[]
     {
         new StageData {
@@ -299,6 +301,7 @@ public class StarBlasterPlayer : MonoBehaviour
         CreateParticleSystems();
 
         bestScore = PlayerPrefs.GetInt("StarBlaster_BestScore", 0);
+        AddAdvancedStages();
         ResetToStage(0);
     }
 
@@ -515,7 +518,7 @@ public class StarBlasterPlayer : MonoBehaviour
         bossObject = new GameObject("BossLeviathan");
         bossObject.transform.position = new Vector3(0, 0, 7.5f);
 
-        bossMaxHp = stg.id == 12 ? 3000f : 1500f;
+        bossMaxHp = stg.bossHealth > 0f ? stg.bossHealth : (stg.id == 12 ? 3000f : 1500f);
         bossHp = bossMaxHp;
         bossPhase = 1;
         bossAttackTimer = 0f;
@@ -1403,7 +1406,7 @@ public class StarBlasterPlayer : MonoBehaviour
 
         GUILayout.BeginArea(new Rect(r.x + 20, r.y + 15, r.width - 40, r.height - 30));
         GUI.color = Color.yellow;
-        GUILayout.Label($"<size=23><b>🏆 {GetText("12스테이지 전 은하 제패!", "ALL 12 STAGES CONQUERED!", "全12星域制覇！", "¡TODAS LAS ETAPAS SUPERADAS!")}</b></size>", GUILayout.Height(34));
+        GUILayout.Label($"<size=23><b>🏆 {GetText("30스테이지 전 은하 제패!", "ALL 30 STAGES CONQUERED!", "全30星域制覇！", "¡LAS 30 ETAPAS SUPERADAS!")}</b></size>", GUILayout.Height(34));
         GUI.color = Color.white;
 
         GUILayout.Space(8);
@@ -1439,7 +1442,7 @@ public class StarBlasterPlayer : MonoBehaviour
         GUILayout.BeginArea(new Rect(r.x + 15, r.y + 15, r.width - 30, r.height - 30));
         GUILayout.BeginHorizontal();
         GUI.color = Color.cyan;
-        GUILayout.Label($"<size=20><b>{GetText("스테이지 선택 (12 Stages)", "Select Stage (12 Stages)", "ステージ選択 (全12ステージ)", "Seleccionar Etapa (12 Etapas)")}</b></size>");
+        GUILayout.Label($"<size=20><b>{GetText("스테이지 선택 (30 Stages)", "Select Stage (30 Stages)", "ステージ選択 (全30ステージ)", "Seleccionar Etapa (30 Etapas)")}</b></size>");
         GUI.color = Color.white;
         GUILayout.FlexibleSpace();
         if (GUILayout.Button("×", GUILayout.Width(35), GUILayout.Height(28)))
@@ -1450,7 +1453,10 @@ public class StarBlasterPlayer : MonoBehaviour
 
         GUILayout.Space(10);
 
-        for (int row = 0; row < 3; row++)
+        // 4 columns, scrolling for all 30 stages
+        float btnW = (r.width - 30f - 24f - 4 * 6f) / 4f;
+        stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, false, true);
+        for (int row = 0; row * 4 < stages.Length; row++)
         {
             GUILayout.BeginHorizontal();
             for (int col = 0; col < 4; col++)
@@ -1462,7 +1468,7 @@ public class StarBlasterPlayer : MonoBehaviour
                     GUI.color = idx == currentStageIndex ? Color.cyan : Color.white;
 
                     string btnText = $"<b>{U("Stage")} {stg.id}</b>\n<size=11>{GetStageName(stg)}</size>";
-                    if (GUILayout.Button(btnText, GUILayout.Height(85), GUILayout.Width((r.width - 50) / 4f)))
+                    if (GUILayout.Button(btnText, GUILayout.Height(64), GUILayout.Width(btnW)))
                     {
                         showStageSelect = false;
                         isEndless = false;
@@ -1475,8 +1481,77 @@ public class StarBlasterPlayer : MonoBehaviour
             GUILayout.Space(6);
         }
 
+        GUILayout.EndScrollView();
+
         GUI.color = Color.white;
         GUILayout.EndArea();
+    }
+
+    // Stages 13-30 keep climbing from stage 11/12: more kills, faster spawns and enemies, and
+    // asteroid / stealth / shield-drone mixes that all appear together from stage 25.
+    // Every fifth stage is a leviathan fight with a tougher hull (3400 .. 5000 HP).
+    private void AddAdvancedStages()
+    {
+        if (stages.Length > 12) return;
+        string[][] names = new string[][]
+        {
+            new[] { "Shattered Halo", "부서진 헤일로", "砕けたヘイロー", "Halo Destrozado" },
+            new[] { "Ghost Fleet Drift", "유령 함대 표류", "幽霊艦隊の漂流", "Deriva de la Flota Fantasma" },
+            new[] { "Boss: Leviathan Reborn", "보스: 되살아난 리바이어선", "ボス：蘇るリヴァイアサン", "Jefe: Leviatán Renacido" },
+            new[] { "Ion Wall Blockade", "이온 장벽 봉쇄", "イオン壁封鎖", "Bloqueo del Muro Iónico" },
+            new[] { "Meteor Torrent", "유성 급류", "流星の奔流", "Torrente de Meteoros" },
+            new[] { "Cloaked Hunters", "은신 사냥꾼", "光学迷彩の狩人", "Cazadores Ocultos" },
+            new[] { "Shield Drone Hive", "방어막 드론 둥지", "シールドドローンの巣", "Colmena de Drones Escudo" },
+            new[] { "Boss: Crimson Dreadnought", "보스: 진홍 드레드노트", "ボス：真紅のドレッドノート", "Jefe: Acorazado Carmesí" },
+            new[] { "Comet Graveyard", "혜성 무덤", "彗星の墓場", "Cementerio de Cometas" },
+            new[] { "Phase Shift Raid", "위상 전이 습격", "位相転移の強襲", "Asalto de Cambio de Fase" },
+            new[] { "Plasma Rift", "플라즈마 균열", "プラズマの裂け目", "Grieta de Plasma" },
+            new[] { "Silent Armada", "침묵의 함대", "沈黙の艦隊", "Armada Silenciosa" },
+            new[] { "Boss: Twin Leviathan", "보스: 쌍둥이 리바이어선", "ボス：双子のリヴァイアサン", "Jefe: Leviatán Gemelo" },
+            new[] { "Supernova Edge", "초신성 경계", "超新星の縁", "Borde de Supernova" },
+            new[] { "Black Hole Approach", "블랙홀 접근로", "ブラックホール接近路", "Aproximación al Agujero Negro" },
+            new[] { "Event Horizon", "사건의 지평선", "事象の地平線", "Horizonte de Sucesos" },
+            new[] { "Last Starlight", "마지막 별빛", "最後の星明かり", "Última Luz Estelar" },
+            new[] { "Boss: Void Emperor", "보스: 공허의 황제", "ボス：虚空の皇帝", "Jefe: Emperador del Vacío" },
+        };
+        var list = new List<StageData>(stages);
+        for (int k = 1; k <= names.Length; k++)
+        {
+            int n = 12 + k;
+            bool boss = n % 5 == 0;
+            int m = k % 3;
+            var src = stages[(k - 1) % 12];
+            var stg = new StageData
+            {
+                id = n,
+                nameEn = names[k - 1][0], nameKo = names[k - 1][1], nameJa = names[k - 1][2], nameEs = names[k - 1][3],
+                targetKills = 170 + k * 12,                                  // 182 .. 386
+                spawnInterval = boss ? 1.0f - k * 0.008f : 0.6f - k * 0.006f, // 0.59 .. 0.49 (bosses 0.98 .. 0.86)
+                enemySpeed = (boss ? 5.0f : 6.6f) + k * 0.07f,               // 6.67 .. 7.86 (bosses 5.2 .. 6.3)
+                hasAsteroids = boss ? k >= 13 : (m != 2 || k >= 13),
+                hasStealth = boss ? k >= 8 : (m != 0 || k >= 13),
+                hasShieldDrones = boss ? k >= 18 : (m != 1 || k >= 13),
+                isBossStage = boss,
+                bossHealth = boss ? (n == 30 ? 5000f : 3000f + (n / 5 - 2) * 400f) : 0f, // 3400, 3800, 4200, 5000
+                nebulaColor = boss ? new Color(0.3f, 0.06f, 0.1f) : src.nebulaColor
+            };
+            if (boss)
+            {
+                stg.descEn = string.Format(OiyoI18n.En("Stage {0}: destroy a boss with {1} HP while escorts arrive every {2:0.00} s."), n, stg.bossHealth, stg.spawnInterval);
+                stg.descKo = string.Format("{0}단계: {2:0.00}초마다 호위기가 오는 동안 HP {1} 보스를 격침하세요.", n, stg.bossHealth, stg.spawnInterval);
+                stg.descJa = string.Format("ステージ{0}：{2:0.00}秒ごとに護衛機が来る中、HP {1}のボスを撃沈せよ。", n, stg.bossHealth, stg.spawnInterval);
+                stg.descEs = string.Format("Etapa {0}: destruye un jefe de {1} PV mientras llegan escoltas cada {2:0.00} s.", n, stg.bossHealth, stg.spawnInterval);
+            }
+            else
+            {
+                stg.descEn = string.Format(OiyoI18n.En("Stage {0}: shoot down {1} enemies arriving every {2:0.00} s at speed {3:0.0}."), n, stg.targetKills, stg.spawnInterval, stg.enemySpeed);
+                stg.descKo = string.Format("{0}단계: {2:0.00}초마다 속도 {3:0.0}로 오는 적 {1}기를 격추하세요.", n, stg.targetKills, stg.spawnInterval, stg.enemySpeed);
+                stg.descJa = string.Format("ステージ{0}：{2:0.00}秒ごとに速度{3:0.0}で来る敵{1}機を撃墜せよ。", n, stg.targetKills, stg.spawnInterval, stg.enemySpeed);
+                stg.descEs = string.Format("Etapa {0}: derriba {1} enemigos que llegan cada {2:0.00} s a velocidad {3:0.0}.", n, stg.targetKills, stg.spawnInterval, stg.enemySpeed);
+            }
+            list.Add(stg);
+        }
+        stages = list.ToArray();
     }
 
     private string GetText(string ko, string en, string ja, string es)
