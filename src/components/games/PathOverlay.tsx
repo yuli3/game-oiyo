@@ -40,7 +40,7 @@ export default function PathOverlay({ size, cells, walker = false, tone = "norma
   return (
     <svg
       viewBox={`0 0 ${size} ${size}`}
-      className={`pointer-events-none absolute inset-0 size-full ${color}`}
+      className={`pointer-events-none absolute inset-0 z-10 size-full ${color}`}
       aria-hidden="true"
     >
       {pts.length > 1 && (

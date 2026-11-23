@@ -5,6 +5,9 @@ import { Html } from "@react-three/drei";
 import { useRef } from "react";
 import type { Group, Mesh } from "three";
 import type { MarkerPosition } from "../../lib/games/spatial-memory";
+import PixelSkyBackground from "./PixelSkyBackground";
+import PixelMaterials, { PIXEL_SCENE_DPR } from "./PixelMaterials";
+import { SCENE_SKIES } from "../../lib/games/pixel-sprites";
 
 /**
  * The WebGL presentation layer. This module — and only this module — pulls in
@@ -78,17 +81,18 @@ function Marker({
     target.scale.setScalar(base * pulse);
   });
 
-  const color = lit ? "#a3e635" : entered ? "#65a30d" : "#334155";
+  const color = lit ? "#a3e635" : entered ? "#65a30d" : "#6366f1";
 
   return (
     <group position={[position.x, position.y, position.z]}>
       <mesh ref={mesh}>
-        <icosahedronGeometry args={[0.55, 1]} />
+        <octahedronGeometry args={[0.62, 0]} />
         <meshStandardMaterial
           color={color}
           emissive={color}
           emissiveIntensity={lit ? 1.4 : entered ? 0.5 : 0.12}
           roughness={0.35}
+          flatShading
         />
       </mesh>
       <Html center distanceFactor={9} zIndexRange={[10, 0]}>
@@ -114,11 +118,13 @@ export default function SpatialMemoryScene(props: SceneProps) {
       camera={{ position: [0, 0, 12], fov: 55 }}
       // Capped for phones: an uncapped pixel ratio is the usual cause of a
       // handset heating up on a 3D page.
-      dpr={[1, 1.6]}
+      dpr={PIXEL_SCENE_DPR}
+      className="pixelated"
       gl={{ antialias: false, powerPreference: "low-power" , toneMapping: THREE.ACESFilmicToneMapping }}
       style={{ width: "100%", height: "100%" }}
     >
-      <color attach="background" args={["#070b16"]} />
+      <PixelSkyBackground spec={SCENE_SKIES.spatialMemory} />
+      <PixelMaterials />
       <ambientLight intensity={0.45} />
       <pointLight position={[6, 8, 10]} intensity={90} />
       <Rig yaw={yaw} reducedMotion={reducedMotion}>

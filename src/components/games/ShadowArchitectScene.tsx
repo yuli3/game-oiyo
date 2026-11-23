@@ -6,6 +6,9 @@ import { RepeatWrapping, SRGBColorSpace, type Texture } from "three";
 import { SHADOW_WALL_HEIGHT, SHADOW_WALL_WIDTH, targetShadow, worldVoxels, type ShadowArchitectState } from "../../lib/games/shadow-architect";
 import { SHADOW_ARCHITECT_MAPS } from "../../lib/games/sprites";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
+import PixelSkyBackground from "./PixelSkyBackground";
+import PixelMaterials, { PIXEL_SCENE_DPR } from "./PixelMaterials";
+import { SCENE_SKIES } from "../../lib/games/pixel-sprites";
 
 const BLOCK_COLORS = ["#d6a84f", "#708b55", "#b65f4c", "#4f8290", "#d8cfaa"];
 
@@ -55,8 +58,9 @@ function Studio({ state }: { state: ShadowArchitectState }) {
 export default function ShadowArchitectScene({ state }: { state: ShadowArchitectState }) {
   const frameloop = usePlayFrameloop(true);
   return (
-    <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }} frameloop={frameloop} camera={{ position: [8, 7, 11], fov: 38 }} shadows dpr={[1, 1.5]}>
-      <color attach="background" args={["#11160f"]} />
+    <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping, antialias: false }} frameloop={frameloop} camera={{ position: [8, 7, 11], fov: 38 }} shadows dpr={PIXEL_SCENE_DPR} className="pixelated">
+      <PixelSkyBackground spec={SCENE_SKIES.shadowArchitect} />
+      <PixelMaterials />
       <ambientLight intensity={0.75} />
       <directionalLight position={[2, 8, 10]} intensity={2.2} castShadow shadow-mapSize={[1024, 1024]} />
       <Suspense fallback={null}>

@@ -22,6 +22,10 @@ import {
   downloadShareCard,
 } from "../../lib/games/share-card";
 import { CHEF_PHYSICS_SPRITES } from "../../lib/games/sprites";
+import { DROPLET, DROPLET_OFF, FLAME_A, FLAME_OFF } from "../../lib/games/pixel-sprites";
+import type { PixelArt } from "../../lib/games/pixel-kit";
+import PixelImg from "../ui/game/PixelImg";
+import ChefStove from "./ChefStove";
 import {
   CLOCK_MS,
   GAME_ID,
@@ -214,13 +218,15 @@ const KEYS: Record<string, Act> = {
   ArrowRight: "T",
 };
 
-function Meter({ label, value }: { label: string; value: number }) {
+function Meter({ label, value, on, off }: { label: string; value: number; on: PixelArt; off: PixelArt }) {
   return (
-    <div className="flex items-center gap-2" aria-label={label}>
+    <div className="flex items-center gap-2" aria-label={`${label} ${value}/3`}>
       <span className="w-20 shrink-0 text-sm text-muted-foreground">{label}</span>
       <span className="flex gap-1">
         {[0, 1, 2].map((index) => (
-          <span key={index} className={`h-8 w-8 rounded-md ${index < value ? "bg-foreground/15" : "bg-muted"}`} />
+          <span key={index} className={`flex size-9 items-center justify-center rounded-md border ${index < value ? "border-border bg-card" : "border-transparent bg-muted opacity-50"}`}>
+            <PixelImg art={index < value ? on : off} scale={3} className="h-7 w-auto" />
+          </span>
         ))}
       </span>
     </div>
@@ -326,7 +332,7 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
     void import("matter-js")
       .then((mod) => {
         if (reducedRef.current || debrisRef.current) return;
-        debrisRef.current = createDebrisWorld(mod.default as unknown as DebrisMatterLike, { width: 280, height: 72, cap: 24 });
+        debrisRef.current = createDebrisWorld(mod.default as unknown as DebrisMatterLike, { width: 280, height: 150, cap: 24 });
       })
       .catch(() => {})
       .finally(() => { debrisLoadingRef.current = false; });
@@ -513,12 +519,13 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
                 <p className="text-sm font-bold text-foreground">{t.won}</p>
               </div>
             ) : null}
-            <div ref={panRef} className="relative h-16 overflow-hidden rounded-xl border border-border bg-muted/40">
-              <canvas ref={fxCanvasRef} aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full text-foreground" />
+            <div ref={panRef} className="relative h-44 overflow-hidden rounded-xl border-2 border-foreground/70 bg-muted">
+              <ChefStove heat={run.heat} moisture={run.moisture} cut={run.cut} still={reducedMotion || run.phase !== "play"} />
+              <canvas ref={fxCanvasRef} aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full text-warning" />
             </div>
             <div className="flex touch-none flex-col gap-2">
-              <Meter label={t.heat} value={run.heat} />
-              <Meter label={t.moisture} value={run.moisture} />
+              <Meter label={t.heat} value={run.heat} on={FLAME_A} off={FLAME_OFF} />
+              <Meter label={t.moisture} value={run.moisture} on={DROPLET} off={DROPLET_OFF} />
               <p className="text-sm text-muted-foreground">{run.cut ? t.cut : t.whole}</p>
             </div>
             {run.phase === "play" ? (

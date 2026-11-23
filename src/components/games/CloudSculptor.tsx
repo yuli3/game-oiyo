@@ -370,20 +370,20 @@ function writeSeed(value: number) {
 }
 
 function controlClass(tone: "primary" | "quiet" | "danger"): string {
-  if (tone === "danger") return "min-h-11 min-w-11 rounded-xl bg-destructive px-3 text-sm font-semibold text-destructive-foreground disabled:opacity-40";
-  if (tone === "primary") return "min-h-11 min-w-11 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground disabled:opacity-40";
-  return "min-h-11 min-w-11 rounded-xl bg-muted px-3 text-sm font-semibold text-foreground disabled:opacity-40";
+  if (tone === "danger") return "min-h-11 min-w-11 game-btn game-btn-danger px-3 text-sm disabled:opacity-40";
+  if (tone === "primary") return "min-h-11 min-w-11 game-btn game-btn-live px-3 text-sm disabled:opacity-40";
+  return "min-h-11 min-w-11 game-btn px-3 text-sm disabled:opacity-40";
 }
 
 function windClass(dir: Dir, live: boolean): string {
-  if (dir === "N" && live) return "col-start-2 row-start-1 min-h-11 min-w-11 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground disabled:opacity-40";
-  if (dir === "N") return "col-start-2 row-start-1 min-h-11 min-w-11 rounded-xl bg-muted px-3 text-sm font-semibold text-foreground disabled:opacity-40";
-  if (dir === "W" && live) return "col-start-1 row-start-2 min-h-11 min-w-11 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground disabled:opacity-40";
-  if (dir === "W") return "col-start-1 row-start-2 min-h-11 min-w-11 rounded-xl bg-muted px-3 text-sm font-semibold text-foreground disabled:opacity-40";
-  if (dir === "E" && live) return "col-start-3 row-start-2 min-h-11 min-w-11 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground disabled:opacity-40";
-  if (dir === "E") return "col-start-3 row-start-2 min-h-11 min-w-11 rounded-xl bg-muted px-3 text-sm font-semibold text-foreground disabled:opacity-40";
-  if (live) return "col-start-2 row-start-3 min-h-11 min-w-11 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground disabled:opacity-40";
-  return "col-start-2 row-start-3 min-h-11 min-w-11 rounded-xl bg-muted px-3 text-sm font-semibold text-foreground disabled:opacity-40";
+  if (dir === "N" && live) return "col-start-2 row-start-1 min-h-11 min-w-11 game-btn game-btn-live px-3 text-sm disabled:opacity-40";
+  if (dir === "N") return "col-start-2 row-start-1 min-h-11 min-w-11 game-btn px-3 text-sm disabled:opacity-40";
+  if (dir === "W" && live) return "col-start-1 row-start-2 min-h-11 min-w-11 game-btn game-btn-live px-3 text-sm disabled:opacity-40";
+  if (dir === "W") return "col-start-1 row-start-2 min-h-11 min-w-11 game-btn px-3 text-sm disabled:opacity-40";
+  if (dir === "E" && live) return "col-start-3 row-start-2 min-h-11 min-w-11 game-btn game-btn-live px-3 text-sm disabled:opacity-40";
+  if (dir === "E") return "col-start-3 row-start-2 min-h-11 min-w-11 game-btn px-3 text-sm disabled:opacity-40";
+  if (live) return "col-start-2 row-start-3 min-h-11 min-w-11 game-btn game-btn-live px-3 text-sm disabled:opacity-40";
+  return "col-start-2 row-start-3 min-h-11 min-w-11 game-btn px-3 text-sm disabled:opacity-40";
 }
 
 function gaugeClass(ready: boolean): string {
@@ -459,7 +459,7 @@ function TiltWindButton({
       }}
     >
       {labelName}
-      <span className="block text-xs font-normal">{detail}</span>
+      <span className="sr-only">{detail}</span>
     </button>
   );
 }

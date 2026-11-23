@@ -12,6 +12,9 @@ import {
   type Relic,
 } from "../../lib/games/dream-elevator";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
+import PixelSkyBackground from "./PixelSkyBackground";
+import PixelMaterials, { PIXEL_SCENE_DPR } from "./PixelMaterials";
+import { SCENE_SKIES } from "../../lib/games/pixel-sprites";
 
 const TRAVELER = "/games/dream-elevator-traveler.jpg";
 const STONE = "/games/dream-elevator-stone.jpg";
@@ -276,8 +279,9 @@ export default function DreamElevatorScene({
 }) {
   const frameloop = usePlayFrameloop(!paused);
   return (
-    <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }} frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [CAMERA_POSES[0][0], CAMERA_POSES[0][1], CAMERA_POSES[0][2]], fov: 36 }}>
-      <color attach="background" args={[0.03, 0.03, 0.06]} />
+    <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping, antialias: false }} frameloop={frameloop} shadows dpr={PIXEL_SCENE_DPR} className="pixelated" camera={{ position: [CAMERA_POSES[0][0], CAMERA_POSES[0][1], CAMERA_POSES[0][2]], fov: 36 }}>
+      <PixelSkyBackground spec={SCENE_SKIES.dreamElevator} />
+      <PixelMaterials />
       <ambientLight intensity={0.4} />
       <directionalLight
         position={[KEY_LIGHT[0] * 8, KEY_LIGHT[1] * 8, KEY_LIGHT[2] * 8]}

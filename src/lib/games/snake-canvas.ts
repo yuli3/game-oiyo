@@ -1,3 +1,5 @@
+import { drawSprite } from "./pixel-kit";
+import { APPLE, SNAKE_BACKDROP_TILES, SNAKE_BODY, SNAKE_HEAD, SNAKE_TAIL } from "./pixel-sprites";
 /**
  * 100% Canvas GPU 120fps Rendering & VFX Engine for Snake Game
  * Implements smooth sub-grid interpolation, procedural Argon neon aesthetics,
@@ -298,108 +300,47 @@ export function renderSnakeCanvas(
     ctx.translate(offsetX, offsetY);
   }
 
-  // 2. Cyberpunk Dark Base Background
-  const bgGrad = ctx.createRadialGradient(
-    width / 2,
-    height / 2,
-    width * 0.1,
-    width / 2,
-    height / 2,
-    width * 0.75
-  );
-  bgGrad.addColorStop(0, "#0a101f");
-  bgGrad.addColorStop(1, "#03060c");
-  ctx.fillStyle = bgGrad;
-  ctx.fillRect(0, 0, width, height);
-
-  // 3. Grid Metrics
+  // 2. Pixel garden: checker grass with seeded tufts and flowers
   const cellW = width / gridSize;
   const cellH = height / gridSize;
-
-  // 4. Subtle Neon Grid Lines
-  ctx.strokeStyle = "rgba(6, 182, 212, 0.07)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  for (let x = 1; x < gridSize; x++) {
-    ctx.moveTo(x * cellW, 0);
-    ctx.lineTo(x * cellW, height);
+  const T = SNAKE_BACKDROP_TILES;
+  for (let gy = 0; gy < gridSize; gy++) {
+    for (let gx = 0; gx < gridSize; gx++) {
+      const x0 = Math.floor(gx * cellW);
+      const y0 = Math.floor(gy * cellH);
+      const w = Math.ceil((gx + 1) * cellW) - x0;
+      const h = Math.ceil((gy + 1) * cellH) - y0;
+      ctx.fillStyle = (gx + gy) % 2 === 0 ? T.light : T.dark;
+      ctx.fillRect(x0, y0, w, h);
+      const hsh = (gx * 73856093) ^ (gy * 19349663);
+      const u = Math.max(2, Math.floor(Math.min(cellW, cellH) / 8));
+      if ((hsh & 7) === 0) {
+        ctx.fillStyle = T.tuft;
+        ctx.fillRect(x0 + u * 2, y0 + u * 4, u, u * 2);
+        ctx.fillRect(x0 + u * 3, y0 + u * 3, u, u * 3);
+        ctx.fillRect(x0 + u * 4, y0 + u * 4, u, u * 2);
+      } else if ((hsh & 31) === 9) {
+        ctx.fillStyle = T.flower[(hsh >>> 5) % T.flower.length];
+        ctx.fillRect(x0 + u * 3, y0 + u * 2, u, u);
+        ctx.fillRect(x0 + u * 2, y0 + u * 3, u * 3, u);
+        ctx.fillRect(x0 + u * 3, y0 + u * 4, u, u);
+      }
+    }
   }
-  for (let y = 1; y < gridSize; y++) {
-    ctx.moveTo(0, y * cellH);
-    ctx.lineTo(width, y * cellH);
-  }
-  ctx.stroke();
 
-  // 5. Outer Cyber Arena Perimeter Glow
-  ctx.strokeStyle = status === "over" ? "rgba(239, 68, 68, 0.45)" : "rgba(56, 189, 248, 0.25)";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(1, 1, width - 2, height - 2);
+  // 3. Hedge border (red when the run ends)
+  ctx.strokeStyle = status === "over" ? "#b91c1c" : "#1f3d17";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(2, 2, width - 4, height - 4);
 
-  // Corner highlights
-  const cornerSize = Math.min(width, height) * 0.05;
-  ctx.strokeStyle = "rgba(56, 189, 248, 0.7)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  // Top-left
-  ctx.moveTo(1, cornerSize);
-  ctx.lineTo(1, 1);
-  ctx.lineTo(cornerSize, 1);
-  // Top-right
-  ctx.moveTo(width - cornerSize, 1);
-  ctx.lineTo(width - 1, 1);
-  ctx.lineTo(width - 1, cornerSize);
-  // Bottom-left
-  ctx.moveTo(1, height - cornerSize);
-  ctx.lineTo(1, height - 1);
-  ctx.lineTo(cornerSize, height - 1);
-  // Bottom-right
-  ctx.moveTo(width - cornerSize, height - 1);
-  ctx.lineTo(width - 1, height - 1);
-  ctx.lineTo(width - 1, height - cornerSize);
-  ctx.stroke();
-
-  // 6. Holographic Food (Argon Energy Core)
+  // 4. Apple with a little hop
+  const spriteScale = Math.max(1, Math.floor(Math.min(cellW, cellH) / 8));
   const foodPxX = (food.x + 0.5) * cellW;
   const foodPxY = (food.y + 0.5) * cellH;
-  const foodRadius = Math.min(cellW, cellH) * 0.42;
-  const pulse = Math.sin(now * 0.006) * 0.12;
-  const currentRadius = foodRadius * (1 + pulse);
-
-  // Food outer rotating orbital ring
-  const orbitAngle = now * 0.003;
-  ctx.save();
-  ctx.translate(foodPxX, foodPxY);
-  ctx.rotate(orbitAngle);
-  ctx.strokeStyle = "rgba(244, 63, 94, 0.6)";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(0, 0, currentRadius * 1.35, 0, Math.PI * 1.4);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(0, 0, currentRadius * 1.35, Math.PI * 1.6, Math.PI * 1.95);
-  ctx.stroke();
-  ctx.restore();
-
-  // Food Core Glow
-  ctx.save();
-  ctx.shadowColor = "#f43f5e";
-  ctx.shadowBlur = 16;
-  const foodGrad = ctx.createRadialGradient(
-    foodPxX,
-    foodPxY,
-    1,
-    foodPxX,
-    foodPxY,
-    currentRadius
-  );
-  foodGrad.addColorStop(0, "#ffe4e6");
-  foodGrad.addColorStop(0.4, "#f43f5e");
-  foodGrad.addColorStop(1, "#be123c");
-  ctx.fillStyle = foodGrad;
-  ctx.beginPath();
-  ctx.arc(foodPxX, foodPxY, currentRadius, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
+  const hop = Math.round(Math.abs(Math.sin(now * 0.005)) * -spriteScale * 1.5);
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.fillRect(Math.round(foodPxX - cellW * 0.3), Math.round(foodPxY + cellH * 0.32), Math.round(cellW * 0.6), Math.max(2, spriteScale));
+  drawSprite(ctx, APPLE, foodPxX, foodPxY + hop, { scale: spriteScale });
 
   // 7. Shockwave Ripples
   for (let i = 0; i < ripples.length; i++) {
@@ -416,102 +357,19 @@ export function renderSnakeCanvas(
     ctx.restore();
   }
 
-  // 8. Render Snake with 120fps Sub-Grid Interpolation
+  // 8. Render Snake (pixel sprites) with sub-grid interpolation
   const interpolated = interpolateSnake(prevSnake, snake, progress);
   const snakeLen = interpolated.length;
-
-  if (snakeLen > 0) {
-    // A. Connect body segments with smooth glowing ribbon
-    ctx.save();
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-
-    // Draw from tail to head
-    for (let i = snakeLen - 1; i >= 0; i--) {
-      const pt = interpolated[i];
-      const pxX = (pt.x + 0.5) * cellW;
-      const pxY = (pt.y + 0.5) * cellH;
-
-      const isHead = i === 0;
-      const ratio = 1 - i / Math.max(snakeLen, 1); // 1.0 at head, ~0.2 at tail
-
-      // Pulsing organic spine effect
-      const spineWave = Math.sin(now * 0.008 + i * 0.4) * 0.08;
-      const segRadius = (Math.min(cellW, cellH) * 0.38 * (0.65 + ratio * 0.35)) * (1 + spineWave);
-
-      ctx.save();
-      if (isHead) {
-        ctx.shadowColor = "#38bdf8";
-        ctx.shadowBlur = 18;
-
-        // Head Gradient
-        const headGrad = ctx.createRadialGradient(
-          pxX,
-          pxY,
-          2,
-          pxX,
-          pxY,
-          segRadius * 1.2
-        );
-        headGrad.addColorStop(0, "#e0f2fe");
-        headGrad.addColorStop(0.4, "#38bdf8");
-        headGrad.addColorStop(1, "#0284c7");
-        ctx.fillStyle = headGrad;
-
-        // Draw Head Shape
-        ctx.beginPath();
-        ctx.arc(pxX, pxY, segRadius * 1.15, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Cyber Eyes pointing in direction
-        const dir = direction ?? { x: 1, y: 0 };
-        const eyeAngle = Math.atan2(dir.y, dir.x);
-        const eyeDist = segRadius * 0.6;
-        const eyeOffset = segRadius * 0.45;
-
-        // Left eye
-        const leX = pxX + Math.cos(eyeAngle) * eyeDist - Math.sin(eyeAngle) * eyeOffset;
-        const leY = pxY + Math.sin(eyeAngle) * eyeDist + Math.cos(eyeAngle) * eyeOffset;
-        // Right eye
-        const reX = pxX + Math.cos(eyeAngle) * eyeDist + Math.sin(eyeAngle) * eyeOffset;
-        const reY = pxY + Math.sin(eyeAngle) * eyeDist - Math.cos(eyeAngle) * eyeOffset;
-
-        ctx.fillStyle = "#ffffff";
-        ctx.shadowColor = "#ffffff";
-        ctx.shadowBlur = 6;
-        ctx.beginPath();
-        ctx.arc(leX, leY, 2.4, 0, Math.PI * 2);
-        ctx.arc(reX, reY, 2.4, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        // Body Segment
-        const bodyGrad = ctx.createRadialGradient(
-          pxX,
-          pxY,
-          1,
-          pxX,
-          pxY,
-          segRadius
-        );
-        bodyGrad.addColorStop(0, "#38bdf8");
-        bodyGrad.addColorStop(0.6, "#0284c7");
-        bodyGrad.addColorStop(1, "#0f172a");
-        ctx.fillStyle = bodyGrad;
-        ctx.shadowColor = "#0284c7";
-        ctx.shadowBlur = 8;
-
-        ctx.beginPath();
-        ctx.arc(pxX, pxY, segRadius, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Neon outline
-        ctx.strokeStyle = "rgba(56, 189, 248, 0.85)";
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      }
-      ctx.restore();
+  for (let i = snakeLen - 1; i >= 0; i--) {
+    const pt = interpolated[i];
+    const pxX = (pt.x + 0.5) * cellW;
+    const pxY = (pt.y + 0.5) * cellH;
+    if (i === 0) {
+      const dir = direction ?? { x: 1, y: 0 };
+      drawSprite(ctx, SNAKE_HEAD, pxX, pxY, { scale: spriteScale, rotate: Math.atan2(dir.y, dir.x) });
+    } else {
+      drawSprite(ctx, i === snakeLen - 1 && snakeLen > 2 ? SNAKE_TAIL : SNAKE_BODY, pxX, pxY, { scale: spriteScale });
     }
-    ctx.restore();
   }
 
   // 9. Sparks / Particles
@@ -520,11 +378,8 @@ export function renderSnakeCanvas(
     ctx.save();
     ctx.globalAlpha = p.alpha;
     ctx.fillStyle = p.color;
-    ctx.shadowColor = p.color;
-    ctx.shadowBlur = 8;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fill();
+    const ps = Math.max(2, Math.round(p.size * 1.5));
+    ctx.fillRect(Math.round(p.x - ps / 2), Math.round(p.y - ps / 2), ps, ps);
     ctx.restore();
   }
 
