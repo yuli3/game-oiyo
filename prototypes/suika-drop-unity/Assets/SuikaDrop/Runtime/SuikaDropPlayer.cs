@@ -119,6 +119,7 @@ public class SuikaDropPlayer : MonoBehaviour
     private float overfillTimer = 0f;
     private int currentStageIdx = 0;
     private bool showStageSelect = false;
+    private Vector2 stageSelectScroll;
     private float cameraTrauma = 0f;
 
     // Particles & Floating Text
@@ -154,7 +155,7 @@ public class SuikaDropPlayer : MonoBehaviour
     // 10 Evolution Tiers
     private FruitTierDef[] fruitTiers;
 
-    // 12 Mandatory Stages (User Rule: Minimum 10 stages accessible)
+    // 30 stages: 1-12 hand-made, 13-30 from AppendLateStages
     private StageDef[] stages;
 
     void Awake()
@@ -197,7 +198,7 @@ public class SuikaDropPlayer : MonoBehaviour
             new FruitTierDef { tier = 0, name = new LocalizedText("체리", "Cherry", "さくらんぼ", "Cereza"), emoji = "🍒", radius = 0.28f, score = 2, color = new Color(0.96f, 0.25f, 0.37f) },
             new FruitTierDef { tier = 1, name = new LocalizedText("딸기", "Strawberry", "いちご", "Fresa"), emoji = "🍓", radius = 0.36f, score = 4, color = new Color(0.98f, 0.44f, 0.52f) },
             new FruitTierDef { tier = 2, name = new LocalizedText("포도", "Grape", "ぶどう", "Uva"), emoji = "🍇", radius = 0.45f, score = 8, color = new Color(0.66f, 0.33f, 0.97f) },
-            new FruitTierDef { tier = 3, name = new LocalizedText("한라봉", "Dekopon", "デコポン", "Mandarina"), emoji = "🍊", radius = 0.55f, score = 16, color = new Color(0.98f, 0.57f, 0.24f) },
+            new FruitTierDef { tier = 3, name = new LocalizedText("귤", "Mandarin", "みかん", "Mandarina"), emoji = "🍊", radius = 0.55f, score = 16, color = new Color(0.98f, 0.57f, 0.24f) },
             new FruitTierDef { tier = 4, name = new LocalizedText("감", "Persimmon", "柿", "Caqui"), emoji = "🍅", radius = 0.65f, score = 32, color = new Color(0.98f, 0.45f, 0.09f) },
             new FruitTierDef { tier = 5, name = new LocalizedText("사과", "Apple", "りんご", "Manzana"), emoji = "🍎", radius = 0.76f, score = 64, color = new Color(0.94f, 0.27f, 0.27f) },
             new FruitTierDef { tier = 6, name = new LocalizedText("배", "Pear", "梨", "Pera"), emoji = "🍐", radius = 0.88f, score = 128, color = new Color(0.64f, 0.90f, 0.21f) },
@@ -320,7 +321,7 @@ public class SuikaDropPlayer : MonoBehaviour
             {
                 stageNum = 2,
                 title = new LocalizedText("달콤한 시트러스 밭", "Citrus Grove", "甘いシトラス畑", "Campo de Cítricos"),
-                briefing = new LocalizedText("한라봉을 거쳐 새콤달콤한 사과(Apple)까지 합체를 연결하십시오.", "Chain merges from Dekopon up to an Apple (Tier 5).", "デコポンから甘酸っぱいりんごへの合体をつなげよう。", "Encadena fusiones hasta la Manzana."),
+                briefing = new LocalizedText("귤을 거쳐 새콤달콤한 사과(Apple)까지 합체를 연결하십시오.", "Chain merges from Mandarin up to an Apple (Tier 5).", "みかんから甘酸っぱいりんごへの合体をつなげよう。", "Encadena fusiones hasta la Manzana."),
                 targetTier = 5,
                 targetScore = 600,
                 gravityScale = 1.0f,
@@ -472,6 +473,76 @@ public class SuikaDropPlayer : MonoBehaviour
                 bumpers = new List<Bumper>()
             }
         };
+        stages = AppendLateStages(stages);
+    }
+
+    // Stages 13-30 continue from stage 12 (watermelon or 10,000 pts, joker on, 6.8 jar):
+    // every stage asks for a watermelon (or the score, 10,500 -> 19,000). The jar narrows
+    // 6.6 -> 5.58, the joker leaves after 15, and gravity / bumper variants take turns.
+    // 15, 20, 25, 30 are boss jars: 0.2 narrower with three bumpers.
+    StageDef[] AppendLateStages(StageDef[] early)
+    {
+        var names = new LocalizedText[] {
+            new LocalizedText("아침 이슬 과수원", "Morning Dew Orchard", "朝露の果樹園", "Huerto del Rocío"),
+            new LocalizedText("꿀배 언덕", "Honey Pear Hill", "蜜梨の丘", "Colina de Peras Dulces"),
+            new LocalizedText("보름달 수확 항아리 [보스]", "Harvest Moon Jar [BOSS]", "満月の収穫壺 [ボス]", "Tarro de Luna Llena [JEFE]"),
+            new LocalizedText("매화 오솔길", "Plum Blossom Lane", "梅の小道", "Sendero del Ciruelo"),
+            new LocalizedText("귤 풍차", "Citrus Windmill", "みかん風車", "Molino de Cítricos"),
+            new LocalizedText("묵직한 바구니", "Heavy Basket", "ずっしりバスケット", "Cesta Pesada"),
+            new LocalizedText("무화과 등불 시장", "Fig Lantern Market", "いちじく灯の市", "Mercado de Higos"),
+            new LocalizedText("과수원 골렘 항아리 [보스]", "Orchard Golem Jar [BOSS]", "果樹園ゴーレムの壺 [ボス]", "Tarro del Gólem [JEFE]"),
+            new LocalizedText("깃털 낙하 포도원", "Featherfall Vineyard", "羽根落ちのぶどう園", "Viñedo de Plumas"),
+            new LocalizedText("좁은 과일 저장고", "Narrow Fruit Cellar", "狭い果物蔵", "Bodega Estrecha"),
+            new LocalizedText("덤불 열매 미로", "Bramble Berry Maze", "茨のベリー迷路", "Laberinto de Zarzas"),
+            new LocalizedText("노을 잼 부엌", "Sunset Jam Kitchen", "夕焼けジャム工房", "Cocina de Mermelada"),
+            new LocalizedText("폭풍 사과즙 압착기 [보스]", "Storm Cider Press [BOSS]", "嵐のりんご搾り機 [ボス]", "Prensa de la Tormenta [JEFE]"),
+            new LocalizedText("서리 온실", "Frost Greenhouse", "霜の温室", "Invernadero de Escarcha"),
+            new LocalizedText("무쇠 바구니 시련", "Iron Basket Trial", "鉄かごの試練", "Prueba de la Cesta de Hierro"),
+            new LocalizedText("별과일 천문대", "Starfruit Observatory", "スターフルーツ天文台", "Observatorio de Carambolas"),
+            new LocalizedText("마지막 햇살 과수원", "Last Light Orchard", "最後の陽だまり果樹園", "Huerto de la Última Luz"),
+            new LocalizedText("대수확의 왕관 [최종]", "Grand Harvest Crown [FINAL]", "大収穫の王冠 [最終]", "Corona de la Gran Cosecha [FINAL]")
+        };
+        var briefs = new LocalizedText[] {
+            new LocalizedText("항아리가 조금 더 좁아졌어요. 한 알 한 알 신중하게 떨어뜨려 수박을 만드세요!", "The jar is a little narrower. Drop each fruit with care and grow a watermelon!", "壺が少し狭くなった。一つずつ慎重に落としてスイカを作ろう！", "El tarro es un poco más estrecho. ¡Suelta cada fruta con cuidado y crea una sandía!"),
+            new LocalizedText("중력이 강해 과일이 세게 떨어져요. 쌓을 자리를 미리 정하세요!", "Heavy gravity: fruits slam down fast. Plan where each one lands!", "重力が強く果物が勢いよく落ちる。置き場所を先に決めよう！", "Gravedad fuerte: las frutas caen rápido. ¡Planea dónde caerá cada una!"),
+            new LocalizedText("저중력이라 과일이 천천히 내려와요. 선을 넘기 전에 수박을 만드세요!", "Low gravity: fruits drift down slowly. Grow a watermelon before they cross the line!", "低重力で果物がゆっくり落ちる。ラインを越える前にスイカを作ろう！", "Baja gravedad: las frutas caen despacio. ¡Crea una sandía antes de que crucen la línea!"),
+            new LocalizedText("항아리 속 범퍼가 과일을 튕겨 내요. 그래도 수박을 만들어 보세요!", "Bumpers in the jar knock fruits aside. Grow a watermelon anyway!", "壺の中のバンパーが果物を弾く。それでもスイカを作ろう！", "Los rebotadores del tarro desvían las frutas. ¡Crea una sandía de todos modos!"),
+            new LocalizedText("보스 항아리: 좁은 벽과 범퍼 세 개. 수박을 만들면 이겨요!", "Boss jar: narrow walls and three bumpers. Grow a watermelon to win!", "ボスの壺：狭い壁と3つのバンパー。スイカを作れば勝ち！", "Tarro jefe: paredes estrechas y tres rebotadores. ¡Crea una sandía para ganar!")
+        };
+        var list = new List<StageDef>(early);
+        for (int n = 13; n <= 30; n++)
+        {
+            int k = n - 13;
+            bool boss = n % 5 == 0;
+            int kind = boss ? 4 : (k - (k + 2) / 5) % 4; // narrow / heavy / low gravity / bumpers
+            float width = 6.6f - 0.06f * k - (boss ? 0.2f : 0f);
+            float bx = width * 0.5f - 1.25f;
+            var st = new StageDef
+            {
+                stageNum = n,
+                title = names[k],
+                briefing = briefs[kind],
+                targetTier = 9,
+                targetScore = 10500 + 500 * k,
+                gravityScale = kind == 1 ? 1.15f + 0.01f * k : (kind == 2 ? 0.6f : 1.0f),
+                containerWidth = width,
+                allowJoker = n <= 15,
+                bumpers = new List<Bumper>()
+            };
+            if (kind == 3)
+            {
+                st.bumpers.Add(new Bumper { pos = new Vector2(-bx, -1.2f), radius = 0.4f });
+                st.bumpers.Add(new Bumper { pos = new Vector2(bx, -1.2f), radius = 0.4f });
+            }
+            else if (kind == 4)
+            {
+                st.bumpers.Add(new Bumper { pos = new Vector2(-bx, -1.6f), radius = 0.4f });
+                st.bumpers.Add(new Bumper { pos = new Vector2(bx, -1.6f), radius = 0.4f });
+                st.bumpers.Add(new Bumper { pos = new Vector2(0f, 0.4f), radius = 0.35f });
+            }
+            list.Add(st);
+        }
+        return list.ToArray();
     }
 
     public void LoadStage(int idx)
@@ -926,7 +997,7 @@ public class SuikaDropPlayer : MonoBehaviour
 
         // Stage Title & Target
         GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(250));
-        GUILayout.Label("<color=#22c55e><b>" + F("STAGE {0}/12", s.stageNum) + "</b></color>: " + s.title.Get(currentLang));
+        GUILayout.Label("<color=#22c55e><b>" + F("STAGE {0}/30", s.stageNum) + "</b></color>: " + s.title.Get(currentLang));
         var targetDef = fruitTiers[s.targetTier];
         GUILayout.Label("🎯 " + GetLocalizedTargetLabel() + ": <b>" + targetDef.name.Get(currentLang) + " " + targetDef.emoji + "</b> " + F("(or {0} pts)", s.targetScore));
         GUILayout.EndVertical();
@@ -955,7 +1026,7 @@ public class SuikaDropPlayer : MonoBehaviour
         }
 
         // Stage Selector Button
-        if (GUILayout.Button("🗺️ " + U("STAGES\n(1~12)"), GUILayout.Width(80), GUILayout.Height(50)))
+        if (GUILayout.Button("🗺️ " + U("STAGES\n(1~30)"), GUILayout.Width(80), GUILayout.Height(50)))
         {
             showStageSelect = !showStageSelect;
         }
@@ -1007,7 +1078,7 @@ public class SuikaDropPlayer : MonoBehaviour
             GUILayout.Space(12);
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button(currentStageIdx < 11 ? "▶ " + F("NEXT STAGE ({0})", currentStageIdx + 2) : "🏆 " + U("PLAY AGAIN"), GUILayout.Width(180), GUILayout.Height(40)))
+            if (GUILayout.Button(currentStageIdx < stages.Length - 1 ? "▶ " + F("NEXT STAGE ({0})", currentStageIdx + 2) : "🏆 " + U("PLAY AGAIN"), GUILayout.Width(180), GUILayout.Height(40)))
             {
                 NextStage();
             }
@@ -1038,35 +1109,29 @@ public class SuikaDropPlayer : MonoBehaviour
             GUILayout.EndArea();
         }
 
-        // 12-Stage Selector Modal (User Rule: Minimum 10 stages accessible)
+        // 30-stage selector: 4 fixed-width columns, scrolling
         if (showStageSelect)
         {
             Rect modalRect = new Rect(Screen.width * 0.5f - 260, 105, 520, 420);
-            GUI.Box(modalRect, "<b>" + U("SELECT STAGE (1~12)") + "</b>");
+            GUI.Box(modalRect, "<b>" + U("SELECT STAGE (1~30)") + "</b>");
             GUILayout.BeginArea(new Rect(modalRect.x + 15, modalRect.y + 35, modalRect.width - 30, modalRect.height - 45));
 
-            int colsCount = 2;
-            for (int i = 0; i < stages.Length; i += colsCount)
+            var cellStyle = new GUIStyle(GUI.skin.button) { wordWrap = true, fontSize = 11 };
+            stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, GUILayout.Height(320));
+            for (int idx = 0; idx < stages.Length; idx++)
             {
-                GUILayout.BeginHorizontal();
-                for (int c = 0; c < colsCount; c++)
+                if (idx % 4 == 0) GUILayout.BeginHorizontal();
+                var st = stages[idx];
+                var tgDef = fruitTiers[st.targetTier];
+                string btnText = "<b>#" + st.stageNum + "</b> " + st.title.Get(currentLang) + "\n(" + U("Target") + ": " + tgDef.name.Get(currentLang) + " " + tgDef.emoji + ")";
+                if (GUILayout.Button(btnText, cellStyle, GUILayout.Width(110), GUILayout.Height(66)))
                 {
-                    int idx = i + c;
-                    if (idx < stages.Length)
-                    {
-                        var st = stages[idx];
-                        var tgDef = fruitTiers[st.targetTier];
-                        string btnText = "<b>" + F("Stage {0}", st.stageNum) + "</b>: " + st.title.Get(currentLang) + "\n(" + U("Target") + ": " + tgDef.name.Get(currentLang) + " " + tgDef.emoji + ")";
-                        if (GUILayout.Button(btnText, GUILayout.Height(50)))
-                        {
-                            showStageSelect = false;
-                            LoadStage(idx);
-                        }
-                    }
+                    showStageSelect = false;
+                    LoadStage(idx);
                 }
-                GUILayout.EndHorizontal();
-                GUILayout.Space(3);
+                if (idx % 4 == 3 || idx == stages.Length - 1) GUILayout.EndHorizontal();
             }
+            GUILayout.EndScrollView();
 
             GUILayout.Space(6);
             if (GUILayout.Button("× " + U("CLOSE"), GUILayout.Height(28)))
