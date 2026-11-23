@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import NeolJump from "../../components/games/NeolJump";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "널뛰기 — 박자 맞춰 눌러 담장 너머까지 뛰어오르는 무료 설날 리듬 게임 30단계",
+    description: "긴 널 양 끝에 나와 친구가 섰어요. 한 사람이 내려앉는 순간 반대편이 하늘로! 누가 널에 닿는 바로 그때 톡 누르면 더 높이, 공중에서는 좌우로 끌어 복주머니를 모아요. 담장 너머 마을이 보일 만큼 높이 뛰어 보세요. 까치와 바람까지 30단계.",
+  },
+  en: {
+    title: "Neol Seesaw Jump — Free Seollal rhythm game: time your taps to fly over the village wall (30 stages)",
+    description: "You and a friend stand on the two ends of a long board. When one lands, the other flies! Tap right as someone lands to go higher, and drag sideways in the air to grab the lucky pouches. Jump high enough to see over the village wall. 30 stages with magpies and wind.",
+  },
+  ja: {
+    title: "ノルティギ — タイミングよく押して塀の向こうまで跳ぶ無料の韓国お正月リズムゲーム30ステージ",
+    description: "長い板の両端に自分と友だち。片方が着地すると反対側が空へ！誰かが板に着くその瞬間にタップすればもっと高く、空中では左右に引いて福袋を集めます。塀の向こうの村が見えるほど高く跳びましょう。カササギと風まで30ステージ。",
+  },
+  zh: {
+    title: "跳板 — 踩准节拍跳过院墙的免费春节节奏游戏30关",
+    description: "长木板两端站着你和朋友。一个人落下，另一个人就飞上天！在有人落到木板上的那一刻点一下就能跳得更高，在空中左右拖动收集福袋。跳得高高的，越过院墙看看村子吧。共30关，还有喜鹊和风。",
+  },
+  fr: {
+    title: "Neolttwigi — Jeu de rythme gratuit du Nouvel An coréen : sautez par-dessus le mur du village (30 niveaux)",
+    description: "Vous et une amie êtes aux deux bouts d'une longue planche. Quand l'une atterrit, l'autre s'envole ! Touchez pile à l'atterrissage pour monter plus haut, et glissez de côté en l'air pour attraper les bourses porte-bonheur. Sautez assez haut pour voir par-dessus le mur du village. 30 niveaux avec pies et vent.",
+  },
+  es: {
+    title: "Neolttwigi — Juego de ritmo gratis del Año Nuevo coreano: salta por encima del muro del pueblo (30 niveles)",
+    description: "Tú y una amiga estáis en los extremos de una tabla larga. Cuando una cae, ¡la otra sale volando! Toca justo al aterrizar para subir más y arrastra de lado en el aire para coger las bolsitas de la suerte. Salta tan alto que veas por encima del muro del pueblo. 30 niveles con urracas y viento.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["neol-jump"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <NeolJump client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="neol-jump" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
