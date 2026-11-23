@@ -101,12 +101,32 @@ public class GravityRollerPlayer : MonoBehaviour
         new StageDef { id = 9, nameKo = "경사 램프와 슈퍼 점프", nameEn = "Ramp & Super Jump", nameJa = "傾斜スロープと大ジャンプ", nameEs = "Rampa y Gran Salto", timeLimit = 60f, boardSize = new Vector2(20f, 38f), boardColor = new Color(0.48f, 0.32f, 0.12f), wallColor = new Color(0.95f, 0.65f, 0.22f), gemCount = 16, holeCount = 9, bumperCount = 6, boosterCount = 5 },
         new StageDef { id = 10, nameKo = "핀볼 카오스 정글", nameEn = "Pinball Chaos Jungle", nameJa = "ピンボールカオス", nameEs = "Jungla de Pinball Caótico", timeLimit = 70f, boardSize = new Vector2(24f, 36f), boardColor = new Color(0.12f, 0.45f, 0.25f), wallColor = new Color(0.22f, 0.92f, 0.45f), gemCount = 18, holeCount = 10, bumperCount = 12, boosterCount = 6 },
         new StageDef { id = 11, nameKo = "나선형 타워 하강", nameEn = "Spiral Helix Descent", nameJa = "螺旋塔の降下", nameEs = "Descenso de Torre Helicoidal", timeLimit = 75f, boardSize = new Vector2(26f, 40f), boardColor = new Color(0.18f, 0.15f, 0.42f), wallColor = new Color(0.45f, 0.35f, 0.95f), gemCount = 20, holeCount = 12, bumperCount = 10, boosterCount = 6 },
-        new StageDef { id = 12, nameKo = "그랜드 마스터 최종 시련", nameEn = "Grandmaster Final Trial", nameJa = "グランドマスターの最終試練", nameEs = "Prueba Final Gran Maestro", timeLimit = 90f, boardSize = new Vector2(28f, 45f), boardColor = new Color(0.08f, 0.08f, 0.18f), wallColor = new Color(1f, 0.85f, 0.25f), gemCount = 25, holeCount = 15, bumperCount = 14, boosterCount = 8 }
+        new StageDef { id = 12, nameKo = "그랜드 마스터 최종 시련", nameEn = "Grandmaster Final Trial", nameJa = "グランドマスターの最終試練", nameEs = "Prueba Final Gran Maestro", timeLimit = 90f, boardSize = new Vector2(28f, 45f), boardColor = new Color(0.08f, 0.08f, 0.18f), wallColor = new Color(1f, 0.85f, 0.25f), gemCount = 25, holeCount = 15, bumperCount = 14, boosterCount = 8 },
+        // 13-30: per stage +2 s, +1 m length, a slightly narrower board, +1 gem, +0.8 hole, +0.5 bumper, +1/3 booster
+        new StageDef { id = 13, nameKo = "안개 테라스", nameEn = "Misty Terraces", nameJa = "霧のテラス", nameEs = "Terrazas Brumosas", timeLimit = 92f, boardSize = new Vector2(27.85f, 46f), boardColor = new Color(0.38f, 0.34f, 0.15f), wallColor = new Color(0.95f, 0.83f, 0.29f), gemCount = 26, holeCount = 15, bumperCount = 14, boosterCount = 8 },
+        new StageDef { id = 14, nameKo = "쌍둥이 범퍼 광장", nameEn = "Twin Bumper Plaza", nameJa = "ツインバンパー広場", nameEs = "Plaza de Rebotes Gemelos", timeLimit = 94f, boardSize = new Vector2(27.70f, 47f), boardColor = new Color(0.23f, 0.38f, 0.15f), wallColor = new Color(0.52f, 0.95f, 0.29f), gemCount = 27, holeCount = 16, bumperCount = 15, boosterCount = 8 },
+        new StageDef { id = 15, nameKo = "얼음 결정 정원", nameEn = "Ice Crystal Garden", nameJa = "氷晶の庭", nameEs = "Jardín de Cristales de Hielo", timeLimit = 96f, boardSize = new Vector2(27.55f, 48f), boardColor = new Color(0.15f, 0.38f, 0.26f), wallColor = new Color(0.29f, 0.95f, 0.59f), gemCount = 28, holeCount = 17, bumperCount = 15, boosterCount = 9 },
+        new StageDef { id = 16, nameKo = "모래시계 협곡", nameEn = "Hourglass Canyon", nameJa = "砂時計の峡谷", nameEs = "Cañón del Reloj de Arena", timeLimit = 98f, boardSize = new Vector2(27.40f, 49f), boardColor = new Color(0.15f, 0.31f, 0.38f), wallColor = new Color(0.29f, 0.76f, 0.95f), gemCount = 29, holeCount = 18, bumperCount = 16, boosterCount = 9 },
+        new StageDef { id = 17, nameKo = "별빛 체커보드", nameEn = "Starlit Checkerboard", nameJa = "星明かりのチェッカー盤", nameEs = "Tablero Estrellado", timeLimit = 100f, boardSize = new Vector2(27.25f, 50f), boardColor = new Color(0.18f, 0.15f, 0.38f), wallColor = new Color(0.36f, 0.29f, 0.95f), gemCount = 30, holeCount = 19, bumperCount = 16, boosterCount = 9 },
+        new StageDef { id = 18, nameKo = "용암 가장자리", nameEn = "Lava Rim Run", nameJa = "溶岩の縁", nameEs = "Borde de Lava", timeLimit = 102f, boardSize = new Vector2(27.10f, 51f), boardColor = new Color(0.36f, 0.15f, 0.38f), wallColor = new Color(0.90f, 0.29f, 0.95f), gemCount = 31, holeCount = 19, bumperCount = 17, boosterCount = 10 },
+        new StageDef { id = 19, nameKo = "구슬 공장 라인", nameEn = "Marble Factory Line", nameJa = "ビー玉工場ライン", nameEs = "Línea de la Fábrica de Canicas", timeLimit = 104f, boardSize = new Vector2(26.95f, 52f), boardColor = new Color(0.38f, 0.15f, 0.21f), wallColor = new Color(0.95f, 0.29f, 0.45f), gemCount = 32, holeCount = 20, bumperCount = 17, boosterCount = 10 },
+        new StageDef { id = 20, nameKo = "이중 나선 계단", nameEn = "Double Helix Stairs", nameJa = "二重らせん階段", nameEs = "Escalera de Doble Hélice", timeLimit = 106f, boardSize = new Vector2(26.80f, 53f), boardColor = new Color(0.38f, 0.28f, 0.15f), wallColor = new Color(0.95f, 0.67f, 0.29f), gemCount = 33, holeCount = 21, bumperCount = 18, boosterCount = 10 },
+        new StageDef { id = 21, nameKo = "거울 호수", nameEn = "Mirror Lake Glide", nameJa = "鏡の湖", nameEs = "Lago Espejo", timeLimit = 108f, boardSize = new Vector2(26.65f, 54f), boardColor = new Color(0.29f, 0.38f, 0.15f), wallColor = new Color(0.69f, 0.95f, 0.29f), gemCount = 34, holeCount = 22, bumperCount = 18, boosterCount = 11 },
+        new StageDef { id = 22, nameKo = "폭풍 갑판", nameEn = "Storm Deck", nameJa = "嵐の甲板", nameEs = "Cubierta de la Tormenta", timeLimit = 110f, boardSize = new Vector2(26.50f, 55f), boardColor = new Color(0.15f, 0.38f, 0.20f), wallColor = new Color(0.29f, 0.95f, 0.43f), gemCount = 35, holeCount = 23, bumperCount = 19, boosterCount = 11 },
+        new StageDef { id = 23, nameKo = "수정 동굴", nameEn = "Crystal Cavern", nameJa = "水晶の洞窟", nameEs = "Caverna de Cristal", timeLimit = 112f, boardSize = new Vector2(26.35f, 56f), boardColor = new Color(0.15f, 0.37f, 0.38f), wallColor = new Color(0.29f, 0.92f, 0.95f), gemCount = 36, holeCount = 23, bumperCount = 19, boosterCount = 11 },
+        new StageDef { id = 24, nameKo = "천 개의 구멍 평원", nameEn = "Thousand Pits Plain", nameJa = "千の穴の平原", nameEs = "Llanura de los Mil Pozos", timeLimit = 114f, boardSize = new Vector2(26.20f, 57f), boardColor = new Color(0.15f, 0.18f, 0.38f), wallColor = new Color(0.29f, 0.38f, 0.95f), gemCount = 37, holeCount = 24, bumperCount = 20, boosterCount = 12 },
+        new StageDef { id = 25, nameKo = "톱니바퀴 성채", nameEn = "Clockwork Citadel", nameJa = "ぜんまい仕掛けの城塞", nameEs = "Ciudadela de Engranajes", timeLimit = 116f, boardSize = new Vector2(26.05f, 58f), boardColor = new Color(0.31f, 0.15f, 0.38f), wallColor = new Color(0.74f, 0.29f, 0.95f), gemCount = 38, holeCount = 25, bumperCount = 20, boosterCount = 12 },
+        new StageDef { id = 26, nameKo = "구름 다리", nameEn = "Cloud Bridge Span", nameJa = "雲の架け橋", nameEs = "Puente de Nubes", timeLimit = 118f, boardSize = new Vector2(25.90f, 59f), boardColor = new Color(0.38f, 0.15f, 0.26f), wallColor = new Color(0.95f, 0.29f, 0.61f), gemCount = 39, holeCount = 26, bumperCount = 21, boosterCount = 12 },
+        new StageDef { id = 27, nameKo = "오로라 활주로", nameEn = "Aurora Runway", nameJa = "オーロラ滑走路", nameEs = "Pista de la Aurora", timeLimit = 120f, boardSize = new Vector2(25.75f, 60f), boardColor = new Color(0.38f, 0.23f, 0.15f), wallColor = new Color(0.95f, 0.50f, 0.29f), gemCount = 40, holeCount = 27, bumperCount = 21, boosterCount = 13 },
+        new StageDef { id = 28, nameKo = "블랙홀 가장자리", nameEn = "Black Hole Brink", nameJa = "ブラックホールの縁", nameEs = "Borde del Agujero Negro", timeLimit = 122f, boardSize = new Vector2(25.60f, 61f), boardColor = new Color(0.35f, 0.38f, 0.15f), wallColor = new Color(0.85f, 0.95f, 0.29f), gemCount = 41, holeCount = 27, bumperCount = 22, boosterCount = 13 },
+        new StageDef { id = 29, nameKo = "마지막 관문", nameEn = "The Last Gate", nameJa = "最後の関門", nameEs = "La Última Puerta", timeLimit = 124f, boardSize = new Vector2(25.45f, 62f), boardColor = new Color(0.16f, 0.38f, 0.15f), wallColor = new Color(0.30f, 0.95f, 0.29f), gemCount = 42, holeCount = 28, bumperCount = 22, boosterCount = 13 },
+        new StageDef { id = 30, nameKo = "무한 궤도 왕좌", nameEn = "Endless Orbit Throne", nameJa = "無限軌道の玉座", nameEs = "Trono de la Órbita Infinita", timeLimit = 126f, boardSize = new Vector2(25.30f, 63f), boardColor = new Color(0.15f, 0.38f, 0.33f), wallColor = new Color(0.29f, 0.95f, 0.81f), gemCount = 43, holeCount = 29, bumperCount = 23, boosterCount = 14 }
     };
 
     private int currentStageIndex = 0;
     private bool isEndlessMode = false;
     private bool showStageSelect = false;
+    private Vector2 stageSelectScroll;
 
     // --- Interactive Mathematical Elements (Zero-Collider) ---
     public class GemObj
@@ -1133,26 +1153,31 @@ public class GravityRollerPlayer : MonoBehaviour
         // 4. Stage Select Modal
         if (showStageSelect)
         {
-            float ssw = 540f;
-            float ssh = 420f;
+            float ssw = Mathf.Min(640f, Screen.width - 20f);
+            float ssh = Mathf.Min(520f, Screen.height - 20f);
             float ssx = (Screen.width - ssw) * 0.5f;
             float ssy = (Screen.height - ssh) * 0.5f;
 
             GUILayout.BeginArea(new Rect(ssx, ssy, ssw, ssh), GUI.skin.window);
-            GUILayout.Label($"📋 {GetText("stage_select")} (12 Stages)", headerTitleStyle);
+            GUILayout.Label($"📋 {GetText("stage_select")} (30 Stages)", headerTitleStyle);
             GUILayout.Space(8);
 
-            for (int r = 0; r < 6; r++)
+            // 4 columns, scrolling for all 30 stages
+            var cellStyle = new GUIStyle(btnStyle) { wordWrap = true, fontSize = 11 };
+            float cellW = (ssw - 60f) / 4f;
+            stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, GUILayout.Height(ssh - 190f));
+            int rowsN = (Stages.Length + 3) / 4;
+            for (int r = 0; r < rowsN; r++)
             {
                 GUILayout.BeginHorizontal();
-                for (int c = 0; c < 2; c++)
+                for (int c = 0; c < 4; c++)
                 {
-                    int idx = r * 2 + c;
+                    int idx = r * 4 + c;
                     if (idx < Stages.Length)
                     {
                         bool isCur = (!isEndlessMode && currentStageIndex == idx);
                         GUI.backgroundColor = isCur ? new Color(0.2f, 0.8f, 0.4f) : Color.white;
-                        if (GUILayout.Button($"{U("Stage")} {idx + 1}: {GetStageName(idx)}", btnStyle, GUILayout.Height(32)))
+                        if (GUILayout.Button($"{U("Stage")} {idx + 1}\n{GetStageName(idx)}", cellStyle, GUILayout.Width(cellW), GUILayout.Height(60)))
                         {
                             isEndlessMode = false;
                             showStageSelect = false;
@@ -1164,6 +1189,8 @@ public class GravityRollerPlayer : MonoBehaviour
                 GUILayout.EndHorizontal();
                 GUILayout.Space(3);
             }
+            GUILayout.EndScrollView();
+            GUI.backgroundColor = Color.white;
 
             GUILayout.Space(8);
 

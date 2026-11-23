@@ -19,6 +19,9 @@ def fetch(family, text):
     css = urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': UA})).read().decode()
     f = TTFont(io.BytesIO(urllib.request.urlopen(re.search(r'url\((https://[^)]+)\)', css).group(1)).read()))
     f.flavor = None
+    if len(f.getBestCmap()) > 2 * len(text) + 200:  # Google sent the whole font (long text=), so subset here
+        from fontTools import subset
+        sub = subset.Subsetter(subset.Options(hinting=False)); sub.populate(text=text); sub.subset(f)
     return f
 
 out = os.path.join(root, 'Assets/OiyoFont/Resources/OiyoFont')

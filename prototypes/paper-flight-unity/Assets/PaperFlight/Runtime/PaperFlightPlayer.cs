@@ -109,12 +109,32 @@ public class PaperFlightPlayer : MonoBehaviour
         new StageDef { id = 9, nameKo = "황혼의 석양 해안", nameEn = "Sunset Coastline", nameJa = "黄昏の夕暮れ海岸", nameEs = "Costa al Atardecer", courseLength = 2200f, skyColor = new Color(0.98f, 0.45f, 0.35f), groundColor = new Color(0.12f, 0.25f, 0.42f), themeColor = new Color(1f, 0.6f, 0.2f), windStrength = 3.0f, ringCount = 44, craneCount = 16, updraftCount = 14, obstacleCount = 38 },
         new StageDef { id = 10, nameKo = "빛나는 수정 동굴", nameEn = "Luminescent Crystal Caves", nameJa = "発光水晶の洞窟", nameEs = "Cuevas de Cristal Brillante", courseLength = 2500f, skyColor = new Color(0.08f, 0.05f, 0.18f), groundColor = new Color(0.1f, 0.08f, 0.2f), themeColor = new Color(0.6f, 0.3f, 1f), windStrength = 2.0f, ringCount = 48, craneCount = 18, updraftCount = 15, obstacleCount = 42 },
         new StageDef { id = 11, nameKo = "오로라 은하수 밤하늘", nameEn = "Aurora Galaxy Night", nameJa = "オーロラ銀河の夜空", nameEs = "Noche de Aurora y Galaxia", courseLength = 2800f, skyColor = new Color(0.05f, 0.12f, 0.18f), groundColor = new Color(0.04f, 0.08f, 0.12f), themeColor = new Color(0.2f, 1f, 0.7f), windStrength = 3.0f, ringCount = 52, craneCount = 20, updraftCount = 16, obstacleCount = 45 },
-        new StageDef { id = 12, nameKo = "우주 성층권 최종 활공", nameEn = "Cosmic Stratosphere Finale", nameJa = "成層圏の最終飛行", nameEs = "Final de la Estratosfera Cósmica", courseLength = 3200f, skyColor = new Color(0.02f, 0.03f, 0.08f), groundColor = new Color(0.08f, 0.18f, 0.32f), themeColor = new Color(0.4f, 0.8f, 1f), windStrength = 4.5f, ringCount = 60, craneCount = 24, updraftCount = 20, obstacleCount = 50 }
+        new StageDef { id = 12, nameKo = "우주 성층권 최종 활공", nameEn = "Cosmic Stratosphere Finale", nameJa = "成層圏の最終飛行", nameEs = "Final de la Estratosfera Cósmica", courseLength = 3200f, skyColor = new Color(0.02f, 0.03f, 0.08f), groundColor = new Color(0.08f, 0.18f, 0.32f), themeColor = new Color(0.4f, 0.8f, 1f), windStrength = 4.5f, ringCount = 60, craneCount = 24, updraftCount = 20, obstacleCount = 50 },
+        // 13-30: per stage +150 m course, +0.1 wind, +2 rings, +1 crane, +0.6 updraft, +2 obstacles
+        new StageDef { id = 13, nameKo = "비 오는 창턱", nameEn = "Rainy Window Ledge", nameJa = "雨の窓辺", nameEs = "Alféizar Lluvioso", courseLength = 3350f, skyColor = new Color(0.62f, 0.68f, 0.75f), groundColor = new Color(0.23f, 0.28f, 0.14f), themeColor = new Color(0.76f, 1.00f, 0.30f), windStrength = 4.6f, ringCount = 62, craneCount = 25, updraftCount = 20, obstacleCount = 52 },
+        new StageDef { id = 14, nameKo = "도서관 서가 탑", nameEn = "Library Tower Stacks", nameJa = "図書館の書架塔", nameEs = "Torres de la Biblioteca", courseLength = 3500f, skyColor = new Color(0.90f, 0.84f, 0.72f), groundColor = new Color(0.14f, 0.28f, 0.19f), themeColor = new Color(0.30f, 1.00f, 0.56f), windStrength = 4.7f, ringCount = 64, craneCount = 26, updraftCount = 21, obstacleCount = 54 },
+        new StageDef { id = 15, nameKo = "등불 야시장", nameEn = "Lantern Night Market", nameJa = "提灯の夜市", nameEs = "Mercado Nocturno de Faroles", courseLength = 3650f, skyColor = new Color(0.12f, 0.08f, 0.16f), groundColor = new Color(0.14f, 0.22f, 0.28f), themeColor = new Color(0.30f, 0.71f, 1.00f), windStrength = 4.8f, ringCount = 66, craneCount = 27, updraftCount = 21, obstacleCount = 56 },
+        new StageDef { id = 16, nameKo = "풍차 언덕", nameEn = "Windmill Hills", nameJa = "風車の丘", nameEs = "Colinas de Molinos", courseLength = 3800f, skyColor = new Color(0.62f, 0.82f, 0.95f), groundColor = new Color(0.20f, 0.14f, 0.28f), themeColor = new Color(0.62f, 0.30f, 1.00f), windStrength = 4.9f, ringCount = 68, craneCount = 28, updraftCount = 22, obstacleCount = 58 },
+        new StageDef { id = 17, nameKo = "항구 크레인 부두", nameEn = "Harbor Crane Yard", nameJa = "港のクレーン埠頭", nameEs = "Muelle de Grúas", courseLength = 3950f, skyColor = new Color(0.70f, 0.78f, 0.85f), groundColor = new Color(0.28f, 0.14f, 0.21f), themeColor = new Color(1.00f, 0.30f, 0.66f), windStrength = 5.0f, ringCount = 70, craneCount = 29, updraftCount = 23, obstacleCount = 60 },
+        new StageDef { id = 18, nameKo = "대나무 바람 터널", nameEn = "Bamboo Wind Tunnel", nameJa = "竹林の風トンネル", nameEs = "Túnel de Viento de Bambú", courseLength = 4100f, skyColor = new Color(0.72f, 0.88f, 0.70f), groundColor = new Color(0.28f, 0.21f, 0.14f), themeColor = new Color(1.00f, 0.67f, 0.30f), windStrength = 5.1f, ringCount = 72, craneCount = 30, updraftCount = 23, obstacleCount = 62 },
+        new StageDef { id = 19, nameKo = "눈 덮인 소나무 능선", nameEn = "Snowy Pine Ridge", nameJa = "雪の松の尾根", nameEs = "Cresta de Pinos Nevados", courseLength = 4250f, skyColor = new Color(0.85f, 0.90f, 0.96f), groundColor = new Color(0.20f, 0.28f, 0.14f), themeColor = new Color(0.60f, 1.00f, 0.30f), windStrength = 5.2f, ringCount = 74, craneCount = 31, updraftCount = 24, obstacleCount = 64 },
+        new StageDef { id = 20, nameKo = "열기구 축제", nameEn = "Hot Air Balloon Fair", nameJa = "熱気球フェア", nameEs = "Feria de Globos Aerostáticos", courseLength = 4400f, skyColor = new Color(0.98f, 0.80f, 0.60f), groundColor = new Color(0.14f, 0.28f, 0.22f), themeColor = new Color(0.30f, 1.00f, 0.72f), windStrength = 5.3f, ringCount = 76, craneCount = 32, updraftCount = 24, obstacleCount = 66 },
+        new StageDef { id = 21, nameKo = "폭포 물안개 계곡", nameEn = "Waterfall Mist Valley", nameJa = "滝しぶきの谷", nameEs = "Valle de la Bruma de Cascada", courseLength = 4550f, skyColor = new Color(0.75f, 0.88f, 0.90f), groundColor = new Color(0.14f, 0.19f, 0.28f), themeColor = new Color(0.30f, 0.55f, 1.00f), windStrength = 5.4f, ringCount = 78, craneCount = 33, updraftCount = 25, obstacleCount = 68 },
+        new StageDef { id = 22, nameKo = "사막 신기루 언덕", nameEn = "Desert Mirage Dunes", nameJa = "砂漠の蜃気楼砂丘", nameEs = "Dunas del Espejismo", courseLength = 4700f, skyColor = new Color(0.98f, 0.85f, 0.60f), groundColor = new Color(0.24f, 0.14f, 0.28f), themeColor = new Color(0.78f, 0.30f, 1.00f), windStrength = 5.5f, ringCount = 80, craneCount = 34, updraftCount = 26, obstacleCount = 70 },
+        new StageDef { id = 23, nameKo = "화산재 하늘", nameEn = "Volcanic Ash Sky", nameJa = "火山灰の空", nameEs = "Cielo de Ceniza Volcánica", courseLength = 4850f, skyColor = new Color(0.35f, 0.25f, 0.22f), groundColor = new Color(0.28f, 0.14f, 0.18f), themeColor = new Color(1.00f, 0.30f, 0.50f), windStrength = 5.6f, ringCount = 82, craneCount = 35, updraftCount = 26, obstacleCount = 72 },
+        new StageDef { id = 24, nameKo = "빙하 피오르 활공", nameEn = "Glacier Fjord Drift", nameJa = "氷河フィヨルド滑空", nameEs = "Deriva por el Fiordo Glaciar", courseLength = 5000f, skyColor = new Color(0.70f, 0.85f, 0.95f), groundColor = new Color(0.28f, 0.25f, 0.14f), themeColor = new Color(1.00f, 0.83f, 0.30f), windStrength = 5.7f, ringCount = 84, craneCount = 36, updraftCount = 27, obstacleCount = 74 },
+        new StageDef { id = 25, nameKo = "태풍의 눈 통과", nameEn = "Typhoon Eye Passage", nameJa = "台風の目の通過", nameEs = "Paso por el Ojo del Tifón", courseLength = 5150f, skyColor = new Color(0.30f, 0.36f, 0.42f), groundColor = new Color(0.17f, 0.28f, 0.14f), themeColor = new Color(0.44f, 1.00f, 0.30f), windStrength = 5.8f, ringCount = 86, craneCount = 37, updraftCount = 27, obstacleCount = 76 },
+        new StageDef { id = 26, nameKo = "떠 있는 섬 군도", nameEn = "Floating Island Chain", nameJa = "浮遊島の連なり", nameEs = "Cadena de Islas Flotantes", courseLength = 5300f, skyColor = new Color(0.60f, 0.80f, 1.00f), groundColor = new Color(0.14f, 0.28f, 0.26f), themeColor = new Color(0.30f, 1.00f, 0.88f), windStrength = 5.9f, ringCount = 88, craneCount = 38, updraftCount = 28, obstacleCount = 78 },
+        new StageDef { id = 27, nameKo = "달빛 등대 곶", nameEn = "Moonlit Lighthouse Cape", nameJa = "月夜の灯台岬", nameEs = "Cabo del Faro a la Luz de la Luna", courseLength = 5450f, skyColor = new Color(0.08f, 0.10f, 0.22f), groundColor = new Color(0.14f, 0.16f, 0.28f), themeColor = new Color(0.30f, 0.39f, 1.00f), windStrength = 6.0f, ringCount = 90, craneCount = 39, updraftCount = 29, obstacleCount = 80 },
+        new StageDef { id = 28, nameKo = "위성 궤도 항로", nameEn = "Satellite Orbit Lane", nameJa = "衛星軌道航路", nameEs = "Carril de Órbita Satelital", courseLength = 5600f, skyColor = new Color(0.03f, 0.04f, 0.10f), groundColor = new Color(0.27f, 0.14f, 0.28f), themeColor = new Color(0.94f, 0.30f, 1.00f), windStrength = 6.1f, ringCount = 92, craneCount = 40, updraftCount = 29, obstacleCount = 82 },
+        new StageDef { id = 29, nameKo = "유성대 활공", nameEn = "Meteor Belt Glide", nameJa = "流星帯の滑空", nameEs = "Planeo por el Cinturón de Meteoros", courseLength = 5750f, skyColor = new Color(0.05f, 0.03f, 0.12f), groundColor = new Color(0.28f, 0.14f, 0.15f), themeColor = new Color(1.00f, 0.30f, 0.34f), windStrength = 6.2f, ringCount = 94, craneCount = 41, updraftCount = 30, obstacleCount = 84 },
+        new StageDef { id = 30, nameKo = "별빛 귀환 비행", nameEn = "Starlight Homecoming", nameJa = "星明かりの帰還飛行", nameEs = "Regreso a la Luz de las Estrellas", courseLength = 5900f, skyColor = new Color(0.02f, 0.02f, 0.06f), groundColor = new Color(0.28f, 0.28f, 0.14f), themeColor = new Color(1.00f, 0.99f, 0.30f), windStrength = 6.3f, ringCount = 96, craneCount = 42, updraftCount = 30, obstacleCount = 86 }
     };
 
     private int currentStageIndex = 0;
     private bool isEndlessMode = false;
     private bool showStageSelect = false;
+    private Vector2 stageSelectScroll;
 
     // --- Course Elements (Zero-Collider Math Objects) ---
     public class RingObj
@@ -1310,27 +1330,31 @@ public class PaperFlightPlayer : MonoBehaviour
         // 4. Stage Select Modal Window
         if (showStageSelect)
         {
-            float ssw = 540f;
-            float ssh = 420f;
+            float ssw = Mathf.Min(640f, Screen.width - 20f);
+            float ssh = Mathf.Min(520f, Screen.height - 20f);
             float ssx = (Screen.width - ssw) * 0.5f;
             float ssy = (Screen.height - ssh) * 0.5f;
 
             GUILayout.BeginArea(new Rect(ssx, ssy, ssw, ssh), GUI.skin.window);
-            GUILayout.Label($"📋 {GetText("stage_select")} (12 Stages)", headerTitleStyle);
+            GUILayout.Label($"📋 {GetText("stage_select")} (30 Stages)", headerTitleStyle);
             GUILayout.Space(8);
 
-            // 12 Stage Buttons in 2 columns
-            for (int r = 0; r < 6; r++)
+            // 30 Stage Buttons in 4 columns, scrolling
+            var cellStyle = new GUIStyle(btnStyle) { wordWrap = true, fontSize = 11 };
+            float cellW = (ssw - 60f) / 4f;
+            stageSelectScroll = GUILayout.BeginScrollView(stageSelectScroll, GUILayout.Height(ssh - 190f));
+            int rowsN = (Stages.Length + 3) / 4;
+            for (int r = 0; r < rowsN; r++)
             {
                 GUILayout.BeginHorizontal();
-                for (int c = 0; c < 2; c++)
+                for (int c = 0; c < 4; c++)
                 {
-                    int idx = r * 2 + c;
+                    int idx = r * 4 + c;
                     if (idx < Stages.Length)
                     {
                         bool isCur = (!isEndlessMode && currentStageIndex == idx);
                         GUI.backgroundColor = isCur ? new Color(0.2f, 0.8f, 0.4f) : Color.white;
-                        if (GUILayout.Button($"{U("Stage")} {idx + 1}: {GetStageName(idx)}", btnStyle, GUILayout.Height(32)))
+                        if (GUILayout.Button($"{U("Stage")} {idx + 1}\n{GetStageName(idx)}", cellStyle, GUILayout.Width(cellW), GUILayout.Height(60)))
                         {
                             isEndlessMode = false;
                             showStageSelect = false;
@@ -1341,6 +1365,8 @@ public class PaperFlightPlayer : MonoBehaviour
                 GUILayout.EndHorizontal();
                 GUILayout.Space(3);
             }
+            GUILayout.EndScrollView();
+            GUI.backgroundColor = Color.white;
 
             GUILayout.Space(8);
 
