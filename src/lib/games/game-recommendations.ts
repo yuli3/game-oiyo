@@ -185,6 +185,7 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
   "spin-sumo": { emoji: "🌀", cat: "arcade", name: {"ko":"팽이 씨름","en":"Spin Sumo","ja":"コマずもう","zh":"陀螺相扑","fr":"Sumo de toupies","es":"Sumo de peonzas"} },
   "spider-cards": { emoji: "🕷️", cat: "card", name: {"ko":"스파이더 카드","en":"Spider Cards","ja":"スパイダーカード","zh":"蜘蛛纸牌","fr":"Spider Solitaire","es":"Solitario Spider"} },
   "market-mercenaries": { emoji: "🏮", cat: "arcade", name: {"ko":"장터 용병단","en":"Market Mercenaries","ja":"市場の傭兵団","zh":"集市佣兵团","fr":"Les Mercenaires du marché","es":"Mercenarios del Mercado"} },
+  "advent-puzzles": { emoji: "🎄", cat: "puzzle", name: {"ko":"어드벤트 퍼즐 달력","en":"Advent Puzzle Calendar","ja":"アドベント・パズルカレンダー","zh":"降临节谜题日历","fr":"Calendrier de l'Avent à énigmes","es":"Calendario de Adviento de puzles"} },
   "sunlit-glass": { emoji: "🪟", cat: "puzzle", name: {"ko":"햇살 스테인드글라스","en":"Sunlit Glass","ja":"陽だまりステンドグラス","zh":"阳光彩绘玻璃","fr":"Vitrail au soleil","es":"Vitral al Sol"} },
   "finger-hockey": { emoji: "🏒", cat: "arcade", name: {"ko":"손가락 에어하키","en":"Finger Air Hockey","ja":"指先エアホッケー","zh":"指尖桌上冰球","fr":"Air hockey du bout des doigts","es":"Air Hockey con el Dedo"} },
   "rampart-keeper": { emoji: "🏯", cat: "arcade", name: {"ko":"성벽 지기","en":"Rampart Keeper","ja":"城壁の守り手","zh":"城墙守卫","fr":"Gardien du rempart","es":"Guardián de la muralla"} },
@@ -207,6 +208,7 @@ export const CATALOG_GAMES: Record<string, CatalogEntry> = {
  * Players finishing or exploring these games receive hand-tuned next-best suggestions.
  */
 export const CURATED_CLUSTERS: Record<string, string[]> = {
+  "advent-puzzles": ["water-sort", "snowman-stack", "sunlit-glass", "light-up"],
   "sunlit-glass": ["picture-logic", "mirror-lanterns", "light-up", "hexa-sort"],
   "finger-hockey": ["spin-sumo", "link-duel", "liar-onephone", "mini-golf-3d"],
   "market-mercenaries": ["tower-deck-rogue", "slot-rogue", "mech-grid-tactics", "shield-isle-tactics"],
