@@ -111,6 +111,9 @@ public class SwatBreachPlayer : MonoBehaviour
         public bool hasBomb;
         public Vector2Int bombPos;
         public bool isBossMission;
+        public float suspectHpScale = 1f;   // 13-30 only; 1 keeps missions 1-12 as they were
+        public float suspectFireScale = 1f; // multiplies the suspects' time between shots
+        public float bombTime = 30f;
     }
 
     // Grid Dimensions
@@ -177,11 +180,12 @@ public class SwatBreachPlayer : MonoBehaviour
     private Phase phase = Phase.Planning;
     private int currentMissionIdx = 0;
     private bool showMissionSelect = false;
+    private Vector2 missionSelectScroll;
     private int selectedOperator = 0; // 0: Alpha, 1: Bravo
     private int totalScore = 0;
     private float missionTimer = 0f;
 
-    // 12 Tactical CQB Missions (User Rule: Minimum 10 stages accessible)
+    // 30 missions: 1-12 hand-made, 13-30 from AppendLateMissions
     private MissionDef[] missions;
 
     void Awake()
@@ -628,6 +632,73 @@ public class SwatBreachPlayer : MonoBehaviour
                 isBossMission = true
             }
         };
+        missions = AppendLateMissions(missions);
+    }
+
+    // Missions 13-30 replay the hand-made floors of missions 2-12 (same suspects, hostages and
+    // auto plan, so each stays clearable) mirrored top-bottom, left-right or both, while the
+    // suspects toughen: HP x1.05 -> x1.39 and time between shots x0.98 -> x0.86. The C4 timer
+    // drops from 30 s to 28 s (M20) and 26 s (M28). 15, 20, 25, 30 are boss floors.
+    MissionDef[] AppendLateMissions(MissionDef[] early)
+    {
+        var names = new LocalizedText[] {
+            new LocalizedText("야시장 대치", "Night Market Standoff", "夜市の膠着", "Enfrentamiento en el Mercado Nocturno"),
+            new LocalizedText("강변 모텔 급습", "Riverside Motel Raid", "川沿いモーテル急襲", "Redada en el Motel del Río"),
+            new LocalizedText("장갑 창고 포위", "Armored Depot Siege", "装甲倉庫包囲", "Asedio al Depósito Blindado"),
+            new LocalizedText("조선소 야간 수색", "Shipyard Night Sweep", "造船所の夜間掃討", "Barrido Nocturno del Astillero"),
+            new LocalizedText("영사관 봉쇄", "Consulate Lockdown", "領事館封鎖", "Cierre del Consulado"),
+            new LocalizedText("스카이라인 로프트 돌입", "Skyline Loft Breach", "スカイライン・ロフト突入", "Irrupción en el Loft"),
+            new LocalizedText("지하 승강장 매복", "Tunnel Platform Ambush", "地下ホームの待ち伏せ", "Emboscada en el Andén"),
+            new LocalizedText("정유 공장 기폭 장치", "Refinery Detonator", "製油所の起爆装置", "Detonador de la Refinería"),
+            new LocalizedText("빌라 옥상 진입", "Villa Rooftop Entry", "邸宅屋上からの突入", "Entrada por la Azotea"),
+            new LocalizedText("부두 화물 미로", "Dockside Crate Maze", "埠頭の貨物迷路", "Laberinto de Cajas del Muelle"),
+            new LocalizedText("회담장 구출", "Summit Hall Rescue", "会談場救出", "Rescate en la Sala de Cumbre"),
+            new LocalizedText("타워 스위트 급습", "Tower Suite Raid", "タワースイート急襲", "Asalto a la Suite de la Torre"),
+            new LocalizedText("심층 벙커 농성", "Deep Bunker Holdout", "深層バンカー籠城", "Resistencia en el Búnker"),
+            new LocalizedText("막차 승강장", "Last Train Platform", "終電のホーム", "Andén del Último Tren"),
+            new LocalizedText("화강암 금고 재진입", "Granite Vault Return", "花崗岩金庫への再突入", "Regreso a la Bóveda de Granito"),
+            new LocalizedText("쌍둥이 도화선 공장", "Twin Fuse Plant", "双導火線の工場", "Planta de Doble Mecha"),
+            new LocalizedText("그림자 벙커", "Shadow Bunker", "影のバンカー", "Búnker en Sombras"),
+            new LocalizedText("마지막 불빛 작전 [최종]", "Last Light Protocol [FINAL]", "最後の灯作戦 [最終]", "Protocolo Última Luz [FINAL]")
+        };
+        // base mission number and mirror (1 = top-bottom, 2 = left-right, 3 = both) for 13..30
+        int[] baseNum = { 3, 4, 5, 6, 7, 8, 9, 10, 4, 6, 7, 8, 11, 9, 5, 10, 11, 12 };
+        int[] mirror = { 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3 };
+        var list = new List<MissionDef>(early);
+        for (int k = 0; k < 18; k++)
+        {
+            var b = early[baseNum[k] - 1];
+            bool flipY = (mirror[k] & 1) != 0, flipX = (mirror[k] & 2) != 0;
+            Func<Vector2Int, Vector2Int> mp = v => new Vector2Int(flipX ? GridW - 1 - v.x : v.x, flipY ? GridH - 1 - v.y : v.y);
+            var rows = new string[GridH];
+            for (int r = 0; r < GridH; r++)
+            {
+                string row = b.layout[flipY ? GridH - 1 - r : r];
+                if (flipX) { var ch = row.ToCharArray(); Array.Reverse(ch); row = new string(ch); }
+                rows[r] = row;
+            }
+            var m = new MissionDef
+            {
+                missionNum = 13 + k,
+                title = names[k],
+                briefing = b.briefing,
+                layout = rows,
+                alphaSpawn = mp(b.alphaSpawn),
+                bravoSpawn = mp(b.bravoSpawn),
+                alphaAutoPath = b.alphaAutoPath.ConvertAll(v => mp(v)),
+                bravoAutoPath = b.bravoAutoPath.ConvertAll(v => mp(v)),
+                suspects = b.suspects.ConvertAll(t => Tuple.Create(mp(t.Item1), t.Item2)),
+                hostages = b.hostages.ConvertAll(v => mp(v)),
+                hasBomb = b.hasBomb,
+                bombPos = mp(b.bombPos),
+                isBossMission = (13 + k) % 5 == 0,
+                suspectHpScale = 1.05f + 0.02f * k,
+                suspectFireScale = 0.98f - 0.007f * k,
+                bombTime = 30f - 0.25f * (k + 1)
+            };
+            list.Add(m);
+        }
+        return list.ToArray();
     }
 
     public void LoadMission(int idx)
@@ -717,8 +788,8 @@ public class SwatBreachPlayer : MonoBehaviour
                 type = sTuple.Item2,
                 pos = GridToWorld(sTuple.Item1.x, sTuple.Item1.y),
                 angle = 180f,
-                hp = (sTuple.Item2 == SuspectType.JuggernautBoss) ? 320 : ((sTuple.Item2 == SuspectType.Shotgunner) ? 80 : 50),
-                maxHp = (sTuple.Item2 == SuspectType.JuggernautBoss) ? 320 : ((sTuple.Item2 == SuspectType.Shotgunner) ? 80 : 50)
+                hp = Mathf.RoundToInt(((sTuple.Item2 == SuspectType.JuggernautBoss) ? 320 : ((sTuple.Item2 == SuspectType.Shotgunner) ? 80 : 50)) * m.suspectHpScale),
+                maxHp = Mathf.RoundToInt(((sTuple.Item2 == SuspectType.JuggernautBoss) ? 320 : ((sTuple.Item2 == SuspectType.Shotgunner) ? 80 : 50)) * m.suspectHpScale)
             };
             s.go = CreateSuspectVisual(s);
             suspects.Add(s);
@@ -744,7 +815,7 @@ public class SwatBreachPlayer : MonoBehaviour
             currentBomb = new BombTarget
             {
                 gridPos = m.bombPos,
-                timer = 30f,
+                timer = m.bombTime,
                 isDefused = false
             };
             var bGo = new GameObject("BombC4");
@@ -1125,7 +1196,7 @@ public class SwatBreachPlayer : MonoBehaviour
 
                 if (target != null && bestDist < CellSize * 6.5f)
                 {
-                    s.fireCooldown = (s.type == SuspectType.JuggernautBoss) ? 0.35f : 0.85f;
+                    s.fireCooldown = ((s.type == SuspectType.JuggernautBoss) ? 0.35f : 0.85f) * missions[currentMissionIdx].suspectFireScale;
                     int dmg = (s.type == SuspectType.Sniper) ? 45 : (s.type == SuspectType.Shotgunner ? 35 : 20);
 
                     // Shield mitigation if hitting Alpha from front
@@ -1279,7 +1350,7 @@ public class SwatBreachPlayer : MonoBehaviour
 
         // Mission Title & Score
         GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(240));
-        GUILayout.Label("<color=#38bdf8><b>" + F("MISSION {0}/12", m.missionNum) + "</b></color>: " + m.title.Get(currentLang));
+        GUILayout.Label("<color=#38bdf8><b>" + F("MISSION {0}/30", m.missionNum) + "</b></color>: " + m.title.Get(currentLang));
         GUILayout.Label("🏆 " + U("Score") + ": <b>" + totalScore + "</b> | " + U("Time") + ": <b>" + missionTimer.ToString("F1") + "s</b>");
         GUILayout.EndVertical();
 
@@ -1328,7 +1399,7 @@ public class SwatBreachPlayer : MonoBehaviour
         }
 
         // Mission Selector Button
-        if (GUILayout.Button("🗺️ " + U("MISSIONS\n(1~12)"), GUILayout.Width(90), GUILayout.Height(50)))
+        if (GUILayout.Button("🗺️ " + U("MISSIONS\n(1~30)"), GUILayout.Width(90), GUILayout.Height(50)))
         {
             showMissionSelect = !showMissionSelect;
         }
@@ -1389,9 +1460,9 @@ public class SwatBreachPlayer : MonoBehaviour
             GUILayout.Space(15);
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button(currentMissionIdx < 11 ? "▶ " + F("NEXT OPERATION ({0})", currentMissionIdx + 2) : "🏆 " + U("PLAY AGAIN"), GUILayout.Width(190), GUILayout.Height(40)))
+            if (GUILayout.Button(currentMissionIdx < missions.Length - 1 ? "▶ " + F("NEXT OPERATION ({0})", currentMissionIdx + 2) : "🏆 " + U("PLAY AGAIN"), GUILayout.Width(190), GUILayout.Height(40)))
             {
-                LoadMission(currentMissionIdx < 11 ? currentMissionIdx + 1 : 0);
+                LoadMission(currentMissionIdx < missions.Length - 1 ? currentMissionIdx + 1 : 0);
             }
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -1420,35 +1491,29 @@ public class SwatBreachPlayer : MonoBehaviour
             GUILayout.EndArea();
         }
 
-        // 12-Mission Selector Modal (User Rule: Minimum 10 stages accessible)
+        // 30-mission selector: 4 fixed-width columns, scrolling
         if (showMissionSelect)
         {
             Rect modalRect = new Rect(Screen.width * 0.5f - 270, 105, 540, 430);
-            GUI.Box(modalRect, "<b>" + U("TACTICAL OPERATIONS (1~12)") + "</b>");
+            GUI.Box(modalRect, "<b>" + U("TACTICAL OPERATIONS (1~30)") + "</b>");
             GUILayout.BeginArea(new Rect(modalRect.x + 15, modalRect.y + 35, modalRect.width - 30, modalRect.height - 45));
 
-            int colsCount = 2;
-            for (int i = 0; i < missions.Length; i += colsCount)
+            var cellStyle = new GUIStyle(GUI.skin.button) { wordWrap = true, fontSize = 11 };
+            missionSelectScroll = GUILayout.BeginScrollView(missionSelectScroll, GUILayout.Height(330));
+            for (int idx = 0; idx < missions.Length; idx++)
             {
-                GUILayout.BeginHorizontal();
-                for (int c = 0; c < colsCount; c++)
+                if (idx % 4 == 0) GUILayout.BeginHorizontal();
+                var mis = missions[idx];
+                string bossTag = mis.isBossMission ? "\n★ " + U("BOSS") : "";
+                string btnText = "<b>M" + mis.missionNum + "</b> " + mis.title.Get(currentLang) + bossTag;
+                if (GUILayout.Button(btnText, cellStyle, GUILayout.Width(114), GUILayout.Height(62)))
                 {
-                    int idx = i + c;
-                    if (idx < missions.Length)
-                    {
-                        var mis = missions[idx];
-                        string bossTag = mis.isBossMission ? " ★ " + U("BOSS") : "";
-                        string btnText = "<b>M" + mis.missionNum + "</b>: " + mis.title.Get(currentLang) + bossTag;
-                        if (GUILayout.Button(btnText, GUILayout.Height(50)))
-                        {
-                            showMissionSelect = false;
-                            LoadMission(idx);
-                        }
-                    }
+                    showMissionSelect = false;
+                    LoadMission(idx);
                 }
-                GUILayout.EndHorizontal();
-                GUILayout.Space(3);
+                if (idx % 4 == 3 || idx == missions.Length - 1) GUILayout.EndHorizontal();
             }
+            GUILayout.EndScrollView();
 
             GUILayout.Space(6);
             if (GUILayout.Button("× " + U("CLOSE"), GUILayout.Height(28)))

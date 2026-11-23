@@ -163,7 +163,7 @@ describe('Suika Fruit Drop Physics & 6-System Deepening Suite (#137)', () => {
       fruits: [
         {
           id: 1,
-          tier: 3, // Dekopon
+          tier: 3, // Kiwi
           x: 180,
           y: CONTAINER_HEIGHT - 40,
           vx: 0,
@@ -195,7 +195,7 @@ describe('Suika Fruit Drop Physics & 6-System Deepening Suite (#137)', () => {
 
     state = stepSuikaPhysics(state, 0.03);
     expect(state.fruits).toHaveLength(1);
-    expect(state.fruits[0].tier).toBe(4); // 3 (Dekopon) -> 4 (Persimmon)
+    expect(state.fruits[0].tier).toBe(4); // 3 (Kiwi) -> 4 (Orange)
     expect(state.mergesCount).toBe(1);
   });
 

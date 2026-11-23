@@ -313,7 +313,7 @@ public class BlockBlastPlayer : MonoBehaviour
         {
             stageNum = 7,
             title = new LocalizedText("Stage 7: 좁아진 공간 (6x6)", "Stage 7: Constricted Grid (6x6)", "Stage 7: 狭まる領域 (6x6)", "Etapa 7: Cuadrícula Estrecha (6x6)"),
-            briefing = new LocalizedText("외곽 벽으로 둘러싸인 6x6 좁은 보드에서 3,500점을 돌파하세요!", "Overcome the blocked border and score 3,500 pts in 6x6 space!", "外枠が封鎖された6x6の狭いボードで3,500点を突破しましょう！", "¡Supera el borde bloqueado y supera 3,500 pts en 6x6!"),
+            briefing = new LocalizedText("얼음 벽에 갇힌 6x6 보드예요. 줄을 지워 벽을 깨고 3,500점을 넘으세요! (모서리 바위는 그대로)", "Ice walls box in a 6x6 space. Clear lines to break them and score 3,500 pts! (Corner rocks stay.)", "氷の壁に囲まれた6x6のボードです。ラインを消して壁を壊し、3,500点を突破しましょう！（角の岩は残ります）", "Muros de hielo encierran un espacio de 6x6. ¡Despeja líneas para romperlos y supera 3,500 pts! (Las rocas de las esquinas se quedan.)"),
             targetScore = 3500,
             targetGems = 0,
             targetCombos = 0,
@@ -400,13 +400,13 @@ public class BlockBlastPlayer : MonoBehaviour
             title = new LocalizedText("Stage 12: 궁극의 블록 마스터 [피날레]", "Stage 12: Ultimate Block Master [Finale]", "Stage 12: 究極のブロックマスター [フィナーレ]", "Etapa 12: Maestro Supremo de Bloques [Final]"),
             briefing = new LocalizedText("모든 장애물을 뚫고 8,000점을 달성하여 전설의 마스터가 되세요!", "Overcome all obstacles and achieve 8,000 points to become a legend!", "全ての障害を乗り越えて8,000点を達成し、伝説のマスターになりましょう！", "¡Supera todos los obstáculos y logra 8,000 puntos para ser leyenda!"),
             targetScore = 8000,
-            targetGems = 8,
-            targetCombos = 4,
-            targetMultiClears = 1,
+            targetGems = 0,
+            targetCombos = 0,
+            targetMultiClears = 0,
             bombCountdown = 20,
             bossHp = 0,
             hasIce = true,
-            hasRocks = false,
+            hasRocks = true,
             hasBorderBlock = false
         });
 
@@ -962,13 +962,19 @@ public class BlockBlastPlayer : MonoBehaviour
         // Apply Stage Features
         if (stage.hasBorderBlock)
         {
-            for (int i = 0; i < GridSize; i++)
+            // Ice ring with rock corners: inner rows/cols clear with 6 cells and break the ring;
+            // the outer rows/cols keep their corner rocks, so the edge only clears crosswise.
+            for (int i = 1; i < GridSize - 1; i++)
             {
-                SetCellBlock(0, i, CellType.Rock);
-                SetCellBlock(GridSize - 1, i, CellType.Rock);
-                SetCellBlock(i, 0, CellType.Rock);
-                SetCellBlock(i, GridSize - 1, CellType.Rock);
+                SetCellBlock(0, i, CellType.Ice);
+                SetCellBlock(GridSize - 1, i, CellType.Ice);
+                SetCellBlock(i, 0, CellType.Ice);
+                SetCellBlock(i, GridSize - 1, CellType.Ice);
             }
+            SetCellBlock(0, 0, CellType.Rock);
+            SetCellBlock(0, GridSize - 1, CellType.Rock);
+            SetCellBlock(GridSize - 1, 0, CellType.Rock);
+            SetCellBlock(GridSize - 1, GridSize - 1, CellType.Rock);
         }
 
         if (stage.hasRocks)
