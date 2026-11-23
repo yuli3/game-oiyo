@@ -16,6 +16,8 @@ import { useAudioContext } from '../../lib/games/use-audio-context';
 import { useClipboardShare } from '../../lib/games/use-clipboard-share';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { CHEESE_FACTORY_SPRITES } from '../../lib/games/sprites';
+import { drawBackdrop, drawSprite } from '../../lib/games/pixel-kit';
+import { FACTORY_FLOOR, FORKLIFT_BOT, cheeseWedge } from '../../lib/games/pixel-sprites';
 import { celebrate } from '../../lib/games/celebration';
 import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 import { GameStatTile } from '../ui/game/GameStatTile';
@@ -150,59 +152,65 @@ export default function CheeseFactory() {
       const width = canvas.width;
       const height = canvas.height;
 
-      // Clean background
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, 0, width, height);
+      // Factory floor (pixel tiles)
+      drawBackdrop(ctx, width, height, FACTORY_FLOOR, 3);
 
-      // Floor grid tiles
-      ctx.strokeStyle = '#1e293b';
-      ctx.lineWidth = 1;
-      const gridSize = 30;
-      for (let x = 0; x < width; x += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
-        ctx.stroke();
-      }
-      for (let y = 0; y < height; y += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-        ctx.stroke();
-      }
+      // Conveyor belt: dark rubber with moving pixel cleats
+      ctx.fillStyle = '#0b0f17';
+      ctx.fillRect(36, 148, 618, 14);
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(36, 148, 618, 2);
+      ctx.fillRect(36, 160, 618, 2);
+      const beltShift = Math.floor(time / 40) % 12;
+      ctx.fillStyle = '#64748b';
+      for (let x = 36 + beltShift; x < 650; x += 12) ctx.fillRect(x, 152, 4, 6);
 
-      // Conveyor belt line linking stations
-      ctx.strokeStyle = '#334155';
-      ctx.lineWidth = 8;
-      ctx.beginPath();
-      ctx.moveTo(40, 155);
-      ctx.lineTo(650, 155);
-      ctx.stroke();
-
-      // Render factory stations
-      current.stations.forEach((station, idx) => {
-        // Station shadow
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
-        ctx.fillRect(station.x + 3, station.y + 3, station.width, station.height);
-
-        // Station body
+      // Factory stations: bevelled pixel machines with rivets and a lamp
+      current.stations.forEach((station) => {
         const isCellar = station.id === 'aging_cellar';
-        ctx.fillStyle = isCellar ? '#1e3a8a' : idx % 2 === 0 ? '#334155' : '#475569';
-        ctx.strokeStyle = '#64748b';
-        ctx.lineWidth = 2;
-        ctx.fillRect(station.x, station.y, station.width, station.height);
-        ctx.strokeRect(station.x, station.y, station.width, station.height);
+        const sx = Math.round(station.x);
+        const sy = Math.round(station.y);
+        const sw = Math.round(station.width);
+        const sh = Math.round(station.height);
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.fillRect(sx + 4, sy + 4, sw, sh);
+        ctx.fillStyle = isCellar ? '#3b2f2a' : '#64748b';
+        ctx.fillRect(sx, sy, sw, sh);
+        ctx.fillStyle = isCellar ? '#57463d' : '#94a3b8';
+        ctx.fillRect(sx, sy, sw, 3);
+        ctx.fillRect(sx, sy, 3, sh);
+        ctx.fillStyle = isCellar ? '#211a17' : '#334155';
+        ctx.fillRect(sx, sy + sh - 3, sw, 3);
+        ctx.fillRect(sx + sw - 3, sy, 3, sh);
+        ctx.fillStyle = isCellar ? '#cbd5e1' : '#e2e8f0';
+        for (const [rx, ry] of [[sx + 5, sy + 5], [sx + sw - 8, sy + 5], [sx + 5, sy + sh - 8], [sx + sw - 8, sy + sh - 8]]) ctx.fillRect(rx, ry, 3, 3);
+        if (isCellar) {
+          // stone arch doorway
+          ctx.fillStyle = '#0c0a09';
+          const aw = Math.max(12, Math.round(sw * 0.45));
+          ctx.fillRect(sx + Math.round((sw - aw) / 2), sy + Math.round(sh * 0.35), aw, Math.round(sh * 0.65) - 3);
+          ctx.fillRect(sx + Math.round((sw - aw) / 2) + 3, sy + Math.round(sh * 0.35) - 3, aw - 6, 3);
+        } else {
+          // glass window
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(sx + 8, sy + 10, sw - 16, Math.max(6, Math.round(sh * 0.3)));
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillRect(sx + 10, sy + 12, Math.max(2, Math.round((sw - 20) * 0.35)), 2);
+        }
+        // status lamp
+        ctx.fillStyle = Math.floor(time / 500 + station.x) % 2 === 0 ? '#22c55e' : '#166534';
+        ctx.fillRect(sx + sw - 10, sy - 5, 5, 5);
 
         // Station name label
-        ctx.fillStyle = '#cbd5e1';
-        ctx.font = '10px monospace';
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = 'bold 10px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText(station.name.split(' ')[0], station.x + station.width / 2, station.y - 6);
+        ctx.fillText(station.name.split(' ')[0], sx + sw / 2, sy - 7);
 
         // Station level badge
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = '9px monospace';
-        ctx.fillText(`Lv.${station.level}`, station.x + station.width / 2, station.y + station.height + 12);
+        ctx.fillStyle = '#fcd34d';
+        ctx.font = 'bold 9px monospace';
+        ctx.fillText(`Lv.${station.level}`, sx + sw / 2, sy + sh + 12);
       });
 
       // Render SoA Cheese Entities
@@ -215,48 +223,20 @@ export default function CheeseFactory() {
         const varietyKey = Object.keys(CHEESE_VARIETIES)[varietyIndex] as CheeseVariety;
         const varietyDef = CHEESE_VARIETIES[varietyKey] || CHEESE_VARIETIES.mozzarella;
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(x, y, 7, 0, Math.PI * 2);
-        ctx.fillStyle = varietyDef.color;
-        ctx.fill();
-        ctx.strokeStyle = '#0f172a';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+        drawSprite(ctx, cheeseWedge(varietyDef.color), x, y, { scale: 2 });
 
-        // Maturity mini ring if in cellar
+        // Maturity bar if in cellar
         if (maturity > 0 && maturity < 100) {
-          ctx.beginPath();
-          ctx.arc(x, y, 9, -Math.PI / 2, -Math.PI / 2 + (maturity / 100) * Math.PI * 2);
-          ctx.strokeStyle = '#22c55e';
-          ctx.lineWidth = 2;
-          ctx.stroke();
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(Math.round(x) - 9, Math.round(y) + 11, 18, 4);
+          ctx.fillStyle = '#22c55e';
+          ctx.fillRect(Math.round(x) - 8, Math.round(y) + 12, Math.round(16 * maturity / 100), 2);
         }
-        ctx.restore();
       });
 
       // Render Autonomous AGV Transport Bots
       current.bots.forEach((bot) => {
-        ctx.save();
-        ctx.translate(bot.x, bot.y);
-
-        // Bot chassis shadow & body
-        ctx.fillStyle = '#f59e0b';
-        ctx.beginPath();
-        ctx.roundRect(-bot.radius, -bot.radius, bot.radius * 2, bot.radius * 2, 4);
-        ctx.fill();
-        ctx.strokeStyle = '#78350f';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // Direction indicator light
-        const angle = Math.atan2(bot.vy, bot.vx);
-        ctx.fillStyle = '#ef4444';
-        ctx.beginPath();
-        ctx.arc(Math.cos(angle) * (bot.radius - 2), Math.sin(angle) * (bot.radius - 2), 2.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.restore();
+        drawSprite(ctx, FORKLIFT_BOT, bot.x, bot.y, { scale: 2, flipX: bot.vx < 0 });
       });
 
       animationFrameRef.current = requestAnimationFrame(loop);

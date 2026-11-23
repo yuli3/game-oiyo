@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GameContainer } from "../ui/game/GamePrimitives";
+import PixelImg from "../ui/game/PixelImg";
+import { PATH_STONE, PATH_STONE_LIT } from "../../lib/games/pixel-sprites";
 import { celebrate } from "../../lib/games/celebration";
 import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import { createTrail, dailySeed, pathSum, tapCell, trailStatus, type TrailLevel } from "../../lib/games/number-trail";
@@ -92,7 +94,7 @@ export default function NumberTrail({ locale = "en" }: { locale?: string }) {
         </div>
       </div>
       <div ref={boardRef} className="mx-auto w-full max-w-md">
-        <div className={`grid gap-1.5 ${COLS[puzzle.size]}`} role="grid" aria-label={t.title}>
+        <div className={`grid gap-0 overflow-hidden rounded-xl border-4 border-border ${COLS[puzzle.size]}`} role="grid" aria-label={t.title}>
           {puzzle.digits.map((d, i) => {
             const step = inPath.get(i);
             const on = step !== undefined;
@@ -104,11 +106,10 @@ export default function NumberTrail({ locale = "en" }: { locale?: string }) {
                 type="button"
                 onClick={() => onTap(i)}
                 aria-label={`${d}${label ? ` ${label}` : ""}${on ? ` step ${step! + 1}` : ""}`}
-                className={`relative aspect-square min-h-11 rounded-lg border-2 font-mono text-xl font-black transition-colors motion-reduce:transition-none sm:text-2xl ${
-                  status === "solved" && on ? "border-primary bg-primary text-primary-foreground" : isEnd ? "border-primary bg-primary/30 text-foreground" : on ? "border-primary bg-primary/15 text-foreground" : "border-border bg-card text-foreground hover:bg-muted"
-                }`}
+                className={`relative flex aspect-square min-h-11 items-center justify-center font-mono text-xl font-black text-foreground sm:text-2xl ${isEnd ? "ring-4 ring-inset ring-primary" : ""}`}
               >
-                {d}
+                <PixelImg art={on ? PATH_STONE_LIT : PATH_STONE} className="pointer-events-none absolute inset-0 size-full" />
+                <span className="relative">{d}</span>
                 {(i === 0 || i === goal) && <span className="absolute right-1 top-0.5 text-xs" aria-hidden="true">{i === 0 ? "▶" : "★"}</span>}
               </button>
             );

@@ -491,3 +491,187 @@ export const ALL_PIXEL_SPRITES: Record<string, PixelArt> = {
   MAGE, BAT_A, BAT_B, SKELETON, GHOST, GOLEM, GEM, GEM_GREEN, GEM_RED, TOME, KNIFE, SPARK_BOLT, GRAVE_TILE, GRAVESTONE,
   NOTE, PAD, PEG, DROP_BALL, FIREFLY_LIT, FIREFLY_DIM,
 };
+
+// ─── Board tiles for DOM grid games ─────────────────────────────────────────
+
+/** Lab floor panel (Delay Cursor). */
+export const LAB_FLOOR: PixelArt = {
+  palette: { a: "#1e293b", b: "#253449", c: "#334155", l: "#3b4c63", r: "#0f172a" },
+  rows: [
+    "rrrrrrrrrrrrrrrr",
+    "rlllllllllllllcr",
+    "rlbbbbbbbbbbbbcr",
+    "rlbaaaaaaaaaabcr",
+    "rlbacbbbbbbcabcr",
+    "rlbabaaaaaabacbr",
+    "rlbabaaaaaabaccr",
+    "rlbabaaaaaabaccr",
+    "rlbabaaaaaabaccr",
+    "rlbabaaaaaabaccr",
+    "rlbabaaaaaabacbr",
+    "rlbacbbbbbbcabcr",
+    "rlbaaaaaaaaaabcr",
+    "rlbbbbbbbbbbbbcr",
+    "rccccccccccccccr",
+    "rrrrrrrrrrrrrrrr",
+  ],
+};
+
+/** Stacked crate wall (Delay Cursor). */
+export const LAB_WALL: PixelArt = {
+  palette: { o: "#1c1917", w: "#a16207", l: "#ca8a04", d: "#713f12", n: "#fde68a" },
+  rows: [
+    "oooooooooooooooo",
+    "ollllllllllllllo",
+    "olwwwwwwwwwwwwdo",
+    "olwndwwwwwwndwdo",
+    "olwddwwwwwwddwdo",
+    "olwwwdwwwwdwwwdo",
+    "olwwwwdwwdwwwwdo",
+    "olwwwwwddwwwwwdo",
+    "olwwwwwddwwwwwdo",
+    "olwwwwdwwdwwwwdo",
+    "olwwwdwwwwdwwwdo",
+    "olwddwwwwwwddwdo",
+    "olwndwwwwwwndwdo",
+    "olwwwwwwwwwwwwdo",
+    "oddddddddddddddd",
+    "oooooooooooooooo",
+  ],
+};
+
+/** Charging plate under the live cursor's goal. */
+export const LAB_PLATE: PixelArt = {
+  palette: { o: "#052e16", g: "#22c55e", l: "#bbf7d0", d: "#15803d", y: "#fde047" },
+  rows: [
+    "..oooooooooo..",
+    ".oggggggggggo.",
+    "oglllllllllgdo",
+    "oglgggyygggldo",
+    "oglggyyggggldo",
+    "oglgyyyyyygldo",
+    "oglggggyygglgo",
+    "oglgggyyggglgo",
+    "ogddddddddddgo",
+    ".oggggggggggo.",
+    "..oooooooooo..",
+  ],
+};
+
+/** Hourglass plate the delayed ghost must reach. */
+export const LAB_GHOST_PLATE: PixelArt = { rows: LAB_PLATE.rows, palette: { o: "#2e1065", g: "#a78bfa", l: "#ede9fe", d: "#6d28d9", y: "#f5d0fe" } };
+
+Object.assign(ALL_PIXEL_SPRITES, { LAB_FLOOR, LAB_WALL, LAB_PLATE, LAB_GHOST_PLATE });
+
+// ─── Cheese Factory ─────────────────────────────────────────────────────────
+
+/** Cheese wedge; the body colour follows the variety. */
+export const CHEESE_WEDGE: PixelArt = {
+  palette: { o: "#3f2a0a", c: "#fcd34d", l: "#fef3c7", d: "#d97706", h: "#b45309" },
+  rows: [
+    "......oo..",
+    "....ooclo.",
+    "..oocclllo",
+    "oocccclllo",
+    "olllllllco",
+    "olhlllhllo",
+    "olllllldlo",
+    "oddddddddo",
+    "oooooooooo",
+  ],
+};
+
+const wedgeCache = new Map<string, PixelArt>();
+export function cheeseWedge(body: string): PixelArt {
+  let art = wedgeCache.get(body);
+  if (!art) {
+    art = { rows: CHEESE_WEDGE.rows, palette: { ...CHEESE_WEDGE.palette, l: body } };
+    wedgeCache.set(body, art);
+  }
+  return art;
+}
+
+export const FORKLIFT_BOT: PixelArt = {
+  palette: { o: "#1c1917", y: "#f59e0b", l: "#fde68a", d: "#b45309", g: "#94a3b8", k: "#111827", r: "#ef4444" },
+  rows: [
+    "....oooo....",
+    "...olllyo...",
+    "...oyrryo...",
+    "ooooyyyyoooo",
+    "oyyyyyyyyyyo",
+    "oylyyyyyydyo",
+    "oyyyyyyyyddo",
+    "oooooooooooo",
+    ".okko..okko.",
+    "..oo....oo..",
+  ],
+};
+
+export const FACTORY_FLOOR: BackdropSpec = {
+  sky: ["#1f2937", "#1b2430", "#17202b"],
+  tiles: { size: 10, line: "#111827", alt: "#212c3a" },
+  seed: 3,
+};
+
+Object.assign(ALL_PIXEL_SPRITES, { CHEESE_WEDGE, FORKLIFT_BOT });
+
+// ─── Garden path puzzles (Arrow Walk, Number Trail) ─────────────────────────
+
+export const PATH_STONE: PixelArt = {
+  palette: { g: "#4d7c3a", m: "#3f6a2f", o: "#57534e", s: "#a8a29e", l: "#d6d3d1", d: "#78716c" },
+  rows: [
+    "gggmgggggggmgggg",
+    "ggooooooooooooog",
+    "goslllllllllllso",
+    "golsssssssssssdo",
+    "golssssssssssddo",
+    "golssssssssssddo",
+    "golsssssssssssdo",
+    "mgolsssssssssdom",
+    "golsssssssssssdo",
+    "golssssssssssddo",
+    "golsssssssssssdo",
+    "golssssssssssddo",
+    "goldssssssssdddo",
+    "godddddddddddddo",
+    "ggooooooooooooog",
+    "gggggmggggggmggg",
+  ],
+};
+
+export const PATH_STONE_LIT: PixelArt = { rows: PATH_STONE.rows, palette: { ...PATH_STONE.palette, s: "#fde68a", l: "#fefce8", d: "#d97706", o: "#92400e" } };
+
+/** Arrow pointing up; rotate with CSS. */
+export const PATH_ARROW: PixelArt = {
+  palette: { o: "#1c1917", r: "#dc2626", l: "#fca5a5" },
+  rows: [
+    "....oo....",
+    "...orro...",
+    "..orlrro..",
+    ".orlrrrro.",
+    "orrrrrrrro",
+    "oooorroooo",
+    "...orro...",
+    "...orro...",
+    "...orro...",
+    "...oooo...",
+  ],
+};
+
+export const PATH_STAR: PixelArt = {
+  palette: { o: "#713f12", y: "#facc15", w: "#fef9c3", d: "#ca8a04" },
+  rows: [
+    "....oo....",
+    "....oyo...",
+    "...oywyo..",
+    "oooywyyooo",
+    "oyyyyyyyyo",
+    ".oyyyyyyo.",
+    "..oyyyydo.",
+    "..oydoydo.",
+    ".oydo.odo.",
+    ".ooo...oo.",
+  ],
+};
+
+Object.assign(ALL_PIXEL_SPRITES, { PATH_STONE, PATH_STONE_LIT, PATH_ARROW, PATH_STAR });
