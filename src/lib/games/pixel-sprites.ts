@@ -691,6 +691,7 @@ export const SCENE_SKIES = {
   constellationShepherd: { sky: ["#02030a", "#070b1c", "#0d1430", "#141d45"], stars: 1.6, starColor: "#fef9c3", hills: "#05070f", seed: 50 },
   emotionWeather: { sky: ["#1d1a22", "#29242f", "#38303f", "#4a3f52"], stars: 0.25, starColor: "#e9d5ff", hills: "#141118", seed: 51 },
   museumNight: { sky: ["#0a0c10", "#0e1117", "#12161e"], tiles: { size: 14, line: "#06080b", alt: "#0c0f15" }, seed: 52 },
+  spatialMemory: { sky: ["#03040c", "#070a1c", "#0c1030", "#121844"], stars: 0.9, starColor: "#c7d2fe", seed: 54 },
   glassPlanet: { sky: ["#03060a", "#081018", "#0d1a24", "#122430"], stars: 1.4, starColor: "#cffafe", orb: { x: 0.82, y: 0.22, r: 9, color: "#5eead4", glow: "#0f766e" }, seed: 53 },
 } satisfies Record<string, BackdropSpec>;
 
@@ -874,3 +875,63 @@ export const KITCHEN_WALL: BackdropSpec = {
 };
 
 Object.assign(ALL_PIXEL_SPRITES, { FLAME_A, FLAME_B, FLAME_OFF, DROPLET, DROPLET_OFF, SKILLET, STEAK, STEAK_SEARED });
+
+// ─── Finger Hockey: rink, pucks, mallets, bumpers ───────────────────────────
+
+const discCache = new Map<string, PixelArt>();
+/** A shaded pixel disc (lit top-left, dark rim bottom-right), optional inner knob. */
+export function pixelDisc(d: number, base: string, knob?: string): PixelArt {
+  const key = `${d}:${base}:${knob ?? ""}`;
+  const hit = discCache.get(key);
+  if (hit) return hit;
+  const c = (d - 1) / 2;
+  const R = d / 2;
+  const rows: string[] = [];
+  for (let y = 0; y < d; y += 1) {
+    let row = "";
+    for (let x = 0; x < d; x += 1) {
+      const dx = x - c;
+      const dy = y - c;
+      const r = Math.hypot(dx, dy);
+      if (r > R - 0.1) row += ".";
+      else if (r > R - 1.1) row += "o";
+      else if (knob && r < R * 0.42) row += r < R * 0.42 - 1 ? (dx + dy < -1 ? "K" : "k") : "o";
+      else if (dx + dy < -R * 0.55 && r > R * 0.45) row += "h";
+      else if (dx + dy > R * 0.55) row += "d";
+      else row += "b";
+    }
+    rows.push(row);
+  }
+  const art: PixelArt = {
+    rows,
+    palette: {
+      o: shadeHex(base, 0.3),
+      b: base,
+      d: shadeHex(base, 0.7),
+      h: shadeHex(base, 1.45),
+      k: knob ?? base,
+      K: shadeHex(knob ?? base, 1.4),
+    },
+  };
+  discCache.set(key, art);
+  return art;
+}
+
+export const HOCKEY_PUCK = pixelDisc(9, "#e5e7eb");
+export const HOCKEY_MALLET_RED = pixelDisc(16, "#ef4444", "#fecaca");
+export const HOCKEY_MALLET_BLUE = pixelDisc(16, "#3b82f6", "#bfdbfe");
+export const HOCKEY_BUMPER = pixelDisc(10, "#facc15", "#78350f");
+export const HOCKEY_SHADOW = pixelDisc(16, "#000000");
+
+export const ICE_RINK: BackdropSpec = {
+  sky: ["#0d2236", "#0f2a40", "#11314a"],
+  tiles: { size: 10, line: "#0a1c2c", alt: "#10293f" },
+  seed: 63,
+};
+export const ICE_RINK_SLICK: BackdropSpec = {
+  sky: ["#0c3346", "#0e3c52", "#10455e"],
+  tiles: { size: 10, line: "#082636", alt: "#0f3b50" },
+  seed: 64,
+};
+
+Object.assign(ALL_PIXEL_SPRITES, { HOCKEY_PUCK, HOCKEY_MALLET_RED, HOCKEY_MALLET_BLUE, HOCKEY_BUMPER });
