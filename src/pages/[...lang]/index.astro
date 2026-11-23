@@ -1,10 +1,10 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import TodaysGameCard from "../../components/TodaysGameCard.astro";
-import { getTranslations, locales } from "../../lib/i18n";
+import GameTile from "../../components/GameTile.astro";
+import { locales } from "../../lib/i18n";
 import type { Locale } from "../../lib/i18n";
 import gameArtDocument from "../../../config/game-art-v1.json";
-import { Image } from "astro:assets";
 import type { ImageMetadata } from "astro";
 const cardSources = import.meta.glob<ImageMetadata>(["../../../public/games/*.png", "../../../public/games/grok-20261106/*.webp", "../../../public/games/*-keyart.webp", "../../../public/prototypes/*.webp", "../../../public/assets/sprites/**/keyart.webp"], { eager: true, import: "default" });
 const cardSource = (url: string) => cardSources[`../../../public${url}`];
@@ -13,7 +13,6 @@ export async function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
 }
 const { locale } = Astro.props as { locale: Locale };
-const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
   ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 213종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 213종." },
@@ -1759,6 +1758,29 @@ const dotArcadeGames = DOT_ARCADE_CONFIG
   })
   .filter((item): item is { game: Game; tag: Record<Locale, string>; desc: Record<Locale, string> } => Boolean(item));
 
+
+/** 2026-11-24 hub pass: helpers shared by the shelves and the all-games grid. */
+const artOf = (g: Game) => (cardHasArt(g) ? cardSource(gameArt[g.slug]) : undefined);
+const pageSources = import.meta.glob<string>("./*.astro", { query: "?raw", import: "default", eager: true });
+const unitySlugs = new Set(
+  Object.entries(pageSources)
+    .filter(([, src]) => src.includes("UnityMainShell"))
+    .map(([path]) => path.slice(2, -".astro".length)),
+);
+const newBadgeSlugs = new Set(NEW_RELEASES_CONFIG.slice(0, 12).map((c) => c.slug));
+const hubUi: Record<Locale, { search: string; placeholder: string; continueTitle: string; allGames: string; all: string; more: string; count: string; allCount: string; noResults: string; newBadge: string; d3: string }> = {
+  ko: { search: "게임 검색", placeholder: "게임 이름으로 찾기 (예: 체스, 스네이크)", continueTitle: "▶ 이어서 하기", allGames: "모든 게임", all: "전체", more: "더 보기 (+{n})", count: "{n}개 게임", allCount: "전체 {n}개", noResults: "찾는 게임이 없어요. 다른 이름으로 검색해 보세요.", newBadge: "NEW", d3: "3D" },
+  en: { search: "Search games", placeholder: "Find a game (e.g. chess, snake)", continueTitle: "▶ Continue playing", allGames: "All games", all: "All", more: "Show more (+{n})", count: "{n} games", allCount: "{n} in total", noResults: "No game matches. Try another name.", newBadge: "NEW", d3: "3D" },
+  ja: { search: "ゲーム検索", placeholder: "ゲーム名で探す（例：チェス、スネーク）", continueTitle: "▶ 続きから遊ぶ", allGames: "すべてのゲーム", all: "すべて", more: "もっと見る（+{n}）", count: "{n}件", allCount: "全{n}件", noResults: "該当するゲームがありません。別の名前で検索してください。", newBadge: "NEW", d3: "3D" },
+  zh: { search: "搜索游戏", placeholder: "按名称查找游戏（如：国际象棋、贪吃蛇）", continueTitle: "▶ 继续游玩", allGames: "全部游戏", all: "全部", more: "显示更多（+{n}）", count: "{n} 款游戏", allCount: "共 {n} 款", noResults: "没有找到游戏，请换个名称试试。", newBadge: "NEW", d3: "3D" },
+  fr: { search: "Rechercher un jeu", placeholder: "Trouver un jeu (ex. échecs, snake)", continueTitle: "▶ Reprendre", allGames: "Tous les jeux", all: "Tous", more: "Voir plus (+{n})", count: "{n} jeux", allCount: "{n} au total", noResults: "Aucun jeu trouvé. Essayez un autre nom.", newBadge: "NEW", d3: "3D" },
+  es: { search: "Buscar juegos", placeholder: "Busca un juego (p. ej. ajedrez, snake)", continueTitle: "▶ Seguir jugando", allGames: "Todos los juegos", all: "Todos", more: "Ver más (+{n})", count: "{n} juegos", allCount: "{n} en total", noResults: "Ningún juego coincide. Prueba otro nombre.", newBadge: "NEW", d3: "3D" },
+};
+const u = hubUi[locale] ?? hubUi.en;
+const badge3dOf = (g: Game) => (unitySlugs.has(g.slug) ? u.d3 : undefined);
+const searchText = (g: Game) =>
+  [g.slug.replace(/-/g, " "), ...Object.values(g.name), catLabel[g.cat]?.[locale] ?? ""].join(" ").toLowerCase();
+
 /** Entries without an explicit `kind` are games; only the exceptions are tagged. */
 const isGame = (g: Game) => (g.kind ?? "game") === "game";
 const gameCount = GAMES.filter(isGame).length;
@@ -1788,28 +1810,28 @@ const cardJsonLd = {
 <BaseLayout title={m.title} description={m.description}>
   <script type="application/ld+json" set:html={JSON.stringify(cardJsonLd)} />
 
-  <section class="relative overflow-hidden bg-gradient-to-b from-lime-50 via-lime-50/40 to-white px-4 pt-16 pb-10 text-center">
-    <div class="relative z-10 mx-auto max-w-2xl">
-      <span class="inline-block rounded-full bg-white/70 px-3 py-1 text-xs font-bold text-primary ring-1 ring-lime-100">{h.eyebrow}</span>
-      <h1 class="mt-4 text-3xl font-black tracking-tight text-foreground md:text-5xl">{h.title}</h1>
-      <p class="mt-3 text-base leading-relaxed text-muted-foreground">{h.sub}</p>
-      <p class="mt-2 text-xs font-bold text-primary">{gameCount} {statLine[locale] ?? statLine.en}</p>
+  <section class="border-b-2 border-foreground bg-accent pt-5 pb-6 sm:pt-10 sm:pb-8">
+    <div class="mx-auto max-w-6xl px-4">
+      <p class="text-xs font-black text-primary">{h.eyebrow}</p>
+      <h1 class="mt-1 text-2xl font-black tracking-tight text-foreground sm:text-4xl">{h.title}</h1>
+      <p class="mt-1 hidden text-sm text-foreground sm:block">{h.sub}</p>
+      <form role="search" action={`/${locale}/#all-games`} data-game-search-form class="mt-4 max-w-xl">
+        <label for="game-search" class="sr-only">{u.search}</label>
+        <span class="game-card flex h-12 items-center gap-2 px-3">
+          <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          <input id="game-search" name="q" type="search" enterkeyhint="search" autocomplete="off" placeholder={u.placeholder} class="h-full min-w-0 flex-1 bg-transparent text-base font-bold text-foreground outline-none placeholder:font-semibold placeholder:text-muted-foreground" />
+        </span>
+      </form>
+      <p class="mt-3 text-xs font-bold text-primary">{gameCount} {statLine[locale] ?? statLine.en}</p>
     </div>
   </section>
 
   <div class="mx-auto max-w-6xl px-4 pb-16">
-    <nav aria-label={genreNavLabel[locale] ?? genreNavLabel.en} class="-mx-4 mt-6 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <ul class="flex w-max gap-2 sm:w-auto sm:flex-wrap">
-        <li>
-          <a href="#dot-arcade" class="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full border border-primary/40 bg-primary/10 px-4 text-sm font-bold text-primary shadow-sm transition-colors hover:border-primary hover:bg-primary/20">
-            <span aria-hidden="true">🕹️</span>
-            <span>{dotLabels.badge}</span>
-            <span class="text-xs font-bold text-primary">{dotArcadeGames.length}</span>
-          </a>
-        </li>
+    <nav aria-label={genreNavLabel[locale] ?? genreNavLabel.en} data-shelf class="-mx-4 mt-4 overflow-x-auto px-4 pb-1 no-scrollbar">
+      <ul class="flex w-max gap-2 py-1 sm:w-auto sm:flex-wrap">
         {catOrder.filter((cat) => byCat(cat).length > 0).map((cat) => (
           <li>
-            <a href={`#genre-${cat}`} class="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-card px-4 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:border-primary/50 hover:text-primary">
+            <a href={`#genre-${cat}`} data-genre-link={cat} class="game-chip inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap px-4 text-sm font-bold">
               <span aria-hidden="true">{catIcon[cat]}</span>
               {catLabel[cat][locale] ?? catLabel[cat].en}
               <span class="text-xs font-bold text-muted-foreground">{byCat(cat).length}</span>
@@ -1818,219 +1840,176 @@ const cardJsonLd = {
         ))}
       </ul>
     </nav>
-    <TodaysGameCard locale={locale} candidates={todaysGameCandidates} />
-    <section class="mt-10">
-      <div class="mb-4">
+
+    <section data-continue data-shelf hidden class="mt-6" aria-labelledby="continue-title">
+      <h2 id="continue-title" class="mb-3 text-lg font-black text-foreground">{u.continueTitle}</h2>
+      <div data-continue-row class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pt-1 pb-3"></div>
+    </section>
+
+    <div data-shelf>
+      <TodaysGameCard locale={locale} candidates={todaysGameCandidates} />
+    </div>
+
+    <section data-shelf class="mt-10">
+      <div class="mb-3">
         <h2 class="text-xl font-black text-foreground">{newReleaseLabels.sectionTitle}</h2>
         <p class="mt-0.5 text-xs font-medium text-muted-foreground">{newReleaseLabels.subtitle}</p>
       </div>
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pt-1 pb-3 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
         {newReleaseGames.map(({ game: g, tag, desc }) => (
-          <a
-            href={`/${locale}/${g.slug}/`}
-            data-game={g.slug}
-            class="group relative flex min-h-56 flex-col justify-between overflow-hidden rounded-2xl border-2 border-primary/30 bg-card p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-primary hover:shadow-lg ring-1 ring-primary/20"
-          >
-            {cardHasArt(g) ? (
-              <Image
-                src={cardSource(gameArt[g.slug])}
-                alt={cardName(g)}
-                width={720}
-                widths={[360, 720]}
-                sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw"
-                format="webp"
-                loading="lazy"
-                decoding="async"
-                class="absolute inset-0 h-full w-full object-cover opacity-70 transition-transform duration-500 group-hover:scale-105 group-hover:opacity-80"
-              />
-            ) : (
-              <span class="absolute right-4 bottom-4 text-7xl opacity-20 transition-transform duration-300 group-hover:scale-110" aria-hidden="true">
-                {g.emoji}
-              </span>
-            )}
-            <span class="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" aria-hidden="true" />
-            
-            <div class="relative z-10 flex items-center justify-between gap-2">
-              <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-2.5 py-0.5 text-xs font-black tracking-wide text-primary-foreground shadow-xs">
-                <span>✦</span>
-                <span>{newReleaseLabels.badge}</span>
-              </span>
-              <span class="min-w-0 truncate rounded-full bg-background/80 px-2 py-0.5 text-xs font-bold text-muted-foreground">
-                {tag[locale] ?? tag.en}
-              </span>
-            </div>
-
-            <div class="relative z-10 mt-6">
-              <div class="flex items-center gap-2">
-                <span class="text-2xl" aria-hidden="true">{g.emoji}</span>
-                <span class="text-lg font-black tracking-tight text-foreground group-hover:text-primary transition-colors">
-                  {cardName(g)}
-                </span>
-              </div>
-              <p class="mt-2 text-xs font-medium leading-relaxed text-muted-foreground line-clamp-2">
-                {desc[locale] ?? desc.en}
-              </p>
-              <div class="mt-3 flex items-center gap-1 text-xs font-bold text-primary group-hover:underline">
-                <span>{newReleaseLabels.playNow}</span>
-                <span aria-hidden="true">→</span>
-              </div>
-            </div>
-          </a>
+          <GameTile variant="shelf" href={`/${locale}/${g.slug}/`} slug={g.slug} name={cardName(g)} emoji={g.emoji} art={artOf(g)} tag={tag[locale] ?? tag.en} desc={desc[locale] ?? desc.en} badge={newReleaseLabels.badge} badge3d={badge3dOf(g)} />
         ))}
       </div>
     </section>
-    <section id="dot-arcade" class="mt-10">
-      <div class="mb-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1">
-        <div>
-          <div class="flex items-center gap-2">
-            <h2 class="text-xl font-black text-foreground">{dotLabels.sectionTitle}</h2>
-            <span class="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/30 px-2 py-0.5 text-xs font-black tracking-wider text-primary">
-              {dotLabels.badge}
-            </span>
-          </div>
-          <p class="mt-0.5 text-xs font-medium text-muted-foreground">{dotLabels.subtitle}</p>
-        </div>
+
+    <section id="dot-arcade" data-shelf class="mt-10 scroll-mt-20">
+      <div class="mb-3">
+        <h2 class="flex flex-wrap items-center gap-2 text-xl font-black text-foreground">
+          {dotLabels.sectionTitle}
+          <span class="rounded-sm border-2 border-foreground bg-card px-1.5 text-xs font-black text-primary">{dotLabels.badge}</span>
+        </h2>
+        <p class="mt-0.5 text-xs font-medium text-muted-foreground">{dotLabels.subtitle}</p>
       </div>
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4">
+      <div class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pt-1 pb-3 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
         {dotArcadeGames.map(({ game: g, tag, desc }) => (
-          <a
-            href={`/${locale}/${g.slug}/`}
-            data-game={g.slug}
-            class="group relative flex min-h-48 flex-col justify-between overflow-hidden rounded-2xl border-2 border-border/80 bg-card p-4 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-primary hover:shadow-lg ring-1 ring-border/50"
-          >
-            {cardHasArt(g) ? (
-              <Image
-                src={cardSource(gameArt[g.slug])}
-                alt={cardName(g)}
-                width={640}
-                widths={[320, 640]}
-                sizes="(min-width: 1024px) 250px, (min-width: 640px) 50vw, 50vw"
-                format="webp"
-                loading="lazy"
-                decoding="async"
-                class="absolute inset-0 h-full w-full object-cover opacity-70 transition-transform duration-500 group-hover:scale-105 group-hover:opacity-80"
-              />
-            ) : (
-              <span class="absolute right-3 bottom-3 text-6xl opacity-15 transition-transform duration-300 group-hover:scale-110" aria-hidden="true">
-                {g.emoji}
-              </span>
-            )}
-            <span class="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" aria-hidden="true" />
-
-            <div class="relative z-10 flex items-center justify-between">
-              <span class="inline-flex items-center gap-1 rounded-md bg-secondary border border-border px-1.5 py-0.5 text-xs font-bold text-foreground">
-                <span aria-hidden="true">{g.emoji}</span>
-                <span class="text-xs font-semibold text-muted-foreground">{tag[locale] ?? tag.en}</span>
-              </span>
-            </div>
-
-            <div class="relative z-10 mt-6">
-              <span class="block text-base font-black tracking-tight text-foreground group-hover:text-primary transition-colors">
-                {cardName(g)}
-              </span>
-              <p class="mt-1 text-xs font-medium leading-relaxed text-muted-foreground line-clamp-2">
-                {desc[locale] ?? desc.en}
-              </p>
-              <div class="mt-2.5 flex items-center gap-1 text-xs font-bold text-primary group-hover:underline">
-                <span>{dotLabels.playNow}</span>
-                <span aria-hidden="true">→</span>
-              </div>
-            </div>
-          </a>
+          <GameTile variant="shelf" href={`/${locale}/${g.slug}/`} slug={g.slug} name={cardName(g)} emoji={g.emoji} art={artOf(g)} tag={tag[locale] ?? tag.en} desc={desc[locale] ?? desc.en} badge3d={badge3dOf(g)} />
         ))}
       </div>
     </section>
-    <section class="mt-10">
-      <div class="mb-4">
+
+    <section data-shelf class="mt-10">
+      <div class="mb-3">
         <h2 class="text-xl font-black text-foreground">{studioLabels.sectionTitle}</h2>
         <p class="mt-0.5 text-xs font-medium text-muted-foreground">{studioLabels.subtitle}</p>
       </div>
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {studioFlagshipGames.map(({ game: g, tag }) => (
-          <a
-            href={`/${locale}/${g.slug}/`}
-            data-game={g.slug}
-            class="group relative flex min-h-44 flex-col justify-end overflow-hidden rounded-2xl border-2 border-primary/20 bg-card text-left shadow-sm transition-all hover:-translate-y-1 hover:border-primary hover:shadow-lg ring-1 ring-primary/10"
-          >
-            {cardHasArt(g) ? (
-              <Image
-                src={cardSource(gameArt[g.slug])}
-                alt={cardName(g)}
-                width={640}
-                widths={[320, 640]}
-                sizes="(min-width: 1024px) 220px, (min-width: 640px) 33vw, 50vw"
-                format="webp"
-                loading="lazy"
-                decoding="async"
-                class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-            ) : (
-              <span class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-muted text-5xl transition-transform duration-300 group-hover:scale-110" aria-hidden="true">
-                {g.emoji}
-              </span>
-            )}
-            <span class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" aria-hidden="true" />
-            <div class="absolute top-2.5 left-2.5 z-10">
-              <span class="inline-flex items-center rounded-full bg-primary/90 px-2 py-0.5 text-xs font-black tracking-wide text-primary-foreground backdrop-blur-xs shadow-xs">
-                {studioLabels.badge}
-              </span>
-            </div>
-            <div class="relative z-10 p-3.5 text-white">
-              <span class="block text-sm font-black drop-shadow-sm leading-tight group-hover:text-primary-foreground">
-                {cardName(g)}
-              </span>
-              <span class="mt-1 inline-block text-xs font-semibold text-white/80 line-clamp-1">
-                {tag[locale] ?? tag.en}
-              </span>
-            </div>
-            <span data-winrate hidden class="absolute right-2 top-2 rounded-full bg-background/90 px-2 py-0.5 text-xs font-black text-primary backdrop-blur-xs"></span>
-          </a>
+      <div class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pt-1 pb-3 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-5">
+        {[...studioFlagshipGames.map(({ game: g, tag }) => ({ g, tag: tag[locale] ?? tag.en })), ...featuredGames.map((g) => ({ g, tag: catLabel[g.cat][locale] ?? catLabel[g.cat].en }))].map(({ g, tag }) => (
+          <GameTile variant="shelf" href={`/${locale}/${g.slug}/`} slug={g.slug} name={cardName(g)} emoji={g.emoji} art={artOf(g)} tag={tag} badge3d={badge3dOf(g)} />
         ))}
       </div>
     </section>
-    {featuredGames.length > 0 && (
-      <section class="mt-10">
-        <h2 class="mb-4 text-lg font-black text-foreground">{translations.magazine.featured}</h2>
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {featuredGames.map((g) => (
-            <a href={`/${locale}/${g.slug}/`} data-game={g.slug} class="group relative flex min-h-36 flex-col justify-end overflow-hidden rounded-2xl border border-slate-100 bg-card text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
-              {cardHasArt(g) ? (
-                <Image src={cardSource(gameArt[g.slug])} alt={cardName(g)} width={640} widths={[320, 640]} sizes="(min-width: 1024px) 270px, (min-width: 640px) 33vw, 50vw" format="webp" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
-              ) : (
-                <span class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-lime-50 to-stone-100 text-4xl transition-transform group-hover:scale-110" aria-hidden="true">{g.emoji}</span>
-              )}
-              <span class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" aria-hidden="true"></span>
-              <span class="relative z-10 p-4 text-sm font-bold text-white drop-shadow-sm" aria-hidden={cardHasArt(g) ? "true" : undefined}>{cardName(g)}</span>
-              <span data-winrate hidden class="absolute right-2 top-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-black text-primary"></span>
-            </a>
-          ))}
+
+    <section id="all-games" class="mt-12 scroll-mt-20" aria-labelledby="all-games-title">
+      <h2 id="all-games-title" class="text-xl font-black text-foreground">{u.allGames}</h2>
+      <div class="sticky top-16 z-20 -mx-4 mt-2 border-b-2 border-foreground bg-background px-4 py-2">
+        <div class="overflow-x-auto no-scrollbar">
+          <div class="flex w-max gap-2 py-0.5" role="group" aria-label={genreNavLabel[locale] ?? genreNavLabel.en}>
+            <button type="button" data-filter="all" aria-pressed="true" class="game-chip inline-flex min-h-11 items-center whitespace-nowrap px-4 text-sm font-bold">{u.all}</button>
+            {catOrder.filter((cat) => byCat(cat).length > 0).map((cat) => (
+              <button type="button" data-filter={cat} aria-pressed="false" class="game-chip inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap px-4 text-sm font-bold">
+                <span aria-hidden="true">{catIcon[cat]}</span>
+                {catLabel[cat][locale] ?? catLabel[cat].en}
+              </button>
+            ))}
+          </div>
         </div>
-      </section>
-    )}
-    {catOrder.map((cat) => (
-      <section id={`genre-${cat}`} class="mt-10 scroll-mt-20">
-        <h2 class="mb-4 flex items-center gap-2 text-lg font-black text-foreground">
-          <span aria-hidden="true">{catIcon[cat]}</span>
-          {catLabel[cat][locale] ?? catLabel[cat].en}
-          <span class="text-xs font-bold text-muted-foreground">{byCat(cat).length}</span>
-        </h2>
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {byCat(cat).map((g) => (
-            <a href={`/${locale}/${g.slug}/`} data-game={g.slug} class="group relative flex min-h-36 flex-col justify-end overflow-hidden rounded-2xl border border-slate-100 bg-card text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
-              {cardHasArt(g) ? (
-                <Image src={cardSource(gameArt[g.slug])} alt={cardName(g)} width={640} widths={[320, 640]} sizes="(min-width: 1024px) 270px, (min-width: 640px) 33vw, 50vw" format="webp" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
-              ) : (
-                <span class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-lime-50 to-stone-100 text-4xl transition-transform group-hover:scale-110" aria-hidden="true">{g.emoji}</span>
-              )}
-              <span class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" aria-hidden="true"></span>
-              <span class="relative z-10 p-4 text-sm font-bold text-white drop-shadow-sm" aria-hidden={cardHasArt(g) ? "true" : undefined}>{cardName(g)}</span>
-              <span data-winrate hidden class="absolute right-2 top-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-black text-primary"></span>
-            </a>
-          ))}
-        </div>
-      </section>
-    ))}
+        <p data-result-count aria-live="polite" class="mt-1 min-h-4 text-xs font-bold text-muted-foreground"></p>
+      </div>
+      <p data-no-results hidden class="mt-6 rounded-lg border-2 border-dashed border-border p-6 text-center text-sm font-bold text-muted-foreground">{u.noResults}</p>
+      {catOrder.filter((cat) => byCat(cat).length > 0).map((cat) => (
+        <section id={`genre-${cat}`} data-genre={cat} class="mt-6 scroll-mt-40">
+          <h3 class="mb-3 flex items-center gap-2 text-lg font-black text-foreground">
+            <span aria-hidden="true">{catIcon[cat]}</span>
+            {catLabel[cat][locale] ?? catLabel[cat].en}
+            <span class="text-xs font-bold text-muted-foreground">{byCat(cat).length}</span>
+          </h3>
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {byCat(cat).map((g) => (
+              <GameTile href={`/${locale}/${g.slug}/`} slug={g.slug} cat={cat} search={searchText(g)} name={cardName(g)} emoji={g.emoji} art={artOf(g)} badge={newBadgeSlugs.has(g.slug) ? u.newBadge : undefined} badge3d={badge3dOf(g)} />
+            ))}
+          </div>
+          <button type="button" data-more hidden class="game-btn mt-4 flex min-h-11 w-full items-center justify-center text-sm">{u.more}</button>
+        </section>
+      ))}
+    </section>
   </div>
+
+  <script is:inline define:vars={{ moreLabel: u.more, countLabel: u.count, allCountLabel: u.allCount }}>
+    (() => {
+      const PAGE = 8;
+      const root = document.getElementById("all-games");
+      if (!root) return;
+      const sections = [...root.querySelectorAll("[data-genre]")];
+      const chips = [...root.querySelectorAll("[data-filter]")];
+      const input = document.getElementById("game-search");
+      const count = root.querySelector("[data-result-count]");
+      const empty = root.querySelector("[data-no-results]");
+      const shelves = [...document.querySelectorAll("[data-shelf]")];
+      const expanded = new Set();
+      let filter = "all";
+      let query = "";
+      const norm = (s) => s.toLowerCase().normalize("NFKC").replace(/\s+/g, "");
+
+      function apply() {
+        const q = norm(query);
+        let shown = 0;
+        for (const sec of sections) {
+          const cat = sec.dataset.genre;
+          const tiles = [...sec.querySelectorAll("[data-tile]")];
+          const more = sec.querySelector("[data-more]");
+          let visible = 0;
+          if (q) {
+            for (const t of tiles) { const hit = norm(t.dataset.search || "").includes(q); t.hidden = !hit; if (hit) visible++; }
+            more.hidden = true;
+          } else {
+            const open = filter !== "all" || expanded.has(cat);
+            tiles.forEach((t, i) => { t.hidden = !open && i >= PAGE; });
+            visible = tiles.length;
+            const rest = tiles.length - PAGE;
+            more.hidden = open || rest <= 0;
+            if (!more.hidden) more.textContent = moreLabel.replace("{n}", String(rest));
+          }
+          const sectionOn = (filter === "all" || filter === cat) && visible > 0;
+          sec.hidden = !sectionOn;
+          if (sectionOn) shown += visible;
+        }
+        for (const c of chips) c.setAttribute("aria-pressed", String(c.dataset.filter === filter));
+        for (const s of shelves) {
+          if (s.hasAttribute("data-continue")) s.hidden = Boolean(q) || !s.dataset.ready;
+          else s.hidden = Boolean(q);
+        }
+        empty.hidden = shown > 0;
+        count.textContent = q || filter !== "all" ? countLabel.replace("{n}", String(shown)) : allCountLabel.replace("{n}", String(shown));
+      }
+
+      for (const c of chips) c.addEventListener("click", () => { filter = c.dataset.filter; apply(); root.scrollIntoView({ block: "start" }); });
+      for (const sec of sections) sec.querySelector("[data-more]").addEventListener("click", () => { expanded.add(sec.dataset.genre); apply(); });
+      for (const a of document.querySelectorAll("[data-genre-link]")) {
+        a.addEventListener("click", (e) => { e.preventDefault(); filter = a.dataset.genreLink; apply(); history.replaceState(null, "", `#genre-${filter}`); root.scrollIntoView({ block: "start" }); });
+      }
+      if (input) {
+        input.addEventListener("input", () => { query = input.value.trim(); apply(); });
+        input.form?.addEventListener("submit", (e) => { e.preventDefault(); input.blur(); root.scrollIntoView({ block: "start" }); });
+        const params = new URLSearchParams(location.search);
+        if (params.get("q")) { input.value = params.get("q"); query = input.value.trim(); }
+      }
+      const fromHash = /^#genre-([a-z]+)$/.exec(location.hash);
+      if (fromHash && sections.some((s) => s.dataset.genre === fromHash[1])) filter = fromHash[1];
+
+      // "Continue" row: pages opened recently (slug store) + legacy last-played stamps.
+      try {
+        const stamps = {};
+        const add = (obj) => { for (const [k, v] of Object.entries(obj || {})) { const t = Date.parse(v); if (!Number.isNaN(t) && (!stamps[k] || stamps[k] < t)) stamps[k] = t; } };
+        add(JSON.parse(localStorage.getItem("oiyo:game-recent-opened:v1") || "{}"));
+        add(JSON.parse(localStorage.getItem("oiyo:game-last-played:v1") || "{}"));
+        const row = document.querySelector("[data-continue-row]");
+        const box = document.querySelector("[data-continue]");
+        const picks = Object.entries(stamps).sort((a, b) => b[1] - a[1]).map(([slug]) => root.querySelector(`[data-tile][data-game="${CSS.escape(slug)}"]`)).filter(Boolean).slice(0, 10);
+        if (row && box && picks.length) {
+          for (const tile of picks) {
+            const clone = tile.cloneNode(true);
+            clone.removeAttribute("data-tile"); clone.removeAttribute("data-search"); clone.removeAttribute("data-cat"); clone.hidden = false;
+            clone.classList.add("w-40", "shrink-0", "snap-start");
+            row.append(clone);
+          }
+          box.dataset.ready = "1";
+        }
+      } catch { /* storage unavailable — no continue row */ }
+
+      apply();
+      if (fromHash || query) root.scrollIntoView({ block: "start" });
+    })();
+  </script>
 
   <script is:inline>
     // vs-AI 전적이 있는 게임 카드에 승률 배지 표시 (localStorage oiyo:game-records:v1)
