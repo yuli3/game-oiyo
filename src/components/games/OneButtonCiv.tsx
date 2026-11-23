@@ -1,556 +1,496 @@
-// The shell stays scrollable. data-game-surface would block the guide on a
-// phone (2026-10-21). The button face has no policy name. A committed plot
-// stays hidden for most of the next season, so waiting is the only way to
-// see what the last press did before the next one locks in.
+// One-Button Civ v2 (2026-11-23): a one-button island on a canvas. A builder
+// walks the ring of plots, the season wheel turns field → road → wall, and one
+// tap anywhere builds what the season allows on the plot under the builder.
+// Hook (design lens): high concept ("a whole civilisation on one button") +
+// addictive one-more-island. Logic: lib/games/one-button-civ.
 
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
-import { GameContainer } from "../ui/game/GamePrimitives";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import StageBar from "./StageBar";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
-import type { Locale } from "../../lib/i18n";
-import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
-import { getBest, getRecord, recordBest, recordResult, type BestRecord, type GameRecord } from "../../lib/games/records";
-import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
-import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
-import { createHaptics } from "../../lib/games/haptics";
-import { celebrate } from "../../lib/games/celebration";
+import { readMutedPref, writeMutedPref } from "../../lib/games/game-audio";
+import { createHaptics, readHapticsEnabled, type Haptics } from "../../lib/games/haptics";
+import { recordBest, recordResult } from "../../lib/games/records";
+import { finaleLabel, loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
+import { normalizeGameLocale } from "../../lib/games/game-text";
 import {
-  createShareCardCanvas,
-  copyShareCardToClipboard,
-  downloadShareCard,
-} from "../../lib/games/share-card";
-import { ONE_BUTTON_CIV_SPRITES } from "../../lib/games/sprites";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-
-function TiltCivButton({
-  children,
-  onClick,
-  className = "",
-  disabled = false,
-  title,
-  ariaLabel,
-  type = "button",
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  className?: string;
-  disabled?: boolean;
-  title?: string;
-  ariaLabel?: string;
-  type?: "button" | "submit";
-}) {
-  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
-
-  return (
-    <button
-      type={type}
-      title={title}
-      aria-label={ariaLabel || title}
-      onClick={() => {
-        triggerPop(0.12);
-        MobileHapticsPro.light();
-        onClick?.();
-      }}
-      disabled={disabled}
-      onPointerMove={onPointerMove}
-      onPointerLeave={onPointerLeave}
-      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
-      style={{ "--card-tilt": transformCss } as React.CSSProperties}
-    >
-      {children}
-    </button>
-  );
-}
-import {
-  GAME_ID,
-  PLOTS,
-  POLICIES,
-  begin,
-  commit,
-  createPuzzle,
-  createRun,
-  matched,
-  resolved,
-  type Gesture,
-  type Policy,
-  type Run,
+  GAME_ID, HEARTS, PLOTS, STAGE_COUNT, begin, newCiv, plotUnder, season, stars, tap as tapCiv, tick, timeLimit, upcoming,
+  type Build, type CivState, type Plot,
 } from "../../lib/games/one-button-civ";
+import type { Locale } from "../../lib/i18n";
 
-const SEASON_MS = 1600;
-const HOLD_MS = 400;
-const REVEAL_MS = 1100;
-const GLYPH: Record<Policy, string> = { field: "◐", wall: "▮", road: "═" };
-const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+type L = "ko" | "en" | "ja" | "zh" | "fr" | "es";
+const MUTE_KEY = "oiyo:one-button-civ:muted";
+const fill = (s: string, ...v: (string | number)[]) => v.reduce<string>((acc, x, i) => acc.replace(`{${i}}`, String(x)), s);
 
-interface Copy {
-  title: string;
-  subtitle: string;
-  preparing: string;
-  ready: string;
-  play: string;
-  start: string;
-  button: string;
-  season: (n: number) => string;
-  target: string;
-  land: string;
-  policies: Record<Policy, string>;
-  matched: (n: number) => string;
-  won: string;
-  lost: string;
-  again: string;
-  best: (n: number) => string;
-  record: (wins: number, losses: number) => string;
-  date: (key: string) => string;
-}
-
-const COPY: Record<Locale, Copy> = {
+const COPY: Record<L, {
+  island: string; pop: string; years: string; start: string; next: string; retry: string; won: string; lost: string; lostTime: string;
+  hint: string; stages: string; full: string; exitFull: string; mute: string; unmute: string; season: Record<Build, string>;
+  repelled: string; burned: string; grew: string; build: string;
+}> = {
   ko: {
-    title: "버튼 하나짜리 문명",
-    subtitle: "버튼은 하나입니다. 짧게 누르거나, 길게 누르거나, 계절이 끝날 때까지 참으세요. 방금의 결과는 다음 계절이 꽤 지난 뒤에 나타납니다.",
-    preparing: "판을 준비하는 중입니다.",
-    ready: "오늘의 땅 네 칸을 같은 모양으로 만드세요.",
-    play: "계절이 끝나기 전에 누르거나, 끝까지 참으세요.",
-    start: "시작",
-    button: "버튼",
-    season: (n) => `계절 ${n} / ${PLOTS}`,
-    target: "오늘의 땅",
-    land: "지금 땅",
-    policies: { field: "밭", wall: "담", road: "길" },
-    matched: (n) => `맞춘 칸 ${n} / ${PLOTS}`,
-    won: "네 칸이 오늘의 땅과 같습니다.",
-    lost: "네 칸이 오늘의 땅과 같지 않습니다.",
-    again: "같은 판 다시",
-    best: (n) => `가장 많이 맞춘 칸 ${n}`,
-    record: (wins, losses) => `맞춤 ${wins} · 놓침 ${losses}`,
-    date: (key) => `${key} · 한국 표준시`,
+    island: "{0}번째 섬", pop: "인구 {0} / {1}", years: "{0}년 남음", start: "섬에 내리기", next: "다음 섬", retry: "다시 하기",
+    won: "마을이 도시가 됐어요!", lost: "마을이 불타 버렸어요", lostTime: "세월이 다 갔어요",
+    hint: "버튼은 하나, 화면 어디든 톡. 일꾼이 서 있는 칸에 지금 계절의 건물을 지어요. 봄=밭(지나갈 때마다 식량), 여름=길(일꾼이 빨라짐), 겨울=성벽(빨간 표시 칸에 상륙하는 약탈선을 막음). 스페이스 키도 돼요.",
+    stages: "섬 고르기", full: "전체화면", exitFull: "나가기", mute: "소리 끄기", unmute: "소리 켜기",
+    season: { field: "봄 · 밭", road: "여름 · 길", wall: "겨울 · 성벽" }, repelled: "막았다!", burned: "불탔다…", grew: "+1명", build: "짓기",
   },
   en: {
-    title: "One-Button Realm",
-    subtitle: "One button. Tap, hold, or wait out the season. The last result appears only after the next season is well underway.",
-    preparing: "Preparing the round.",
-    ready: "Make the four plots match today's land.",
-    play: "Press before the season ends, or wait it out.",
-    start: "Start",
-    button: "Button",
-    season: (n) => `Season ${n} / ${PLOTS}`,
-    target: "Today's land",
-    land: "Land now",
-    policies: { field: "Field", wall: "Wall", road: "Road" },
-    matched: (n) => `Matching plots ${n} / ${PLOTS}`,
-    won: "The four plots match today's land.",
-    lost: "The four plots do not match today's land.",
-    again: "Same land again",
-    best: (n) => `Best matching plots ${n}`,
-    record: (wins, losses) => `Matched ${wins} · Missed ${losses}`,
-    date: (key) => `${key} · Korea Standard Time`,
+    island: "Island {0}", pop: "Pop {0} / {1}", years: "{0} yrs left", start: "Land on the island", next: "Next island", retry: "Try again",
+    won: "Your village became a city!", lost: "Your village burned down", lostTime: "The years ran out",
+    hint: "One button: tap anywhere. You build the season's building on the plot under the walker. Spring = field (food each pass), summer = road (walker speeds up), winter = wall (stops raiders landing on red-marked plots). Space works too.",
+    stages: "Pick an island", full: "Fullscreen", exitFull: "Exit", mute: "Mute", unmute: "Sound on",
+    season: { field: "Spring · field", road: "Summer · road", wall: "Winter · wall" }, repelled: "Repelled!", burned: "Burned…", grew: "+1", build: "Build",
   },
   ja: {
-    title: "ボタン一つの文明",
-    subtitle: "ボタンは一つです。短く押すか、長く押すか、季節が終わるまで待ってください。直前の結果は、次の季節がかなり進んでから出ます。",
-    preparing: "盤面を準備しています。",
-    ready: "今日の土地四マスを同じ形にしてください。",
-    play: "季節が終わる前に押すか、最後まで待ってください。",
-    start: "開始",
-    button: "ボタン",
-    season: (n) => `季節 ${n} / ${PLOTS}`,
-    target: "今日の土地",
-    land: "今の土地",
-    policies: { field: "畑", wall: "塀", road: "道" },
-    matched: (n) => `合ったマス ${n} / ${PLOTS}`,
-    won: "四マスが今日の土地と同じです。",
-    lost: "四マスが今日の土地と違います。",
-    again: "同じ盤でもう一度",
-    best: (n) => `いちばん多く合ったマス ${n}`,
-    record: (wins, losses) => `合った ${wins} · 外した ${losses}`,
-    date: (key) => `${key} · 韓国標準時`,
+    island: "{0}番目の島", pop: "人口 {0} / {1}", years: "残り{0}年", start: "島に上陸", next: "次の島", retry: "もう一度",
+    won: "村が都市になりました！", lost: "村が焼けてしまいました", lostTime: "年月が尽きました",
+    hint: "ボタンは一つ、画面のどこでもタップ。働き手が立つマスに今の季節の建物を建てます。春=畑（通るたび食料）、夏=道（働き手が速くなる）、冬=城壁（赤い印のマスに上陸する略奪船を防ぐ）。スペースキーでもOK。",
+    stages: "島を選ぶ", full: "全画面", exitFull: "戻る", mute: "ミュート", unmute: "音をオン",
+    season: { field: "春 · 畑", road: "夏 · 道", wall: "冬 · 城壁" }, repelled: "防いだ！", burned: "焼けた…", grew: "+1人", build: "建てる",
   },
   zh: {
-    title: "一个按钮的文明",
-    subtitle: "只有一个按钮。短按、长按，或等到这一季结束。上一次的结果要等下一季走了很久才出现。",
-    preparing: "正在准备这一局。",
-    ready: "把四格做成和今天的土地一样。",
-    play: "在这一季结束前按下，或者一直等到结束。",
-    start: "开始",
-    button: "按钮",
-    season: (n) => `季 ${n} / ${PLOTS}`,
-    target: "今天的土地",
-    land: "现在的土地",
-    policies: { field: "田", wall: "墙", road: "路" },
-    matched: (n) => `对齐的格 ${n} / ${PLOTS}`,
-    won: "四格和今天的土地一样。",
-    lost: "四格和今天的土地不同。",
-    again: "同一盘再来",
-    best: (n) => `最多对齐的格 ${n}`,
-    record: (wins, losses) => `对齐 ${wins} · 错过 ${losses}`,
-    date: (key) => `${key} · 韩国标准时间`,
+    island: "第{0}座岛", pop: "人口 {0} / {1}", years: "剩{0}年", start: "登上小岛", next: "下一座岛", retry: "再来一次",
+    won: "村庄变成了城市！", lost: "村庄被烧毁了", lostTime: "岁月用完了",
+    hint: "只有一个按钮，点屏幕任何地方。在工人脚下的地块建造当季的建筑。春=田（每次经过得粮食），夏=路（工人变快），冬=城墙（挡住在红色标记地块登陆的海盗船）。空格键也可以。",
+    stages: "选择小岛", full: "全屏", exitFull: "退出", mute: "静音", unmute: "开启声音",
+    season: { field: "春 · 田", road: "夏 · 路", wall: "冬 · 城墙" }, repelled: "挡住了！", burned: "烧毁了…", grew: "+1人", build: "建造",
   },
   fr: {
-    title: "Civilisation à un bouton",
-    subtitle: "Un seul bouton. Appui court, appui long, ou attendre la fin de la saison. Le résultat précédent n'apparaît que lorsque la saison suivante est déjà bien avancée.",
-    preparing: "Préparation de la manche.",
-    ready: "Rendez les quatre parcelles identiques à la terre du jour.",
-    play: "Appuyez avant la fin de la saison, ou attendez-la.",
-    start: "Commencer",
-    button: "Bouton",
-    season: (n) => `Saison ${n} / ${PLOTS}`,
-    target: "Terre du jour",
-    land: "Terre actuelle",
-    policies: { field: "Champ", wall: "Mur", road: "Chemin" },
-    matched: (n) => `Parcelles justes ${n} / ${PLOTS}`,
-    won: "Les quatre parcelles correspondent à la terre du jour.",
-    lost: "Les quatre parcelles ne correspondent pas à la terre du jour.",
-    again: "La même terre",
-    best: (n) => `Meilleur nombre de parcelles ${n}`,
-    record: (wins, losses) => `Réussies ${wins} · Ratées ${losses}`,
-    date: (key) => `${key} · heure de Séoul`,
+    island: "Île {0}", pop: "Pop. {0} / {1}", years: "{0} ans restants", start: "Débarquer", next: "Île suivante", retry: "Réessayer",
+    won: "Votre village est devenu une ville !", lost: "Votre village a brûlé", lostTime: "Les années sont écoulées",
+    hint: "Un seul bouton : touchez n'importe où. Vous construisez le bâtiment de la saison sur la parcelle du marcheur. Printemps = champ (nourriture à chaque passage), été = route (le marcheur accélère), hiver = muraille (arrête les pillards qui débarquent sur les parcelles marquées en rouge). La barre d'espace marche aussi.",
+    stages: "Choisir une île", full: "Plein écran", exitFull: "Quitter", mute: "Couper le son", unmute: "Activer le son",
+    season: { field: "Printemps · champ", road: "Été · route", wall: "Hiver · muraille" }, repelled: "Repoussés !", burned: "Brûlé…", grew: "+1", build: "Bâtir",
   },
   es: {
-    title: "Civilización de un botón",
-    subtitle: "Un solo botón. Pulsación corta, pulsación larga, o esperar el fin de la estación. El resultado anterior aparece cuando la estación siguiente ya va avanzada.",
-    preparing: "Preparando la ronda.",
-    ready: "Haz que las cuatro parcelas coincidan con la tierra de hoy.",
-    play: "Pulsa antes de que acabe la estación, o espérala.",
-    start: "Empezar",
-    button: "Botón",
-    season: (n) => `Estación ${n} / ${PLOTS}`,
-    target: "Tierra de hoy",
-    land: "Tierra de ahora",
-    policies: { field: "Campo", wall: "Muro", road: "Camino" },
-    matched: (n) => `Parcelas acertadas ${n} / ${PLOTS}`,
-    won: "Las cuatro parcelas coinciden con la tierra de hoy.",
-    lost: "Las cuatro parcelas no coinciden con la tierra de hoy.",
-    again: "La misma tierra",
-    best: (n) => `Mejor número de parcelas ${n}`,
-    record: (wins, losses) => `Acertadas ${wins} · Falladas ${losses}`,
-    date: (key) => `${key} · hora de Seúl`,
+    island: "Isla {0}", pop: "Pob. {0} / {1}", years: "Quedan {0} años", start: "Desembarcar", next: "Siguiente isla", retry: "Reintentar",
+    won: "¡Tu aldea se volvió ciudad!", lost: "Tu aldea ardió", lostTime: "Se acabaron los años",
+    hint: "Un solo botón: toca en cualquier parte. Construyes el edificio de la estación en la parcela del caminante. Primavera = campo (comida en cada paso), verano = camino (el caminante acelera), invierno = muralla (frena a los saqueadores que desembarcan en parcelas marcadas en rojo). La barra espaciadora también vale.",
+    stages: "Elegir isla", full: "Pantalla completa", exitFull: "Salir", mute: "Silenciar", unmute: "Activar sonido",
+    season: { field: "Primavera · campo", road: "Verano · camino", wall: "Invierno · muralla" }, repelled: "¡Repelidos!", burned: "Ardió…", grew: "+1", build: "Construir",
   },
 };
 
-export default function OneButtonCiv({ locale }: { locale: Locale }) {
-  const loc = COPY[locale] ? locale : "en";
-  const t = COPY[loc];
-  const reducedMotion = usePrefersReducedMotion();
-  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
-  const [dateKey, setDateKey] = useState<string | null>(null);
-  const [run, setRun] = useState<Run | null>(null);
-  const [attempt, setAttempt] = useState(0);
-  const [record, setRecord] = useState<GameRecord | null>(null);
-  const [best, setBest] = useState<BestRecord | null>(null);
-  const [muted, setMuted] = useState(false);
-  const [shareCopied, setShareCopied] = useState(false);
-  const [quarter, setQuarter] = useState(0);
-  const [visible, setVisible] = useState(0);
-  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
-  const hapticsRef = useRef(createHaptics());
-  const noted = useRef(new Set<string>());
-  const phase = useRef<Run["phase"] | null>(null);
-  const runRef = useRef<Run | null>(null);
-  const seasonStart = useRef(0);
-  const downAt = useRef<number | null>(null);
-  const locked = useRef(-1);
-  runRef.current = run;
+const W = 360;
+const H = 420;
+const DPR = 2;
+const CX = 180;
+const CY = 220;
+const RING = 122;
+const SEASON_HUE: Record<Build, number> = { field: 120, road: 38, wall: 210 };
 
-  const cue = (kind: CoreCue) => {
-    if (muted || reducedMotion) return;
-    try {
-      cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
-      void cuesRef.current.play(kind);
-    } catch {
-      /* audio blocked */
+interface Fx { kind: "repelled" | "burned" | "grew" | "built"; plot: number; t: number }
+
+function plotAngle(p: number): number {
+  return -Math.PI / 2 + (p / PLOTS) * Math.PI * 2;
+}
+function ringXY(p: number, r = RING): [number, number] {
+  const a = plotAngle(p);
+  return [CX + Math.cos(a) * r, CY + Math.sin(a) * r];
+}
+
+function boop(ctx: AudioContext | null, freq: number, vol = 0.16, type: OscillatorType = "triangle", len = 0.14) {
+  if (!ctx) return;
+  const when = ctx.currentTime;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, when);
+  o.frequency.exponentialRampToValueAtTime(freq * 0.7, when + len);
+  g.gain.setValueAtTime(vol, when);
+  g.gain.exponentialRampToValueAtTime(0.001, when + len + 0.02);
+  o.connect(g).connect(ctx.destination);
+  o.start(when);
+  o.stop(when + len + 0.04);
+}
+
+function drawPlot(ctx: CanvasRenderingContext2D, kind: Plot, x: number, y: number, a: number, time: number) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(a + Math.PI / 2);
+  const s = 19;
+  if (kind === "empty") {
+    ctx.fillStyle = "#e9d49a";
+    ctx.beginPath(); ctx.roundRect(-s, -s * 0.8, s * 2, s * 1.6, 6); ctx.fill();
+  } else if (kind === "ash") {
+    ctx.fillStyle = "#4a4040";
+    ctx.beginPath(); ctx.roundRect(-s, -s * 0.8, s * 2, s * 1.6, 6); ctx.fill();
+    ctx.fillStyle = `rgba(255,120,40,${0.3 + 0.2 * Math.sin(time * 5 + x)})`;
+    ctx.beginPath(); ctx.arc(-4, 2, 4, 0, Math.PI * 2); ctx.arc(6, -3, 3, 0, Math.PI * 2); ctx.fill();
+  } else if (kind === "field") {
+    ctx.fillStyle = "#5fa84a";
+    ctx.beginPath(); ctx.roundRect(-s, -s * 0.8, s * 2, s * 1.6, 6); ctx.fill();
+    ctx.strokeStyle = "#f2d45c"; ctx.lineWidth = 2.5; ctx.lineCap = "round";
+    for (let k = -2; k <= 2; k++) {
+      const sway = Math.sin(time * 2 + k + x * 0.1) * 2;
+      ctx.beginPath(); ctx.moveTo(k * 7, 9); ctx.lineTo(k * 7 + sway, -8); ctx.stroke();
     }
-  };
+  } else if (kind === "road") {
+    ctx.fillStyle = "#a89c8a";
+    ctx.beginPath(); ctx.roundRect(-s, -s * 0.8, s * 2, s * 1.6, 6); ctx.fill();
+    ctx.fillStyle = "#cfc4b0";
+    for (const [dx, dy] of [[-10, -6], [2, -8], [10, 2], [-6, 6], [4, 7]] as const) { ctx.beginPath(); ctx.ellipse(dx, dy, 5, 3.5, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(-s + 3, 0); ctx.lineTo(s - 3, 0); ctx.stroke(); ctx.setLineDash([]);
+  } else if (kind === "wall") {
+    ctx.fillStyle = "#7d8899";
+    ctx.beginPath(); ctx.roundRect(-s, -s * 0.8, s * 2, s * 1.6, 5); ctx.fill();
+    ctx.fillStyle = "#9aa6b8";
+    ctx.fillRect(-s, -s * 0.8 - 6, s * 2, 8);
+    ctx.fillStyle = "#7d8899";
+    for (let k = -s + 3; k < s - 2; k += 9) ctx.fillRect(k, -s * 0.8 - 12, 6, 7);
+    ctx.strokeStyle = "rgba(0,0,0,0.25)"; ctx.lineWidth = 1;
+    for (let r = -4; r <= 10; r += 7) { ctx.beginPath(); ctx.moveTo(-s, r); ctx.lineTo(s, r); ctx.stroke(); }
+  }
+  ctx.restore();
+}
 
-  useEffect(() => {
-    const key = kstDateKey();
-    const seed = (dateKeyIndex(key) * 0x9e3779b1) >>> 0;
-    setDateKey(key);
-    setRun(createRun(createPuzzle(seed)));
-    try {
-      setRecord(getRecord(GAME_ID));
-      setBest(getBest(GAME_ID));
-    } catch { /* storage can be blocked */ }
+export default function OneButtonCiv({ locale: pageLocale }: { locale?: string }) {
+  const locale = normalizeGameLocale(pageLocale) as L;
+  const c = COPY[locale] ?? COPY.en;
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: locale as Locale });
+  const [civ, setCiv] = useState<CivState>(() => newCiv(0));
+  const [cleared, setCleared] = useState<number[]>([]);
+  const [muted, setMuted] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const audio = useRef<AudioContext | null>(null);
+  const haptics = useRef<Haptics | null>(null);
+  const civRef = useRef(civ);
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
+  const fx = useRef<Fx[]>([]);
+  const logSeen = useRef(0);
+  const tapPulse = useRef(0);
+  const prevStatus = useRef(civ.status);
+
+  const load = useCallback((i: number) => {
+    const s = newCiv(i);
+    civRef.current = s;
+    logSeen.current = 0;
+    fx.current = [];
+    setCiv(s);
   }, []);
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      const root = containerRef.current;
-      if (!root || !(event.target instanceof Node) || !root.contains(event.target)) return;
-      if (event.key === "f" || event.key === "F") {
-        event.preventDefault();
-        togglePortal();
-        return;
+    const done = loadClearedStages(GAME_ID, STAGE_COUNT);
+    setCleared(done);
+    load(nextOpenStage(done, STAGE_COUNT));
+    setMuted(readMutedPref(MUTE_KEY));
+    haptics.current = createHaptics({ enabled: readHapticsEnabled() });
+    return () => { void audio.current?.close().catch(() => undefined); };
+  }, [load]);
+
+  useEffect(() => {
+    const prev = prevStatus.current;
+    prevStatus.current = civ.status;
+    if (prev === civ.status) return;
+    if (civ.status === "won") {
+      setCleared(markStageCleared(GAME_ID, civ.island.index, STAGE_COUNT));
+      try { recordResult(GAME_ID, "w"); recordBest(GAME_ID, civ.island.index + 1, "score"); } catch { /* storage blocked */ }
+      haptics.current?.fire("win");
+    } else if (civ.status === "lost") {
+      try { recordResult(GAME_ID, "l"); } catch { /* storage blocked */ }
+      haptics.current?.fire("fail");
+    }
+  }, [civ.status, civ.island.index]);
+
+  const ensureAudio = () => {
+    if (audio.current) return audio.current;
+    try {
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      audio.current = Ctx ? new Ctx() : null;
+    } catch { audio.current = null; }
+    return audio.current;
+  };
+  const sound = (freq: number, vol?: number, type?: OscillatorType, len?: number) => {
+    if (!mutedRef.current) boop(audio.current, freq, vol, type, len);
+  };
+
+  const start = () => {
+    ensureAudio();
+    void audio.current?.resume().catch(() => undefined);
+    const s = begin(civRef.current);
+    civRef.current = s;
+    setCiv(s);
+    canvasRef.current?.focus();
+  };
+
+  const press = () => {
+    const s = civRef.current;
+    if (s.status === "ready") { start(); return; }
+    if (s.status !== "play") return;
+    const next = tapCiv(s);
+    tapPulse.current = 1;
+    if (next !== s) {
+      civRef.current = next;
+      const b = season(s);
+      sound(b === "field" ? 523 : b === "road" ? 392 : 262, 0.16, "square", 0.1);
+      haptics.current?.fire("tap");
+    } else sound(180, 0.06, "sine", 0.06);
+  };
+
+  // simulation + render loop
+  useEffect(() => {
+    let raf = 0;
+    let last = performance.now();
+    let time = 0;
+    let hudAt = 0;
+    const loop = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      time += dt;
+      let s = civRef.current;
+      if (s.status === "play") {
+        s = tick(s, dt);
+        civRef.current = s;
+        for (let k = logSeen.current; k < s.log.length; k++) {
+          const e = s.log[k]!;
+          fx.current.push({ kind: e.kind, plot: e.plot, t: 0 });
+          if (e.kind === "repelled") { sound(660, 0.16, "triangle", 0.2); haptics.current?.fire("success"); }
+          else if (e.kind === "burned") { sound(110, 0.2, "sawtooth", 0.35); haptics.current?.fire("fail"); }
+          else if (e.kind === "grew") sound(880, 0.08, "sine", 0.08);
+        }
+        logSeen.current = s.log.length;
+        if (now - hudAt > 120 || s.status !== "play") { hudAt = now; setCiv(s); }
       }
-      if (event.key === "m" || event.key === "M") {
-        event.preventDefault();
-        setMuted((value) => !value);
-        return;
+      fx.current = fx.current.filter((f) => (f.t += dt) < 1.2);
+      tapPulse.current = Math.max(0, tapPulse.current - dt * 5);
+
+      const ctx = canvasRef.current?.getContext("2d");
+      if (ctx) {
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        const se = season(s);
+        const seasonT = (s.t % s.island.seasonS) / s.island.seasonS;
+        // sea
+        const sea = ctx.createRadialGradient(CX, CY, 60, CX, CY, 300);
+        sea.addColorStop(0, se === "wall" ? "#5b7fa8" : "#3fa7c9");
+        sea.addColorStop(1, se === "wall" ? "#1f3550" : "#14506e");
+        ctx.fillStyle = sea;
+        ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = "rgba(255,255,255,0.15)"; ctx.lineWidth = 2;
+        for (let k = 0; k < 7; k++) {
+          const wx = (k * 71 + time * 12) % (W + 40) - 20;
+          const wy = 40 + ((k * 113) % (H - 60));
+          ctx.beginPath(); ctx.arc(wx, wy, 8, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+        }
+        // island
+        ctx.fillStyle = "#f3e2b0";
+        ctx.beginPath(); ctx.arc(CX, CY, RING + 30, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = se === "wall" ? "#dfe8ee" : "#8cc66a";
+        ctx.beginPath(); ctx.arc(CX, CY, RING - 26, 0, Math.PI * 2); ctx.fill();
+        if (se === "wall") {
+          ctx.fillStyle = "rgba(255,255,255,0.8)";
+          for (let k = 0; k < 24; k++) ctx.fillRect((k * 61 + time * 8) % W, (k * 37 + time * 30) % H, 2, 2);
+        }
+        // raid markers (threats inside the warning window)
+        const threats = upcoming(s);
+        for (const r of threats) {
+          const [px, py] = ringXY(r.plot);
+          const warn = s.island.seasonS * 6;
+          const k = Math.max(0, Math.min(1, r.inS / warn));
+          ctx.strokeStyle = `rgba(255,70,70,${0.55 + 0.45 * Math.sin(time * 8)})`;
+          ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(px, py, 25, 0, Math.PI * 2); ctx.stroke();
+          // ship sailing in from the edge
+          const [sx, sy] = ringXY(r.plot, RING + 40 + k * 120);
+          ctx.save();
+          ctx.translate(sx, sy);
+          ctx.rotate(plotAngle(r.plot) + Math.PI / 2);
+          ctx.fillStyle = "#5a3825";
+          ctx.beginPath(); ctx.moveTo(-12, 0); ctx.lineTo(12, 0); ctx.lineTo(8, 7); ctx.lineTo(-8, 7); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = "#d94b4b";
+          ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(10, -3); ctx.lineTo(0, -3); ctx.closePath(); ctx.fill();
+          ctx.strokeStyle = "#3b2416"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(0, 0); ctx.stroke();
+          ctx.restore();
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "800 13px system-ui";
+          ctx.textAlign = "center";
+          ctx.fillText(String(Math.max(0, Math.ceil(r.inS))), px, py - 28);
+        }
+        // plots
+        for (let p = 0; p < PLOTS; p++) {
+          const [x, y] = ringXY(p);
+          drawPlot(ctx, s.plots[p]!, x, y, plotAngle(p), time);
+        }
+        // builder
+        const under = plotUnder(s);
+        {
+          const a = -Math.PI / 2 + (s.pos / PLOTS) * Math.PI * 2;
+          const bx = CX + Math.cos(a) * RING;
+          const by = CY + Math.sin(a) * RING;
+          const [ux, uy] = ringXY(under);
+          ctx.strokeStyle = `hsla(${SEASON_HUE[se]},90%,55%,0.95)`;
+          ctx.lineWidth = 3 + tapPulse.current * 3;
+          ctx.beginPath(); ctx.arc(ux, uy, 23 + tapPulse.current * 4, 0, Math.PI * 2); ctx.stroke();
+          const hop = Math.abs(Math.sin(time * 10)) * 4;
+          ctx.fillStyle = "rgba(0,0,0,0.25)";
+          ctx.beginPath(); ctx.ellipse(bx, by + 8, 8, 3, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = "#e8553a";
+          ctx.beginPath(); ctx.roundRect(bx - 7, by - 10 - hop, 14, 14, 4); ctx.fill();
+          ctx.fillStyle = "#ffd9b0";
+          ctx.beginPath(); ctx.arc(bx, by - 16 - hop, 6, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = "#f2c230";
+          ctx.beginPath(); ctx.ellipse(bx, by - 21 - hop, 8, 3, 0, 0, Math.PI * 2); ctx.fill();
+        }
+        // town in the middle, grows with population
+        const houses = Math.min(24, s.pop);
+        for (let k = 0; k < houses; k++) {
+          const ring = k < 6 ? 0 : k < 14 ? 1 : 2;
+          const inRing = ring === 0 ? k : ring === 1 ? k - 6 : k - 14;
+          const count = ring === 0 ? 6 : ring === 1 ? 8 : 10;
+          const ang = (inRing / count) * Math.PI * 2 + ring * 0.3;
+          const rr = 18 + ring * 22;
+          const hx = CX + Math.cos(ang) * rr;
+          const hy = CY + 18 + Math.sin(ang) * rr * 0.6;
+          ctx.fillStyle = ["#f4a259", "#e76f51", "#f6bd60", "#84a59d"][k % 4]!;
+          ctx.fillRect(hx - 6, hy - 6, 12, 9);
+          ctx.fillStyle = "#7a3b2e";
+          ctx.beginPath(); ctx.moveTo(hx - 8, hy - 6); ctx.lineTo(hx, hy - 13); ctx.lineTo(hx + 8, hy - 6); ctx.closePath(); ctx.fill();
+        }
+        // season wheel
+        {
+          const wx = CX;
+          const wy = CY - 42;
+          for (let k = 0; k < 3; k++) {
+            const b = (["field", "road", "wall"] as const)[k]!;
+            ctx.fillStyle = `hsla(${SEASON_HUE[b]},70%,${b === se ? 52 : 80}%,${b === se ? 1 : 0.6})`;
+            ctx.beginPath(); ctx.moveTo(wx, wy);
+            ctx.arc(wx, wy, 26, -Math.PI / 2 + (k * Math.PI * 2) / 3, -Math.PI / 2 + ((k + 1) * Math.PI * 2) / 3);
+            ctx.closePath(); ctx.fill();
+          }
+          const idx = ["field", "road", "wall"].indexOf(se);
+          const needle = -Math.PI / 2 + ((idx + seasonT) * Math.PI * 2) / 3;
+          ctx.strokeStyle = "#1c1b2e"; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(wx, wy); ctx.lineTo(wx + Math.cos(needle) * 24, wy + Math.sin(needle) * 24); ctx.stroke();
+          ctx.fillStyle = "#1c1b2e"; ctx.beginPath(); ctx.arc(wx, wy, 4, 0, Math.PI * 2); ctx.fill();
+        }
+        // season label
+        ctx.fillStyle = "rgba(0,0,0,0.45)";
+        ctx.beginPath(); ctx.roundRect(CX - 80, 10, 160, 28, 14); ctx.fill();
+        ctx.fillStyle = "#ffffff"; ctx.font = "800 15px system-ui"; ctx.textAlign = "center";
+        ctx.fillText(c.season[se], CX, 29);
+        // effects
+        for (const f of fx.current) {
+          const [x, y] = ringXY(f.plot);
+          const k = f.t / 1.2;
+          if (f.kind === "burned") {
+            for (let n = 0; n < 8; n++) {
+              ctx.fillStyle = `rgba(255,${120 + n * 12},40,${1 - k})`;
+              ctx.beginPath(); ctx.arc(x + Math.sin(n * 2.3) * 16 * k, y - k * 40 - n * 3, 6 * (1 - k) + 2, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+          if (f.kind === "repelled") {
+            ctx.strokeStyle = `rgba(120,220,255,${1 - k})`; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.arc(x, y, 22 + k * 30, 0, Math.PI * 2); ctx.stroke();
+          }
+          const txt = f.kind === "burned" ? c.burned : f.kind === "repelled" ? c.repelled : f.kind === "grew" ? c.grew : "";
+          if (txt) {
+            ctx.fillStyle = f.kind === "burned" ? `rgba(255,120,90,${1 - k})` : f.kind === "grew" ? `rgba(255,240,140,${1 - k})` : `rgba(200,240,255,${1 - k})`;
+            ctx.font = "800 14px system-ui"; ctx.textAlign = "center";
+            const [tx, ty] = f.kind === "grew" ? [CX, CY + 60] : [x, y];
+            ctx.fillText(txt, tx, ty - 30 - k * 20);
+          }
+        }
+        // year progress bar at the bottom
+        const T = timeLimit(s.island);
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
+        ctx.beginPath(); ctx.roundRect(20, H - 22, W - 40, 10, 5); ctx.fill();
+        ctx.fillStyle = "#ffd166";
+        ctx.beginPath(); ctx.roundRect(20, H - 22, Math.max(4, (W - 40) * (1 - s.t / T)), 10, 5); ctx.fill();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
       }
-      if (event.code !== "Space" || runRef.current?.phase !== "play") return;
-      event.preventDefault();
-      if (event.type === "keydown") {
-        if (event.repeat || downAt.current !== null) return;
-        downAt.current = performance.now();
-        return;
-      }
-      if (downAt.current === null) return;
-      const held = performance.now() - downAt.current;
-      downAt.current = null;
-      apply(held >= HOLD_MS ? "hold" : "tap");
+      raf = requestAnimationFrame(loop);
     };
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("keyup", onKey);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("keyup", onKey);
-    };
-  }, [containerRef, togglePortal]);
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+    // copy strings are stable per locale; the loop reads sim state from refs
+  }, [c]);
 
-  useEffect(() => {
-    if (run?.phase !== "play") return;
-    seasonStart.current = performance.now();
-    setQuarter(0);
-  }, [run?.cursor, run?.phase]);
-
-  useEffect(() => {
-    if (run?.phase !== "play") return;
-    const id = window.setInterval(() => {
-      const elapsed = performance.now() - seasonStart.current;
-      setQuarter(Math.min(3, Math.floor(elapsed / HOLD_MS)));
-      if (elapsed < SEASON_MS) return;
-      const held = downAt.current === null ? null : performance.now() - downAt.current;
-      apply(held === null ? "rest" : held >= HOLD_MS ? "hold" : "tap");
-    }, 100);
-    return () => window.clearInterval(id);
-  }, [run?.cursor, run?.phase]);
-
-  useEffect(() => {
-    if (!run || run.phase === "ready") {
-      setVisible(0);
-      return;
-    }
-    if (run.phase === "won" || run.phase === "lost") {
-      setVisible(PLOTS);
-      return;
-    }
-    const due = run.cursor;
-    const id = window.setTimeout(() => setVisible(due), REVEAL_MS);
-    return () => window.clearTimeout(id);
-  }, [run?.cursor, run?.phase]);
-
-  useEffect(() => {
-    if (!run || !dateKey) return;
-    const previous = phase.current;
-    phase.current = run.phase;
-    if (previous === run.phase) return;
-    if (run.phase !== "won" && run.phase !== "lost") return;
-    const key = `${dateKey}:${attempt}`;
-    if (!noted.current.has(key)) {
-      noted.current.add(key);
-      try {
-        setRecord(recordResult(GAME_ID, run.phase === "won" ? "w" : "l"));
-        setBest(recordBest(GAME_ID, matched(run), "score"));
-      } catch { /* best-effort */ }
-    }
-    if (run.phase === "won") {
-      cue("win");
-      hapticsRef.current.fire("win");
-      if (containerRef.current) {
-        celebrate(containerRef.current, { preset: "stardust" });
-      }
-    } else if (run.phase === "lost") {
-      cue("fail");
-      hapticsRef.current.fire("fail");
-    }
-  }, [run, dateKey, attempt, muted, reducedMotion]);
-
-  function apply(gesture: Gesture) {
-    const current = runRef.current;
-    if (!current || current.phase !== "play") return;
-    if (locked.current === current.cursor) return;
-    locked.current = current.cursor;
-    downAt.current = null;
-    hapticsRef.current.fire("place");
-    cue("place");
-    setRun(commit(current, gesture));
-  }
-
-  const handleShareCard = async () => {
-    if (!run) return;
-    const isWon = run.phase === "won";
-    const matchCount = matched(run);
-    const canvas = createShareCardCanvas({
-      title: "One Button Civ",
-      subtitle: isWon ? "Golden Age Civilization" : "Dynasty Collapse",
-      score: `${matchCount}/4 Plots Aligned`,
-      slug: "one-button-civ",
-      customStats: [
-        { label: "Date", value: dateKey ?? "Today" },
-        { label: "Seasons", value: "4 Seasons" },
-        { label: "Record", value: `${record?.w ?? 0}W - ${record?.l ?? 0}L` },
-      ],
-    });
-    const ok = await copyShareCardToClipboard(canvas);
-    if (ok) {
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 2000);
-    } else {
-      downloadShareCard(canvas, `one-button-civ-${dateKey}.png`);
-    }
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === " " || e.key === "Enter") { e.preventDefault(); press(); }
   };
 
-  const again = () => {
-    if (!dateKey) return;
-    const seed = (dateKeyIndex(dateKey) * 0x9e3779b1) >>> 0;
-    locked.current = -1;
-    downAt.current = null;
-    setQuarter(0);
-    setVisible(0);
-    setAttempt((value) => value + 1);
-    setRun(createRun(createPuzzle(seed)));
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    writeMutedPref(MUTE_KEY, next);
   };
 
-  const release = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (runRef.current?.phase !== "play" || downAt.current === null) return;
-    const held = performance.now() - downAt.current;
-    downAt.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    if (held >= HOLD_MS) {
-      MobileHapticsPro.heavy();
-    } else {
-      MobileHapticsPro.medium();
-    }
-    apply(held >= HOLD_MS ? "hold" : "tap");
-  };
+  const yearsLeft = Math.max(0, Math.ceil((timeLimit(civ.island) - civ.t) / (civ.island.seasonS * 3)));
+  const st = stars(civ);
+  const lostByTime = civ.status === "lost" && civ.hearts > 0;
 
   return (
-    <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
-      <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
-        <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
-          <img
-            src={ONE_BUTTON_CIV_SPRITES.keyart}
-            alt={t.title}
-            className="h-32 w-full object-cover sm:h-44"
-          />
+    <div
+      ref={containerRef}
+      data-game="one-button-civ"
+      className={isImmersive ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col gap-2 overflow-y-auto overscroll-none bg-background p-3" : "mx-auto w-full max-w-md space-y-2"}
+    >
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Badge variant="secondary">{fill(c.island, civ.island.index + 1)} / {STAGE_COUNT}</Badge>
+        <Badge variant="outline">{fill(c.pop, civ.pop, civ.island.goal)}</Badge>
+        <Badge variant="outline" aria-label={`${civ.hearts}/${HEARTS}`}>{"♥".repeat(Math.max(0, civ.hearts))}{"♡".repeat(Math.max(0, HEARTS - civ.hearts))}</Badge>
+        <Badge variant="outline">{fill(c.years, yearsLeft)}</Badge>
+        <div className="ml-auto flex gap-1">
+          <Button variant="ghost" size="icon" className="size-11" onClick={toggleMute} aria-label={muted ? c.unmute : c.mute}>
+            {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
+          </Button>
+          <Button variant="ghost" size="icon" className="size-11" onClick={togglePortal} aria-label={isImmersive ? c.exitFull : c.full}>
+            {isImmersive ? <Minimize2 className="size-5" /> : <Maximize2 className="size-5" />}
+          </Button>
         </div>
-        <div className="mb-4 flex flex-wrap gap-2">
-          <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
-            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
-          </button>
-          <button type="button" onClick={togglePortal} aria-pressed={isImmersive} aria-label={isImmersive ? portalLabels.exit : portalLabels.enter} title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
-            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-          </button>
-        </div>
-        {!run || !dateKey ? <p className="text-sm text-muted-foreground">{t.preparing}</p> : (
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">{t.date(dateKey)}</p>
-            <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
-            <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-              {POLICIES.map((policy) => (
-                <span key={policy} className="inline-flex items-center gap-1.5">
-                  <img src={ONE_BUTTON_CIV_SPRITES[policy]} alt="" className="size-4 object-contain" />
-                  <span>{GLYPH[policy]} {t.policies[policy]}</span>
-                </span>
-              ))}
-            </div>
-            <div>
-              <p className="mb-2 text-sm font-bold text-foreground">{t.target}</p>
-              <div className="grid grid-cols-4 gap-2">
-                {run.puzzle.target.map((policy, index) => (
-                  <div key={index} className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl bg-muted text-xl text-foreground" aria-label={`${t.target} ${index + 1} ${t.policies[policy]}`}>
-                    <img src={ONE_BUTTON_CIV_SPRITES[policy]} alt="" className="size-8 object-contain drop-shadow-sm" />
-                    <span className="text-xs font-bold">{GLYPH[policy]}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="mb-2 text-sm font-bold text-foreground">{t.land}</p>
-              <div className="grid grid-cols-4 gap-2">
-                {Array.from({ length: PLOTS }, (_, index) => {
-                  const policy = index < visible ? resolved(run, index) : null;
-                  const current = run.phase === "play" && index === run.cursor;
-                  return (
-                    <div key={index} className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-xl text-xl ${current ? "bg-primary text-primary-foreground" : "bg-foreground/15 text-foreground"}`} aria-label={policy ? `${t.land} ${index + 1} ${t.policies[policy]}` : `${t.land} ${index + 1}`}>
-                      {policy ? (
-                        <>
-                          <img src={ONE_BUTTON_CIV_SPRITES[policy]} alt="" className="size-8 object-contain drop-shadow-sm" />
-                          <span className="text-xs font-bold">{GLYPH[policy]}</span>
-                        </>
-                      ) : ""}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            {run.phase === "play" ? (
-              <div className="space-y-2">
-                <p className="text-sm font-bold tabular-nums text-foreground" aria-live="polite">{t.season(run.cursor + 1)}</p>
-                <div className="grid grid-cols-4 gap-1" aria-hidden="true">
-                  {[0, 1, 2, 3].map((index) => (
-                    <span key={index} className={`h-2 rounded-full ${index <= quarter ? "bg-primary" : "bg-muted"}`} />
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  className="min-h-16 w-full touch-none rounded-xl border border-primary bg-primary px-3 py-2 text-2xl font-bold text-primary-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-transform active:scale-95"
-                  aria-label={t.button}
-                  onPointerDown={(event) => {
-                    event.preventDefault();
-                    MobileHapticsPro.light();
-                    downAt.current = performance.now();
-                    event.currentTarget.setPointerCapture(event.pointerId);
-                  }}
-                  onPointerUp={release}
-                  onPointerCancel={release}
-                  onContextMenu={(event) => event.preventDefault()}
-                >
-                  ●
-                </button>
-              </div>
-            ) : null}
-            {run.phase === "ready" ? (
-              <TiltCivButton
-                onClick={() => { locked.current = -1; setRun((current) => (current ? begin(current) : current)); }}
-                className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
-              >
-                {t.start}
-              </TiltCivButton>
-            ) : null}
-            {run.phase === "won" || run.phase === "lost" ? (
-              <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
-                {run.phase === "won" && (
-                  <div className="flex justify-center mb-2">
-                    <img
-                      src={ONE_BUTTON_CIV_SPRITES.trophy}
-                      alt="Civilization Golden Age Trophy"
-                      width={64}
-                      height={64}
-                      className="size-14 object-contain animate-bounce drop-shadow-md"
-                    />
-                  </div>
-                )}
-                <p className="text-sm font-bold tabular-nums text-foreground">{t.matched(matched(run))}</p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <TiltCivButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>
-                    {t.again}
-                  </TiltCivButton>
-                  <TiltCivButton
-                    onClick={() => void handleShareCard()}
-                    className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30"
-                  >
-                    <Share2 className="size-4" />
-                    <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
-                  </TiltCivButton>
-                </div>
-              </div>
-            ) : null}
-            <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>
+      </div>
+
+      <div className="relative">
+        <canvas
+          ref={canvasRef}
+          width={W * DPR}
+          height={H * DPR}
+          tabIndex={0}
+          onKeyDown={onKey}
+          onPointerDown={(e) => { e.preventDefault(); if (civRef.current.status === "play") press(); }}
+          className="mx-auto block w-full max-w-md touch-none select-none rounded-xl border border-border"
+          aria-label={c.hint}
+        />
+        {civ.status === "ready" ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-background/80 p-4 text-center">
+            <p className="text-2xl font-black">{fill(c.island, civ.island.index + 1)}</p>
+            <p className="text-sm">{fill(c.pop, 3, civ.island.goal)}</p>
+            <Button className="min-h-12 min-w-40" onClick={start}>{c.start}</Button>
           </div>
-        )}
-      </GameContainer>
+        ) : null}
+      </div>
+
+      {civ.status === "won" || civ.status === "lost" ? (
+        <div className="space-y-2 rounded-lg border border-primary/40 bg-primary/10 p-3 text-center" aria-live="polite">
+          <p className="text-lg font-bold">{civ.status === "won" ? c.won : lostByTime ? c.lostTime : c.lost}</p>
+          {civ.status === "won" ? <p className="text-xl text-warning" aria-label={`${st}/3`}>{"★".repeat(st)}{"☆".repeat(3 - st)}</p> : null}
+          {civ.status === "won" ? (
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" className="min-h-12" onClick={() => load(civ.island.index)}><RotateCcw className="size-4" /><span>{c.retry}</span></Button>
+              <Button className="min-h-12" onClick={() => load(civ.island.index >= STAGE_COUNT - 1 ? 0 : civ.island.index + 1)}>
+                {civ.island.index >= STAGE_COUNT - 1 ? finaleLabel(locale) : c.next}
+              </Button>
+            </div>
+          ) : (
+            <Button className="min-h-12 w-full" onClick={() => load(civ.island.index)}><RotateCcw className="size-4" /><span>{c.retry}</span></Button>
+          )}
+        </div>
+      ) : (
+        <Button size="lg" className="min-h-14 w-full" disabled={civ.status !== "play"} onClick={press}>{c.build}</Button>
+      )}
+
+      <p className="text-xs text-muted-foreground">{c.hint}</p>
+
+      <details className="rounded-lg border border-border p-2">
+        <summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">{c.stages}</summary>
+        <div className="pt-2">
+          <StageBar count={STAGE_COUNT} current={civ.island.index} cleared={cleared} locale={locale} onSelect={load} />
+        </div>
+      </details>
     </div>
   );
 }

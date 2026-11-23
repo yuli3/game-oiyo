@@ -1,87 +1,51 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import {
-  ASKS,
-  GAME_ID,
-  MISSES,
-  RHYTHM,
-  SIGNALS,
-  answer,
-  begin,
-  createLesson,
-  createRun,
-  nextTeach,
-  type Run,
-  type Signal,
-} from "./untranslatable-creature";
+import { GAME_ID, GOOD_MS, MOODS, STAGE_COUNT, answer, begin, drumTimes, judge, makeStage, newRun, stars } from "./untranslatable-creature";
 
-function learn(run: Run): Run {
-  let current = run.phase === "ready" ? begin(run) : run;
-  let guard = 0;
-  while (current.phase === "teach" && guard < 8) {
-    guard += 1;
-    current = nextTeach(current);
-  }
-  return current;
-}
+describe("untranslatable creature rhythm", () => {
+  it("keeps the record id and ships 30 deterministic stages", () => {
+    expect(GAME_ID).toBe("untranslatable-creature");
+    expect(STAGE_COUNT).toBe(30);
+    expect(JSON.stringify(makeStage(7))).toBe(JSON.stringify(makeStage(7)));
+  });
 
-function solve(run: Run): Run {
-  let current = learn(run);
-  let guard = 0;
-  while (current.phase === "ask" && guard < 20) {
-    guard += 1;
-    current = answer(current, current.lesson.asks[current.step] as Signal);
-  }
-  return current;
-}
-
-describe("untranslatable creature", () => {
-  it("teaches one shared lesson and clears it when every ask matches", () => {
-    const rhythms = SIGNALS.map((signal) => RHYTHM[signal].join(""));
-    expect(new Set(rhythms).size).toBe(SIGNALS.length);
-    for (let seed = 0; seed < 20; seed += 1) {
-      const lesson = createLesson(seed);
-      expect(createLesson(seed)).toEqual(lesson);
-      expect(lesson.teach).toHaveLength(SIGNALS.length);
-      expect([...lesson.teach].sort()).toEqual([...SIGNALS].sort());
-      expect(lesson.asks).toHaveLength(ASKS);
-      expect(new Set(lesson.asks).size).toBeGreaterThanOrEqual(3);
-      const won = solve(createRun(lesson));
-      expect(won.phase).toBe("won");
-      expect(won.misses).toBe(0);
+  it("phrases start on a drum, mix drums and rests, and never repeat back to back", () => {
+    for (let i = 0; i < STAGE_COUNT; i++) {
+      const s = makeStage(i);
+      s.phrases.forEach((p, k) => {
+        expect(p.beats[0]).toBe(1);
+        const on = p.beats.filter(Boolean).length;
+        expect(on).toBeGreaterThanOrEqual(2);
+        expect(on).toBeLessThan(p.beats.length);
+        if (k) expect(p.beats.join("")).not.toBe(s.phrases[k - 1]!.beats.join(""));
+      });
+      // eighth notes stay tappable on a phone
+      expect(s.stepMs).toBeGreaterThanOrEqual(170);
     }
   });
 
-  it("keeps the same ask after a wrong mark", () => {
-    let run = learn(createRun(createLesson(3)));
-    const want = run.lesson.asks[0] as Signal;
-    const wrong = SIGNALS.find((signal) => signal !== want) as Signal;
-    run = answer(run, wrong);
-    expect(run.phase).toBe("ask");
-    expect(run.step).toBe(0);
-    expect(run.misses).toBe(1);
-    run = answer(run, want);
-    expect(run.step).toBe(1);
-    expect(run.misses).toBe(1);
+  it("grades exact, near, and missing taps", () => {
+    const s = makeStage(0);
+    const p = s.phrases[0]!;
+    const want = drumTimes(p, s.stepMs);
+    expect(judge(p, s.stepMs, want).grades.every((g) => g === "perfect")).toBe(true);
+    expect(judge(p, s.stepMs, want.map((t) => t + 100)).grades.every((g) => g === "good")).toBe(true);
+    const late = judge(p, s.stepMs, want.map((t) => t + GOOD_MS + 10));
+    expect(late.passed).toBe(false);
+    expect(judge(p, s.stepMs, want.slice(1)).passed).toBe(false);
+    expect(judge(p, s.stepMs, [...want, 9999]).passed).toBe(true); // one stray tap is forgiven
+    expect(judge(p, s.stepMs, [...want, 9999, 8888]).passed).toBe(false);
   });
 
-  it("closes the lesson on the third miss", () => {
-    let run = learn(createRun(createLesson(5)));
-    const want = run.lesson.asks[0] as Signal;
-    const wrong = SIGNALS.find((signal) => signal !== want) as Signal;
-    run = answer(run, wrong);
-    run = answer(run, wrong);
-    run = answer(run, wrong);
-    expect(run.phase).toBe("lost");
-    expect(run.misses).toBe(MISSES);
-    expect(answer(run, want)).toEqual(run);
-  });
-
-  it("registers the catalog slug", () => {
-    const page = readFileSync("src/pages/[...lang]/untranslatable-creature.astro", "utf8");
-    const catalog = readFileSync("src/pages/[...lang]/index.astro", "utf8");
-    expect(page).toContain('slug="untranslatable-creature"');
-    expect(catalog).toContain('slug: "untranslatable-creature"');
-    expect(GAME_ID).toBe("untranslatable-creature");
+  it("perfect play wins with three stars; three failed phrases lose", () => {
+    let r = begin(newRun(10));
+    while (r.status === "play") {
+      const p = r.stage.phrases[r.at]!;
+      r = answer(r, judge(p, r.stage.stepMs, drumTimes(p, r.stage.stepMs)));
+    }
+    expect(r.status).toBe("won");
+    expect(stars(r)).toBe(3);
+    let bad = begin(newRun(10));
+    for (let k = 0; k < MOODS; k++) bad = answer(bad, judge(bad.stage.phrases[0]!, bad.stage.stepMs, []));
+    expect(bad.status).toBe("lost");
   });
 });

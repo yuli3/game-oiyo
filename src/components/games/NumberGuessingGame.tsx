@@ -9,6 +9,7 @@ import { celebrate } from '@/lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '@/lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '@/lib/games/engine-suite-unified';
 import { getSpriteUrl, NUMBER_GUESSING_UI_SPRITES } from '@/lib/games/sprites';
+import NumberLineDial from './NumberLineDial';
 
 function TiltGuessButton({
   children,
@@ -245,6 +246,13 @@ const NumberGuessingGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) =>
             </div>
             {state.status === 'playing' && (
               <>
+                <NumberLineDial
+                  state={state}
+                  value={input && Number.isFinite(Number(input)) ? Number(input) : null}
+                  disabled={paused}
+                  label={t.placeholder(state.max)}
+                  onChange={(n) => { setInput(String(n)); setError(''); }}
+                />
                 <form
                   className="mb-3 flex flex-col gap-2 sm:flex-row"
                   onSubmit={(event) => {

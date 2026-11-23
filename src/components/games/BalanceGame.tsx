@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
-import { useCardTiltPro, MobileHapticsPro, useGameJuicePro, getSharedAudioContext, playComboSfx } from '../../lib/games/engine-suite-unified';
+import { MobileHapticsPro, useGameJuicePro, getSharedAudioContext, playComboSfx } from '../../lib/games/engine-suite-unified';
 import {
   PENDING_STORAGE_KEY, addVote, parsePending, removeFlushed, shouldFlush, toDeltas,
   withLocalPending, type PendingVotes,
@@ -10,8 +10,11 @@ import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { BALANCE_GAME_PROMPTS } from '../../data/balance-game-prompts';
 import { celebrate } from '../../lib/games/celebration';
 import { BALANCE_GAME_SPRITES } from '../../lib/games/sprites';
+import { recordBest } from '../../lib/games/records';
+import { BalanceSeesaw, SwipeCard } from './BalanceStage';
 
 const STORAGE_KEY = 'oiyo:balance-game:v1';
+const STREAK_KEY = 'oiyo:balance-game:majority-best';
 
 type Tally = { a: number; b: number };
 type Stored = { answered: number; picks: Record<number, 'a' | 'b'> };
@@ -43,33 +46,6 @@ function shuffledOrder(length: number): number[] {
   return order;
 }
 
-function TiltBalanceChoiceButton({
-  children,
-  onClick,
-  className,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  className?: string;
-}) {
-  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
-  return (
-    <button
-      type="button"
-      style={{ '--card-tilt': transformCss } as React.CSSProperties}
-      onPointerMove={onPointerMove}
-      onPointerLeave={onPointerLeave}
-      onClick={() => {
-        triggerPop(0.12);
-        onClick();
-      }}
-      className={`${className ?? ''} will-change-transform transform-(--card-tilt)`}
-    >
-      {children}
-    </button>
-  );
-}
-
 const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const COPY = {
     ko: {
@@ -78,6 +54,7 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       restart: '처음부터 다시', done: '68문항을 모두 골랐어요!', doneSub: '당신의 선택 기록',
       pickA: 'A 선택', pickB: 'B 선택', myPicks: '내 선택 비율', vs: 'VS',
       crowd: '다른 사람들의 선택', crowdFirst: '이 질문에 처음 답했어요', crowdNote: (n: number) => `${n.toLocaleString()}명 참여 · 집계는 잠시 뒤 반영됩니다`,
+      swipe: '밀어서 고르기', streak: (n: number) => `다수파 연속 ${n}`, best: (n: number) => `최고 ${n}`, majority: '다수파예요!', minority: '소수파예요. 개성 있네요!', tie: '정확히 반반!', seesaw: '사람들의 선택 저울',
     },
     en: {
       title: 'Balance Game', subtitle: 'Which would you choose?',
@@ -85,6 +62,7 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       restart: 'Restart from the beginning', done: 'You’ve answered all 68!', doneSub: 'Your pick history',
       pickA: 'Pick A', pickB: 'Pick B', myPicks: 'My pick split', vs: 'VS',
       crowd: 'What everyone else picked', crowdFirst: 'You answered this first', crowdNote: (n: number) => `${n.toLocaleString()} answers · totals update shortly`,
+      swipe: 'swipe to pick', streak: (n: number) => `Majority streak ${n}`, best: (n: number) => `Best ${n}`, majority: 'You sided with the majority!', minority: 'Minority pick. Bold!', tie: 'Dead even!', seesaw: 'Crowd scale',
     },
     ja: {
       title: 'バランスゲーム', subtitle: 'どちらか一つを選ぶなら？',
@@ -92,6 +70,7 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       restart: '最初からやり直す', done: '68問すべて選びました！', doneSub: 'あなたの選択履歴',
       pickA: 'Aを選ぶ', pickB: 'Bを選ぶ', myPicks: '選択の割合', vs: 'VS',
       crowd: 'みんなの選択', crowdFirst: 'この質問に最初に答えました', crowdNote: (n: number) => `${n.toLocaleString()}人が回答 · 集計は少し後に反映されます`,
+      swipe: 'スワイプで選ぶ', streak: (n: number) => `多数派連続 ${n}`, best: (n: number) => `最高 ${n}`, majority: '多数派です！', minority: '少数派。個性的！', tie: 'ちょうど半々！', seesaw: 'みんなの選択の天秤',
     },
     zh: {
       title: '二选一游戏', subtitle: '如果只能选一个？',
@@ -99,6 +78,7 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       restart: '从头开始', done: '你已回答全部68题！', doneSub: '你的选择记录',
       pickA: '选择A', pickB: '选择B', myPicks: '我的选择比例', vs: 'VS',
       crowd: '其他人的选择', crowdFirst: '你是第一个回答的', crowdNote: (n: number) => `${n.toLocaleString()}人参与 · 统计稍后更新`,
+      swipe: '滑动选择', streak: (n: number) => `多数派连胜 ${n}`, best: (n: number) => `最佳 ${n}`, majority: '你站在多数派！', minority: '少数派，很有个性！', tie: '正好一半一半！', seesaw: '大家的选择天平',
     },
     fr: {
       title: 'Jeu du dilemme', subtitle: 'Si vous ne pouviez choisir qu’un seul ?',
@@ -106,6 +86,7 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       restart: 'Recommencer depuis le début', done: 'Vous avez répondu aux 68 questions !', doneSub: 'Votre historique de choix',
       pickA: 'Choisir A', pickB: 'Choisir B', myPicks: 'Répartition de mes choix', vs: 'VS',
       crowd: 'Le choix des autres', crowdFirst: 'Vous avez répondu en premier', crowdNote: (n: number) => `${n.toLocaleString()} réponses · totaux mis à jour bientôt`,
+      swipe: 'glissez pour choisir', streak: (n: number) => `Série majoritaire ${n}`, best: (n: number) => `Record ${n}`, majority: 'Vous êtes avec la majorité !', minority: 'Choix minoritaire. Audacieux !', tie: 'Pile à égalité !', seesaw: 'Balance de la foule',
     },
     es: {
       title: 'Juego del dilema', subtitle: '¿Si solo pudieras elegir uno?',
@@ -113,13 +94,20 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       restart: 'Reiniciar desde el principio', done: '¡Has respondido las 68 preguntas!', doneSub: 'Tu historial de elecciones',
       pickA: 'Elegir A', pickB: 'Elegir B', myPicks: 'Mi reparto de elecciones', vs: 'VS',
       crowd: 'Lo que eligieron los demás', crowdFirst: 'Has respondido primero', crowdNote: (n: number) => `${n.toLocaleString()} respuestas · totales se actualizan pronto`,
+      swipe: 'desliza para elegir', streak: (n: number) => `Racha mayoritaria ${n}`, best: (n: number) => `Mejor ${n}`, majority: '¡Estás con la mayoría!', minority: 'Elección minoritaria. ¡Valiente!', tie: '¡Empate exacto!', seesaw: 'Balanza de la gente',
     },
   };
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
   const total = BALANCE_GAME_PROMPTS.length;
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
   const { shakeCssVars, addTrauma } = useGameJuicePro();
-  const [scaleTilt, setScaleTilt] = useState(0);
+  const [dropKey, setDropKey] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [verdict, setVerdict] = useState<'majority' | 'minority' | 'tie' | null>(null);
+  useEffect(() => {
+    try { setBestStreak(Number(localStorage.getItem(STREAK_KEY)) || 0); } catch { /* storage blocked */ }
+  }, []);
 
   const [stored, setStored] = useState<Stored>(() => loadStored());
   const [order, setOrder] = useState<number[]>(() => shuffledOrder(total));
@@ -236,7 +224,7 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
   const pick = useCallback((choice: 'a' | 'b') => {
     if (!currentPrompt) return;
-    setScaleTilt(choice === 'a' ? -15 : 15);
+    setDropKey((k) => k + 1);
     playPop(choice === 'a' ? 520 : 660, 0.07);
     MobileHapticsPro.impact();
     addTrauma(0.18);
@@ -264,14 +252,31 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     setRevealed({ id: currentPrompt.id, choice });
     pendingRef.current = addVote(pendingRef.current, currentPrompt.id, choice);
     persistPending();
+    {
+      const merged = withLocalPending(crowd[currentPrompt.id] ?? { a: 0, b: 0 }, pendingRef.current[currentPrompt.id]);
+      const sum = merged.a + merged.b;
+      if (sum <= 1) setVerdict(null);
+      else {
+        const mine = choice === 'a' ? merged.a : merged.b;
+        const v = mine * 2 > sum ? 'majority' : mine * 2 === sum ? 'tie' : 'minority';
+        setVerdict(v);
+        const nextStreak = v === 'majority' ? streak + 1 : 0;
+        setStreak(nextStreak);
+        if (nextStreak > bestStreak) {
+          setBestStreak(nextStreak);
+          try { localStorage.setItem(STREAK_KEY, String(nextStreak)); recordBest('balance-game', nextStreak, 'score'); } catch { /* storage blocked */ }
+        }
+      }
+    }
     if (shouldFlush(pendingRef.current)) void flush();
     setCursor((c) => c + 1);
-  }, [currentPrompt, cursor, order.length, persistPending, flush, playPop, addTrauma, muted]);
+  }, [currentPrompt, cursor, order.length, persistPending, flush, playPop, addTrauma, muted, crowd, streak, bestStreak]);
 
   const restart = useCallback(() => {
     playPop(440, 0.06);
-    setScaleTilt(0);
     setRevealed(null);
+    setVerdict(null);
+    setStreak(0);
     setOrder(shuffledOrder(total));
     setCursor(0);
   }, [total, playPop]);
@@ -299,15 +304,11 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [togglePortal, finished, currentPrompt, pick]);
 
-  useEffect(() => {
-    if (!revealed) return;
+  const revealedShare = useMemo(() => {
+    if (!revealed) return null;
     const merged = withLocalPending(crowd[revealed.id] ?? { a: 0, b: 0 }, pendingRef.current[revealed.id]);
     const sum = merged.a + merged.b;
-    if (sum > 0) {
-      const aPctCrowd = Math.round((merged.a / sum) * 100);
-      const targetTilt = Math.max(-18, Math.min(18, ((50 - aPctCrowd) / 50) * 14));
-      setScaleTilt(targetTilt);
-    }
+    return sum > 0 ? merged.a / sum : null;
   }, [revealed, crowd]);
 
   const answeredCount = Object.keys(stored.picks).length;
@@ -357,45 +358,24 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
           <span>{t.progress(Math.min(cursor, total), total)}</span>
         </div>
 
-        {/* Animated Seesaw Scale Beam */}
-        <div className="w-full max-w-xs flex flex-col items-center my-1 select-none pointer-events-none" aria-hidden="true">
-          <div
-            style={{ '--scale-rot': `${scaleTilt}deg` } as React.CSSProperties}
-            className="relative w-44 h-2.5 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-between px-2 transition-transform duration-500 ease-out transform rotate-(--scale-rot)"
-          >
-            <div className="size-6 -top-2.5 left-0.5 absolute rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center text-xs font-black text-primary shadow-sm">
-              A
-            </div>
-            <div className="size-6 -top-2.5 right-0.5 absolute rounded-full bg-chart-2/20 border-2 border-chart-2 flex items-center justify-center text-xs font-black text-chart-2 shadow-sm">
-              B
-            </div>
-          </div>
-          <svg className="w-5 h-3.5 fill-muted-foreground/40 -mt-0.5" viewBox="0 0 20 14">
-            <polygon points="10,0 20,14 0,14" />
-          </svg>
-          <div className="w-14 h-1 rounded-full bg-muted-foreground/30 mt-0.5" />
+        <BalanceSeesaw shareA={revealedShare} dropKey={dropKey} dropSide={revealed?.choice ?? null} ariaLabel={t.seesaw} />
+
+        <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-bold" aria-live="polite">
+          <span className="rounded-full border border-border px-3 py-1">{t.streak(streak)}</span>
+          <span className="rounded-full border border-border px-3 py-1 text-muted-foreground">{t.best(bestStreak)}</span>
+          {verdict ? <span className="rounded-full bg-primary/10 px-3 py-1 text-primary">{verdict === 'majority' ? t.majority : verdict === 'minority' ? t.minority : t.tie}</span> : null}
         </div>
 
         {!finished && currentPrompt && (
-          <div className="w-full max-w-xl">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="group" aria-label={t.subtitle}>
-              <TiltBalanceChoiceButton
-                onClick={() => pick('a')}
-                className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-border bg-card p-5 text-center text-base font-bold shadow-sm transition-all hover:border-primary hover:bg-primary/5 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              >
-                <img src={BALANCE_GAME_SPRITES.badgeA} alt="" aria-hidden="true" className="h-7 w-7 object-contain" />
-                <span className="text-foreground">{currentPrompt.a}</span>
-              </TiltBalanceChoiceButton>
-              <TiltBalanceChoiceButton
-                onClick={() => pick('b')}
-                className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-border bg-card p-5 text-center text-base font-bold shadow-sm transition-all hover:border-chart-2 hover:bg-chart-2/5 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chart-2"
-              >
-                <img src={BALANCE_GAME_SPRITES.badgeB} alt="" aria-hidden="true" className="h-7 w-7 object-contain" />
-                <span className="text-foreground">{currentPrompt.b}</span>
-              </TiltBalanceChoiceButton>
-            </div>
-            <p className="mt-3 text-center text-xs font-black uppercase tracking-widest text-muted-foreground">{t.vs}</p>
-          </div>
+          <SwipeCard
+            key={currentPrompt.id}
+            a={currentPrompt.a}
+            b={currentPrompt.b}
+            hint={t.swipe}
+            pickALabel={t.pickA}
+            pickBLabel={t.pickB}
+            onPick={pick}
+          />
         )}
 
         {/* Revealed only after answering. Showing the split beforehand would

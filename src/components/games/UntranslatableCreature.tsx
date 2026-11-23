@@ -1,395 +1,449 @@
-// The shell stays scrollable. data-game-surface would block the marks on a
-// phone (2026-10-20). The rhythm is the creature's only request, so the six
-// locales share the marks and the lesson. The beat clock lives on this screen.
+// Untranslatable Creature v2 (2026-11-23): call-and-response rhythm on a
+// canvas. The creature drums a phrase, then you tap it back on its belly in
+// time. Hook (design lens): cute creature + "one more phrase" rhythm loop.
+// Logic and timing judge: lib/games/untranslatable-creature.
 
-import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
-import { GameContainer } from "../ui/game/GamePrimitives";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import StageBar from "./StageBar";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
-import type { Locale } from "../../lib/i18n";
-import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
-import { getBest, getRecord, recordBest, recordResult, type BestRecord, type GameRecord } from "../../lib/games/records";
-import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
-import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
-import { createHaptics } from "../../lib/games/haptics";
-import { celebrate } from "../../lib/games/celebration";
-import { UNTRANSLATABLE_CREATURE_SPRITES } from "../../lib/games/sprites";
-import { useGameJuicePro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { readMutedPref, writeMutedPref } from "../../lib/games/game-audio";
+import { createHaptics, readHapticsEnabled, type Haptics } from "../../lib/games/haptics";
+import { recordBest, recordResult } from "../../lib/games/records";
+import { finaleLabel, loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
+import { normalizeGameLocale } from "../../lib/games/game-text";
 import {
-  GAME_ID,
-  MISSES,
-  RHYTHM,
-  SIGNALS,
-  answer,
-  begin,
-  createLesson,
-  createRun,
-  nextTeach,
-  type Run,
-  type Signal,
+  GAME_ID, GOOD_MS, MOODS, STAGE_COUNT, answer, begin, judge, newRun, stars,
+  type Grade, type Judged, type RunState,
 } from "../../lib/games/untranslatable-creature";
+import type { Locale } from "../../lib/i18n";
 
-const BEAT_MS = 420;
-const GLYPH: Record<Signal, string> = { hunger: "◉", rest: "☾", play: "▲", clean: "◆" };
-const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+type L = "ko" | "en" | "ja" | "zh" | "fr" | "es";
+const MUTE_KEY = "oiyo:untranslatable-creature:muted";
+const fill = (s: string, ...v: (string | number)[]) => v.reduce<string>((acc, x, i) => acc.replace(`{${i}}`, String(x)), s);
 
-interface Copy {
-  title: string;
-  subtitle: string;
-  preparing: string;
-  ready: string;
-  teach: string;
-  ask: string;
-  start: string;
-  signals: Record<Signal, string>;
-  misses: (n: number) => string;
-  won: string;
-  lost: string;
-  again: string;
-  best: (n: number) => string;
-  record: (wins: number, losses: number) => string;
-  date: (key: string) => string;
-}
-
-const COPY: Record<Locale, Copy> = {
+const COPY: Record<L, {
+  stage: string; phrase: string; score: string; listen: string; yours: string; ready: string; start: string; next: string; retry: string;
+  won: string; lost: string; hint: string; stages: string; full: string; exitFull: string; mute: string; unmute: string;
+  grade: Record<Grade, string>; pass: string; fail: string; tap: string;
+}> = {
   ko: {
-    title: "번역 불가능한 생물",
-    subtitle: "요구는 네 박자의 리듬입니다. 말은 없고, 여섯 언어가 같은 순서를 봅니다.",
-    preparing: "판을 준비하는 중입니다.",
-    ready: "리듬을 본 뒤 같은 기호를 고르세요.",
-    teach: "리듬 뒤에 맞는 기호가 켜집니다. 그 기호를 누르세요.",
-    ask: "리듬만 보고 기호를 고르세요.",
-    start: "시작",
-    signals: { hunger: "먹이", rest: "쉼", play: "놀이", clean: "씻기" },
-    misses: (n) => `실패 ${n} / ${MISSES}`,
-    won: "오늘의 요구를 모두 읽었습니다.",
-    lost: "세 번 틀려 끝났습니다.",
-    again: "같은 판 다시",
-    best: (n) => `남긴 기회 ${n}`,
-    record: (wins, losses) => `읽음 ${wins} · 놓침 ${losses}`,
-    date: (key) => `${key} · 한국 표준시`,
+    stage: "{0}번째 만남", phrase: "말 {0} / {1}", score: "점수 {0}", listen: "듣는 중…", yours: "따라 치세요!", ready: "준비…",
+    start: "만나러 가기", next: "다음 만남", retry: "다시 하기", won: "생물이 당신 말을 알아들었어요!", lost: "생물이 토라져서 숨었어요",
+    hint: "생물이 배를 두드려 리듬으로 말해요. 끝나면 같은 리듬을 박자에 맞춰 화면(생물 배)을 톡톡 두드려 대답하세요. 스페이스 키도 돼요.",
+    stages: "만남 고르기", full: "전체화면", exitFull: "나가기", mute: "소리 끄기", unmute: "소리 켜기",
+    grade: { perfect: "완벽", good: "좋아", miss: "놓침" }, pass: "통했다! ♥", fail: "갸우뚱?", tap: "두드리기",
   },
   en: {
-    title: "Untranslatable Creature",
-    subtitle: "A need is a four-beat rhythm. There is no sentence, and every language sees the same order.",
-    preparing: "Preparing the round.",
-    ready: "Watch the rhythm, then choose the same mark.",
-    teach: "The matching mark lights after the rhythm. Tap that mark.",
-    ask: "Choose the mark from the rhythm alone.",
-    start: "Start",
-    signals: { hunger: "Food", rest: "Rest", play: "Play", clean: "Wash" },
-    misses: (n) => `Misses ${n} / ${MISSES}`,
-    won: "You read every need today.",
-    lost: "Three misses end the lesson.",
-    again: "Same lesson again",
-    best: (n) => `Chances left ${n}`,
-    record: (wins, losses) => `Read ${wins} · Missed ${losses}`,
-    date: (key) => `${key} · Korea Standard Time`,
+    stage: "Meeting {0}", phrase: "Phrase {0} / {1}", score: "Score {0}", listen: "Listening…", yours: "Your turn!", ready: "Ready…",
+    start: "Go meet it", next: "Next meeting", retry: "Try again", won: "The creature understood you!", lost: "The creature got upset and hid",
+    hint: "The creature talks by drumming its belly. When it stops, tap the same rhythm back on the screen (its belly) in time. Space works too.",
+    stages: "Pick a meeting", full: "Fullscreen", exitFull: "Exit", mute: "Mute", unmute: "Sound on",
+    grade: { perfect: "Perfect", good: "Good", miss: "Miss" }, pass: "Understood! ♥", fail: "Huh?", tap: "Tap",
   },
   ja: {
-    title: "翻訳できない生き物",
-    subtitle: "要求は四拍のリズムです。言葉はなく、六つの言語が同じ順番を見ます。",
-    preparing: "盤面を準備しています。",
-    ready: "リズムを見てから、同じ記号を選んでください。",
-    teach: "リズムのあとに合う記号が点きます。その記号を押してください。",
-    ask: "リズムだけを見て記号を選んでください。",
-    start: "開始",
-    signals: { hunger: "餌", rest: "休み", play: "遊び", clean: "洗い" },
-    misses: (n) => `失敗 ${n} / ${MISSES}`,
-    won: "今日の要求をすべて読みました。",
-    lost: "三回外して終わりました。",
-    again: "同じ盤でもう一度",
-    best: (n) => `残した機会 ${n}`,
-    record: (wins, losses) => `読めた ${wins} · 外した ${losses}`,
-    date: (key) => `${key} · 韓国標準時`,
+    stage: "{0}回目の出会い", phrase: "ことば {0} / {1}", score: "スコア {0}", listen: "聞いています…", yours: "まねして！", ready: "準備…",
+    start: "会いに行く", next: "次の出会い", retry: "もう一度", won: "生き物があなたの言葉をわかってくれました！", lost: "生き物がすねて隠れました",
+    hint: "生き物はお腹をたたいてリズムで話します。終わったら同じリズムを拍に合わせて画面（お腹）をトントンたたいて答えましょう。スペースキーでもOK。",
+    stages: "出会いを選ぶ", full: "全画面", exitFull: "戻る", mute: "ミュート", unmute: "音をオン",
+    grade: { perfect: "完璧", good: "いいね", miss: "ミス" }, pass: "通じた！♥", fail: "はて？", tap: "たたく",
   },
   zh: {
-    title: "无法翻译的生物",
-    subtitle: "要求是四拍节奏。没有句子，六种语言看到的是同一个顺序。",
-    preparing: "正在准备这一局。",
-    ready: "先看节奏，再选同一个符号。",
-    teach: "节奏之后，对应的符号会亮起。按下那个符号。",
-    ask: "只看节奏，选出符号。",
-    start: "开始",
-    signals: { hunger: "食物", rest: "休息", play: "玩耍", clean: "清洁" },
-    misses: (n) => `失败 ${n} / ${MISSES}`,
-    won: "今天的要求都读懂了。",
-    lost: "错三次，这一课结束。",
-    again: "同一盘再来",
-    best: (n) => `剩下的机会 ${n}`,
-    record: (wins, losses) => `读懂 ${wins} · 错过 ${losses}`,
-    date: (key) => `${key} · 韩国标准时间`,
+    stage: "第{0}次见面", phrase: "话语 {0} / {1}", score: "得分 {0}", listen: "正在听…", yours: "跟着敲！", ready: "准备…",
+    start: "去见它", next: "下一次见面", retry: "再来一次", won: "小生物听懂你的话了！", lost: "小生物生气躲起来了",
+    hint: "小生物拍肚子用节奏说话。它停下后，按节拍在屏幕（它的肚子）上敲出同样的节奏来回答。空格键也可以。",
+    stages: "选择见面", full: "全屏", exitFull: "退出", mute: "静音", unmute: "开启声音",
+    grade: { perfect: "完美", good: "不错", miss: "错过" }, pass: "听懂了！♥", fail: "嗯？", tap: "敲",
   },
   fr: {
-    title: "Créature intraduisible",
-    subtitle: "Un besoin est un rythme de quatre temps. Il n'y a pas de phrase, et les six langues voient le même ordre.",
-    preparing: "Préparation de la manche.",
-    ready: "Regardez le rythme, puis choisissez la même marque.",
-    teach: "La marque juste s'allume après le rythme. Touchez cette marque.",
-    ask: "Choisissez la marque d'après le rythme seul.",
-    start: "Commencer",
-    signals: { hunger: "Nourrir", rest: "Repos", play: "Jeu", clean: "Soin" },
-    misses: (n) => `Ratés ${n} / ${MISSES}`,
-    won: "Vous avez lu chaque besoin du jour.",
-    lost: "Trois ratés ferment la leçon.",
-    again: "La même leçon",
-    best: (n) => `Chances restantes ${n}`,
-    record: (wins, losses) => `Lues ${wins} · Ratées ${losses}`,
-    date: (key) => `${key} · heure de Séoul`,
+    stage: "Rencontre {0}", phrase: "Phrase {0} / {1}", score: "Score {0}", listen: "Écoute…", yours: "À vous !", ready: "Prêt…",
+    start: "Aller le voir", next: "Rencontre suivante", retry: "Réessayer", won: "La créature vous a compris !", lost: "La créature s'est vexée et cachée",
+    hint: "La créature parle en tapant sur son ventre. Quand elle s'arrête, tapez le même rythme sur l'écran (son ventre), en mesure. La barre d'espace marche aussi.",
+    stages: "Choisir une rencontre", full: "Plein écran", exitFull: "Quitter", mute: "Couper le son", unmute: "Activer le son",
+    grade: { perfect: "Parfait", good: "Bien", miss: "Raté" }, pass: "Compris ! ♥", fail: "Hein ?", tap: "Taper",
   },
   es: {
-    title: "Criatura intraducible",
-    subtitle: "Una necesidad es un ritmo de cuatro tiempos. No hay frase, y los seis idiomas ven el mismo orden.",
-    preparing: "Preparando la ronda.",
-    ready: "Mira el ritmo y elige la misma marca.",
-    teach: "La marca correcta se enciende después del ritmo. Toca esa marca.",
-    ask: "Elige la marca solo con el ritmo.",
-    start: "Empezar",
-    signals: { hunger: "Comida", rest: "Descanso", play: "Juego", clean: "Aseo" },
-    misses: (n) => `Fallos ${n} / ${MISSES}`,
-    won: "Leíste cada necesidad de hoy.",
-    lost: "Tres fallos cierran la lección.",
-    again: "La misma lección",
-    best: (n) => `Oportunidades restantes ${n}`,
-    record: (wins, losses) => `Leídas ${wins} · Falladas ${losses}`,
-    date: (key) => `${key} · hora de Seúl`,
+    stage: "Encuentro {0}", phrase: "Frase {0} / {1}", score: "Puntos {0}", listen: "Escuchando…", yours: "¡Tu turno!", ready: "Listo…",
+    start: "Ir a verla", next: "Siguiente encuentro", retry: "Reintentar", won: "¡La criatura te entendió!", lost: "La criatura se enfadó y se escondió",
+    hint: "La criatura habla tamborileando su barriga. Cuando pare, toca el mismo ritmo en la pantalla (su barriga) a tiempo. La barra espaciadora también vale.",
+    stages: "Elegir encuentro", full: "Pantalla completa", exitFull: "Salir", mute: "Silenciar", unmute: "Activar sonido",
+    grade: { perfect: "Perfecto", good: "Bien", miss: "Fallo" }, pass: "¡Entendido! ♥", fail: "¿Eh?", tap: "Tocar",
   },
 };
 
-export default function UntranslatableCreature({ locale }: { locale: Locale }) {
-  const loc = COPY[locale] ? locale : "en";
-  const t = COPY[loc];
-  const reducedMotion = usePrefersReducedMotion();
-  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
-  const { shakeCssVars, addTrauma } = useGameJuicePro();
-  const [dateKey, setDateKey] = useState<string | null>(null);
-  const [run, setRun] = useState<Run | null>(null);
-  const [attempt, setAttempt] = useState(0);
-  const [beat, setBeat] = useState(0);
-  const [shown, setShown] = useState(false);
-  const [record, setRecord] = useState<GameRecord | null>(null);
-  const [best, setBest] = useState<BestRecord | null>(null);
-  const [muted, setMuted] = useState(false);
-  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
-  const hapticsRef = useRef(createHaptics());
-  const noted = useRef(new Set<string>());
-  const phase = useRef<Run["phase"] | null>(null);
+const W = 360;
+const H = 420;
+const DPR = 2;
+const CX = 180;
+const CY = 200;
 
-  const cue = (kind: CoreCue) => {
-    if (muted || reducedMotion) return;
-    try {
-      cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
-      void cuesRef.current.play(kind);
-    } catch {
-      /* audio blocked */
+type Phase = "idle" | "listen" | "gap" | "answer" | "result";
+interface Timeline { phase: Phase; t0: number; result: Judged | null; taps: number[]; pulse: number; tapPulse: number; ripples: { t: number }[] }
+
+function boop(ctx: AudioContext | null, when: number, freq: number, vol = 0.18, type: OscillatorType = "triangle") {
+  if (!ctx) return;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, when);
+  o.frequency.exponentialRampToValueAtTime(freq * 0.6, when + 0.12);
+  g.gain.setValueAtTime(vol, when);
+  g.gain.exponentialRampToValueAtTime(0.001, when + 0.16);
+  o.connect(g).connect(ctx.destination);
+  o.start(when);
+  o.stop(when + 0.18);
+}
+
+function drawCreature(ctx: CanvasRenderingContext2D, time: number, pulse: number, mood: "idle" | "happy" | "confused" | "listening", hue: number) {
+  const squash = 1 + pulse * 0.12;
+  const breathe = Math.sin(time * 2) * 3;
+  ctx.save();
+  ctx.translate(CX, CY + breathe);
+  // glow
+  const glow = ctx.createRadialGradient(0, 0, 20, 0, 0, 140);
+  glow.addColorStop(0, `hsla(${hue},90%,75%,${0.35 + pulse * 0.4})`);
+  glow.addColorStop(1, `hsla(${hue},90%,60%,0)`);
+  ctx.fillStyle = glow;
+  ctx.beginPath(); ctx.arc(0, 0, 140, 0, Math.PI * 2); ctx.fill();
+  // antennae
+  ctx.strokeStyle = `hsl(${hue},55%,45%)`; ctx.lineWidth = 4; ctx.lineCap = "round";
+  for (const s of [-1, 1]) {
+    ctx.beginPath(); ctx.moveTo(s * 22, -62); ctx.quadraticCurveTo(s * 40, -100 - pulse * 10, s * 30 + Math.sin(time * 3 + s) * 6, -112);
+    ctx.stroke();
+    ctx.fillStyle = `hsl(${(hue + 60) % 360},95%,70%)`;
+    ctx.beginPath(); ctx.arc(s * 30 + Math.sin(time * 3 + s) * 6, -114, 7 + pulse * 3, 0, Math.PI * 2); ctx.fill();
+  }
+  // body
+  ctx.scale(squash, 1 / squash);
+  const body = ctx.createRadialGradient(-20, -30, 10, 0, 0, 80);
+  body.addColorStop(0, `hsl(${hue},90%,88%)`);
+  body.addColorStop(1, `hsl(${hue},60%,58%)`);
+  ctx.fillStyle = body;
+  ctx.beginPath(); ctx.ellipse(0, 0, 76, 70, 0, 0, Math.PI * 2); ctx.fill();
+  // belly drum
+  ctx.fillStyle = `hsla(${(hue + 30) % 360},80%,92%,${0.7 + pulse * 0.3})`;
+  ctx.beginPath(); ctx.ellipse(0, 26, 38, 28, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = `hsla(${hue},50%,40%,0.4)`; ctx.lineWidth = 2;
+  for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(0, 26, 10 + k * 8, 0.2, Math.PI - 0.2); ctx.stroke(); }
+  // eyes
+  const blink = Math.sin(time * 0.9) > 0.97;
+  for (const s of [-1, 1]) {
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.ellipse(s * 26, -18, 16, blink ? 2 : 18, 0, 0, Math.PI * 2); ctx.fill();
+    if (!blink) {
+      ctx.fillStyle = "#1c1b2e";
+      const look = mood === "listening" ? -3 : 0;
+      ctx.beginPath(); ctx.arc(s * 26 + (mood === "confused" ? s * 4 : 0), -14 + look, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(s * 26 + 3, -18 + look, 3, 0, Math.PI * 2); ctx.fill();
     }
-  };
+  }
+  // mouth
+  ctx.strokeStyle = "#1c1b2e"; ctx.lineWidth = 3;
+  ctx.beginPath();
+  if (mood === "happy") ctx.arc(0, 2, 10, 0.1 * Math.PI, 0.9 * Math.PI);
+  else if (mood === "confused") { ctx.moveTo(-8, 8); ctx.quadraticCurveTo(-2, 2, 2, 8); ctx.quadraticCurveTo(6, 13, 10, 7); }
+  else ctx.arc(0, 4, 5 + pulse * 6, 0, Math.PI * 2);
+  ctx.stroke();
+  // cheeks
+  ctx.fillStyle = "rgba(255,120,160,0.45)";
+  ctx.beginPath(); ctx.ellipse(-46, 4, 9, 5, 0, 0, Math.PI * 2); ctx.ellipse(46, 4, 9, 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
 
-  const signal: Signal | null = run?.phase === "teach"
-    ? run.lesson.teach[run.step] ?? null
-    : run?.phase === "ask"
-      ? run.lesson.asks[run.step] ?? null
-      : null;
-  const rhythm = signal ? RHYTHM[signal] : null;
+export default function UntranslatableCreature({ locale: pageLocale }: { locale?: string }) {
+  const locale = normalizeGameLocale(pageLocale) as L;
+  const c = COPY[locale] ?? COPY.en;
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: locale as Locale });
+  const [run, setRun] = useState<RunState>(() => newRun(0));
+  const [cleared, setCleared] = useState<number[]>([]);
+  const [muted, setMuted] = useState(false);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const audio = useRef<AudioContext | null>(null);
+  const haptics = useRef<Haptics | null>(null);
+  const runRef = useRef(run);
+  runRef.current = run;
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
+  const tl = useRef<Timeline>({ phase: "idle", t0: 0, result: null, taps: [], pulse: 0, tapPulse: 0, ripples: [] });
+  const prevStatus = useRef(run.status);
 
-  useEffect(() => {
-    const key = kstDateKey();
-    const seed = (dateKeyIndex(key) * 0x9e3779b1) >>> 0;
-    setDateKey(key);
-    setRun(createRun(createLesson(seed)));
-    try {
-      setRecord(getRecord(GAME_ID));
-      setBest(getBest(GAME_ID));
-    } catch { /* storage can be blocked */ }
+  const load = useCallback((i: number) => {
+    setRun(newRun(i));
+    tl.current = { phase: "idle", t0: 0, result: null, taps: [], pulse: 0, tapPulse: 0, ripples: [] };
+    setPhase("idle");
   }, []);
 
   useEffect(() => {
-    setBeat(0);
-    setShown(reducedMotion);
-    if (!rhythm || reducedMotion) return;
-    let index = 0;
-    const id = window.setInterval(() => {
-      index += 1;
-      if (index >= rhythm.length) {
-        setShown(true);
-        window.clearInterval(id);
-        return;
-      }
-      setBeat(index);
-      if (rhythm[index] === 1) {
-        addTrauma(0.14);
-        MobileHapticsPro.light();
-      }
-    }, BEAT_MS);
-    return () => window.clearInterval(id);
-  }, [run?.phase, run?.step, signal, reducedMotion, rhythm, addTrauma]);
+    const done = loadClearedStages(GAME_ID, STAGE_COUNT);
+    setCleared(done);
+    load(nextOpenStage(done, STAGE_COUNT));
+    setMuted(readMutedPref(MUTE_KEY));
+    haptics.current = createHaptics({ enabled: readHapticsEnabled() });
+    return () => { void audio.current?.close().catch(() => undefined); };
+  }, [load]);
 
-  const choose = (picked: Signal) => {
-    if (!shown) return;
-    cue("place");
-    hapticsRef.current.fire("place");
-    setRun((current) => {
-      if (!current) return current;
-      if (current.phase === "teach" && current.lesson.teach[current.step] === picked) {
-        addTrauma(0.15);
-        MobileHapticsPro.selection();
-        return nextTeach(current);
-      }
-      if (current.phase === "ask") {
-        const next = answer(current, picked);
-        if (next.misses > current.misses) {
-          addTrauma(0.55);
-          MobileHapticsPro.error();
-        } else {
-          addTrauma(0.22);
-          MobileHapticsPro.impact();
+  useEffect(() => {
+    const prev = prevStatus.current;
+    prevStatus.current = run.status;
+    if (prev === run.status) return;
+    if (run.status === "won") {
+      setCleared(markStageCleared(GAME_ID, run.stage.index, STAGE_COUNT));
+      try { recordResult(GAME_ID, "w"); recordBest(GAME_ID, run.score, "score"); } catch { /* storage blocked */ }
+      haptics.current?.fire("win");
+    } else if (run.status === "lost") {
+      try { recordResult(GAME_ID, "l"); } catch { /* storage blocked */ }
+      haptics.current?.fire("fail");
+    }
+  }, [run.status, run.stage.index, run.score]);
+
+  const ensureAudio = () => {
+    if (audio.current) return audio.current;
+    try {
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      audio.current = Ctx ? new Ctx() : null;
+    } catch { audio.current = null; }
+    return audio.current;
+  };
+
+  /** Start the creature's phrase for the current index. */
+  const playPhrase = useCallback(() => {
+    const s = runRef.current;
+    const p = s.stage.phrases[s.at];
+    if (!p) return;
+    const a = ensureAudio();
+    const now = performance.now();
+    tl.current = { ...tl.current, phase: "listen", t0: now + 400, result: null, taps: [] };
+    setPhase("listen");
+    if (a && !mutedRef.current) {
+      const base = a.currentTime + 0.4;
+      p.beats.forEach((b, i) => { if (b) boop(a, base + (i * s.stage.stepMs) / 1000, 196, 0.22, "sine"); });
+    }
+  }, []);
+
+  const start = () => {
+    ensureAudio();
+    void audio.current?.resume().catch(() => undefined);
+    setRun((r) => begin(r));
+    runRef.current = begin(runRef.current);
+    playPhrase();
+  };
+
+  const tap = useCallback(() => {
+    const t = tl.current;
+    t.tapPulse = 1;
+    t.ripples.push({ t: 0 });
+    const a = audio.current;
+    if (a && !mutedRef.current) boop(a, a.currentTime, 392, 0.16, "triangle");
+    haptics.current?.fire("tap");
+    if (t.phase === "answer") t.taps.push(performance.now() - t.t0);
+  }, []);
+
+  // timeline + render
+  useEffect(() => {
+    let raf = 0;
+    let last = performance.now();
+    let time = 0;
+    const loop = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      time += dt;
+      const t = tl.current;
+      const s = runRef.current;
+      const p = s.stage.phrases[Math.min(s.at, s.stage.phrases.length - 1)]!;
+      const step = s.stage.stepMs;
+      const len = p.beats.length * step;
+      const elapsed = now - t.t0;
+      // creature drum pulse during listen
+      if (t.phase === "listen") {
+        const i = Math.floor(elapsed / step);
+        const into = elapsed - i * step;
+        if (i >= 0 && i < p.beats.length && p.beats[i] && into < 60) t.pulse = 1;
+        if (elapsed >= len) { t.phase = "gap"; t.t0 = now; setPhase("gap"); }
+      } else if (t.phase === "gap") {
+        // two-step count-in with soft ticks
+        const gapLen = step * 4;
+        if (elapsed >= gapLen) { t.phase = "answer"; t.t0 = now; t.taps = []; setPhase("answer"); }
+      } else if (t.phase === "answer") {
+        if (elapsed >= len + GOOD_MS + 60) {
+          const j = judge(p, step, t.taps);
+          t.result = j;
+          t.phase = "result";
+          t.t0 = now;
+          setPhase("result");
+          const a = audio.current;
+          if (a && !mutedRef.current) {
+            if (j.passed) { boop(a, a.currentTime, 523, 0.14); boop(a, a.currentTime + 0.1, 784, 0.14); }
+            else boop(a, a.currentTime, 150, 0.16, "sawtooth");
+          }
+          haptics.current?.fire(j.passed ? "success" : "fail");
+          const next = answer(runRef.current, j);
+          runRef.current = next;
+          setRun(next);
         }
-        return next;
+      } else if (t.phase === "result" && elapsed > 1100) {
+        if (runRef.current.status === "play") playPhrase();
+        else { t.phase = "idle"; setPhase("idle"); }
       }
-      return current;
-    });
-  };
+      t.pulse = Math.max(0, t.pulse - dt * 6);
+      t.tapPulse = Math.max(0, t.tapPulse - dt * 6);
+      t.ripples = t.ripples.filter((r) => (r.t += dt) < 0.6);
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      const root = containerRef.current;
-      if (!root || !(event.target instanceof Node) || !root.contains(event.target)) return;
-      const picked = SIGNALS[Number(event.key) - 1];
-      if (picked) {
-        event.preventDefault();
-        choose(picked);
-        return;
+      const ctx = canvasRef.current?.getContext("2d");
+      if (ctx) {
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, "#1b1638");
+        sky.addColorStop(1, "#3b2d6b");
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, W, H);
+        for (let k = 0; k < 40; k++) {
+          const sx = (k * 97) % W;
+          const sy = (k * 53) % 220;
+          ctx.fillStyle = `rgba(255,255,255,${0.3 + 0.3 * Math.sin(time * 2 + k)})`;
+          ctx.fillRect(sx, sy, 2, 2);
+        }
+        ctx.fillStyle = "#2b5d4a";
+        ctx.beginPath(); ctx.ellipse(CX, H + 40, 260, 120, 0, 0, Math.PI * 2); ctx.fill();
+        // ripples from taps
+        for (const r of t.ripples) {
+          ctx.strokeStyle = `rgba(255,236,153,${1 - r.t / 0.6})`;
+          ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(CX, CY + 26, 30 + r.t * 120, 0, Math.PI * 2); ctx.stroke();
+        }
+        const mood = t.phase === "result" && t.result ? (t.result.passed ? "happy" : "confused") : t.phase === "answer" ? "listening" : "idle";
+        drawCreature(ctx, time, Math.max(t.pulse, t.tapPulse), mood, 190 + s.stage.index * 5);
+        // speech glyphs while it talks
+        if (t.phase === "listen" && t.pulse > 0.6) {
+          ctx.fillStyle = "rgba(255,236,153,0.9)";
+          ctx.font = "700 22px system-ui";
+          ctx.textAlign = "center";
+          ctx.fillText(["◉", "✦", "◈", "❖"][Math.floor(elapsed / step) % 4]!, CX + 70, CY - 80);
+        }
+        // beat lights
+        const n = p.beats.length;
+        const gapX = Math.min(40, (W - 40) / n);
+        const x0 = CX - ((n - 1) * gapX) / 2;
+        const curStep = t.phase === "listen" || t.phase === "answer" ? Math.floor(elapsed / step) : -1;
+        const grades = t.result?.grades ?? [];
+        let gi = 0;
+        for (let i = 0; i < n; i++) {
+          const x = x0 + i * gapX;
+          const y = H - 44;
+          const isDrum = p.beats[i] === 1;
+          const showPattern = t.phase === "listen" || t.phase === "result";
+          ctx.fillStyle = "rgba(255,255,255,0.12)";
+          ctx.beginPath(); ctx.arc(x, y, 13, 0, Math.PI * 2); ctx.fill();
+          if (isDrum && showPattern) {
+            let col = "#ffe066";
+            if (t.phase === "result") { const g = grades[gi]; col = g === "perfect" ? "#69db7c" : g === "good" ? "#4dabf7" : "#ff6b6b"; }
+            ctx.fillStyle = col;
+            ctx.beginPath(); ctx.arc(x, y, i === curStep ? 12 : 9, 0, Math.PI * 2); ctx.fill();
+          }
+          if (isDrum) gi++;
+          if (i === curStep) { ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.stroke(); }
+        }
+        if (t.phase === "gap") {
+          const k = Math.floor(elapsed / step);
+          ctx.fillStyle = "rgba(255,255,255,0.85)";
+          ctx.font = "800 30px system-ui";
+          ctx.textAlign = "center";
+          ctx.fillText(k < 2 ? "…" : String(4 - k), CX, 60);
+        }
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
       }
-      if (event.key === "f" || event.key === "F") {
-        event.preventDefault();
-        togglePortal();
-      } else if (event.key === "m" || event.key === "M") {
-        event.preventDefault();
-        setMuted((value) => !value);
-      }
+      raf = requestAnimationFrame(loop);
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [containerRef, togglePortal, shown, signal, run?.phase]);
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [playPhrase]);
 
-  useEffect(() => {
-    if (!run || !dateKey) return;
-    const previous = phase.current;
-    phase.current = run.phase;
-    if (previous === run.phase) return;
-    if (run.phase !== "won" && run.phase !== "lost") return;
-    const key = `${dateKey}:${attempt}`;
-    if (!noted.current.has(key)) {
-      noted.current.add(key);
-      try {
-        setRecord(recordResult(GAME_ID, run.phase === "won" ? "w" : "l"));
-        if (run.phase === "won") setBest(recordBest(GAME_ID, MISSES - run.misses, "score"));
-      } catch { /* best-effort */ }
-    }
-    if (run.phase === "won") {
-      cue("win");
-      hapticsRef.current.fire("win");
-      addTrauma(0.4);
-      if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
-    } else if (run.phase === "lost") {
-      cue("fail");
-      hapticsRef.current.fire("fail");
-      addTrauma(0.65);
-    }
-  }, [run, dateKey, attempt, muted, reducedMotion, addTrauma]);
-
-  const again = () => {
-    cue("tap");
-    hapticsRef.current.fire("tap");
-    if (!dateKey) return;
-    const seed = (dateKeyIndex(dateKey) * 0x9e3779b1) >>> 0;
-    setAttempt((value) => value + 1);
-    setRun(createRun(createLesson(seed)));
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === " " || e.key === "Enter" || e.key === "j" || e.key === "f") { e.preventDefault(); if (run.status === "ready") start(); else tap(); }
   };
 
-  const teachTarget = run?.phase === "teach" && shown ? run.lesson.teach[run.step] : null;
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    writeMutedPref(MUTE_KEY, next);
+  };
+
+  const label = phase === "listen" ? c.listen : phase === "gap" ? c.ready : phase === "answer" ? c.yours : phase === "result" ? (tl.current.result?.passed ? c.pass : c.fail) : "";
+  const st = stars(run);
 
   return (
     <div
       ref={containerRef}
-      style={{
-        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
-        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
-        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
-      } as React.CSSProperties}
-      className={`${isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"} transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)`}
+      data-game="untranslatable-creature"
+      className={isImmersive ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col gap-2 overflow-y-auto overscroll-none bg-background p-3" : "mx-auto w-full max-w-md space-y-2"}
     >
-      <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
-        <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
-          <img src={UNTRANSLATABLE_CREATURE_SPRITES.keyart} alt={t.title} className="h-20 w-full object-cover sm:h-44" />
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Badge variant="secondary">{fill(c.stage, run.stage.index + 1)} / {STAGE_COUNT}</Badge>
+        <Badge variant="outline">{fill(c.phrase, Math.min(run.at + 1, run.stage.phrases.length), run.stage.phrases.length)}</Badge>
+        <Badge variant="outline" aria-label={`${run.moods}/${MOODS}`}>{"♥".repeat(Math.max(0, run.moods))}{"♡".repeat(Math.max(0, MOODS - run.moods))}</Badge>
+        <Badge variant="outline">{fill(c.score, run.score)}</Badge>
+        <div className="ml-auto flex gap-1">
+          <Button variant="ghost" size="icon" className="size-11" onClick={toggleMute} aria-label={muted ? c.unmute : c.mute}>
+            {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
+          </Button>
+          <Button variant="ghost" size="icon" className="size-11" onClick={togglePortal} aria-label={isImmersive ? c.exitFull : c.full}>
+            {isImmersive ? <Minimize2 className="size-5" /> : <Maximize2 className="size-5" />}
+          </Button>
         </div>
-        <div className="mb-4 flex flex-wrap gap-2">
-          <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
-            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
-          </button>
-          <button type="button" onClick={togglePortal} aria-pressed={isImmersive} aria-label={isImmersive ? portalLabels.exit : portalLabels.enter} title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
-            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-          </button>
-        </div>
-        {!run || !dateKey ? <p className="text-sm text-muted-foreground">{t.preparing}</p> : (
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">{t.date(dateKey)}</p>
-            <p className="text-sm font-bold tabular-nums text-foreground" aria-live="polite">{t.misses(run.misses)}</p>
-            <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "ask" ? t.ask : run.phase === "teach" ? t.teach : t.ready}</p>
-            {run.phase === "won" ? (
-              <div className="flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/10 p-3">
-                <img src={UNTRANSLATABLE_CREATURE_SPRITES.trophy} alt="" className="size-10 shrink-0 object-contain drop-shadow-sm" draggable={false} />
-                <p className="text-sm font-bold text-foreground">{t.won}</p>
-              </div>
-            ) : null}
-            <div className="relative mx-auto flex size-24 items-center justify-center" aria-hidden="true">
-              <div
-                className={`absolute inset-0 rounded-full bg-primary/20 transition-all duration-300 ${
-                  !shown && rhythm?.[beat] === 1 ? "scale-125 bg-primary/40 ring-4 ring-primary/60 animate-ping" : "scale-100"
-                }`}
-              />
-              <div className="relative flex size-20 items-center justify-center rounded-full border border-border bg-card p-3 shadow-md">
-                <img
-                  src={UNTRANSLATABLE_CREATURE_SPRITES.orb}
-                  alt="●"
-                  className={`size-14 object-contain transition-transform duration-200 ${
-                    !shown && rhythm?.[beat] === 1 ? "scale-115" : "scale-100"
-                  }`}
-                  draggable={false}
-                />
-              </div>
-            </div>
-            {rhythm ? (
-              <div className="mx-auto grid w-full max-w-xs grid-cols-4 gap-2" aria-hidden="true">
-                {rhythm.map((on, index) => {
-                  const revealed = reducedMotion || shown || index <= beat;
-                  const lit = revealed && on === 1;
-                  const current = !reducedMotion && !shown && index === beat;
-                  return <div key={index} className={`aspect-square rounded-md ${lit ? "bg-primary" : "bg-muted"} ${current ? "ring-2 ring-primary" : ""}`} />;
-                })}
-              </div>
-            ) : null}
-            {run.phase === "ready" ? (
-              <button type="button" onClick={() => { cue("tap"); hapticsRef.current.fire("tap"); setRun(begin(run)); }} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.start}</button>
-            ) : null}
-            {run.phase === "teach" || run.phase === "ask" ? (
-              <div className="grid grid-cols-2 gap-2">
-                {SIGNALS.map((id, index) => (
-                  <button key={id} type="button" disabled={!shown} onClick={() => choose(id)} aria-label={`${index + 1}. ${t.signals[id]}`} className={`${CONTROL} inline-flex min-h-16 items-center justify-center gap-2 text-2xl disabled:opacity-40 ${teachTarget === id ? "border-primary bg-primary/15 text-foreground ring-2 ring-primary" : "border-border bg-card text-foreground"}`}>
-                    <img src={UNTRANSLATABLE_CREATURE_SPRITES.glyph} alt="" className="size-5 shrink-0 object-contain" draggable={false} />
-                    <span>{GLYPH[id]}</span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            {run.phase === "won" || run.phase === "lost" ? (
-              <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
-            ) : null}
-            <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>
+      </div>
+
+      <div className="relative">
+        <canvas
+          ref={canvasRef}
+          width={W * DPR}
+          height={H * DPR}
+          tabIndex={0}
+          onKeyDown={onKey}
+          onPointerDown={(e) => { e.preventDefault(); if (run.status === "play") tap(); }}
+          className="mx-auto block w-full max-w-md touch-none select-none rounded-xl border border-border"
+          aria-label={c.hint}
+        />
+        {label ? (
+          <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center" aria-live="polite">
+            <span className="rounded-full bg-background px-3 py-1 text-sm font-bold text-foreground shadow">{label}</span>
           </div>
-        )}
-      </GameContainer>
+        ) : null}
+        {run.status === "ready" ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-background/80 p-4 text-center">
+            <p className="text-2xl font-black">{fill(c.stage, run.stage.index + 1)}</p>
+            <Button className="min-h-12 min-w-40" onClick={start}>{c.start}</Button>
+          </div>
+        ) : null}
+      </div>
+
+      {run.status === "won" || run.status === "lost" ? (
+        <div className="space-y-2 rounded-lg border border-primary/40 bg-primary/10 p-3 text-center" aria-live="polite">
+          <p className="text-lg font-bold">{run.status === "won" ? c.won : c.lost}</p>
+          {run.status === "won" ? <p className="text-xl text-warning" aria-label={`${st}/3`}>{"★".repeat(st)}{"☆".repeat(3 - st)}</p> : null}
+          <p className="text-sm tabular-nums">{fill(c.score, run.score)}</p>
+          {run.status === "won" ? (
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" className="min-h-12" onClick={() => load(run.stage.index)}><RotateCcw className="size-4" /><span>{c.retry}</span></Button>
+              <Button className="min-h-12" onClick={() => load(run.stage.index >= STAGE_COUNT - 1 ? 0 : run.stage.index + 1)}>
+                {run.stage.index >= STAGE_COUNT - 1 ? finaleLabel(locale) : c.next}
+              </Button>
+            </div>
+          ) : (
+            <Button className="min-h-12 w-full" onClick={() => load(run.stage.index)}><RotateCcw className="size-4" /><span>{c.retry}</span></Button>
+          )}
+        </div>
+      ) : null}
+
+      <p className="text-xs text-muted-foreground">{c.hint}</p>
+
+      <details className="rounded-lg border border-border p-2">
+        <summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">{c.stages}</summary>
+        <div className="pt-2">
+          <StageBar count={STAGE_COUNT} current={run.stage.index} cleared={cleared} locale={locale} onSelect={load} />
+        </div>
+      </details>
     </div>
   );
 }
