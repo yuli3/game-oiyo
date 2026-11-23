@@ -6,7 +6,7 @@ public static partial class OiyoI18n
     // English -> { ko, ja, es, zh, fr }; null keeps the game's own text.
     static readonly Dictionary<string, string[]> Table = new Dictionary<string, string[]>
     {
-        ["Neon Genesis"] = new string[] { null, null, null, "霓虹创世", "Genèse néon" },
+        ["Neon Prelude"] = new string[] { null, null, null, "霓虹序曲", "Prélude néon" },
         ["Cyber Rush"] = new string[] { null, null, null, "赛博冲刺", "Ruée cyber" },
         ["Glitch Hop City"] = new string[] { null, null, null, "故障嘻哈城", "Glitch Hop City" },
         ["Synthwave Sunset"] = new string[] { null, null, null, "合成波日落", "Coucher synthwave" },
