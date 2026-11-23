@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import OndolFlue from "../../components/games/OndolFlue";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "온돌 구들 잇기 — 구들장을 돌려 아궁이 불길을 굴뚝까지 잇는 무료 한옥 겨울 퍼즐 30단계",
+    description: "추운 설날 밤, 한옥 방바닥 아래 고래(불길)를 이어 온 집을 데워요. 구들장 돌을 눌러 돌리고, 아궁이 불에서 굴뚝까지 끊긴 끝 없이 모두 이으면 바닥이 주황빛으로 달아오르고 덜덜 떨던 가족이 쿨쿨 잠들어요. 3×3에서 7×7까지 30단계.",
+  },
+  en: {
+    title: "Ondol Flue — Free hanok winter puzzle: turn floor stones to carry the fire's heat to the chimney (30 stages)",
+    description: "On a cold Seollal night, join the flues under a hanok floor to warm the whole house. Tap floor stones to turn them; link every channel from the kitchen fire to the chimney with no open ends and the floor glows orange while the shivering family drifts off to sleep. 30 stages from 3×3 to 7×7.",
+  },
+  ja: {
+    title: "オンドルの煙道 — 床石を回してかまどの熱を煙突まで届ける無料の韓屋冬パズル30ステージ",
+    description: "寒いお正月の夜、韓屋の床下の煙道をつないで家じゅうを暖めよう。床石をタップして回し、かまどの火から煙突まで開いた端なしにすべてつなぐと、床がオレンジ色に輝き、震えていた家族がすやすや眠ります。3×3から7×7まで30ステージ。",
+  },
+  zh: {
+    title: "暖炕烟道 — 转动炕石把灶火的热引到烟囱的免费韩屋冬季益智游戏30关",
+    description: "寒冷的春节夜晚，把韩屋地板下的烟道接起来，让整个屋子暖和。点击炕石转动它们，从灶火到烟囱全部接通、没有断开的口，地板就会泛起橙色暖光，冻得发抖的家人也安然入睡。从3×3到7×7共30关。",
+  },
+  fr: {
+    title: "Conduits d'ondol — Puzzle d'hiver gratuit : tournez les pierres pour mener la chaleur du feu à la cheminée (30 niveaux)",
+    description: "Par une froide nuit de Seollal, reliez les conduits sous le sol d'une maison hanok pour réchauffer toute la maison. Touchez les pierres pour les tourner ; reliez chaque conduit du feu de cuisine à la cheminée sans extrémité ouverte et le sol rougeoie pendant que la famille grelottante s'endort. 30 niveaux de 3×3 à 7×7.",
+  },
+  es: {
+    title: "Conductos del ondol — Puzle de invierno gratis: gira las piedras para llevar el calor del fuego a la chimenea (30 niveles)",
+    description: "En una fría noche de Seollal, une los conductos bajo el suelo de una casa hanok para calentarla entera. Toca las piedras para girarlas; enlaza cada conducto del fogón a la chimenea sin extremos abiertos y el suelo brilla naranja mientras la familia que tiritaba se queda dormida. 30 niveles de 3×3 a 7×7.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["ondol-flue"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <OndolFlue client:load locale={locale} />
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="ondol-flue" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
