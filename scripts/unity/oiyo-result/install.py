@@ -64,6 +64,7 @@ BUILDS = {
     "line-surf-unity": ("line-surf", "LineSurf/Runtime/LineSurfPlayer.cs", T, "state, score"),
     "dot-runner-unity": ("dot-runner", "DotRunner/Runtime/DotRunnerPlayer.cs", T, "state, score"),
     "charge-climb-unity": ("charge-climb", "ChargeClimb/Runtime/ChargeClimbPlayer.cs", T, "state, score"),
+    "grappling-boss-unity": ("grappling-boss", "GrapplingBoss/Runtime/GrapplingBossPlayer.cs", T, "state, score"),
 }
 
 MARK = "OiyoResult."
