@@ -1,0 +1,331 @@
+{
+"All 30 stages": [
+"30단계 전체",
+"全30面",
+"Los 30 niveles",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Apple": [
+"사과",
+"りんご",
+"Manzana",
+"苹果",
+"Pomme"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Charye Table": [
+"차례상 차리기",
+"茶礼の膳",
+"Mesa del charye",
+"摆茶礼桌",
+"Table du charye"
+],
+"Chestnut": [
+"밤",
+"栗",
+"Castaña",
+"栗",
+"Châtaigne"
+],
+"Choose a stage": [
+"단계를 골라요",
+"ステージを選ぶ",
+"Elige un nivel",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Drag each dish to its row. Tap a fish to turn it.": [
+"음식을 자기 줄로 끌어요. 생선은 탭해 돌려요.",
+"料理を自分の列へドラッグ。魚はタップで向きを変える。",
+"Arrastra cada plato a su fila. Toca un pescado para girarlo.",
+"把菜拖到它那一排。点鱼掉头。",
+"Glissez chaque plat dans sa rangée. Touchez un poisson pour le tourner."
+],
+"Dried fish": [
+"북어포",
+"干物",
+"Seco",
+"鱼干",
+"Séché"
+],
+"Dried fish leftmost, sikhye rightmost": [
+"좌포우혜: 포는 맨 왼쪽, 식혜는 맨 오른쪽",
+"干物は左端、シッケは右端",
+"Pescado seco a la izquierda, sikhye a la derecha",
+"鱼干最左，甜米露最右",
+"Poisson séché tout à gauche, sikhye tout à droite"
+],
+"E": [
+"동",
+"東",
+"E",
+"东",
+"E"
+],
+"Fish": [
+"생선",
+"魚",
+"Pescado",
+"鱼",
+"Poisson"
+],
+"Fish east, meat west": [
+"어동육서: 생선은 동, 고기는 서",
+"魚は東、肉は西",
+"Pescado al este, carne al oeste",
+"鱼在东，肉在西",
+"Poisson à l'est, viande à l'ouest"
+],
+"Fish heads point east": [
+"두동미서: 생선 머리는 동쪽",
+"魚の頭は東向き",
+"Cabezas de pescado hacia el este",
+"鱼头朝东",
+"Têtes des poissons vers l'est"
+],
+"From the west: jujube, chestnut, pear, persimmon": [
+"조율이시: 서쪽부터 대추·밤·배·감",
+"西から ナツメ・栗・梨・柿",
+"Desde el oeste: azufaifa, castaña, pera, caqui",
+"自西起：枣、栗、梨、柿",
+"Depuis l'ouest : jujube, châtaigne, poire, kaki"
+],
+"Greens": [
+"나물",
+"ナムル",
+"Verduras",
+"野菜",
+"Légumes"
+],
+"Jujube": [
+"대추",
+"ナツメ",
+"Azufaifa",
+"枣",
+"Jujube"
+],
+"Meat": [
+"육전",
+"肉",
+"Carne",
+"肉",
+"Viande"
+],
+"Next stage": [
+"다음 단계",
+"次の面",
+"Siguiente nivel",
+"下一关",
+"Niveau suivant"
+],
+"Offer the table": [
+"차례 올리기",
+"茶礼を供える",
+"Presentar la mesa",
+"上供",
+"Présenter la table"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Pear": [
+"배",
+"梨",
+"Pera",
+"梨",
+"Poire"
+],
+"Persimmon": [
+"감",
+"柿",
+"Caqui",
+"柿",
+"Kaki"
+],
+"Play stage {0}": [
+"{0}단계 시작",
+"{0}面をプレイ",
+"Jugar nivel {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Red fruit east, white fruit west": [
+"홍동백서: 붉은 과일은 동, 흰 과일은 서",
+"赤い果物は東、白い果物は西",
+"Fruta roja al este, blanca al oeste",
+"红果在东，白果在西",
+"Fruits rouges à l'est, blancs à l'ouest"
+],
+"Restart": [
+"다시 시작",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 하기",
+"もう一度",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Rice": [
+"밥",
+"ご飯",
+"Arroz",
+"饭",
+"Riz"
+],
+"Rice west (left), soup east (right)": [
+"반서갱동: 밥은 서(왼쪽), 국은 동(오른쪽)",
+"ご飯は西（左）、汁は東（右）",
+"Arroz al oeste (izquierda), sopa al este (derecha)",
+"饭在西（左），汤在东（右）",
+"Riz à l'ouest (gauche), soupe à l'est (droite)"
+],
+"Set the Seollal ancestral table by this house's rules: drag each dish to its row, tap a fish to turn it, then offer before the incense burns down.": [
+"이 집의 법도대로 설날 차례상을 차려요. 음식을 자기 줄로 끌고, 생선은 탭해 돌리고, 향이 다 타기 전에 올려요.",
+"この家のしきたりどおりにソルラルの茶礼の膳を整えよう。料理を自分の列へドラッグし、魚はタップで向きを変え、線香が燃え尽きる前に供えよう。",
+"Pon la mesa ritual de Seollal según las reglas de esta casa: arrastra cada plato a su fila, toca un pescado para girarlo y preséntala antes de que se consuma el incienso.",
+"按这家的规矩摆春节茶礼桌：把菜拖到它那一排，点鱼掉头，在香烧完前上供。",
+"Dressez la table des ancêtres de Seollal selon les règles de la maison : glissez chaque plat dans sa rangée, touchez un poisson pour le tourner, puis présentez-la avant que l'encens se consume."
+],
+"Sikhye": [
+"식혜",
+"シッケ",
+"Sikhye",
+"甜米露",
+"Sikhye"
+],
+"Soup": [
+"국",
+"汁",
+"Sopa",
+"汤",
+"Soupe"
+],
+"Stage": [
+"단계",
+"面",
+"Nivel",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"단계 목록",
+"ステージ一覧",
+"Lista de niveles",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"{0}단계",
+"{0}面",
+"Nivel {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Sweets": [
+"한과",
+"韓菓",
+"Dulces",
+"韩果",
+"Douceurs"
+],
+"Tap to start": [
+"탭해서 시작",
+"タップでスタート",
+"Toca para empezar",
+"点击开始",
+"Touchez pour commencer"
+],
+"That breaks a rule": [
+"법도에 어긋나요",
+"しきたりに合っていない",
+"Se rompe una regla",
+"不合规矩",
+"Une règle n'est pas respectée"
+],
+"The incense burned out": [
+"향이 다 타 버렸어요",
+"線香が燃え尽きた",
+"El incienso se consumió",
+"香烧完了",
+"L'encens s'est consumé"
+],
+"The table is offered with care!": [
+"정성껏 차례를 올렸어요!",
+"心をこめて茶礼を供えた！",
+"¡La mesa se presentó con esmero!",
+"用心摆好了茶礼桌！",
+"La table est présentée avec soin !"
+],
+"There are empty places": [
+"아직 빈자리가 있어요",
+"まだ空いている場所がある",
+"Quedan sitios vacíos",
+"还有空位",
+"Il reste des places vides"
+],
+"This house's rules": [
+"이 집의 법도",
+"この家のしきたり",
+"Las reglas de esta casa",
+"这家的规矩",
+"Les règles de cette maison"
+],
+"W": [
+"서",
+"西",
+"O",
+"西",
+"O"
+],
+"Well set!": [
+"잘 차렸어요!",
+"きれいに整った！",
+"¡Bien puesta!",
+"摆得好！",
+"Bien dressée !"
+],
+"You cleared all 30 stages!": [
+"30단계를 모두 클리어했어요!",
+"全30面をクリアしました！",
+"¡Superaste los 30 niveles!",
+"你通关了全部 30 关！",
+"Vous avez terminé les 30 niveaux !"
+],
+"{0} dishes": [
+"음식 {0}가지",
+"料理 {0}品",
+"{0} platos",
+"{0}道菜",
+"{0} plats"
+],
+"{0} offerings · {1} wrong": [
+"올린 횟수 {0} · 틀린 횟수 {1}",
+"供えた回数 {0} · 間違い {1}",
+"{0} presentaciones · {1} errores",
+"上供 {0}次 · 出错 {1}次",
+"{0} présentations · {1} erreurs"
+]
+}

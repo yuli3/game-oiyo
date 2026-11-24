@@ -38,6 +38,9 @@ import * as mandu from "../../src/lib/games/mandu-pleat";
 import * as kimjang from "../../src/lib/games/kimjang-salt";
 import * as hwangtae from "../../src/lib/games/hwangtae-dry";
 import * as yongal from "../../src/lib/games/yongal-scoop";
+import * as mung from "../../src/lib/games/mungpungji-seal";
+import * as charye from "../../src/lib/games/charye-table";
+import * as yeontan from "../../src/lib/games/yeontan-relay";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -280,4 +283,24 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = yongal.YONGAL_STAGES.map((st) => `        new Level { swingAmp = ${n(st.swingAmp)}, swingPeriod = ${n(st.swingPeriod)}, fall = ${n(st.fall)}, moonR = ${n(st.moonR)}, moonAmp = ${n(st.moonAmp)}, moonPeriod = ${n(st.moonPeriod)}, ripple = ${n(st.ripple)}, time = ${n(st.time)}, need = ${st.need}, par = ${st.par} },`);
   write("yongal-scoop", "YongalScoop", `    public struct Level { public float swingAmp, swingPeriod, fall, moonR, moonAmp, moonPeriod, ripple, time; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Mungpungji Seal: drafts (cell, strength, opening time), frost spread, shades, paper, warmth drain, par
+{
+  const rows = mung.MUNG_STAGES.map((st) => `        new Level { drafts = ${arr(st.drafts.flatMap((d) => [d.cell, d.strength, d.at]))}, spread = ${n(st.spread)}, shades = ${st.shades}, paper = ${st.paper}, drain = ${n(st.drain)}, par = ${st.par} },`);
+  write("mungpungji-seal", "MungpungjiSeal", `    public struct Level { public float[] drafts; public float spread, drain; public int shades, paper, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Charye Table: dishes (kind index per id), the house's rules (index), places per row, incense, par
+{
+  const kinds = ["rice", "soup", "meat", "fish", "po", "namul", "hye", "jujube", "chestnut", "pear", "persimmon", "apple", "hangwa"];
+  const rules = ["banseo", "eodong", "dudong", "jwapo", "joyul", "hongdong"];
+  const rows = charye.CHARYE_STAGES.map((st) => `        new Level { dishes = ${iarr(st.dishes.map((d) => kinds.indexOf(d.kind)))}, rules = ${iarr(st.rules.map((r) => rules.indexOf(r)))}, cols = ${iarr(st.cols)}, time = ${n(st.time)}, par = ${st.par} },`);
+  write("charye-table", "CharyeTable", `    public struct Level { public int[] dishes, rules, cols; public float time; public int par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Yeontan Relay: volunteers (grip, rest, hold seconds), unloading times, truck time, mark, par
+{
+  const rows = yeontan.YEONTAN_STAGES.map((st) => `        new Level { line = ${arr(st.line.flatMap((v) => [v.turn, v.reset, v.hold]))}, arrivals = ${arr(st.arrivals)}, time = ${n(st.time)}, need = ${st.need}, par = ${st.par} },`);
+  write("yeontan-relay", "YeontanRelay", `    public struct Level { public float[] line, arrivals; public float time; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
