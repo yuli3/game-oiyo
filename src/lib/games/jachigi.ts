@@ -191,7 +191,7 @@ export function stepJachigi(s: Jachigi, dt: number): JachigiEvents {
           break;
         }
       }
-      if (s.phase === "landed") break;
+      if (ev.done) break;
       if (st.h <= 0) {
         st.h = 0;
         ev.land = true;
