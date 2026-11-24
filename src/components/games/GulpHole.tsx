@@ -195,7 +195,7 @@ export default function GulpHole({ locale: pageLocale }: { locale?: string }) {
         const dx = (k.has("ArrowRight") ? 1 : 0) - (k.has("ArrowLeft") ? 1 : 0);
         const dy = (k.has("ArrowDown") ? 1 : 0) - (k.has("ArrowUp") ? 1 : 0);
         if (dx || dy) steer(p, p.x + dx * 60, p.y + dy * 60);
-      } else if (started.current && !pointer.current) steer(p, p.x, p.y);
+      }
       if ((pointer.current || k.size) && !started.current) started.current = true;
       if (started.current && !p.over) {
         const got = step(p, dt);
