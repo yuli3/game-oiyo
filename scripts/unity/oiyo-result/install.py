@@ -138,6 +138,9 @@ BUILDS = {
     "formula-lock-unity": ("formula-lock", "FormulaLock/Runtime/FormulaLockPlayer.cs", T, "state, starsWon"),
     "veggie-lanes-unity": ("veggie-lanes", "VeggieLanes/Runtime/VeggieLanesPlayer.cs", T, "state, starsWon"),
     "bounce-down-unity": ("bounce-down", "BounceDown/Runtime/BounceDownPlayer.cs", T, "state, starsWon"),
+    "trio-tray-unity": ("trio-tray", "TrioTray/Runtime/TrioTrayPlayer.cs", T, "state, starsWon"),
+    "cork-spin-unity": ("cork-spin", "CorkSpin/Runtime/CorkSpinPlayer.cs", T, "state, starsWon"),
+    "gondola-queue-unity": ("gondola-queue", "GondolaQueue/Runtime/GondolaQueuePlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

@@ -1,0 +1,163 @@
+{
+"All 30 stages": [
+"30단계 전체",
+"全30面",
+"Los 30 niveles",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Cork Spin": [
+"코르크 핀꽂기",
+"コルクピン刺し",
+"Corcho giratorio",
+"软木钉钉乐",
+"Liège tournant"
+],
+"Every pin is in!": [
+"핀을 다 꽂았어요!",
+"ピンを全部刺した！",
+"¡Todas las chinchetas clavadas!",
+"图钉全钉好了！",
+"Toutes les punaises sont plantées !"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Out of hearts": [
+"하트를 다 잃었어요",
+"ハートがなくなった",
+"Sin corazones",
+"红心用完了",
+"Plus de cœurs"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Rejouer"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ {0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Tap to push a pin in!": [
+"화면을 눌러 핀을 꽂아요!",
+"タップしてピンを刺そう！",
+"¡Toca para clavar una chincheta!",
+"点屏幕把图钉钉上去！",
+"Touchez pour planter une punaise !"
+],
+"Tap to push pins into the spinning cork board. Land one too close to another and it bounces off. Push in every pin before time runs out.": [
+"눌러서 도는 코르크판에 핀을 꽂아요. 다른 핀에 너무 가까우면 튕겨 나와요. 시간 안에 핀을 다 꽂아요.",
+"タップで回るコルクボードにピンを刺そう。ほかのピンに近すぎるとはじかれます。時間内に全部刺そう。",
+"Toca para clavar chinchetas en el corcho que gira. Si cae muy cerca de otra, rebota. Clávalas todas a tiempo.",
+"点击把图钉钉进旋转的软木板。离别的图钉太近会被弹开。在时间内全部钉上。",
+"Touchez pour planter des punaises dans le liège qui tourne. Trop près d'une autre, elle rebondit. Plantez-les toutes à temps."
+],
+"Tap to start": [
+"탭해서 시작",
+"タップでスタート",
+"Toca para empezar",
+"点击开始",
+"Touchez pour commencer"
+],
+"Time's up": [
+"시간이 다 됐어요",
+"時間切れ",
+"Se acabó el tiempo",
+"时间到了",
+"Temps écoulé"
+],
+"You cleared all 30 stages!": [
+"30단계를 모두 클리어했어요!",
+"全30面をクリアしました！",
+"¡Superaste los 30 niveles!",
+"你通关了全部 30 关！",
+"Vous avez terminé les 30 niveaux !"
+],
+"{0} pins": [
+"핀 {0}개",
+"ピン {0}本",
+"{0} chinchetas",
+"{0} 根图钉",
+"{0} punaises"
+],
+"{0} pins left": [
+"남은 핀 {0}개",
+"残り {0}本",
+"Quedan {0}",
+"剩 {0} 根",
+"{0} restantes"
+],
+"{0}s": [
+"{0}초",
+"{0}秒",
+"{0} s",
+"{0}秒",
+"{0} s"
+]
+}
