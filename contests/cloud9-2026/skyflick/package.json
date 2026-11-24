@@ -1,0 +1,1 @@
+{ "name": "skyflick", "private": true, "type": "commonjs", "license": "MIT", "scripts": { "test": "node --test test/logic.test.cjs", "start": "npx serve ." } }

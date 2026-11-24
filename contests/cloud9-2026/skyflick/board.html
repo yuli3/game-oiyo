@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SKYFLICK leaderboard</title>
+<style>
+  :root { --gold: #ffd23f; }
+  html, body { margin: 0; height: 100%; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #fff;
+    background: linear-gradient(#0e2552, #3f6fb8); overflow: hidden; }
+  main { height: 100%; display: grid; grid-template-rows: auto 1fr auto; padding: 4vh 6vw; box-sizing: border-box; }
+  h1 { margin: 0; font-size: 9vh; font-weight: 900; letter-spacing: .04em; text-shadow: 0 .6vh 0 rgba(6,16,40,.45); }
+  h1 small { display: block; font-size: 3vh; color: var(--gold); letter-spacing: .12em; }
+  ol { list-style: none; margin: 3vh 0 0; padding: 0; display: grid; gap: 1.2vh; align-content: start; }
+  li { display: grid; grid-template-columns: 8vh 1fr auto auto; gap: 3vh; align-items: center; font-size: 5vh; font-weight: 900;
+    background: rgba(6,16,40,.45); border-radius: 1.6vh; padding: 1vh 3vh; transition: background .4s; }
+  li .n { opacity: .7; } li .s { font-variant-numeric: tabular-nums; } li .m { font-size: 2.4vh; opacity: .8; font-weight: 700; }
+  li.new { background: rgba(255,210,63,.4); animation: pop .6s ease-out; }
+  li:first-child { color: var(--gold); }
+  footer { font-size: 2.4vh; opacity: .85; }
+  @keyframes pop { from { transform: scale(1.06); } to { transform: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1><small>TODAY'S SKY · BOOTH LEADERBOARD</small>SKYFLICK</h1>
+  <ol id="list" aria-live="polite"></ol>
+  <footer>60 seconds. Same sky for everyone today. Beat the top score at the booth.</footer>
+</main>
+<script src="logic.js"></script>
+<script>
+  const L = window.SkyLogic, KEY = 'skyflick.board.v1';
+  const list = document.getElementById('list');
+  let prev = [];
+  function render(board) {
+    const fresh = new Set(board.filter((e) => !prev.some((p) => p.at === e.at && p.tag === e.tag)).map((e) => e.at));
+    list.innerHTML = '';
+    for (let i = 0; i < L.BOARD_SIZE; i++) {
+      const e = board[i], li = document.createElement('li');
+      if (e && fresh.has(e.at) && prev.length) li.className = 'new';
+      li.innerHTML = `<span class="n">${i + 1}</span><span>${e ? e.tag : '---'}</span><span class="m">${e && e.acc != null ? e.acc + '% · ' + (e.react ?? '—') + ' ms' : ''}</span><span class="s">${e ? e.score.toLocaleString('en-US') : ''}</span>`;
+      list.appendChild(li);
+    }
+    prev = board;
+  }
+  const load = () => { try { return L.parseBoard(localStorage.getItem(KEY)); } catch { return []; } };
+  render(load());
+  if ('BroadcastChannel' in window) new BroadcastChannel('skyflick').onmessage = (m) => m.data?.type === 'board' && render(L.parseBoard(JSON.stringify(m.data.board)));
+  window.addEventListener('storage', (e) => e.key === KEY && render(load()));
+</script>
+</body>
+</html>
