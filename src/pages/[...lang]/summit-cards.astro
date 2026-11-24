@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SummitCards from "../../components/games/SummitCards";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "봉우리 카드 — 한 끗 차이로 이어 세 봉우리를 치우는 무료 카드 놀이 30단계",
+    description: "카드 28장이 세 봉우리를 이뤄요. 캠프 카드보다 한 끗 높거나 낮은 카드를 이어 내며 연속 콤보를 쌓고, 패가 떨어지기 전에 세 봉우리를 모두 치우는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Summit Cards — Free three-peak solitaire: play one rank up or down to clear the peaks (30 stages)",
+    description: "Twenty-eight cards make three peaks. Play cards one rank above or below the camp card to build long runs, and clear all three peaks before the stock runs out. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "峰カード — 1つちがいでつないで3つの峰を片づける無料のソリティア30面",
+    description: "28枚のカードが3つの峰をつくります。キャンプのカードより1つ上か下のカードをつないで連続コンボを重ね、山札がなくなる前に3つの峰をすべて片づけるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "三峰纸牌 — 差一点接下去清空三座山峰的免费接龙30关",
+    description: "28张牌组成三座山峰。接出比营地牌大一点或小一点的牌，打出长长的连击，在牌堆用完前清空三座山峰。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Cartes des cimes — Patience gratuite à trois sommets : un rang de plus ou de moins (30 niveaux)",
+    description: "Vingt-huit cartes forment trois sommets. Jouez des cartes d'un rang au-dessus ou en dessous de celle du camp pour enchaîner de longues suites, et dégagez les trois sommets avant la fin du talon. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Cartas de cumbre — Solitario gratis de tres cumbres: un rango arriba o abajo (30 niveles)",
+    description: "Veintiocho cartas forman tres cumbres. Juega cartas un rango por encima o por debajo de la del campamento para encadenar rachas largas y despeja las tres cumbres antes de que se acabe el mazo. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["summit-cards"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="summit-cards" build="summit-cards-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/summit-cards.webp">
+      <SummitCards client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="summit-cards" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
