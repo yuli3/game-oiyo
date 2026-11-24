@@ -15,22 +15,22 @@ export async function getStaticPaths() {
 const { locale } = Astro.props as { locale: Locale };
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 243종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 243종." },
-  en: { title: "OIYO Arcade — 243 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 243 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム243種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム243種。" },
-  zh: { title: "OIYO 街机 — 无需安装的243款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，243款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 243 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 243 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 243 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 243 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 246종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 246종." },
+  en: { title: "OIYO Arcade — 246 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 246 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム246種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム246種。" },
+  zh: { title: "OIYO 街机 — 无需安装的246款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，246款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 246 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 246 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 246 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 246 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 243종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "243 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム243種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的243款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "243 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "243 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 246종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "246 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム246種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的246款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "246 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "246 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -296,6 +296,9 @@ const GAMES: Game[] = [
   { slug: "daljip-fire", emoji: "🔥", cat: "arcade", name: { ko: "달집태우기", en: "Daljip Fire", ja: "タルチプ焼き", zh: "烧月屋", fr: "Feu de la daljip", es: "Hoguera de la daljip" } },
   { slug: "scarf-knit", emoji: "🧣", cat: "arcade", name: { ko: "목도리 뜨기", en: "Scarf Knit", ja: "マフラー編み", zh: "织围巾", fr: "Tricot d'écharpe", es: "Teje la bufanda" } },
   { slug: "ipchun-brush", emoji: "🖌️", cat: "arcade", name: { ko: "입춘 붓글씨", en: "Ipchun Brush", ja: "立春の筆", zh: "立春书法", fr: "Pinceau d'Ipchun", es: "Pincel de Ipchun" } },
+  { slug: "crane-count", emoji: "🦢", cat: "arcade", name: { ko: "두루미 세기", en: "Crane Count", ja: "ツルを数えろ", zh: "数丹顶鹤", fr: "Compte des grues", es: "Cuenta las grullas" } },
+  { slug: "rink-resurface", emoji: "⛸️", cat: "arcade", name: { ko: "빙판 정빙", en: "Rink Resurface", ja: "リンク整氷", zh: "冰场浇冰", fr: "Surfaçage de patinoire", es: "Pulido de pista" } },
+  { slug: "holiday-ticket", emoji: "🚄", cat: "arcade", name: { ko: "명절 기차표 예매", en: "Holiday Ticket", ja: "帰省きっぷ予約", zh: "春节抢火车票", fr: "Billet des fêtes", es: "Billete de las fiestas" } },
   { slug: "advent-puzzles", emoji: "🎄", cat: "puzzle", name: { ko: "어드벤트 퍼즐 달력", en: "Advent Puzzle Calendar", ja: "アドベント・パズルカレンダー", zh: "降临节谜题日历", fr: "Calendrier de l'Avent à énigmes", es: "Calendario de Adviento de puzles" } },
   { slug: "sunlit-glass", emoji: "🪟", cat: "puzzle", name: { ko: "햇살 스테인드글라스", en: "Sunlit Glass", ja: "陽だまりステンドグラス", zh: "阳光彩绘玻璃", fr: "Vitrail au soleil", es: "Vitral al Sol" } },
   { slug: "finger-hockey", emoji: "🏒", cat: "arcade", name: { ko: "손가락 에어하키", en: "Finger Air Hockey", ja: "指先エアホッケー", zh: "指尖桌上冰球", fr: "Air hockey du bout des doigts", es: "Air Hockey con el Dedo" } },
@@ -360,6 +363,42 @@ const newReleasesLabel: Record<Locale, { sectionTitle: string; badge: string; su
 const newReleaseLabels = newReleasesLabel[locale] ?? newReleasesLabel.en;
 
 const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; desc: Record<Locale, string> }> = [
+  {
+    slug: "crane-count",
+    tag: { ko: "철원 겨울 두루미 조사", en: "Cheorwon's winter crane census", ja: "鉄原の冬のツル調査", zh: "铁原冬季鹤类调查", fr: "Le recensement des grues de Cheorwon", es: "El censo de grullas de Cheorwon" },
+    desc: {
+      ko: "방금 지나간 두루미, 몇 마리였을까?",
+      en: "That flock just now: how many cranes?",
+      ja: "今の群れ、タンチョウは何羽？",
+      zh: "刚飞过的鹤群有几只？",
+      fr: "Ce vol à l'instant : combien de grues ?",
+      es: "Esa bandada: ¿cuántas grullas?",
+    },
+  },
+  {
+    slug: "rink-resurface",
+    tag: { ko: "스케이트장 쉬는 시간", en: "The break at the rink", ja: "スケートリンクの休憩時間", zh: "冰场休息时间", fr: "La pause à la patinoire", es: "El descanso en la pista" },
+    desc: {
+      ko: "바깥부터 한 바퀴씩, 빙판을 거울처럼",
+      en: "Lap from the outside in, ice like a mirror",
+      ja: "外側から一周ずつ、氷を鏡のように",
+      zh: "从外圈一圈圈，冰面如镜",
+      fr: "Tour après tour, une glace miroir",
+      es: "Vuelta a vuelta, hielo como un espejo",
+    },
+  },
+  {
+    slug: "holiday-ticket",
+    tag: { ko: "설 기차표 예매 전쟁", en: "The Seollal train-ticket rush", ja: "ソルラルの切符争奪戦", zh: "春节抢票大战", fr: "La ruée sur les billets de Seollal", es: "La carrera por los billetes de Seollal" },
+    desc: {
+      ko: "매진 전에 가족 자리를 나란히",
+      en: "Seat the family together before it sells out",
+      ja: "売り切れ前に家族を並べて",
+      zh: "卖光前让一家人坐一起",
+      fr: "Placez la famille avant le complet",
+      es: "Sienta a la familia antes de que se agote",
+    },
+  },
   {
     slug: "daljip-fire",
     tag: { ko: "정월 대보름 밤", en: "Daeboreum night", ja: "テボルムの夜", zh: "正月十五之夜", fr: "Nuit de Daeboreum", es: "Noche de Daeboreum" },

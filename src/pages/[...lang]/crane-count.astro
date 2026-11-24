@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CraneCount from "../../components/games/CraneCount";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "두루미 세기 — 하늘을 지나가는 두루미 무리를 몇 초 만에 세는 무료 겨울 관찰 게임 30단계",
+    description: "겨울 철원 들판에 내려앉는 두루미를 세어요. 무리는 몇 초 만에 하늘을 지나가요. 가족 단위 작은 무리로 묶어 빠르게 세고, 섞여 나는 회색 재두루미는 빼고 마릿수를 기록하는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Crane Count — Free winter game: count the red-crowned cranes in a flock that crosses the sky in seconds (30 stages)",
+    description: "Count the cranes that winter in the fields of Cheorwon. Each flock crosses the sky in a few seconds. Count them in little family groups, leave out the grey white-naped cranes flying among them, and record the number. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ツルを数えろ — 数秒で空を横切るタンチョウの群れを数える無料の冬の観察ゲーム30ステージ",
+    description: "冬の鉄原の野に降りるツルを数えます。群れは数秒で空を横切ります。家族単位の小さな群れごとに素早く数え、混じって飛ぶ灰色のマナヅルは除いて羽数を記録するUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "数丹顶鹤 — 几秒内数清飞过天空的丹顶鹤群的免费冬季观察游戏30关",
+    description: "数一数冬天落在铁原田野上的鹤。鹤群几秒钟就飞过天空。按家庭小群快速计数，把混在其中的灰色白枕鹤除外，记下数量。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Compte des grues — Jeu d'hiver gratuit : comptez les grues du Japon d'un vol qui traverse le ciel en quelques secondes (30 niveaux)",
+    description: "Comptez les grues qui hivernent dans les champs de Cheorwon. Chaque vol traverse le ciel en quelques secondes. Comptez par petites familles, laissez de côté les grues grises à cou blanc mêlées au vol, et notez le nombre. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Cuenta las grullas — Juego de invierno gratis: cuenta las grullas de corona roja de una bandada que cruza el cielo en segundos (30 niveles)",
+    description: "Cuenta las grullas que pasan el invierno en los campos de Cheorwon. Cada bandada cruza el cielo en unos segundos. Cuenta por grupitos familiares, deja fuera las grullas grises de nuca blanca y anota el número. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["crane-count"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="crane-count" build="crane-count-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/crane-count.webp">
+      <CraneCount client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="crane-count" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

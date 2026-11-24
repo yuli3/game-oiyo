@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import RinkResurface from "../../components/games/RinkResurface";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "빙판 정빙 — 정빙차를 몰고 바깥부터 한 바퀴씩 스케이트장 얼음을 매끈하게 만드는 무료 겨울 게임 30단계",
+    description: "스케이트장 쉬는 시간, 긁힌 얼음을 정빙차로 다시 매끈하게 만들어요. 바깥부터 날 폭만큼 겹치며 한 바퀴씩 돌고, 깊게 팬 자리는 두 번 지나가며, 펜스에 부딪히지 않게 모서리를 크게 도는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Rink Resurface — Free winter game: drive the resurfacer lap by lap from the outside in to make the ice smooth (30 stages)",
+    description: "In the break at the rink, drive the ice resurfacer to make the scratched ice smooth again. Lap from the outside in, overlapping by a blade's width, go over deep gouges twice and take the corners wide so you never hit the boards. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "リンク整氷 — 整氷車で外側から一周ずつスケートリンクの氷を滑らかにする無料の冬のゲーム30ステージ",
+    description: "スケートリンクの休憩時間、削れた氷を整氷車で滑らかに戻します。外側から刃の幅ずつ重ねて一周ずつ回り、深い傷は2回通り、フェンスにぶつからないよう角は大きく回るUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "冰场浇冰 — 驾驶浇冰车从外圈一圈圈把冰面整平的免费冬季游戏30关",
+    description: "冰场休息时，开着浇冰车把划花的冰面重新整平。从外圈开始每圈重叠一个刀宽，深划痕要过两遍，转角转大一点别撞上围栏。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Surfaçage de patinoire — Jeu d'hiver gratuit : menez la surfaceuse tour après tour, de l'extérieur vers l'intérieur (30 niveaux)",
+    description: "Pendant la pause, menez la surfaceuse pour lisser la glace rayée. Tournez de l'extérieur vers l'intérieur en chevauchant d'une largeur de lame, repassez deux fois sur les entailles et prenez les virages larges pour éviter la bande. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Pulido de pista — Juego de invierno gratis: conduce la pulidora vuelta a vuelta de fuera hacia dentro (30 niveles)",
+    description: "En el descanso de la pista, conduce la pulidora para dejar liso el hielo rayado. Da vueltas de fuera hacia dentro solapando un ancho de cuchilla, pasa dos veces por las marcas hondas y abre las curvas para no chocar con la valla. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["rink-resurface"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="rink-resurface" build="rink-resurface-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/rink-resurface.webp">
+      <RinkResurface client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="rink-resurface" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

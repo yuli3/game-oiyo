@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import HolidayTicket from "../../components/games/HolidayTicket";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "명절 기차표 예매 — 매진되기 전에 가족이 나란히 앉을 자리를 골라 예매하는 무료 설날 게임 30단계",
+    description: "설 기차표 예매가 열리면 빈자리가 눈앞에서 사라져요. 두 사람은 통로 한쪽에 나란히, 서너 사람은 한 줄에 앉도록 자리를 골라 예매하고, 고르는 사이 남이 채 가는 자리를 피하며 모든 가족을 태우는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Holiday Ticket — Free Seollal game: pick seats that keep each family party together and book before the train sells out (30 stages)",
+    description: "When Seollal train tickets go on sale, free seats vanish before your eyes. Pick seats so pairs sit side by side and threes and fours share a row, book them before someone else does, and get every party on the train. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "帰省きっぷ予約 — 売り切れる前に家族が並んで座れる席を選んで予約する無料のソルラルゲーム30ステージ",
+    description: "ソルラルの列車の予約が始まると、空席が目の前で消えていきます。2人は通路の片側に並んで、3〜4人は同じ列に座れるよう席を選んで予約し、他の人に先を越されないよう全員を列車に乗せるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "春节抢火车票 — 在卖光前选好让一家人坐在一起的座位并订票的免费春节游戏30关",
+    description: "春节火车票一开售，空座就在眼前消失。选座让两人坐在过道同侧相邻、三四人坐同一排，赶在别人之前订下，让每组家人都上车。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Billet des fêtes — Jeu de Seollal gratuit : choisissez des places qui gardent chaque groupe ensemble et réservez avant le complet (30 niveaux)",
+    description: "Quand les billets de train de Seollal ouvrent, les places libres disparaissent sous vos yeux. Placez les duos côte à côte et les groupes de trois ou quatre dans une rangée, réservez avant les autres et faites monter toute la famille. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Billete de las fiestas — Juego de Seollal gratis: elige asientos que mantengan junta a cada familia y reserva antes de que se agote (30 niveles)",
+    description: "Cuando salen los billetes de tren de Seollal, los asientos libres desaparecen ante tus ojos. Sienta a las parejas juntas y a los grupos de tres o cuatro en una fila, reserva antes que los demás y sube a toda la familia al tren. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["holiday-ticket"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="holiday-ticket" build="holiday-ticket-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/holiday-ticket.webp">
+      <HolidayTicket client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="holiday-ticket" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
