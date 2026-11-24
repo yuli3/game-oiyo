@@ -81,6 +81,9 @@ BUILDS = {
     "snow-sled-unity": ("snow-sled", "SnowSled/Runtime/SnowSledPlayer.cs", T, "state, starsWon"),
     "neol-jump-unity": ("neol-jump", "NeolJump/Runtime/NeolJumpPlayer.cs", T, "state, starsWon"),
     "tuho-toss-unity": ("tuho-toss", "TuhoToss/Runtime/TuhoTossPlayer.cs", T, "state, starsWon"),
+    "ice-sledge-unity": ("ice-sledge", "IceSledge/Runtime/IceSledgePlayer.cs", T, "state, starsWon"),
+    "snow-roll-unity": ("snow-roll", "SnowRoll/Runtime/SnowRollPlayer.cs", T, "state, starsWon"),
+    "jachigi-unity": ("jachigi", "Jachigi/Runtime/JachigiPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

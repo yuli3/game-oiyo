@@ -1,5 +1,5 @@
 /**
- * Writes the 30 stages of the winter Unity builds (wave 6) as C# tables, straight from the web
+ * Writes the 30 stages of the winter Unity builds (wave 6 and new-games batch 10) as C# tables, straight from the web
  * rules in src/lib/games/*.ts, so the Unity and React versions play the very same stages.
  *
  *   npx tsx scripts/unity/export-winter-stages.ts
@@ -14,6 +14,9 @@ import * as snowball from "../../src/lib/games/snowball-fight";
 import * as sled from "../../src/lib/games/snow-sled";
 import * as neol from "../../src/lib/games/neol-jump";
 import * as tuho from "../../src/lib/games/tuho-toss";
+import * as sledge from "../../src/lib/games/ice-sledge";
+import * as roll from "../../src/lib/games/snow-roll";
+import * as jachigi from "../../src/lib/games/jachigi";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -90,4 +93,37 @@ function write(slug: string, game: string, body: string): void {
     rows.push(`        new Level { potX = ${n(l.potX)}, mouthY = ${n(l.mouthY)}, mouthW = ${n(l.mouthW)}, ears = ${l.ears}, arrows = ${l.arrows}, need = ${l.need}, wind = ${n(l.wind)}, screen = ${rect(l.screen)}, beam = ${rect(l.beam)}, slide = ${n(l.slide)}, slideSpeed = ${n(l.slideSpeed)} },`);
   }
   write("tuho-toss", "TuhoToss", `    public struct Level { public float potX, mouthY, mouthW, wind, slide, slideSpeed; public bool ears; public int arrows, need; public float[] screen, beam; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Ice Sledge: the stream's shape, hazards (kind,x,d,r), rivals' finishing times, par
+{
+  const kinds = ["slush", "hole", "straw"];
+  const rows: string[] = [];
+  for (const l of sledge.LEVELS) {
+    rows.push(`        new Level { length = ${n(l.length)}, amp = ${n(l.amp)}, wave = ${n(l.wave)}, phase = ${n(l.phase)}, half = ${n(l.half)}, weave = ${n(l.weave)}, par = ${n(l.par)}, rivals = ${arr(l.rivals)}, hazards = ${arr(l.hazards.flatMap((h) => [kinds.indexOf(h.kind), h.x, h.d, h.r]))} },`);
+  }
+  write("ice-sledge", "IceSledge", `    public struct Level { public float length, amp, wave, phase, half, weave, par; public float[] rivals, hazards; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Snowball Roll: snow depth per cell as two hex digits (0..255), rocks (x,y,r), fences (x,y,w,h), mud (x,y,r),
+// start, spot, body size, head (start x, y, min, max; empty when none), time limit, par
+{
+  const rows: string[] = [];
+  for (let i = 0; i < roll.STAGE_COUNT; i++) {
+    const l = roll.levelFor(i);
+    const snow = l.snow.map((d) => Math.round(Math.max(0, Math.min(1, d)) * 255).toString(16).padStart(2, "0")).join("");
+    const head = l.head ? [l.head.start.x, l.head.start.y, l.head.min, l.head.max] : [];
+    rows.push(`        new Level { snow = "${snow}", rocks = ${arr(l.rocks.flatMap((k) => [k.x, k.y, k.r]))}, fences = ${arr(l.fences.flatMap((f) => [f.x, f.y, f.w, f.h]))}, mud = ${arr(l.mud.flatMap((m) => [m.x, m.y, m.r]))}, sx = ${n(l.start.x)}, sy = ${n(l.start.y)}, spotX = ${n(l.spot.x)}, spotY = ${n(l.spot.y)}, body = ${n(l.body)}, head = ${arr(head)}, timeLimit = ${n(l.timeLimit)}, par = ${n(l.par)} },`);
+  }
+  write("snow-roll", "SnowRoll", `    public struct Level { public string snow; public float[] rocks, fences, mud, head; public float sx, sy, spotX, spotY, body, timeLimit, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Jachigi: the mark, fielders, wind, branch (x0,x1,h; empty when none), ditch (-1 when none), the steady hit time
+{
+  const rows: string[] = [];
+  for (const l of jachigi.LEVELS) {
+    const br = l.branch ? [l.branch.x0, l.branch.x1, l.branch.h] : [];
+    rows.push(`        new Level { goal = ${n(l.goal)}, fielders = ${arr(l.fielders)}, wind = ${n(l.wind)}, branch = ${arr(br)}, ditch = ${n(l.ditch ?? -1)}, bestT = ${n(l.bestT)} },`);
+  }
+  write("jachigi", "Jachigi", `    public struct Level { public float goal, wind, ditch, bestT; public float[] fielders, branch; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

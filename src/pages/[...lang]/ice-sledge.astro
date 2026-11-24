@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import IceSledge from "../../components/games/IceSledge";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "얼음썰매 레이스 — 왼쪽·오른쪽 꼬챙이를 번갈아 밀어 얼어붙은 개울을 건너는 무료 겨울 레이스 게임 30단계",
+    description: "꽁꽁 언 개울에서 썰매 경주! 화면 왼쪽·오른쪽을 번갈아 톡톡 누르면 꼬챙이로 얼음을 밀어 쭉쭉 나가요. 한쪽을 더 밀면 방향이 바뀌고, 질척한 얼음·얼음 구멍·볏짚 더미를 피해 동네 친구들보다 먼저 건너편에 닿아요. Unity 3D 본편과 빠른 플레이로 즐기는 30단계.",
+  },
+  en: {
+    title: "Ice Sledge Race — Free winter racing game: pole left and right to race across a frozen stream (30 stages)",
+    description: "Race a little sledge across a frozen stream! Tap the left and right halves of the screen in turn to push with your iron-tipped sticks; push one side more to steer. Dodge slush, holes in the ice and straw bundles and beat the village kids to the far bank. A Unity 3D main game plus a quick-play version, 30 stages.",
+  },
+  ja: {
+    title: "氷そり競争 — 左右の棒を交互に押して凍った小川を渡る無料の冬のレースゲーム30ステージ",
+    description: "凍った小川でそり競争！ 画面の左右を交互にトントン押すと、棒で氷を押してぐんぐん進みます。片側を多めに押すと向きが変わり、ぬかるみ・氷の穴・わら束をよけて村の子より先に向こう岸へ。Unity 3D本編とクイックプレイで遊べる30ステージ。",
+  },
+  zh: {
+    title: "冰车比赛 — 左右交替撑钎子冲过结冰小溪的免费冬季竞速游戏30关",
+    description: "在结冰的小溪上比赛滑冰车！交替点屏幕左右两边，用钎子撑冰一路向前；多撑一边就能转弯。避开湿冰、冰窟和稻草捆，比村里的小孩先到对岸。Unity 3D 正式版加快速游玩，共30关。",
+  },
+  fr: {
+    title: "Course de luge sur glace — Jeu de course d'hiver gratuit : poussez à gauche et à droite pour traverser un ruisseau gelé (30 niveaux)",
+    description: "Faites la course en petite luge sur un ruisseau gelé ! Touchez tour à tour les moitiés gauche et droite de l'écran pour pousser avec vos bâtons ; poussez plus d'un côté pour tourner. Évitez la neige fondue, les trous dans la glace et les bottes de paille, et battez les enfants du village jusqu'à l'autre rive. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Carrera de trineo en hielo — Juego de carreras de invierno gratis: empuja a izquierda y derecha para cruzar un arroyo helado (30 niveles)",
+    description: "¡Corre en un trineo pequeño sobre un arroyo helado! Toca por turnos las mitades izquierda y derecha de la pantalla para empujar con los palos; empuja más de un lado para girar. Esquiva el aguanieve, los agujeros en el hielo y las balas de paja, y llega antes que los niños del pueblo. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["ice-sledge"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="ice-sledge" build="ice-sledge-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/ice-sledge.webp">
+      <IceSledge client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="ice-sledge" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Jachigi from "../../components/games/Jachigi";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "자치기 — 새끼자를 톡 띄우고 타이밍 맞춰 멀리 쳐 내는 무료 겨울 민속놀이 게임 30단계",
+    description: "겨울 들판의 민속놀이 자치기! 한 번 톡 눌러 새끼자를 띄우고, 공중에서 돌 때 한 번 더 눌러 딱! 언제 치느냐에 따라 낮고 빠르게 날거나 높이 떠요. 상대편 아이들이 잡지 못하게 머리 위로 넘기고, 바람·감나무 가지·얼어붙은 도랑을 넘어 세 번 친 거리로 목표를 넘는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Jachigi Stick Bat — Free winter folk game: flick the short stick up and bat it far with perfect timing (30 stages)",
+    description: "The Korean winter-field stick game! Tap to flick the short stick up, then tap again as it spins to whack it. When you hit it decides the shot: a fast low drive or a high lob. Loft it over the fielders who catch low shots, mind the wind, a persimmon branch and a frozen ditch, and beat the mark with three swings. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "チャチギ棒打ち — 小棒を跳ね上げてタイミングよく遠くへ打つ無料の冬の伝承遊びゲーム30ステージ",
+    description: "冬の野原の伝承遊びチャチギ！ タップで小棒を跳ね上げ、空中で回るうちにもう一度タップしてカーン！ 打つタイミングで低く速い当たりにも、高いフライにもなります。低い当たりを捕る相手の子の頭上を越し、風・柿の木の枝・凍った溝を越えて、3回の合計で目標を超えるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "打尺游戏 — 挑起小尺、看准时机把它打远的免费冬季民俗游戏30关",
+    description: "韩国冬日田野的民俗游戏打尺！点一下挑起小尺，趁它在空中旋转再点一下“啪”！击打时机决定是低平快球还是高飞球。从会接低球的对方孩子头顶打过去，越过风、柿子树枝和冰沟，用三击总距离超过目标。Unity 3D 正式版加快速游玩，共30关。",
+  },
+  fr: {
+    title: "Jachigi, le bâton frappé — Jeu traditionnel d'hiver gratuit : faites sauter le bâtonnet et frappez-le loin au bon moment (30 niveaux)",
+    description: "Le jeu de bâtons des champs d'hiver coréens ! Touchez pour faire sauter le bâtonnet, puis encore pendant qu'il tourne pour le frapper. Le moment décide du coup : drive rapide et bas ou chandelle haute. Passez au-dessus des joueurs qui attrapent les balles basses, gare au vent, à la branche de kaki et au fossé gelé, et dépassez l'objectif en trois coups. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Jachigi, el palo bateado — Juego tradicional de invierno gratis: levanta el palito y batéalo lejos en el momento justo (30 niveles)",
+    description: "¡El juego de palos de los campos de invierno coreanos! Toca para levantar el palito y otra vez mientras gira para batearlo. El momento decide el golpe: raso y rápido o un globo alto. Pásalo por encima de los niños que atrapan los golpes bajos, cuidado con el viento, la rama de caqui y la zanja helada, y supera la marca en tres golpes. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["jachigi"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="jachigi" build="jachigi-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/jachigi.webp">
+      <Jachigi client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="jachigi" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
