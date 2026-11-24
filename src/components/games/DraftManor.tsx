@@ -10,7 +10,7 @@ import { useRunRecord } from "../../lib/games/use-run-record";
 import { finaleLabel, loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
 import { normalizeGameLocale } from "../../lib/games/game-text";
 import { drawParticles, drawSprite, spawnBurst, stepParticles, type PixelArt, type PixelParticle } from "../../lib/games/pixel-kit";
-import { DX, DY, MANOR_SLUG, MANOR_STAGES, STAGE_COUNT, colOf, dailyStage, distances, doorsOf, move, newManor, next, pick, route, rowOf, starsFor, vault, type Card, type Manor, type ManorStage } from "../../lib/games/draft-manor";
+import { DX, DY, KNOCK, MANOR_SLUG, MANOR_STAGES, STAGE_COUNT, colOf, dailyStage, distances, doorsOf, move, newManor, next, pick, route, rowOf, starsFor, vault, type Card, type Manor, type ManorStage } from "../../lib/games/draft-manor";
 import type { Locale } from "../../lib/i18n";
 
 type L = "ko" | "en" | "ja" | "zh" | "fr" | "es";
@@ -212,11 +212,16 @@ export default function DraftManor({ locale: pageLocale }: { locale?: string }) 
             // an empty plot (or the vault): walk to the nearest built room beside it, then step through
             let best = -1;
             let bestDir = -1;
+            let bestCost = Infinity;
             for (let dir = 0; dir < 4; dir++) {
               const from = next(st, target, (dir + 2) % 4);
-              if (from >= 0 && Number.isFinite(d[from]) && (best < 0 || d[from] < d[best])) {
+              if (from < 0 || !Number.isFinite(d[from])) continue;
+              // through a door if there is one, else knocking through costs a few steps more
+              const cost = d[from] + (m.rooms[from]!.doors & (1 << dir) || target === vault(st) ? 0 : KNOCK);
+              if (cost < bestCost) {
                 best = from;
                 bestDir = dir;
+                bestCost = cost;
               }
             }
             if (best >= 0) {

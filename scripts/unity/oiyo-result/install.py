@@ -114,6 +114,9 @@ BUILDS = {
     "crane-count-unity": ("crane-count", "CraneCount/Runtime/CraneCountPlayer.cs", T, "state, starsWon"),
     "rink-resurface-unity": ("rink-resurface", "RinkResurface/Runtime/RinkResurfacePlayer.cs", T, "state, starsWon"),
     "holiday-ticket-unity": ("holiday-ticket", "HolidayTicket/Runtime/HolidayTicketPlayer.cs", T, "state, starsWon"),
+    "draft-manor-unity": ("draft-manor", "DraftManor/Runtime/DraftManorPlayer.cs", T, "state, starsWon"),
+    "dispatch-desk-unity": ("dispatch-desk", "DispatchDesk/Runtime/DispatchDeskPlayer.cs", T, "state, starsWon"),
+    "parry-duel-unity": ("parry-duel", "ParryDuel/Runtime/ParryDuelPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."
