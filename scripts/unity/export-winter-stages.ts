@@ -41,6 +41,9 @@ import * as yongal from "../../src/lib/games/yongal-scoop";
 import * as mung from "../../src/lib/games/mungpungji-seal";
 import * as charye from "../../src/lib/games/charye-table";
 import * as yeontan from "../../src/lib/games/yeontan-relay";
+import * as daljip from "../../src/lib/games/daljip-fire";
+import * as scarf from "../../src/lib/games/scarf-knit";
+import * as ipchun from "../../src/lib/games/ipchun-brush";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -303,4 +306,23 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = yeontan.YEONTAN_STAGES.map((st) => `        new Level { line = ${arr(st.line.flatMap((v) => [v.turn, v.reset, v.hold]))}, arrivals = ${arr(st.arrivals)}, time = ${n(st.time)}, need = ${st.need}, par = ${st.par} },`);
   write("yeontan-relay", "YeontanRelay", `    public struct Level { public float[] line, arrivals; public float time; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Daljip Fire: cells (0 air, 1 pine, 2 damp) and each cell's pine time, wind, straw, moonrise, par
+{
+  const kinds = { air: 0, pine: 1, damp: 2 } as const;
+  const rows = daljip.DALJIP_STAGES.map((st) => `        new Level { cells = ${iarr(st.cells.map((k) => kinds[k]))}, pine = ${arr(st.pine)}, wind = ${n(st.wind)}, straws = ${st.straws}, moonrise = ${n(st.moonrise)}, par = ${n(st.par)} },`);
+  write("daljip-fire", "DaljipFire", `    public struct Level { public int[] cells; public float[] pine; public float wind, moonrise, par; public int straws; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Scarf Knit: chart rows (flattened, row width), needle speed, mark
+{
+  const rows = scarf.SCARF_STAGES.map((st) => `        new Level { chart = ${iarr(st.rows.flat())}, width = ${st.rows[0].length}, speed = ${n(st.speed)}, need = ${st.need} },`);
+  write("scarf-knit", "ScarfKnit", `    public struct Level { public int[] chart; public int width, need; public float speed; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Ipchun Brush: strokes (index into the eight), line tolerance, width tolerance, mark
+{
+  const rows = ipchun.IPCHUN_STAGES.map((st) => `        new Level { strokes = ${iarr(st.strokes.map((k) => ipchun.STROKES.indexOf(k)))}, tol = ${n(st.tol)}, wTol = ${n(st.wTol)}, mark = ${n(st.mark)} },`);
+  write("ipchun-brush", "IpchunBrush", `    public struct Level { public int[] strokes; public float tol, wTol, mark; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

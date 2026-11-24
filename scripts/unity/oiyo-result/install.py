@@ -108,6 +108,9 @@ BUILDS = {
     "mungpungji-seal-unity": ("mungpungji-seal", "MungpungjiSeal/Runtime/MungpungjiSealPlayer.cs", T, "state, starsWon"),
     "charye-table-unity": ("charye-table", "CharyeTable/Runtime/CharyeTablePlayer.cs", T, "state, starsWon"),
     "yeontan-relay-unity": ("yeontan-relay", "YeontanRelay/Runtime/YeontanRelayPlayer.cs", T, "state, starsWon"),
+    "daljip-fire-unity": ("daljip-fire", "DaljipFire/Runtime/DaljipFirePlayer.cs", T, "state, starsWon"),
+    "scarf-knit-unity": ("scarf-knit", "ScarfKnit/Runtime/ScarfKnitPlayer.cs", T, "state, starsWon"),
+    "ipchun-brush-unity": ("ipchun-brush", "IpchunBrush/Runtime/IpchunBrushPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."
