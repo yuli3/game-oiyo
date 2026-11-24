@@ -1,5 +1,5 @@
 /**
- * Writes the 30 stages of the winter Unity builds (wave 6 and new-games batches 10 to 14) as C# tables, straight from the web
+ * Writes the 30 stages of the winter Unity builds (wave 6 and new-games batches 10 to 15) as C# tables, straight from the web
  * rules in src/lib/games/*.ts, so the Unity and React versions play the very same stages.
  *
  *   npx tsx scripts/unity/export-winter-stages.ts
@@ -29,6 +29,9 @@ import * as tug from "../../src/lib/games/tug-of-war";
 import * as bridge from "../../src/lib/games/bridge-walk";
 import * as saeal from "../../src/lib/games/saealsim-roll";
 import * as heat from "../../src/lib/games/sell-the-heat";
+import * as aval from "../../src/lib/games/avalanche-rescue";
+import * as ogok from "../../src/lib/games/ogokbap-sort";
+import * as chest from "../../src/lib/games/chestnut-roast";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -217,4 +220,22 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = heat.HEAT_STAGES.map((st) => `        new Level { turns = ${arr(st.turns.flatMap((t) => [t.win, t.at, t.real ? 1 : 0, t.tell, t.call]))}, length = ${n(st.length)}, need = ${st.need} },`);
   write("sell-the-heat", "SellTheHeat", `    // turns: (window, start, real, hand-up after, call after) quintuples\n    public struct Level { public float length; public float[] turns; public int need; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Avalanche Rescue: field (m), start, burials (x, y, depth), arrow wobble, air time, wobble seed
+{
+  const rows = aval.RESCUE_STAGES.map((st) => `        new Level { w = ${n(st.w)}, h = ${n(st.h)}, startX = ${n(st.start.x)}, startY = ${n(st.start.y)}, buried = ${arr(st.buried.flatMap((b) => [b.x, b.y, b.depth]))}, noise = ${n(st.noise)}, limit = ${n(st.limit)}, seed = ${st.seed}u },`);
+  write("avalanche-rescue", "AvalancheRescue", `    public struct Level { public float w, h, startX, startY, noise, limit; public float[] buried; public uint seed; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Ogokbap Sort: bowl order (grain kind per bowl), grains (kind, x, pour time, speed), mark
+{
+  const rows = ogok.OGOK_STAGES.map((st) => `        new Level { order = ${iarr(st.order)}, grains = ${arr(st.grains.flatMap((g) => [g.kind, g.x, g.at, g.speed]))}, need = ${st.need} },`);
+  write("ogokbap-sort", "OgokbapSort", `    public struct Level { public int[] order; public float[] grains; public int need; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Chestnut Roast: roasting speed, top of the golden window, arrivals (time, rim angle), mark
+{
+  const rows = chest.CHESTNUT_STAGES.map((st) => `        new Level { cook = ${n(st.cook)}, goldHi = ${n(st.goldHi)}, arrivals = ${arr(st.arrivals.flatMap((a) => [a.at, a.angle]))}, need = ${st.need} },`);
+  write("chestnut-roast", "ChestnutRoast", `    public struct Level { public float cook, goldHi; public float[] arrivals; public int need; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

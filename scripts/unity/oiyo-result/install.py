@@ -96,6 +96,9 @@ BUILDS = {
     "bridge-walk-unity": ("bridge-walk", "BridgeWalk/Runtime/BridgeWalkPlayer.cs", T, "state, starsWon"),
     "saealsim-roll-unity": ("saealsim-roll", "SaealsimRoll/Runtime/SaealsimRollPlayer.cs", T, "state, starsWon"),
     "sell-the-heat-unity": ("sell-the-heat", "SellTheHeat/Runtime/SellTheHeatPlayer.cs", T, "state, starsWon"),
+    "avalanche-rescue-unity": ("avalanche-rescue", "AvalancheRescue/Runtime/AvalancheRescuePlayer.cs", T, "state, starsWon"),
+    "ogokbap-sort-unity": ("ogokbap-sort", "OgokbapSort/Runtime/OgokbapSortPlayer.cs", T, "state, starsWon"),
+    "chestnut-roast-unity": ("chestnut-roast", "ChestnutRoast/Runtime/ChestnutRoastPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."
