@@ -1,7 +1,7 @@
 /**
  * Ipchun Brush (입춘 붓글씨) — practise the eight brush strokes and write spring onto the gate.
  *
- * At Ipchun, the first solar term of spring (4 February 2027), many households paste a sheet on the gate
+ * At Ipchun, the first solar term of spring (around 4 February), many households paste a sheet on the gate
  * reading 立春大吉 "great luck as spring begins". Calligraphy is learned through the eight strokes of the
  * character 永 (永字八法): the dot, the horizontal, the vertical, the hook, the rising stroke, the long and short
  * left-falling strokes and the right-falling one. A brush makes a thick line when it moves slowly and a thin one

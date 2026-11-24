@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ScarfKnit from "../../components/games/ScarfKnit";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "목도리 뜨기 — 누르면 빨간 실, 떼면 흰 실로 도안대로 목도리를 뜨는 무료 설날 리듬 게임 30단계",
+    description: "할머니의 두 색 도안대로 목도리를 떠요. 바늘이 한 코씩 지나가고 다음 단은 반대로 돌아와요. 도안 색이 바뀌는 곳에서 정확히 실을 바꿔 설 선물을 완성하는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Scarf Knit — Free Seollal rhythm game: hold for red yarn, let go for cream, and knit Grandma's chart (30 stages)",
+    description: "Knit a scarf from Grandma's two-colour chart. The needle passes stitch by stitch and comes back along the next row. Change yarn exactly where the chart changes to finish a Seollal gift. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "マフラー編み — 押すと赤、離すと白の毛糸で図案どおりに編む無料のお正月リズムゲーム30ステージ",
+    description: "おばあちゃんの2色の図案どおりにマフラーを編みます。針は1目ずつ進み、次の段は逆向きに戻ります。図案の色が変わる所でぴったり毛糸を替えて贈り物を仕上げるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "织围巾 — 按住红线、松开白线，照图样织围巾的免费春节节奏游戏30关",
+    description: "照着奶奶的双色图样织围巾。织针一针一针走过，下一行反向回来。在图样变色处准确换线，织好新年礼物。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Tricot d'écharpe — Jeu de rythme gratuit de Seollal : maintenez pour le rouge, relâchez pour la crème, et suivez la grille (30 niveaux)",
+    description: "Tricotez une écharpe d'après la grille bicolore de Grand-mère. L'aiguille avance maille par maille et revient au rang suivant. Changez de laine exactement où la grille change pour finir un cadeau de Seollal. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Teje la bufanda — Juego de ritmo gratis de Seollal: mantén para rojo, suelta para crema y sigue el patrón (30 niveles)",
+    description: "Teje una bufanda con el patrón de dos colores de la abuela. La aguja avanza punto a punto y vuelve en la fila siguiente. Cambia de lana justo donde cambia el patrón para terminar un regalo de Seollal. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["scarf-knit"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="scarf-knit" build="scarf-knit-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/scarf-knit.webp">
+      <ScarfKnit client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="scarf-knit" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

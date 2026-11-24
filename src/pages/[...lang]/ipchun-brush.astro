@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import IpchunBrush from "../../components/games/IpchunBrush";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "입춘 붓글씨 — 영자팔법 여덟 획을 굵기 맞춰 긋는 무료 입춘 붓글씨 게임 30단계",
+    description: "입춘엔 대문에 입춘대길을 붙여요. 붓은 천천히 그으면 굵고 빨리 그으면 가늘어요. 점·가로·세로·갈고리·치킴·삐침·파임, 영자팔법 여덟 획의 굵기를 맞춰 쓰는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Ipchun Brush — Free calligraphy game: write the eight brush strokes with the right swell and taper (30 stages)",
+    description: "At Ipchun, homes paste 立春大吉 on the gate. A brush draws thick when slow and thin when fast. Write the eight strokes of 永 — dot, horizontal, vertical, hook, rising, left-falling and right-falling — with the right thickness. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "立春の筆 — 永字八法の8つの画を太さを合わせて書く無料の書道ゲーム30ステージ",
+    description: "立春には門に立春大吉を貼ります。筆はゆっくりだと太く、速いと細くなります。点・横画・縦画・はね・はらい上げ・左はらい・右はらい、永字八法の8画を太さを合わせて書くUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "立春书法 — 按粗细写好永字八法八种笔画的免费书法游戏30关",
+    description: "立春时门上贴“立春大吉”。毛笔慢写粗、快写细。点、横、竖、钩、提、撇、捺，按粗细写好永字八法的八种笔画。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Pinceau d'Ipchun — Jeu de calligraphie gratuit : tracez les huit traits avec le bon renflement (30 niveaux)",
+    description: "À Ipchun, on colle 立春大吉 sur le portail. Un pinceau trace épais lentement et fin rapidement. Écrivez les huit traits de 永 — point, horizontal, vertical, crochet, montant, vers la gauche et vers la droite — à la bonne épaisseur. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Pincel de Ipchun — Juego de caligrafía gratis: traza los ocho trazos con el grosor justo (30 niveles)",
+    description: "En Ipchun se pega 立春大吉 en la puerta. Un pincel traza grueso despacio y fino rápido. Escribe los ocho trazos de 永 —punto, horizontal, vertical, gancho, ascendente, a la izquierda y a la derecha— con el grosor justo. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["ipchun-brush"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="ipchun-brush" build="ipchun-brush-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/ipchun-brush.webp">
+      <IpchunBrush client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="ipchun-brush" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
