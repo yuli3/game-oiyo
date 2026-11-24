@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TrioTray from "../../components/games/TrioTray";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "간식 트레이 — 같은 간식 셋을 모아 돗자리를 치우는 무료 트리플 타일 매치 30단계",
+    description: "소풍 돗자리에 간식 타일이 여러 겹 쌓여 있어요. 위에 놓인 타일을 일곱 칸 쟁반에 담고 같은 간식 셋을 모아 없애, 쟁반이 차기 전에 돗자리를 비우는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Trio Tray — Free triple-tile matching puzzle: three snacks of a kind clear the picnic (30 stages)",
+    description: "Snack tiles lie in layers on a picnic blanket. Move uncovered tiles to a seven-slot tray, pop three of a kind, and clear the blanket before the tray fills. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "おやつトレー — 同じおやつを3つそろえてシートを片づける無料の3つそろえタイルパズル30面",
+    description: "ピクニックシートにおやつのタイルが何層も重なっています。上のタイルを7マスのトレーに移し、同じおやつを3つそろえて消し、トレーがうまる前にシートを空にするUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "零食托盘 — 凑齐三个相同零食清空野餐垫的免费三消叠叠乐30关",
+    description: "野餐垫上叠着好几层零食方块。把最上面的方块放进七格托盘，凑齐三个相同零食消掉，在托盘满之前清空野餐垫。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Plateau trio — Puzzle gratuit de tuiles à tripler : trois en-cas pareils vident la nappe (30 niveaux)",
+    description: "Des tuiles d'en-cas s'empilent sur une nappe de pique-nique. Posez les tuiles dégagées sur un plateau de sept cases, faites disparaître trois en-cas pareils et videz la nappe avant que le plateau ne soit plein. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Bandeja trío — Puzle gratis de fichas de tres: tres meriendas iguales despejan el mantel (30 niveles)",
+    description: "Hay fichas de merienda apiladas en un mantel de picnic. Pasa las fichas libres a una bandeja de siete huecos, junta tres iguales para que desaparezcan y despeja el mantel antes de que se llene la bandeja. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["trio-tray"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="trio-tray" build="trio-tray-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/trio-tray.webp">
+      <TrioTray client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="trio-tray" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

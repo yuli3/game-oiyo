@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CorkSpin from "../../components/games/CorkSpin";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "코르크 핀꽂기 — 도는 코르크판에 핀을 꽂는 무료 타이밍 게임 30단계",
+    description: "벽의 코르크판이 빙글빙글 돌아요. 화면을 눌러 핀을 꽂되 이미 꽂힌 핀과 부딪히지 않게, 일정하게 돌거나 빨라졌다 느려지거나 앞뒤로 흔들리는 판에 핀을 다 꽂는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Cork Spin — Free spinning-board timing game: push every pin in without hitting another (30 stages)",
+    description: "A cork board spins on the wall. Tap to push pins in without landing one next to a pin already there, on boards that spin steadily, speed up and slow down, or swing back and forth. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "コルクピン刺し — 回るコルクボードにピンを刺す無料のタイミングゲーム30面",
+    description: "壁のコルクボードがくるくる回ります。タップしてピンを刺し、もう刺さったピンにぶつけないように。一定に回る、速くなったり遅くなったりする、行ったり来たりするボードにピンを全部刺すUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "软木钉钉乐 — 往旋转软木板上钉图钉的免费时机游戏30关",
+    description: "墙上的软木板不停旋转。点击把图钉钉上去，别撞上已经钉好的图钉；木板有时匀速、有时忽快忽慢、有时来回摆动，把图钉全部钉上。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Liège tournant — Jeu de timing gratuit : plantez toutes les punaises sans en toucher une autre (30 niveaux)",
+    description: "Un panneau de liège tourne au mur. Touchez pour planter les punaises sans en poser une contre une autre, sur des panneaux qui tournent régulièrement, accélèrent et ralentissent, ou vont et viennent. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Corcho giratorio — Juego gratis de puntería: clava todas las chinchetas sin chocar con otra (30 niveles)",
+    description: "Un tablero de corcho gira en la pared. Toca para clavar chinchetas sin que caigan junto a otra, en tableros que giran constantes, aceleran y frenan, o van y vienen. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["cork-spin"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="cork-spin" build="cork-spin-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/cork-spin.webp">
+      <CorkSpin client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="cork-spin" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

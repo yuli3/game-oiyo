@@ -71,6 +71,9 @@ import * as rollerGame from "../../src/lib/games/roller-claim";
 import * as lockGame from "../../src/lib/games/formula-lock";
 import * as lanesGame from "../../src/lib/games/veggie-lanes";
 import * as bounceGame from "../../src/lib/games/bounce-down";
+import * as trayGame from "../../src/lib/games/trio-tray";
+import * as corkGame from "../../src/lib/games/cork-spin";
+import * as gondolaGame from "../../src/lib/games/gondola-queue";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -582,4 +585,42 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = bounceGame.BOUNCE_STAGES.map((st) => `        new Level { floors = ${iarr(st.floors.flatMap((f) => [f.gap, f.width, f.sour.length, ...f.sour]))}, count = ${st.floors.length}, limit = ${st.limit}, par = ${st.par} },`);
   write("bounce-down", "BounceDown", `    public struct Level { public int[] floors; public int count, limit, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Trio Tray: tiles as (x, y, z, kind) quads on a half-tile grid, the blanket size, par
+{
+  const rows: string[] = [];
+  for (let i = 0; i < trayGame.STAGE_COUNT; i++) {
+    const st = trayGame.TRAY_STAGES[i];
+    // the careful player's picks, for the automated play check
+    const plan: number[] = [];
+    {
+      const p = trayGame.newPicnic(st);
+      const rng = (() => { let a = (1 * 7307 + 53) >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; })();
+      while (!p.over) { const i = trayGame.nextPick(p, rng, 0); plan.push(i); trayGame.pick(p, i); }
+      if (!p.won) throw new Error("trio-tray plan does not win");
+    }
+    rows.push(`        new Level { tiles = ${iarr(st.tiles.flatMap((t) => [t.x, t.y, t.z, t.kind]))}, cols = ${st.cols}, rows = ${st.rows}, par = ${st.par}, plan = ${iarr(plan)} },`);
+  }
+  write("trio-tray", "TrioTray", `    public struct Level { public int[] tiles; public int cols, rows, par; public int[] plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Cork Spin: pins to push in, pins already in (board angles), the spin, the clock, par
+{
+  const rows = corkGame.CORK_STAGES.map((st) => `        new Level { pins = ${st.pins}, fixedPins = ${arr(st.fixed)}, speed = ${n(st.speed)}, wobble = ${n(st.wobble)}, wobbleRate = ${n(st.wobbleRate)}, reverse = ${n(st.reverse)}, par = ${st.par}, limit = ${st.limit} },`);
+  write("cork-spin", "CorkSpin", `    public struct Level { public int pins; public float[] fixedPins; public float speed, wobble, wobbleRate, reverse; public int par, limit; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Gondola Queue: the crowd (row-major, 6 wide: colour, -1 empty, -2 rock), gondola colours, par
+{
+  const rows = gondolaGame.GONDOLA_STAGES.map((st) => {
+    // the careful player's taps, for the automated play check
+    const plan: number[] = [];
+    const s = gondolaGame.newStation(st);
+    const rng = (() => { let a = (1 * 6733 + 59) >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; })();
+    while (!s.over) { const i = gondolaGame.nextTap(s, rng, 0); plan.push(i); gondolaGame.tap(s, i); }
+    if (!s.won || gondolaGame.starsFor(s) < 3) throw new Error("gondola-queue plan does not win");
+    return `        new Level { rows = ${st.rows}, grid = ${iarr(st.grid)}, gondolas = ${iarr(st.gondolas)}, par = ${st.par}, plan = ${iarr(plan)} },`;
+  });
+  write("gondola-queue", "GondolaQueue", `    public struct Level { public int rows; public int[] grid, gondolas; public int par; public int[] plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
