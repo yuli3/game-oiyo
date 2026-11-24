@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import RooftopCats from "../../components/games/RooftopCats";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "지붕 위 고양이 — 픽셀 동네 지붕에 숨은 고양이를 찾는 무료 숨은그림찾기 30단계",
+    description: "굴뚝 옆, 창문 틈, 빨래 아래에 숨은 고양이를 눌러 찾아요. 같은 색 지붕에 앉은 고양이는 잘 안 보이고, 엉뚱한 곳을 누르면 시간이 줄어요. 낮에서 밤으로 어두워지는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Rooftop Cats — Free hidden-cat finder: spot the cats on a pixel town's rooftops (30 stages)",
+    description: "Tap the cats hiding by chimneys, in windows and under the washing. A cat the colour of its roof is hard to see, and a wrong tap costs time. From noon to night, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "屋根の上の猫 — ピクセルの町の屋根に隠れた猫を探す無料の隠れ猫さがし30面",
+    description: "煙突のそば、窓のすき間、洗濯物の下に隠れた猫を押して見つけます。同じ色の屋根の猫は見えにくく、違う所を押すと時間が減ります。昼から夜へ暗くなるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "屋顶上的猫 — 在像素小镇屋顶上找隐藏猫咪的免费找猫游戏30关",
+    description: "点出藏在烟囱旁、窗缝里、衣服下的猫。和屋顶同色的猫很难看到，点错会扣时间。从正午到夜晚越来越暗。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Chats sur les toits — Jeu gratuit de chats cachés sur les toits d'une ville en pixels (30 niveaux)",
+    description: "Touchez les chats cachés près des cheminées, aux fenêtres et sous le linge. Un chat de la couleur de son toit se voit mal, et une erreur coûte du temps. De midi à la nuit, un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Gatos en los tejados — Juego gratis de gatos escondidos en los tejados de un pueblo en píxeles (30 niveles)",
+    description: "Toca los gatos escondidos junto a chimeneas, en ventanas y bajo la ropa tendida. Un gato del color de su tejado cuesta de ver y fallar cuesta tiempo. De mediodía a la noche, un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["rooftop-cats"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="rooftop-cats" build="rooftop-cats-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/rooftop-cats.webp">
+      <RooftopCats client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="rooftop-cats" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
