@@ -50,6 +50,9 @@ import * as ticket from "../../src/lib/games/holiday-ticket";
 import * as manor from "../../src/lib/games/draft-manor";
 import * as dispatch from "../../src/lib/games/dispatch-desk";
 import * as parry from "../../src/lib/games/parry-duel";
+import * as commute from "../../src/lib/games/odd-commute";
+import * as sofa from "../../src/lib/games/sofa-carry";
+import * as village from "../../src/lib/games/palm-village";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -374,4 +377,27 @@ function write(slug: string, game: string, body: string): void {
     return `        new Level { lengths = ${iarr(r.combos.map((c) => c.length))}, at = ${arr(all.map((s) => s.at))}, windup = ${arr(all.map((s) => s.windup))}, damage = ${iarr(all.map((s) => s.damage))}, feint = ${iarr(all.map((s) => (s.feint ? 1 : 0)))}, hp = ${r.hp}, perfect = ${n(r.perfect)}, good = ${n(r.good)}, par = ${r.par} },`;
   });
   write("parry-duel", "ParryDuel", `    public struct Level { public int[] lengths, damage, feint; public float[] at, windup; public int hp, par; public float perfect, good; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Odd Commute: the car's things (kind index, x, y, w, h, colour, look) and every car in order
+// (−1 ordinary, else the thing, the change index, dx, scale, colour)
+{
+  const rows = commute.COMMUTE_STAGES.map((st) => {
+    const cars = st.cars;
+    return `        new Level { kind = ${iarr(st.car.map((t) => commute.KINDS.indexOf(t.kind)))}, x = ${arr(st.car.map((t) => t.x))}, y = ${arr(st.car.map((t) => t.y))}, w = ${arr(st.car.map((t) => t.w))}, h = ${arr(st.car.map((t) => t.h))}, colour = ${iarr(st.car.map((t) => t.colour))}, look = ${iarr(st.car.map((t) => t.look))}, thing = ${iarr(cars.map((a) => (a ? a.thing : -1)))}, change = ${iarr(cars.map((a) => (a ? commute.CHANGES.indexOf(a.change) : -1)))}, dx = ${arr(cars.map((a) => (a ? a.dx : 0)))}, scale = ${arr(cars.map((a) => (a ? a.scale : 1)))}, newColour = ${iarr(cars.map((a) => (a ? a.colour : 0)))}, need = ${st.need} },`;
+  });
+  write("odd-commute", "OddCommute", `    public struct Level { public int[] kind, colour, look, thing, change, newColour; public float[] x, y, w, h, dx, scale; public int need; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Sofa Carry: the hall's centre line, hall width, landing size, sofa length and thickness, clock, par
+{
+  const rows = sofa.SOFA_STAGES.map((st) => `        new Level { px = ${arr(st.path.map((p) => p.x))}, py = ${arr(st.path.map((p) => p.y))}, hall = ${n(st.hall)}, landing = ${n(st.landing)}, length = ${n(st.length)}, thick = ${n(st.thick)}, time = ${n(st.time)}, par = ${n(st.par)} },`);
+  write("sofa-carry", "SofaCarry", `    public struct Level { public float[] px, py; public float hall, landing, length, thick, time, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Palm Village: the island (0 land, 1 water, 2 rock), the pieces in order (house, tree, well, field, lantern), star marks
+{
+  const g = { land: 0, water: 1, rock: 2 } as const;
+  const rows = village.VILLAGE_STAGES.map((st) => `        new Level { cols = ${st.cols}, rows = ${st.rows}, ground = ${iarr(st.ground.map((x) => g[x]))}, pieces = ${iarr(st.pieces.map((p) => village.PIECES.indexOf(p)))}, good = ${st.good}, great = ${st.great} },`);
+  write("palm-village", "PalmVillage", `    public struct Level { public int cols, rows, good, great; public int[] ground, pieces; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
