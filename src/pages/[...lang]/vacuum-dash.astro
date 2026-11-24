@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import VacuumDash from "../../components/games/VacuumDash";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "로봇청소기 대시 — 부딪혀야 멈추는 청소기로 방을 싹 치우는 무료 퍼즐 30단계",
+    description: "로봇청소기를 위·아래·왼쪽·오른쪽으로 밀면 가구에 부딪힐 때까지 쭉 달리며 지나간 칸의 먼지를 빨아들여요. 멈추는 자리를 읽어 정해진 횟수 안에 바닥을 모두 치우는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Vacuum Dash — Free sliding puzzle: a robot vacuum that only stops when it bumps into something (30 stages)",
+    description: "Swipe the robot vacuum up, down, left or right and it zooms until it hits furniture, sucking up the dust on every square it passes. Read where it will stop and clean the whole floor within the moves, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ロボット掃除機ダッシュ — ぶつかるまで止まらない掃除機で部屋をきれいにする無料パズル30面",
+    description: "ロボット掃除機を上下左右にスワイプすると、家具にぶつかるまでまっすぐ走り、通ったマスのほこりを吸い取ります。止まる場所を読んで決まった回数のうちに床を全部きれいにするUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "扫地机器人冲刺 — 撞到东西才停的扫地机清扫房间免费谜题30关",
+    description: "向上下左右滑动扫地机器人，它会一直冲到撞上家具才停，把经过格子的灰尘吸干净。看准停下的位置，在规定步数内把地板扫干净。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Aspi-sprint — Puzzle gratuit : un robot aspirateur qui ne s'arrête qu'en heurtant un meuble (30 niveaux)",
+    description: "Glissez le robot aspirateur vers le haut, le bas, la gauche ou la droite : il fonce jusqu'à heurter un meuble en aspirant la poussière de chaque case traversée. Prévoyez où il s'arrêtera et nettoyez tout le sol dans la limite, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Aspiradora a toda pastilla — Puzle gratis: una aspiradora robot que solo frena al chocar (30 niveles)",
+    description: "Desliza la aspiradora robot hacia arriba, abajo, izquierda o derecha y saldrá disparada hasta chocar con un mueble, aspirando el polvo de cada casilla. Calcula dónde se parará y limpia todo el suelo dentro del límite, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["vacuum-dash"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="vacuum-dash" build="vacuum-dash-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/vacuum-dash.webp">
+      <VacuumDash client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="vacuum-dash" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

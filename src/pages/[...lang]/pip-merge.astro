@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PipMerge from "../../components/games/PipMerge";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "주사위 합치기 — 같은 눈 셋을 이어 붙여 합치는 무료 주사위 퍼즐 30단계",
+    description: "주사위를 5×5 판에 하나씩 놓아요. 같은 눈이 셋 이상 이어지면 눈이 하나 높은 주사위로 합쳐지고, 연쇄마다 점수가 두 배! 6이 셋 모이면 터져서 둘레까지 치워 줘요. 다음 주사위를 보고 자리를 잡아 목표 점수를 넘기는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Pip Merge — Free dice-merge puzzle: join three alike to make the next face up (30 stages)",
+    description: "Place dice one at a time on a 5 × 5 tray. Three or more touching dice with the same face merge into one a pip higher, and every chain doubles the points; three sixes burst and clear the dice around them. Plan for the next die and pass the goal, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "サイコロ合体 — 同じ目を3つつなげて合体させる無料サイコロパズル30面",
+    description: "サイコロを5×5の盤に1つずつ置きます。同じ目が3つ以上つながると目が1つ上のサイコロに合体し、連鎖ごとに点数が倍に！6が3つそろうとはじけて周りまで片付けます。次のサイコロを見て置き場所を考え、目標点を超えるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "骰子合成 — 三个同点相连就合成的免费骰子谜题30关",
+    description: "把骰子一个个放到 5×5 盘上。同点数三个以上相连就合成点数加一的骰子，每次连锁得分翻倍！三个 6 会炸开连周围一起清掉。看好下一个骰子安排位置，超过目标分。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Dés en fusion — Puzzle gratuit : réunissez trois dés pareils pour monter d'un point (30 niveaux)",
+    description: "Posez les dés un à un sur un plateau 5 × 5. Trois dés ou plus de même valeur qui se touchent fusionnent en un dé d'un point de plus, et chaque chaîne double les points ; trois 6 explosent et nettoient autour. Anticipez le dé suivant et dépassez l'objectif, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Dados en fusión — Puzle gratis: junta tres dados iguales para subir un punto (30 niveles)",
+    description: "Pon los dados de uno en uno en un tablero de 5 × 5. Tres o más dados iguales que se tocan se funden en uno con un punto más, y cada cadena duplica los puntos; tres seises estallan y limpian alrededor. Piensa en el dado siguiente y supera la meta, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["pip-merge"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="pip-merge" build="pip-merge-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/pip-merge.webp">
+      <PipMerge client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="pip-merge" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
