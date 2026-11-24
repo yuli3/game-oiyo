@@ -77,6 +77,9 @@ import * as gondolaGame from "../../src/lib/games/gondola-queue";
 import * as chopGame from "../../src/lib/games/beaver-chop";
 import * as prismGame from "../../src/lib/games/prism-hop";
 import * as floodGame from "../../src/lib/games/paint-flood";
+import * as hoopGame from "../../src/lib/games/hoop-flick";
+import * as summitGame from "../../src/lib/games/summit-cards";
+import * as slideGame from "../../src/lib/games/coin-slide";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -656,4 +659,32 @@ function write(slug: string, game: string, body: string): void {
     rows.push(`        new Level { cells = ${iarr(st.cells)}, size = ${st.size}, colours = ${st.colours}, limit = ${st.limit}, par = ${st.par}, plan = ${iarr(plan)} },`);
   }
   write("paint-flood", "PaintFlood", `    public struct Level { public int[] cells; public int size, colours, limit, par; public int[] plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Hoop Flick: ball spots as (x, y) pairs, the hoop and its slide, points needed, par
+{
+  const rows = hoopGame.HOOP_STAGES.map((st) => `        new Level { shots = ${arr(st.shots.flatMap((s) => [s.x, s.y]))}, hx = ${n(st.hx)}, hy = ${n(st.hy)}, amp = ${n(st.amp)}, rate = ${n(st.rate)}, need = ${st.need}, par = ${st.par} },`);
+  write("hoop-flick", "HoopFlick", `    public struct Level { public float[] shots; public float hx, hy, amp, rate; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Summit Cards: the 28 peak cards, the stock (drawn from the end), the first camp card, face-down deals, par, and a
+// careful climber's moves (a slot, or -1 to turn the stock) for the play check
+{
+  const rows: string[] = [];
+  for (let i = 0; i < summitGame.STAGE_COUNT; i++) {
+    const st = summitGame.SUMMIT_STAGES[i];
+    const cl = summitGame.newClimb(st);
+    const rng = (() => { let a = (1 * 4507 + 79) >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; })();
+    const plan: number[] = [];
+    while (!cl.over) { const m = summitGame.nextMove(cl, 3, rng, 0); plan.push(m); if (m >= 0) summitGame.play(cl, m); else summitGame.draw(cl); }
+    if (!cl.won || summitGame.starsFor(cl) < 3) throw new Error("summit-cards plan does not win");
+    rows.push(`        new Level { peaks = ${iarr(st.peaks)}, stock = ${iarr(st.stock)}, camp = ${st.camp}, faceDown = ${st.faceDown}, par = ${st.par}, plan = ${iarr(plan)} },`);
+  }
+  write("summit-cards", "SummitCards", `    public struct Level { public int[] peaks, stock; public int camp; public bool faceDown; public int par; public int[] plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Coin Slide: tokens, sugar-pot posts as (x, y) pairs, points needed, par
+{
+  const rows = slideGame.SLIDE_STAGES.map((st) => `        new Level { tokens = ${st.tokens}, posts = ${arr(st.posts.flatMap((p) => [p.x, p.y]))}, need = ${st.need}, par = ${st.par} },`);
+  write("coin-slide", "CoinSlide", `    public struct Level { public int tokens; public float[] posts; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

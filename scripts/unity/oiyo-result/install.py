@@ -144,6 +144,9 @@ BUILDS = {
     "beaver-chop-unity": ("beaver-chop", "BeaverChop/Runtime/BeaverChopPlayer.cs", T, "state, starsWon"),
     "prism-hop-unity": ("prism-hop", "PrismHop/Runtime/PrismHopPlayer.cs", T, "state, starsWon"),
     "paint-flood-unity": ("paint-flood", "PaintFlood/Runtime/PaintFloodPlayer.cs", T, "state, starsWon"),
+    "hoop-flick-unity": ("hoop-flick", "HoopFlick/Runtime/HoopFlickPlayer.cs", T, "state, starsWon"),
+    "summit-cards-unity": ("summit-cards", "SummitCards/Runtime/SummitCardsPlayer.cs", T, "state, starsWon"),
+    "coin-slide-unity": ("coin-slide", "CoinSlide/Runtime/CoinSlidePlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

@@ -162,22 +162,22 @@ function gauss(rng: () => number): number {
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rng());
 }
 
-/** The spot a sensible player aims for: deep in the 3 band, on a lane clear of posts and of tokens already resting. */
+/** The spot a sensible player aims for: deep in the 3 band on a lane clear of posts and of tokens already resting;
+ *  failing that the 2 band, then the 1 band. Lanes are tried from the middle outward. */
+export const LANES = Array.from({ length: 13 }, (_, k) => 180 + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 18);
+export const TARGET_YS = [66, 122, 186];
 export function pickTarget(tb: Table): { x: number; y: number } {
-  const lanes = [180, 150, 210, 120, 240, 95, 265, 70, 290];
-  const blocked = (x: number) => {
-    // anything within a token's reach of the straight line from the start to (x, top)
-    const ty = 66;
-    const things = [...tb.stage.posts.map((p) => ({ x: p.x, y: p.y, r: POST })), ...tb.pucks.filter((p) => p.on).map((p) => ({ x: p.x, y: p.y, r: TOKEN }))];
-    return things.some((o) => {
-      if (o.y < ty - TOKEN || o.y > START.y) return false;
-      const f = (START.y - o.y) / (START.y - ty);
+  const things = [...tb.stage.posts.map((p) => ({ x: p.x, y: p.y, r: POST })), ...tb.pucks.filter((p) => p.on).map((p) => ({ x: p.x, y: p.y, r: TOKEN }))];
+  const blocked = (x: number, ty: number) =>
+    things.some((o) => {
+      // anything within a token's reach of the straight line from the start to (x, ty), or sitting on the spot
+      if (o.y < ty - TOKEN * 2 || o.y > START.y) return false;
+      const f = Math.min(1, (START.y - o.y) / (START.y - ty));
       const lx = START.x + (x - START.x) * f;
       return Math.abs(o.x - lx) < TOKEN + o.r + 4;
     });
-  };
-  for (const x of lanes) if (!blocked(x)) return { x, y: 66 };
-  return { x: 180, y: 130 }; // nothing clear: settle for the middle band
+  for (const ty of TARGET_YS) for (const x of LANES) if (!blocked(x, ty)) return { x, y: ty };
+  return { x: 180, y: 186 };
 }
 
 /** The slide that stops at a spot (straight line, constant friction). */
@@ -248,7 +248,9 @@ export function buildStage(stage: number): SlideStage {
     if (HUMAN_SLIDERS.some((o) => !pilot(st, o).won)) continue;
     const careful = pilot(st, { aimSpread: 0.3, powerSpread: 0.004 });
     if (!careful.won) continue;
-    st.par = Math.max(st.need, score(careful) - 2);
+    const exact = pilot(st, { aimSpread: 0, powerSpread: 0 });
+    if (!exact.won) continue;
+    st.par = Math.max(st.need, Math.min(score(careful), score(exact)) - 2);
     if ([1, 2, 3].some((seed) => pilot(st, { mode: "random", seed }).won)) continue;
     return st;
   }
