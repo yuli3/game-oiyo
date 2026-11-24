@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import VeggieLanes from "../../components/games/VeggieLanes";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "텃밭 방어선 — 작물을 심어 달팽이 행렬을 막는 무료 줄 방어 게임 30단계",
+    description: "달팽이·민달팽이·딱정벌레가 다섯 줄 텃밭을 기어와요. 이슬을 모아 이슬꽃·무 대포·호박 벽·고추 폭탄을 심고, 해충이 창고에 닿기 전에 마지막 무리까지 막아내는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Veggie Lanes — Free lane defense: plant crops to stop the snail parade (30 stages)",
+    description: "Snails, slugs and beetles creep across five rows of garden. Gather dew and plant dewflowers, radish shooters, pumpkin walls and chili bursts, and stop the last wave before a pest reaches the shed. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "畑の防衛線 — 作物を植えてカタツムリの行列を止める無料のレーン防衛ゲーム30面",
+    description: "カタツムリ・ナメクジ・カブトムシが5列の畑をはってきます。つゆを集めてつゆ花・大根砲・かぼちゃ壁・とうがらしを植え、害虫が小屋に着く前に最後の群れまで止めるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "菜园防线 — 种下作物挡住蜗牛大军的免费分路防守游戏30关",
+    description: "蜗牛、鼻涕虫和甲虫爬过五排菜园。收集露水，种下露水花、萝卜炮、南瓜墙和辣椒弹，在害虫爬到小屋前挡住最后一波。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Potager en défense — Défense en rangs gratuite : plantez pour arrêter la parade d'escargots (30 niveaux)",
+    description: "Escargots, limaces et scarabées traversent cinq rangs de potager. Récoltez la rosée, plantez fleurs de rosée, radis tireurs, murs de citrouilles et piments explosifs, et arrêtez la dernière vague avant la cabane. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Huerto en guardia — Defensa por hileras gratis: planta para frenar el desfile de caracoles (30 niveles)",
+    description: "Caracoles, babosas y escarabajos cruzan cinco hileras de huerto. Junta rocío y planta flores de rocío, rábanos tiradores, muros de calabaza y guindillas explosivas, y frena la última oleada antes del cobertizo. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["veggie-lanes"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="veggie-lanes" build="veggie-lanes-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/veggie-lanes.webp">
+      <VeggieLanes client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="veggie-lanes" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import FormulaLock from "../../components/games/FormulaLock";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "수식 자물쇠 — 6번 안에 금고의 수식을 맞히는 무료 수식 맞히기 퍼즐 30단계",
+    description: "금고는 참인 수식 하나로 열려요. 같은 길이의 참인 수식을 넣으면 칸마다 초록·노랑·회색으로 힌트가 켜지고, 그 단서로 6번 안에 '12+35=47' 같은 정답 수식을 찾아내는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Formula Lock — Free equation-guessing puzzle: crack the safe's equation in six tries (30 stages)",
+    description: "The safe opens to one true equation. Type any true equation of the same length and each square lights green, yellow or grey; use the clues to find an answer like '12+35=47' within six tries. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "数式ロック — 6回以内に金庫の式を当てる無料の式あてパズル30面",
+    description: "金庫は正しい式ひとつで開きます。同じ長さの正しい式を入れるとマスごとに緑・黄・灰のヒントがつき、その手がかりで6回以内に「12+35=47」のような答えを見つけるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "算式密码锁 — 六次内猜出保险箱算式的免费猜算式谜题30关",
+    description: "保险箱只认一个成立的算式。输入同样长度的成立算式，每一格会亮起绿、黄、灰提示，凭这些线索在六次内找出像“12+35=47”这样的答案。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Coffre à formules — Casse-tête gratuit : trouvez l'équation du coffre en six essais (30 niveaux)",
+    description: "Le coffre s'ouvre avec une seule équation juste. Tapez une équation juste de même longueur : chaque case s'allume en vert, jaune ou gris ; servez-vous des indices pour trouver une réponse comme « 12+35=47 » en six essais. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Candado de fórmulas — Puzle gratis: descifra la ecuación de la caja fuerte en seis intentos (30 niveles)",
+    description: "La caja fuerte se abre con una sola ecuación cierta. Escribe una ecuación cierta de la misma longitud y cada casilla se ilumina en verde, amarillo o gris; usa las pistas para dar con una respuesta como «12+35=47» en seis intentos. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["formula-lock"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="formula-lock" build="formula-lock-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/formula-lock.webp">
+      <FormulaLock client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="formula-lock" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

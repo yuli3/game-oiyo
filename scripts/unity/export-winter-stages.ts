@@ -68,6 +68,9 @@ import * as blanketGame from "../../src/lib/games/blanket-battle";
 import * as duckGame from "../../src/lib/games/duck-parade";
 import * as cableGame from "../../src/lib/games/cable-knot";
 import * as rollerGame from "../../src/lib/games/roller-claim";
+import * as lockGame from "../../src/lib/games/formula-lock";
+import * as lanesGame from "../../src/lib/games/veggie-lanes";
+import * as bounceGame from "../../src/lib/games/bounce-down";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -552,4 +555,31 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = rollerGame.ROLLER_STAGES.map((st) => `        new Level { start = ${iarr(st.start)}, balls = ${iarr(st.balls.flatMap((b) => [b.x, b.y, b.dx, b.dy]))}, ballStep = ${n(st.ballStep)}, goal = ${n(st.goal)}, limit = ${st.limit}, par = ${st.par} },`);
   write("roller-claim", "RollerClaim", `    public struct Level { public int[] start, balls; public float ballStep, goal; public int limit, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Formula Lock: the answer, its length, par, and the careful solver's guesses (for the automated play check)
+{
+  const rows: string[] = [];
+  for (let i = 0; i < lockGame.STAGE_COUNT; i++) {
+    const st = lockGame.LOCK_STAGES[i];
+    const plan = lockGame.pilot(st, { seed: 1 }).guesses;
+    rows.push(`        new Level { answer = ${JSON.stringify(st.answer)}, length = ${st.length}, par = ${st.par}, plan = new string[] { ${plan.map((g) => JSON.stringify(g)).join(", ")} } },`);
+  }
+  write("formula-lock", "FormulaLock", `    public struct Level { public string answer; public int length, par; public string[] plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Veggie Lanes: pests as (time, row, kind) triples, their toughness, and the plants not yet on offer
+{
+  const rows: string[] = [];
+  for (let i = 0; i < lanesGame.STAGE_COUNT; i++) {
+    const st = lanesGame.LANE_STAGES[i];
+    rows.push(`        new Level { spawns = ${arr(st.spawns.flatMap((s) => [s.t, s.row, s.kind]))}, hpScale = ${n(st.hpScale)}, locked = ${iarr(st.locked)} },`);
+  }
+  write("veggie-lanes", "VeggieLanes", `    public struct Level { public float[] spawns; public float hpScale; public int[] locked; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Bounce Down: floors as (gap, width, sour count, sour slices...) runs, the clock, par
+{
+  const rows = bounceGame.BOUNCE_STAGES.map((st) => `        new Level { floors = ${iarr(st.floors.flatMap((f) => [f.gap, f.width, f.sour.length, ...f.sour]))}, count = ${st.floors.length}, limit = ${st.limit}, par = ${st.par} },`);
+  write("bounce-down", "BounceDown", `    public struct Level { public int[] floors; public int count, limit, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

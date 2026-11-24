@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BounceDown from "../../components/games/BounceDown";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "통통 내려가기 — 사탕 탑을 돌려 젤리 공을 떨어뜨리는 무료 탑 내려가기 게임 30단계",
+    description: "젤리 공이 사탕 탑 위에서 통통 튀어요. 탑을 좌우로 돌려 구멍을 공 밑에 맞추면 한 층씩 쏙 떨어지고, 빨간 신맛 칸은 피해서 시간 안에 바닥까지 내려가는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Bounce Down — Free spin-the-tower game: drop a jelly ball down a candy tower (30 stages)",
+    description: "A jelly ball bounces on a candy tower. Spin the tower so the gap comes under the ball and it drops a floor at a time; dodge the red sour slices and reach the bottom before time runs out. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ぽよんと下へ — キャンディータワーを回してゼリーボールを落とす無料ゲーム30面",
+    description: "ゼリーのボールがキャンディータワーの上ではずみます。タワーを回してすき間をボールの下に合わせると1階ずつストンと落ち、赤いすっぱいマスを避けて時間内に下まで降りるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "弹弹下楼 — 转动糖果塔让果冻球落下的免费游戏30关",
+    description: "果冻球在糖果塔上弹跳。转动高塔把缺口对准球下方，它就一层层落下；避开红色酸味格，在时间内落到塔底。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Rebond en bas — Jeu gratuit : faites tourner une tour de bonbons pour faire descendre la balle (30 niveaux)",
+    description: "Une balle en gelée rebondit sur une tour de bonbons. Tournez la tour pour amener le trou sous la balle et elle descend d'un étage ; évitez les parts rouges acidulées et atteignez le bas à temps. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Rebota abajo — Juego gratis: gira una torre de caramelo para bajar la bola de gelatina (30 niveles)",
+    description: "Una bola de gelatina rebota sobre una torre de caramelo. Gira la torre para poner el hueco bajo la bola y bajará piso a piso; evita las porciones rojas ácidas y llega al fondo a tiempo. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["bounce-down"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="bounce-down" build="bounce-down-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/bounce-down.webp">
+      <BounceDown client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="bounce-down" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
