@@ -126,6 +126,9 @@ BUILDS = {
     "screw-jam-unity": ("screw-jam", "ScrewJam/Runtime/ScrewJamPlayer.cs", T, "state, starsWon"),
     "parking-out-unity": ("parking-out", "ParkingOut/Runtime/ParkingOutPlayer.cs", T, "state, starsWon"),
     "night-checkout-unity": ("night-checkout", "NightCheckout/Runtime/NightCheckoutPlayer.cs", T, "state, starsWon"),
+    "toy-box-brawl-unity": ("toy-box-brawl", "ToyBoxBrawl/Runtime/ToyBoxBrawlPlayer.cs", T, "state, starsWon"),
+    "summon-guard-unity": ("summon-guard", "SummonGuard/Runtime/SummonGuardPlayer.cs", T, "state, starsWon"),
+    "rooftop-cats-unity": ("rooftop-cats", "RooftopCats/Runtime/RooftopCatsPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

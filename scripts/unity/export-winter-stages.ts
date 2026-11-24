@@ -59,6 +59,9 @@ import * as crownGame from "../../src/lib/games/crown-regions";
 import * as screwGame from "../../src/lib/games/screw-jam";
 import * as parkGame from "../../src/lib/games/parking-out";
 import * as shopGame from "../../src/lib/games/night-checkout";
+import * as toyGame from "../../src/lib/games/toy-box-brawl";
+import * as guardGame from "../../src/lib/games/summon-guard";
+import * as catsGame from "../../src/lib/games/rooftop-cats";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -453,4 +456,45 @@ function write(slug: string, game: string, body: string): void {
     return `        new Level { at = ${arr(cs.map((c) => c.at))}, patience = ${arr(cs.map((c) => c.patience))}, paid = ${iarr(cs.map((c) => c.paid))}, count = ${iarr(cs.map((c) => c.items.length))}, items = ${iarr(items)}, showChange = ${st.showChange}, par = ${st.par} },`;
   });
   write("night-checkout", "NightCheckout", `    public struct Level { public float[] at, patience; public int[] paid, count, items; public bool showChange; public int par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Toy Box Brawl: shelf (kind index), coins, enemy (kind, atk, hp), the most toys a line keeps, and one line that does it
+{
+  const kinds = toyGame.KINDS;
+  const rows = toyGame.TOY_STAGES.map((st) => {
+    let bestLine: number[] = [];
+    for (const l of toyGame.lines(st)) {
+      const r = toyGame.battle(l.map((k) => toyGame.toy(k)), st.enemy);
+      if (r.won && r.left === st.best) {
+        // the bot buys from the shelf in this order: offer indices, front first
+        const used = new Set<number>();
+        bestLine = l.map((k) => {
+          const i = st.shop.findIndex((s, j) => s === k && !used.has(j));
+          used.add(i);
+          return i;
+        });
+        break;
+      }
+    }
+    return `        new Level { shop = ${iarr(st.shop.map((k) => kinds.indexOf(k)))}, coins = ${st.coins}, enemy = ${iarr(st.enemy.flatMap((e) => [kinds.indexOf(e.kind), e.atk, e.hp]))}, best = ${st.best}, answer = ${iarr(bestLine)} },`;
+  });
+  write("toy-box-brawl", "ToyBoxBrawl", `    public struct Level { public int[] shop, enemy, answer; public int coins, best; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Summon Guard: waves, monsters per wave, first-wave hp and growth, speed, boss hp, coins, luck seed, peak par
+{
+  const rows = guardGame.GUARD_STAGES.map((st) => `        new Level { waves = ${st.waves}, perWave = ${st.perWave}, hp = ${st.hp}, growth = ${n(st.growth)}, speed = ${n(st.speed)}, bossHp = ${st.bossHp}, coins = ${st.coins}, seed = ${st.seed}u, peakPar = ${st.peakPar} },`);
+  write("summon-guard", "SummonGuard", `    public struct Level { public int waves, perWave, hp, bossHp, coins, peakPar; public float growth, speed; public uint seed; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Rooftop Cats: time of day, sky, props (kind, x, y, w, h + colour), cats (x, y, peek, host, scale + colour), clock, par
+{
+  const kinds = ["building", "roof", "window", "chimney", "plant", "tank", "cloth", "ac", "line"];
+  const sarr = (xs: string[]) => `new string[] { ${xs.map((x) => `"${x}"`).join(", ")} }`;
+  const rows = catsGame.CATS_STAGES.map((st) => {
+    const props = st.props.flatMap((p) => [kinds.indexOf(p.kind), p.x, p.y, p.w, p.h]);
+    const cats = st.cats.flatMap((c) => [c.x, c.y, c.peek ? 1 : 0, c.host, c.scale]);
+    return `        new Level { time = ${["day", "dusk", "night"].indexOf(st.time)}, sky = "${st.sky}", props = ${arr(props)}, propColours = ${sarr(st.props.map((p) => p.colour))}, cats = ${arr(cats)}, catColours = ${sarr(st.cats.map((c) => c.colour))}, limit = ${st.limit}, par = ${st.par} },`;
+  });
+  write("rooftop-cats", "RooftopCats", `    public struct Level { public int time, limit, par; public string sky; public float[] props, cats; public string[] propColours, catColours; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
