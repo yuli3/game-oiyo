@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import NumberBoom from "../../components/games/NumberBoom";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "숫자 폭발 — 1분짜리 판 30개, 30분 만에 숫자가 '양'까지 커지는 무료 증분형 게임",
+    description: "기계 줄의 첫 기계는 동전을 만들고, 뒤의 기계는 흘러오는 양을 곱해요. 어디에 업그레이드를 쓸지 골라 1분 안에 목표 숫자를 넘기는 판이 30개, 다 합쳐 30분이면 숫자가 10의 28제곱을 넘어가요. Unity 3D 본편과 빠른 플레이.",
+  },
+  en: {
+    title: "Number Boom — Free 30-minute incremental: thirty one-minute runs that take the number from hundreds to thirty zeros",
+    description: "The first machine in the chain makes coins; every one after it multiplies the flow. Choose where to spend on upgrades and pass each run's target within a minute. Thirty runs, half an hour in all, and the number passes 10^28. A Unity 3D main game plus quick play.",
+  },
+  ja: {
+    title: "数字大爆発 — 1分のランが30本、30分で数字が「穣」まで膨らむ無料のインクリメンタルゲーム",
+    description: "機械の列の最初はコインを作り、その後の機械は流れてくる量を掛け算します。どこを強化するか選んで1分以内に目標を超えるランが30本、合計30分で数字は10の28乗を超えます。Unity 3D本編とクイックプレイ。",
+  },
+  zh: {
+    title: "数字大爆炸 — 30局每局1分钟，30分钟让数字涨到“穰”的免费增量游戏",
+    description: "机器链里第一台造金币，后面每台都把流量乘上去。选择把钱花在哪里升级，在1分钟内超过目标。共30局、合计30分钟，数字会超过10的28次方。Unity 3D 正式版和快速玩。",
+  },
+  fr: {
+    title: "Explosion de nombres — Incrémental gratuit de 30 minutes : trente parties d'une minute, des centaines à trente zéros",
+    description: "La première machine de la chaîne fabrique des pièces, chacune des suivantes multiplie le flux. Choisissez où investir et dépassez l'objectif de chaque partie en une minute. Trente parties, une demi-heure en tout, et le nombre dépasse 10^28. Un jeu Unity 3D et une version rapide.",
+  },
+  es: {
+    title: "Explosión de números — Incremental gratis de 30 minutos: treinta partidas de un minuto, de cientos a treinta ceros",
+    description: "La primera máquina de la cadena fabrica monedas y cada una de las siguientes multiplica el flujo. Elige dónde invertir y supera la meta de cada partida en un minuto. Treinta partidas, media hora en total, y el número pasa de 10^28. Un juego Unity 3D y una versión rápida.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["number-boom"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="number-boom" build="number-boom-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/number-boom.webp">
+      <NumberBoom client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="number-boom" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
