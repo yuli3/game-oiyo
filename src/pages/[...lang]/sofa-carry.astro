@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SofaCarry from "../../components/games/SofaCarry";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "둘이서 소파 옮기기 — 한 휴대폰으로 둘이 소파 양 끝을 잡고 복도를 지나 트럭까지 옮기는 무료 협동 게임 30단계",
+    description: "이삿날, 긴 소파를 둘이서 한쪽씩 잡고 옮겨요. 복도는 소파보다 좁아서 길게만 지나가고 방향은 모퉁이 계단참에서만 돌릴 수 있어요. 벽에 긁히지 않게 손발을 맞춰 트럭까지 싣는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Sofa Carry — Free co-op game for two on one phone: each holds one end of the sofa and gets it down the halls to the van (30 stages)",
+    description: "Moving day: two of you carry a long sofa, one end each. The halls are narrower than the sofa, so it only goes lengthwise and only turns on the landings. Work together, don't scrape the walls, and load the van. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "2人でソファ運び — 1台のスマホで2人がソファの両端を持ち、廊下を抜けてトラックまで運ぶ無料の協力ゲーム30面",
+    description: "引っ越しの日、長いソファを2人で片方ずつ持って運びます。廊下はソファより狭く、縦にしか通れず、向きを変えられるのは角の踊り場だけ。息を合わせて壁をこすらずトラックに積むUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "两人搬沙发 — 一部手机两人各抓沙发一头、穿过走廊搬上货车的免费合作游戏30关",
+    description: "搬家这天，两人各抬一头搬长沙发。走廊比沙发窄，只能竖着过，只有在拐角平台上才能转向。配合好别蹭墙，把沙发装上货车。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Canapé à deux — Jeu coopératif gratuit à deux sur un téléphone : chacun tient un bout du canapé jusqu'au camion (30 niveaux)",
+    description: "Jour de déménagement : à deux, chacun un bout, vous portez un long canapé. Les couloirs sont plus étroits que lui : il ne passe que dans la longueur et ne tourne que sur les paliers. Accordez-vous, n'éraflez pas les murs et chargez le camion. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Sofá entre dos — Juego cooperativo gratis para dos en un móvil: cada uno lleva un extremo del sofá hasta la furgoneta (30 niveles)",
+    description: "Día de mudanza: entre dos, un extremo cada uno, lleváis un sofá largo. Los pasillos son más estrechos que él: solo pasa a lo largo y solo gira en los descansillos. Coordinaos, no rocéis las paredes y cargad la furgoneta. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["sofa-carry"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="sofa-carry" build="sofa-carry-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/sofa-carry.webp">
+      <SofaCarry client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="sofa-carry" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

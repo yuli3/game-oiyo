@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import OddCommute from "../../components/games/OddCommute";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "이상한 출근길 — 똑같은 지하철 칸이 반복되는 출근 열차에서 이상 현상을 찾는 무료 관찰 게임 30단계",
+    description: "다음 칸으로 가도 계속 같은 칸이 나오는 출근 열차예요. 첫 칸을 잘 봐 두고, 뭔가 바뀌었으면 되돌아가고 그대로면 다음 칸으로 가요. 한 번 틀리면 첫 역부터 다시 세는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Odd Commute — Free anomaly-spotting game: on a morning train of the same car again and again, turn back if anything changed (30 stages)",
+    description: "Walk into the next car and it is the same car again. Learn the first car; then turn back if anything has changed and go on if nothing has. One wrong call and you count from the first stop again. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "おかしな通勤電車 — 同じ車両が繰り返される通勤電車で異変を探す無料の観察ゲーム30面",
+    description: "次の車両に移っても同じ車両が続く通勤電車。最初の車両をよく覚え、何か変わっていれば引き返し、そのままなら次の車両へ。一度間違えると最初の駅から数え直すUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "诡异的通勤车 — 在不断重复同一节车厢的早班车里找异常的免费观察游戏30关",
+    description: "走进下一节车厢，又是同一节车厢。记住第一节车厢，有变化就往回走，没有就去下一节。错一次就从第一站重新数。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Trajet étrange — Jeu d'observation gratuit : dans un train du matin qui répète la même voiture, faites demi-tour si quelque chose a changé (30 niveaux)",
+    description: "On passe à la voiture suivante et c'est encore la même. Retenez la première ; puis faites demi-tour si quelque chose a changé, avancez sinon. Une erreur et l'on recompte depuis le premier arrêt. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Viaje raro — Juego de observación gratis: en un tren matinal que repite el mismo vagón, vuelve atrás si algo cambió (30 niveles)",
+    description: "Pasas al siguiente vagón y es el mismo otra vez. Memoriza el primero; luego vuelve atrás si algo ha cambiado y sigue si no. Un fallo y vuelves a contar desde la primera parada. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["odd-commute"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="odd-commute" build="odd-commute-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/odd-commute.webp">
+      <OddCommute client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="odd-commute" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
