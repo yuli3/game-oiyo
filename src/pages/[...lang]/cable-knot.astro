@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CableKnot from "../../components/games/CableKnot";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "엉킨 전선 — 플러그를 옮겨 엉킨 충전선을 푸는 무료 전선 풀기 퍼즐 30단계",
+    description: "책상 위 충전선이 엉켰어요. 플러그를 빈 콘센트로 옮겨 겹친 전선이 하나도 없게 만들어요. 모든 판은 깔끔하게 풀리는 답이 있고, 이동 횟수 안에 풀면 통과하는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Cable Knot — Free untangle puzzle: move plugs until no charging cable crosses another (30 stages)",
+    description: "The charging cables on the desk are in a tangle. Move plugs to empty sockets until no cable crosses another. Every desk has a tidy answer; untangle it within the move limit. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "からまりケーブル — プラグを動かして充電ケーブルをほどく無料のほどきパズル30面",
+    description: "机の上の充電ケーブルがからまっています。プラグを空いたコンセントへ動かし、交差するケーブルを一つもなくします。どの机にもきれいにほどける答えがあり、移動回数内にほどけばクリアのUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "缠绕电线 — 移动插头理顺充电线的免费解线谜题30关",
+    description: "桌上的充电线缠在一起了。把插头移到空插座，直到没有任何电线交叉。每张桌子都有理顺的答案，在移动次数内理顺即过关。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Nœud de câbles — Casse-tête gratuit : déplacez les prises jusqu'à ce qu'aucun câble n'en croise un autre (30 niveaux)",
+    description: "Les câbles de recharge du bureau sont emmêlés. Déplacez des prises vers des emplacements libres jusqu'à ne plus avoir aucun croisement. Chaque bureau a une solution nette ; démêlez-le dans la limite de coups. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Nudo de cables — Puzle gratis: mueve enchufes hasta que ningún cable cruce a otro (30 niveles)",
+    description: "Los cables de carga del escritorio están enredados. Mueve enchufes a huecos libres hasta que ningún cable se cruce. Cada escritorio tiene una solución limpia; desenrédalo dentro del límite de movimientos. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["cable-knot"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="cable-knot" build="cable-knot-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/cable-knot.webp">
+      <CableKnot client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="cable-knot" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
