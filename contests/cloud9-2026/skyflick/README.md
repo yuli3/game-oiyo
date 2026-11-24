@@ -47,7 +47,7 @@ test/        node --test suite
 ## Test
 
 ```bash
-npm test   # node --test test/logic.test.cjs
+npm test   # node --test test/logic-check.cjs
 ```
 
 ## License
