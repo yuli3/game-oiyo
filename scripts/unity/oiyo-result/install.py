@@ -141,6 +141,9 @@ BUILDS = {
     "trio-tray-unity": ("trio-tray", "TrioTray/Runtime/TrioTrayPlayer.cs", T, "state, starsWon"),
     "cork-spin-unity": ("cork-spin", "CorkSpin/Runtime/CorkSpinPlayer.cs", T, "state, starsWon"),
     "gondola-queue-unity": ("gondola-queue", "GondolaQueue/Runtime/GondolaQueuePlayer.cs", T, "state, starsWon"),
+    "beaver-chop-unity": ("beaver-chop", "BeaverChop/Runtime/BeaverChopPlayer.cs", T, "state, starsWon"),
+    "prism-hop-unity": ("prism-hop", "PrismHop/Runtime/PrismHopPlayer.cs", T, "state, starsWon"),
+    "paint-flood-unity": ("paint-flood", "PaintFlood/Runtime/PaintFloodPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."
