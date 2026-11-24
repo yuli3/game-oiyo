@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AvalancheRescue from "../../components/games/AvalancheRescue";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "눈사태 구조 — 신호기 삐삐 소리를 따라가 묻힌 스키어를 파내는 무료 겨울 구조 게임 30단계",
+    description: "눈사태에 묻힌 스키어를 구해요! 수신기의 화살표와 거리를 따라 눈밭을 걷고, 삐삐 소리가 빨라지면 바로 위에서 꾹 눌러 파요. 멀리서는 화살표가 흔들리고, 엉뚱한 곳을 파면 시간만 흘러요. 공기가 떨어지기 전에 모두 구하는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Avalanche Rescue — Free winter rescue game: follow the transceiver beeps and dig out buried skiers (30 stages)",
+    description: "Rescue skiers buried in an avalanche! Walk the snow following your transceiver's arrow and distance, and when the beeps quicken, hold to dig right on top. Far away the arrow wavers, and digging in the wrong place only wastes time. Find everyone before the air runs out. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "雪崩救助 — ビーコンの音をたどって埋まったスキーヤーを掘り出す無料の冬の救助ゲーム30ステージ",
+    description: "雪崩に埋まったスキーヤーを救え！ 受信機の矢印と距離をたどって雪原を歩き、ピッピッが速くなったら真上で長押しして掘ります。遠いと矢印が揺れ、見当違いの場所を掘ると時間だけが過ぎます。空気が尽きる前に全員を救うUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "雪崩救援 — 跟着信标哔哔声挖出被埋滑雪者的免费冬季救援游戏30关",
+    description: "救出被雪崩掩埋的滑雪者！跟着接收器的箭头和距离在雪地上走，哔哔声变快时在正上方按住挖。离得远时箭头会晃，挖错地方只会浪费时间。在空气耗尽前救出所有人，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Secours en avalanche — Jeu de secours hivernal gratuit : suivez les bips du DVA et dégagez les skieurs ensevelis (30 niveaux)",
+    description: "Secourez des skieurs ensevelis par une avalanche ! Marchez sur la neige en suivant la flèche et la distance de votre DVA, et quand les bips s'accélèrent, maintenez pour creuser juste au-dessus. De loin la flèche hésite, et creuser au mauvais endroit fait perdre du temps. Trouvez tout le monde avant que l'air s'épuise. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Rescate en avalancha — Juego de rescate invernal gratis: sigue los pitidos del ARVA y desentierra a los esquiadores (30 niveles)",
+    description: "¡Rescata a esquiadores enterrados por una avalancha! Camina por la nieve siguiendo la flecha y la distancia de tu ARVA, y cuando los pitidos se aceleren, mantén para cavar justo encima. De lejos la flecha vacila, y cavar en el sitio equivocado solo pierde tiempo. Encuentra a todos antes de que se acabe el aire. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["avalanche-rescue"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="avalanche-rescue" build="avalanche-rescue-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/avalanche-rescue.webp">
+      <AvalancheRescue client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="avalanche-rescue" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
