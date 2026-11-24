@@ -1,5 +1,5 @@
 /**
- * Writes the 30 stages of the winter Unity builds (wave 6 and new-games batch 10) as C# tables, straight from the web
+ * Writes the 30 stages of the winter Unity builds (wave 6 and new-games batches 10 and 11) as C# tables, straight from the web
  * rules in src/lib/games/*.ts, so the Unity and React versions play the very same stages.
  *
  *   npx tsx scripts/unity/export-winter-stages.ts
@@ -17,6 +17,9 @@ import * as tuho from "../../src/lib/games/tuho-toss";
 import * as sledge from "../../src/lib/games/ice-sledge";
 import * as roll from "../../src/lib/games/snow-roll";
 import * as jachigi from "../../src/lib/games/jachigi";
+import * as ski from "../../src/lib/games/ski-jump";
+import * as bokjori from "../../src/lib/games/bokjori-run";
+import * as pipe from "../../src/lib/games/snow-halfpipe";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -126,4 +129,26 @@ function write(slug: string, game: string, body: string): void {
     rows.push(`        new Level { goal = ${n(l.goal)}, fielders = ${arr(l.fielders)}, wind = ${n(l.wind)}, branch = ${arr(br)}, ditch = ${n(l.ditch ?? -1)}, bestT = ${n(l.bestT)} },`);
   }
   write("jachigi", "Jachigi", `    public struct Level { public float goal, wind, ditch, bestT; public float[] fielders, branch; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Ski Jump: K-point, in-run length, in-run speed, wind, gusts (deg/s per half second), mark, par
+{
+  const rows = ski.HILLS.map((h) => `        new Level { k = ${n(h.k)}, inrun = ${n(h.inrun)}, gateSpeed = ${n(h.gateSpeed)}, wind = ${n(h.wind)}, gusts = ${arr(h.gusts)}, goal = ${n(h.goal)}, par = ${n(h.par)} },`);
+  write("ski-jump", "SkiJump", `    public struct Level { public float k, inrun, gateSpeed, wind, goal, par; public float[] gusts; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Bokjori Run: run speed, houses (wall x, front depth, wall height, yard, house height, wants 0/1), dogs, length, strainers, need
+{
+  const rows: string[] = [];
+  for (let i = 0; i < bokjori.STAGE_COUNT; i++) {
+    const l = bokjori.levelFor(i);
+    rows.push(`        new Level { speed = ${n(l.speed)}, houses = ${arr(l.houses.flatMap((h) => [h.wall, h.front, h.wallH, h.yard, h.houseH, h.wants ? 1 : 0]))}, dogs = ${arr(l.dogs)}, length = ${n(l.length)}, strainers = ${l.strainers}, need = ${l.need} },`);
+  }
+  write("bokjori-run", "BokjoriRun", `    public struct Level { public float speed, length; public float[] houses, dogs; public int strainers, need; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Snow Halfpipe: half-width, wall depth, friction, pump, airs per run, mark
+{
+  const rows = pipe.PIPES.map((p) => `        new Level { half = ${n(p.half)}, depth = ${n(p.depth)}, friction = ${n(p.friction)}, pump = ${n(p.pump)}, hits = ${p.hits}, goal = ${n(p.goal)}, par = ${n(p.par)} },`);
+  write("snow-halfpipe", "SnowHalfpipe", `    public struct Level { public float half, depth, friction, pump, goal, par; public int hits; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
