@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DaljipFire from "../../components/games/DaljipFire";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "달집태우기 — 짚단을 끼워 보름달이 뜰 때 달집을 꼭대기까지 태우는 무료 정월 대보름 퍼즐 30단계",
+    description: "정월 대보름 밤, 달이 뜨는 순간 달집에 불을 붙여요. 생솔가지는 더디 타고 젖은 칸은 더 더뎌요. 마른 짚단을 어디에 끼울지 정해 바람을 이용해 달이 다 뜨기 전에 꼭대기 소원지까지 태우는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Daljip Fire — Free Daeboreum puzzle: pack straw so the moon house burns to the top as the full moon rises (30 stages)",
+    description: "On Daeboreum night the daljip is lit as the full moon rises. Green pine catches slowly, damp cells slower still. Choose where to pack your dry straw, use the wind, and get the fire to the wish paper at the top before the moon is up. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "タルチプ焼き — わらを詰めて満月の出とともに月の家をてっぺんまで燃やす無料のテボルムパズル30ステージ",
+    description: "テボルムの夜、月が昇る瞬間にタルチプへ火をつけます。生の松は燃えにくく、湿ったマスはさらに遅い。乾いたわらをどこに詰めるか決め、風も使って月が昇りきる前にてっぺんの願い紙まで燃やすUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "烧月屋 — 塞好草捆，让月屋在满月升起时烧到顶的免费正月十五益智游戏30关",
+    description: "正月十五夜，月亮升起的一刻点燃月屋。青松枝烧得慢，湿格更慢。决定把干草捆塞在哪里，借助风势，在月亮完全升起前烧到顶端的愿望纸。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Feu de la daljip — Casse-tête gratuit de Daeboreum : garnissez de paille pour que la daljip brûle jusqu'au sommet au lever de la lune (30 niveaux)",
+    description: "La nuit de Daeboreum, on allume la daljip au lever de la pleine lune. Le pin vert prend lentement, les cases mouillées plus encore. Choisissez où glisser la paille sèche, servez-vous du vent et faites atteindre le papier des vœux avant que la lune soit levée. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Hoguera de la daljip — Puzle gratis de Daeboreum: mete paja para que la daljip arda hasta la cima al salir la luna (30 niveles)",
+    description: "La noche de Daeboreum la daljip se enciende al salir la luna llena. El pino verde prende despacio y las casillas húmedas aún más. Elige dónde meter la paja seca, aprovecha el viento y haz que el fuego llegue al papel de los deseos antes de que salga la luna. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["daljip-fire"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="daljip-fire" build="daljip-fire-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/daljip-fire.webp">
+      <DaljipFire client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="daljip-fire" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
