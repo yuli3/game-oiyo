@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DuckParade from "../../components/games/DuckParade";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "오리 행렬 — 숫자 문을 골라 새끼 오리를 불리는 무료 숫자 문 러너 30단계",
+    description: "엄마 오리와 새끼 오리 행렬이 두 갈래 길을 걸어요. '+8', '×2', '−5', '÷2' 문 중 좋은 쪽으로 길을 바꾸고 여우를 피해, 마지막 개울을 건널 만큼 새끼 오리를 모으는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Duck Parade — Free number-gate runner: steer the ducklings through the best gates (30 stages)",
+    description: "A mother duck and her ducklings walk a two-lane path. Switch lanes into the better of '+8', '×2', '−5' and '÷2', dodge the fox, and bring enough ducklings to cross the stream. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "カモの行列 — 数字の門を選んで子ガモを増やす無料の数字ゲートランナー30面",
+    description: "母ガモと子ガモの行列が2車線の道を歩きます。「+8」「×2」「−5」「÷2」のよい方へ道を変え、キツネを避け、最後の小川を渡れるだけ子ガモを集めるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "鸭子游行 — 选数字门让小鸭变多的免费数字门跑酷30关",
+    description: "鸭妈妈带着小鸭走在双车道上。在“+8”“×2”“−5”“÷2”之间换到更好的一边，避开狐狸，攒够小鸭渡过最后的小溪。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Parade de canards — Runner gratuit à portes chiffrées : menez les canetons par les meilleures portes (30 niveaux)",
+    description: "Une cane et ses canetons suivent une allée à deux voies. Changez de voie vers la meilleure porte entre « +8 », « ×2 », « −5 » et « ÷2 », évitez le renard et arrivez avec assez de canetons pour passer le ruisseau. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Desfile de patos — Runner gratis de puertas numéricas: lleva a los patitos por las mejores puertas (30 niveles)",
+    description: "Una pata y sus patitos van por un camino de dos carriles. Cambia de carril hacia la mejor puerta entre «+8», «×2», «−5» y «÷2», esquiva al zorro y llega con patitos suficientes para cruzar el arroyo. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["duck-parade"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="duck-parade" build="duck-parade-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/duck-parade.webp">
+      <DuckParade client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="duck-parade" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

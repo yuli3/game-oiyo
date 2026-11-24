@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import RollerClaim from "../../components/games/RollerClaim";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "롤러 땅따기 — 롤러로 고리를 그려 운동장을 칠하는 무료 영역 차지 게임 30단계",
+    description: "페인트 롤러로 내 땅 밖에 줄을 긋고 다시 돌아오면 둘러싼 땅이 모두 내 색이 돼요. 굴러다니는 공이 젖은 줄을 지우기 전에 고리를 닫아, 시간 안에 목표만큼 칠하는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Roller Claim — Free territory-paint game: draw loops with a roller to paint the playground (30 stages)",
+    description: "Roll a stripe out of your patch and back, and everything it encloses turns your colour. Close each loop before a bouncing ball wipes the wet stripe, and paint the goal share in time. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ローラー陣取り — ローラーで輪を描いて運動場を塗る無料の陣取りゲーム30面",
+    description: "ペンキローラーで陣地の外に線を引いて戻ると、囲んだ土地がすべて自分の色に。転がるボールが濡れた線を消す前に輪を閉じ、時間内に目標まで塗るUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "滚筒占地 — 用滚筒画圈涂满操场的免费占地盘游戏30关",
+    description: "用油漆滚筒从自己的地盘拉出一条线再回来，圈住的地方全变成你的颜色。在弹跳的球抹掉湿线之前合拢，在时间内涂到目标比例。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Rouleau conquérant — Jeu gratuit de conquête : tracez des boucles au rouleau pour peindre la cour (30 niveaux)",
+    description: "Sortez de votre zone avec le rouleau et revenez : tout ce que la bande entoure prend votre couleur. Fermez chaque boucle avant qu'une balle n'efface la bande humide, et peignez la part visée à temps. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Rodillo conquistador — Juego gratis de conquistar terreno: traza lazos con el rodillo y pinta el patio (30 niveles)",
+    description: "Sal de tu zona con el rodillo y vuelve: todo lo que rodea la franja pasa a tu color. Cierra cada lazo antes de que una pelota borre la franja húmeda y pinta la parte pedida a tiempo. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["roller-claim"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="roller-claim" build="roller-claim-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/roller-claim.webp">
+      <RollerClaim client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="roller-claim" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
