@@ -1,0 +1,177 @@
+{
+"All 30 courses": [
+"코스 30개 전체",
+"全30コース",
+"Las 30 pistas",
+"全部 30 条赛道",
+"Les 30 pistes"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a course": [
+"코스를 골라요",
+"コースを選ぶ",
+"Elige una pista",
+"选择赛道",
+"Choisissez une piste"
+],
+"Course": [
+"코스",
+"コース",
+"Pista",
+"赛道",
+"Piste"
+],
+"Course list": [
+"코스 목록",
+"コース一覧",
+"Lista de pistas",
+"赛道列表",
+"Liste des pistes"
+],
+"Course {0}": [
+"{0}번 코스",
+"コース{0}",
+"Pista {0}",
+"第 {0} 条赛道",
+"Piste {0}"
+],
+"Finish! {0} s": [
+"결승! {0}초",
+"ゴール！{0}秒",
+"¡Meta! {0} s",
+"到达终点！{0} 秒",
+"Arrivée ! {0} s"
+],
+"Hold and drag left or right: the sled turns toward your finger. A missed flag costs 2 s, a pouch takes 0.5 s off.": [
+"누른 채 좌우로 끌면 썰매가 손가락 쪽으로 방향을 틀어요. 깃발을 놓치면 2초가 더해지고, 복주머니는 0.5초를 줄여 줘요.",
+"押したまま左右にドラッグすると、そりが指の方へ曲がります。旗を逃すと2秒追加、福袋は0.5秒短縮。",
+"Mantén y arrastra a izquierda o derecha: el trineo gira hacia tu dedo. Cada bandera fallada suma 2 s y cada bolsita resta 0,5 s.",
+"按住左右拖动，雪橇会转向手指方向。漏过旗门加 2 秒，福袋减 0.5 秒。",
+"Maintenez et glissez à gauche ou à droite : la luge tourne vers votre doigt. Un drapeau raté coûte 2 s, une bourse en retire 0,5."
+],
+"Missed flags +{0} s · pouches -{1} s": [
+"깃발 놓침 +{0}초 · 복주머니 −{1}초",
+"旗ミス +{0}秒 · 福袋 −{1}秒",
+"Banderas falladas +{0} s · bolsitas −{1} s",
+"漏旗 +{0} 秒 · 福袋 −{1} 秒",
+"Drapeaux ratés +{0} s · bourses −{1} s"
+],
+"Missed {0}": [
+"놓침 {0}",
+"旗ミス {0}",
+"Fallos {0}",
+"漏旗 {0}",
+"Ratés {0}"
+],
+"Next course": [
+"다음 코스",
+"次のコース",
+"Siguiente pista",
+"下一条赛道",
+"Piste suivante"
+],
+"Par {0} s": [
+"목표 {0}초",
+"目標 {0}秒",
+"Meta {0} s",
+"目标 {0} 秒",
+"Objectif {0} s"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Pouches {0}": [
+"복주머니 {0}",
+"福袋 {0}",
+"Bolsitas {0}",
+"福袋 {0}",
+"Bourses {0}"
+],
+"Restart": [
+"다시 시작",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Ride again": [
+"다시 타기",
+"もう一度滑る",
+"Otra bajada",
+"再滑一次",
+"Redescendre"
+],
+"Ride course {0}": [
+"{0}번 코스 타기",
+"コース{0}を滑る",
+"Bajar pista {0}",
+"滑第 {0} 条赛道",
+"Descendre la piste {0}"
+],
+"Snow Sled": [
+"눈썰매",
+"雪ぞり",
+"Trineo de nieve",
+"雪橇",
+"Luge des neiges"
+],
+"Steer down the hill between the red and blue flags. Dodge pines and snowmen, grab lucky pouches, beat the par time.": [
+"빨강·파랑 깃발 사이로 언덕을 내려가요. 소나무와 눈사람은 피하고 복주머니를 주워 목표 시간을 넘어 봐요.",
+"赤と青の旗の間を通って丘を下ろう。松と雪だるまをよけ、福袋を拾って目標タイムを切ろう。",
+"Baja la colina entre las banderas roja y azul. Esquiva pinos y muñecos, recoge bolsitas y bate el tiempo meta.",
+"在红蓝旗之间滑下山坡。躲开松树和雪人，捡起福袋，跑进目标时间。",
+"Descendez entre les drapeaux rouges et bleus. Évitez pins et bonshommes, ramassez les bourses et battez le temps cible."
+],
+"Time": [
+"시간",
+"時間",
+"Tiempo",
+"时间",
+"Temps"
+],
+"Too slow": [
+"너무 느렸어요",
+"遅すぎました",
+"Demasiado lento",
+"太慢了",
+"Trop lent"
+],
+"Touch to start": [
+"눌러서 출발해요",
+"タッチでスタート",
+"Toca para salir",
+"点击出发",
+"Touchez pour partir"
+],
+"You cleared all 30 courses!": [
+"코스 30개를 모두 클리어했어요!",
+"全30コースをクリアしました！",
+"¡Superaste las 30 pistas!",
+"你通关了全部 30 条赛道！",
+"Vous avez terminé les 30 pistes !"
+],
+"{0} s": [
+"{0}초",
+"{0}秒",
+"{0} s",
+"{0} 秒",
+"{0} s"
+]
+}

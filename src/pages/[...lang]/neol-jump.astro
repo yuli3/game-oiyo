@@ -1,4 +1,5 @@
 ---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import NeolJump from "../../components/games/NeolJump";
 import { locales } from "../../lib/i18n";
@@ -44,7 +45,9 @@ const m = meta[locale] ?? meta.en;
 
 <BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["neol-jump"]}>
   <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
-    <NeolJump client:load locale={locale} />
+    <UnityMainShell slug="neol-jump" build="neol-jump-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/neol-jump.webp">
+      <NeolJump client:visible locale={locale} />
+    </UnityMainShell>
     <div class="mx-auto mt-8 max-w-3xl px-4">
       <GameGuide slug="neol-jump" locale={locale} name={m.title.split(" — ")[0]} />
     </div>
