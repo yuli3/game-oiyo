@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import HoopFlick from "../../components/games/HoopFlick";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "골대 플릭 — 공을 쓱 밀어 링에 넣는 무료 플릭 농구 슛 게임 30단계",
+    description: "코트 곳곳의 공을 골대 쪽으로 쓱 밀어 던져요. 밀기 방향과 길이로 각도와 힘이 정해지고, 높이 띄운 공이 아무 데도 안 닿고 들어가면 클린슛 3점! 움직이는 골대까지 노리는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Hoop Flick — Free flick-to-shoot basketball game: swipe the ball into the hoop (30 stages)",
+    description: "Swipe balls from all over the court toward the hoop. The swipe sets the angle and power, and a high arc that touches nothing but net scores a three-point swish. Sliding hoops too, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "フリックシュート — ボールをはじいてリングに入れる無料のフリックバスケ30面",
+    description: "コートのあちこちのボールをゴールの方へスッとはじいて投げます。なぞる向きと長さで角度と強さが決まり、どこにもふれずに入ればノータッチ3点！動くゴールもねらうUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "指尖投篮 — 划一下把球投进篮筐的免费投篮游戏30关",
+    description: "把球场各处的球往篮筐方向一划投出。划的方向和长度决定角度和力度，高高抛起、什么都不碰地入网就是空心3分！还要瞄准移动的篮筐。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Panier d'un geste — Jeu de basket gratuit : lancez le ballon d'un glissement (30 niveaux)",
+    description: "Glissez les ballons des quatre coins du terrain vers le panier. Le geste fixe l'angle et la puissance, et une haute parabole qui ne touche que le filet vaut trois points. Des paniers mobiles aussi, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Canasta al vuelo — Juego de baloncesto gratis: lanza el balón deslizando el dedo (30 niveles)",
+    description: "Desliza balones desde toda la pista hacia la canasta. El gesto fija el ángulo y la fuerza, y un tiro alto que solo toca la red vale tres puntos. También canastas que se mueven, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["hoop-flick"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="hoop-flick" build="hoop-flick-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/hoop-flick.webp">
+      <HoopFlick client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="hoop-flick" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CoinSlide from "../../components/games/CoinSlide";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "카페 슬라이드 — 토큰을 테이블 끝에 딱 멈추게 미는 무료 셔플 게임 30단계",
+    description: "카페의 긴 테이블 끝으로 토큰을 미끄러뜨려요. 끝자락에 멈추면 3점, 너무 세면 떨어져 0점. 설탕 단지와 먼저 놓인 토큰을 피해 목표 점수를 채우는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Coin Slide — Free table-shuffle game: stop the token right at the edge (30 stages)",
+    description: "Slide tokens up a long café table. Stop right at the edge for 3, push too hard and it drops for nothing. Steer around sugar pots and the tokens already down to reach the goal. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "カフェスライド — コインをテーブルの端でピタッと止める無料のシャッフルゲーム30面",
+    description: "カフェの長いテーブルの先へコインをすべらせます。端ぎりぎりで止まれば3点、強すぎれば落ちて0点。砂糖つぼと先に置いたコインをよけて目標点を集めるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "咖啡桌滑币 — 让代币刚好停在桌边的免费推币游戏30关",
+    description: "把代币沿着咖啡馆的长桌滑出去。停在最边上得3分，太用力掉下去就是0分。绕开糖罐和先放好的代币，凑够目标分数。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Glisse au café — Jeu de palet gratuit : arrêtez le jeton juste au bord (30 niveaux)",
+    description: "Faites glisser des jetons sur une longue table de café. Juste au bord, 3 points ; trop fort, il tombe et ne vaut rien. Évitez les sucriers et les jetons déjà posés pour atteindre l'objectif. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Deslizar en el café — Juego de tejo gratis: para la ficha justo en el borde (30 niveles)",
+    description: "Desliza fichas por una larga mesa de café. Justo en el borde, 3 puntos; demasiado fuerte, cae y no vale nada. Esquiva los azucareros y las fichas ya colocadas para llegar a la meta. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["coin-slide"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="coin-slide" build="coin-slide-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/coin-slide.webp">
+      <CoinSlide client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="coin-slide" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
