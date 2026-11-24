@@ -135,6 +135,9 @@ BUILDS = {
     "duck-parade-unity": ("duck-parade", "DuckParade/Runtime/DuckParadePlayer.cs", T, "state, starsWon"),
     "cable-knot-unity": ("cable-knot", "CableKnot/Runtime/CableKnotPlayer.cs", T, "state, starsWon"),
     "roller-claim-unity": ("roller-claim", "RollerClaim/Runtime/RollerClaimPlayer.cs", T, "state, starsWon"),
+    "formula-lock-unity": ("formula-lock", "FormulaLock/Runtime/FormulaLockPlayer.cs", T, "state, starsWon"),
+    "veggie-lanes-unity": ("veggie-lanes", "VeggieLanes/Runtime/VeggieLanesPlayer.cs", T, "state, starsWon"),
+    "bounce-down-unity": ("bounce-down", "BounceDown/Runtime/BounceDownPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."
