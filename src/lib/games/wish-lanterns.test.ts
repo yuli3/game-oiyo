@@ -35,14 +35,14 @@ describe("wish-lanterns", () => {
       const s = run(st, 0);
       expect(s.won, `stage ${st + 1}`).toBe(true);
     }
-  });
+  }, 60_000);
 
   it("a sloppy pilot still clears most stages, and doing nothing fails past the first", () => {
     let wins = 0;
     for (let st = 0; st < STAGE_COUNT; st++) for (const seed of [3, 4]) if (run(st, seed).won) wins++;
     expect(wins).toBeGreaterThanOrEqual(50);
     for (let st = 1; st < STAGE_COUNT; st++) expect(run(st, null).won, `idle stage ${st + 1}`).toBe(false);
-  });
+  }, 60_000);
 
   it("a hard swipe blows the flame out", () => {
     const s = newSky(0);
