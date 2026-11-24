@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>SKYFLICK: a 60-second booth flick trainer</title>
+<meta name="description" content="SKYFLICK is a 60-second flick-and-reaction mini game for esports booths. Mouse or touch only, same sky for every player each day, offline leaderboard on a second screen.">
+<style>
+  html, body { margin: 0; height: 100%; background: #0b1630; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+  canvas { display: block; width: 100vw; height: 100vh; cursor: none; }
+  noscript { color: #fff; font: 18px system-ui; position: fixed; inset: 0; display: grid; place-items: center; }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="SKYFLICK game. Click the glowing orbs as fast as you can. Avoid storm clouds."></canvas>
+<noscript>SKYFLICK needs JavaScript.</noscript>
+<script src="logic.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
