@@ -15,22 +15,22 @@ export async function getStaticPaths() {
 const { locale } = Astro.props as { locale: Locale };
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 213종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 213종." },
-  en: { title: "OIYO Arcade — 213 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 213 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム213種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム213種。" },
-  zh: { title: "OIYO 街机 — 无需安装的213款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，213款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 213 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 213 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 213 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 213 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 216종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 216종." },
+  en: { title: "OIYO Arcade — 216 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 216 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム216種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム216種。" },
+  zh: { title: "OIYO 街机 — 无需安装的216款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，216款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 216 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 216 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 216 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 216 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 213종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "213 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム213種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的213款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "213 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "213 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 216종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "216 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム216種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的216款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "216 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "216 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -266,6 +266,9 @@ const GAMES: Game[] = [
   { slug: "jwibul-spin", emoji: "🔥", cat: "arcade", name: { ko: "쥐불놀이", en: "Jwibul Fire Spin", ja: "チュィブル火回し", zh: "转火罐", fr: "Jwibul, la boîte de feu", es: "Jwibul, la lata de fuego" } },
   { slug: "sebaetdon-split", emoji: "🧧", cat: "puzzle", name: { ko: "세뱃돈 봉투", en: "Sebaetdon Envelopes", ja: "お年玉袋分け", zh: "压岁钱红包", fr: "Enveloppes du Nouvel An", es: "Sobres de Año Nuevo" } },
   { slug: "bureom-crack", emoji: "🥜", cat: "arcade", name: { ko: "부럼 깨기", en: "Bureom Nut Crack", ja: "プロム割り", zh: "咬坚果", fr: "Casse-noix de Bureom", es: "Rompenueces de Bureom" } },
+  { slug: "ice-sledge", emoji: "🛷", cat: "arcade", name: { ko: "얼음썰매 레이스", en: "Ice Sledge Race", ja: "氷そり競争", zh: "冰车比赛", fr: "Course de luge sur glace", es: "Carrera de trineo en hielo" } },
+  { slug: "snow-roll", emoji: "☃️", cat: "arcade", name: { ko: "눈덩이 굴리기", en: "Snowball Roll", ja: "雪玉ころがし", zh: "滚雪球堆雪人", fr: "Boule de neige roulante", es: "Rueda la bola de nieve" } },
+  { slug: "jachigi", emoji: "🏏", cat: "arcade", name: { ko: "자치기", en: "Jachigi Stick Bat", ja: "チャチギ棒打ち", zh: "打尺游戏", fr: "Jachigi, le bâton frappé", es: "Jachigi, el palo bateado" } },
   { slug: "advent-puzzles", emoji: "🎄", cat: "puzzle", name: { ko: "어드벤트 퍼즐 달력", en: "Advent Puzzle Calendar", ja: "アドベント・パズルカレンダー", zh: "降临节谜题日历", fr: "Calendrier de l'Avent à énigmes", es: "Calendario de Adviento de puzles" } },
   { slug: "sunlit-glass", emoji: "🪟", cat: "puzzle", name: { ko: "햇살 스테인드글라스", en: "Sunlit Glass", ja: "陽だまりステンドグラス", zh: "阳光彩绘玻璃", fr: "Vitrail au soleil", es: "Vitral al Sol" } },
   { slug: "finger-hockey", emoji: "🏒", cat: "arcade", name: { ko: "손가락 에어하키", en: "Finger Air Hockey", ja: "指先エアホッケー", zh: "指尖桌上冰球", fr: "Air hockey du bout des doigts", es: "Air Hockey con el Dedo" } },
@@ -330,6 +333,42 @@ const newReleasesLabel: Record<Locale, { sectionTitle: string; badge: string; su
 const newReleaseLabels = newReleasesLabel[locale] ?? newReleasesLabel.en;
 
 const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; desc: Record<Locale, string> }> = [
+  {
+    slug: "ice-sledge",
+    tag: { ko: "겨울 개울 썰매 레이스", en: "Frozen stream race", ja: "冬の小川のそり競争", zh: "冰河冰车赛", fr: "Course sur ruisseau gelé", es: "Carrera en arroyo helado" },
+    desc: {
+      ko: "왼쪽·오른쪽 번갈아 쭉쭉!",
+      en: "Pole left, right, faster!",
+      ja: "左右交互にぐんぐん！",
+      zh: "左右交替冲冲冲！",
+      fr: "Gauche, droite, plus vite !",
+      es: "¡Izquierda, derecha, más rápido!",
+    },
+  },
+  {
+    slug: "snow-roll",
+    tag: { ko: "눈사람 만들기", en: "Snowman building", ja: "雪だるまづくり", zh: "堆雪人", fr: "Bonhomme de neige", es: "Muñeco de nieve" },
+    desc: {
+      ko: "데굴데굴 굴려 키워요",
+      en: "Roll it, grow it",
+      ja: "ころころ転がして大きく",
+      zh: "越滚越大",
+      fr: "Roulez, faites grossir",
+      es: "Rueda y hazla crecer",
+    },
+  },
+  {
+    slug: "jachigi",
+    tag: { ko: "겨울 들판 민속놀이", en: "Winter field folk game", ja: "冬の野原の伝承遊び", zh: "冬日田野民俗游戏", fr: "Jeu traditionnel d'hiver", es: "Juego tradicional de invierno" },
+    desc: {
+      ko: "톡 띄우고 딱! 쳐 내요",
+      en: "Flick it up, whack it far",
+      ja: "ポンと上げてカーン！",
+      zh: "挑起来，打出去！",
+      fr: "Faites sauter, frappez loin",
+      es: "Levántalo y batea lejos",
+    },
+  },
   {
     slug: "jwibul-spin",
     tag: { ko: "정월 대보름 민속놀이", en: "First full moon folk game", ja: "小正月の伝承遊び", zh: "正月十五民俗游戏", fr: "Jeu traditionnel de la pleine lune", es: "Juego tradicional de luna llena" },

@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SnowRoll from "../../components/games/SnowRoll";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "눈덩이 굴리기 — 눈 위를 굴려 눈덩이를 키우고 눈사람을 완성하는 무료 겨울 게임 30단계",
+    description: "데굴데굴 굴릴수록 커지는 눈덩이! 누른 채 끌어 하얀 눈 위로 굴리면 눈이 묻어 커지고 지나간 자리는 맨땅이 드러나요. 몸통을 키워 제자리에 세우고, 11단계부터는 머리도 굴려 올려요. 머리가 너무 크면 못 올려요! 흙탕·바위·울타리를 피하는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Snowball Roll — Free winter game: roll a snowball to make it grow and build a snowman (30 stages)",
+    description: "A snowball that grows as it rolls! Hold and drag to roll it over fresh snow: it packs on snow and leaves bare ground behind. Grow the body and park it on the snowman spot, and from stage 11 roll a head and lift it on, but a head that grows too big can't be lifted! Mud, rocks and fences in the way. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "雪玉ころがし — 転がして雪玉を大きくし雪だるまを完成させる無料の冬のゲーム30ステージ",
+    description: "転がすほど大きくなる雪玉！ 押したままドラッグして新雪の上を転がすと、雪がついて大きくなり、通ったあとは地面が出ます。胴を育てて場所に置き、11面からは頭も転がして載せます。頭が大きすぎると載せられない！ 泥・岩・柵をよけるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "滚雪球堆雪人 — 滚动雪球让它变大、堆出雪人的免费冬季游戏30关",
+    description: "越滚越大的雪球！按住拖动在新雪上滚，雪球粘上雪变大，滚过的地方露出地面。把身体滚大放到位，第11关起还要滚个头放上去——头太大就搬不上去！避开泥地、石头和篱笆，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Boule de neige roulante — Jeu d'hiver gratuit : faites rouler une boule pour la faire grossir et construire un bonhomme de neige (30 niveaux)",
+    description: "Une boule qui grossit en roulant ! Maintenez et glissez pour la faire rouler sur la neige fraîche : elle grossit et laisse la terre à nu. Faites grossir le corps, garez-le sur l'emplacement, et dès le niveau 11 roulez une tête à poser dessus, mais une tête trop grosse ne se soulève pas ! Boue, rochers et clôtures en travers. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Rueda la bola de nieve — Juego de invierno gratis: rueda una bola para que crezca y haz un muñeco de nieve (30 niveles)",
+    description: "¡Una bola que crece al rodar! Mantén y arrastra para rodarla sobre nieve fresca: se le pega nieve y deja el suelo al descubierto. Haz crecer el cuerpo y aparcarlo en su sitio, y desde el nivel 11 rueda una cabeza y súbela, ¡pero si crece demasiado no podrás levantarla! Barro, rocas y vallas en el camino. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["snow-roll"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="snow-roll" build="snow-roll-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/snow-roll.webp">
+      <SnowRoll client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="snow-roll" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
