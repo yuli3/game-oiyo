@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import OgokbapSort from "../../components/games/OgokbapSort";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "오곡밥 담기 — 쏟아지는 다섯 곡식을 끌어 제 그릇에 담는 무료 정월 대보름 게임 30단계",
+    description: "정월 대보름 오곡밥 준비! 자루에서 쏟아지는 쌀·보리·조·검은콩·팥을 잡아 옆으로 끌어 같은 곡식 그릇에 담아요. 곡식은 끄는 동안에도 떨어지고, 다른 그릇에 들어가면 섞여요. 그릇 순서까지 바뀌는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Ogokbap Sort — Free first-full-moon game: drag five falling grains into their own bowls (30 stages)",
+    description: "Getting the five-grain rice ready for Daeboreum! Grab the rice, barley, millet, black beans and red beans pouring from the sacks and drag each over its own bowl. Grains keep falling while you drag, and the wrong bowl mixes them in. Later the bowls even swap places. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "五穀ご飯の仕分け — 降ってくる五つの穀物をドラッグしてそれぞれの器へ入れる無料の正月テボルムゲーム30ステージ",
+    description: "テボルムの五穀ご飯の準備！ 袋から降ってくる米・麦・粟・黒豆・小豆をつかみ、横へドラッグして同じ穀物の器へ。ドラッグ中も穀物は落ち続け、違う器に入ると混ざります。器の並びまで変わるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "五谷饭分拣 — 拖动落下的五种谷物装进各自碗里的免费正月十五游戏30关",
+    description: "准备正月十五的五谷饭！抓住从袋子里倾泻而下的大米、大麦、小米、黑豆、红豆，横向拖到同种谷物的碗里。拖动时谷物还会下落，装错碗就混了。后面连碗的顺序都会变，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Tri des cinq grains — Jeu gratuit de la première pleine lune : glissez cinq grains qui tombent dans leurs bols (30 niveaux)",
+    description: "On prépare le riz aux cinq grains de Daeboreum ! Attrapez le riz, l'orge, le millet, les haricots noirs et rouges qui tombent des sacs et glissez chacun au-dessus de son bol. Ils tombent encore pendant que vous les déplacez, et le mauvais bol les mélange. Plus tard, les bols changent même de place. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Clasifica los cinco granos — Juego gratis de la primera luna llena: arrastra cinco granos que caen a sus cuencos (30 niveles)",
+    description: "¡Preparando el arroz de cinco granos de Daeboreum! Agarra el arroz, la cebada, el mijo y los frijoles negros y rojos que caen de los sacos y arrastra cada uno sobre su cuenco. Siguen cayendo mientras los arrastras, y el cuenco equivocado los mezcla. Más adelante los cuencos hasta cambian de sitio. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["ogokbap-sort"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="ogokbap-sort" build="ogokbap-sort-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/ogokbap-sort.webp">
+      <OgokbapSort client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="ogokbap-sort" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

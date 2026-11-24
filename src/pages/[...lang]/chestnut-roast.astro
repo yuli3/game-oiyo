@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ChestnutRoast from "../../components/games/ChestnutRoast";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "군밤 굽기 — 철판 위 밤을 옮겨 가며 노릇하게 구워 파는 무료 겨울 길거리 게임 30단계",
+    description: "겨울 길거리 군밤 장수! 숯불 철판 가운데는 뜨겁고 가장자리는 덜 뜨거워요. 밤을 끌어 자리를 바꿔 가며 굽고, 노릇하게 빛나면 봉투에 담아 팔아요. 두면 타고, 날밤은 돌아와요. 익는 때를 엇갈리게 하는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Chestnut Roast — Free winter street-stall game: move chestnuts around the pan and sell them golden (30 stages)",
+    description: "Run a winter roasted-chestnut stall! The middle of the iron pan over the coals is hot and the rim cooler. Drag chestnuts around as they roast and bag them when they glow golden. Leave them and they burn; bag them raw and they come back. Stagger them so they don't all finish at once. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "焼き栗屋 — 鉄板の栗を動かしながらこんがり焼いて売る無料の冬の屋台ゲーム30ステージ",
+    description: "冬の屋台の焼き栗屋！ 炭火の鉄板は真ん中が熱く、ふちはそれほど熱くありません。栗をドラッグして場所を変えながら焼き、こんがり光ったら袋に入れて売りましょう。放っておくと焦げ、生の栗は返されます。焼き上がりをずらすUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "烤栗子 — 在铁锅上挪动栗子、烤得金黄再卖的免费冬季街头小摊游戏30关",
+    description: "当冬天街头的烤栗子摊主！炭火铁锅中间热、边缘没那么热。拖动栗子换位置烤，金黄发亮时装袋卖掉。放着会焦，生的会被退回。让它们熟的时间错开，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Marrons chauds — Jeu d'étal d'hiver gratuit : déplacez les châtaignes sur la poêle et vendez-les dorées (30 niveaux)",
+    description: "Tenez un étal de marrons chauds en hiver ! Le centre de la poêle sur les braises est brûlant, le bord plus doux. Déplacez les châtaignes pendant qu'elles grillent et ensachez-les quand elles brillent, dorées. Oubliées, elles brûlent ; crues, on vous les rend. Décalez-les pour qu'elles ne cuisent pas toutes en même temps. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Castañas asadas — Juego gratis de puesto callejero invernal: mueve las castañas por la sartén y véndelas doradas (30 niveles)",
+    description: "¡Lleva un puesto de castañas asadas en invierno! El centro de la sartén sobre las brasas quema y el borde menos. Mueve las castañas mientras se asan y mételas en la bolsa cuando brillen doradas. Si las dejas se queman; si las vendes crudas, te las devuelven. Escalónalas para que no terminen todas a la vez. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["chestnut-roast"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="chestnut-roast" build="chestnut-roast-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/chestnut-roast.webp">
+      <ChestnutRoast client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="chestnut-roast" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
