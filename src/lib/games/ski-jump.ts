@@ -1,9 +1,9 @@
 /**
  * 스키점프 (Ski Jump) — an OIYO original one-button ski-jumping game.
- * Hold to crouch into a tuck down the in-run, tap right at the end of the table to spring off,
+ * Hold to crouch into a tuck down the in-run, let go right at the end of the table to spring off,
  * then hold to lean forward over your skis and let go to sit up: keep your body angle inside the
  * green band and the air carries you, drift out of it and you drop. Tap just before touchdown for a
- * telemark landing. Points are 60 for reaching the hill's K-point, 2 per metre past (or short of)
+ * telemark landing (press again just before touchdown). Points are 60 for reaching the hill's K-point, 2 per metre past (or short of)
  * it, plus landing style. Hills grow from K70 to K140, with head and tail winds and gusts that push
  * your body angle around. Every hill's mark is set from an autopilot's jump.
  */
@@ -93,7 +93,11 @@ export function hold(j: Jump, down: boolean): void {
   j.holding = down;
 }
 
-/** A tap: springs off the table during the in-run, sets up the telemark in flight. */
+/**
+ * The spring / landing input. On the in-run (the game calls it when you let go of a tuck) it springs
+ * you off the table if the lip is close enough, otherwise you just stand up. In flight (every press)
+ * it readies the telemark: the last press within TELEMARK_WINDOW before touchdown counts.
+ */
 export function tap(j: Jump): "pop" | "early" | "telemark" | null {
   if (j.over) return null;
   if (j.phase === "inrun") {
@@ -102,7 +106,7 @@ export function tap(j: Jump): "pop" | "early" | "telemark" | null {
     takeoff(j, Math.max(0, 1 - left / POP_WINDOW));
     return "pop";
   }
-  if (j.phase === "flight" && j.telemarkAt < 0) {
+  if (j.phase === "flight") {
     j.telemarkAt = j.time;
     return "telemark";
   }
