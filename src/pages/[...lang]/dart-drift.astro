@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DartDrift from "../../components/games/DartDrift";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "흔들 다트 — 흔들리는 조준점을 노려 던지는 무료 타이밍 다트 30단계",
+    description: "다트판 위에서 조준 링이 저절로 흔들려요. 링이 불스아이나 3배 칸을 지나는 순간을 노려 눌러 던지고, 가진 다트로 목표 점수를 채우는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Dart Drift — Free timing darts game: tap as the swaying sight crosses the bullseye (30 stages)",
+    description: "The aiming ring sways over the board on its own. Tap as it crosses the bullseye or a treble to throw, and reach the goal with your darts. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ゆらゆらダーツ — ゆれる照準をねらって投げる無料のタイミングダーツ30面",
+    description: "ダーツボードの上で照準リングがひとりでにゆれます。リングがブルやトリプルを通る瞬間をねらってタップで投げ、手持ちのダーツで目標点を集めるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "晃晃飞镖 — 瞄准晃动准星投掷的免费时机飞镖30关",
+    description: "瞄准环会在镖盘上自己晃动。在它经过靶心或三倍区的瞬间点一下投出，用手里的飞镖凑够目标分数。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Fléchettes flottantes — Jeu de fléchettes gratuit : touchez quand le viseur passe au centre (30 niveaux)",
+    description: "Le viseur oscille tout seul sur la cible. Touchez quand il passe sur le centre ou un triple pour lancer, et atteignez l'objectif avec vos fléchettes. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Dardos a la deriva — Juego gratis de dardos: toca cuando el visor pase por el centro (30 niveles)",
+    description: "El visor se balancea solo sobre la diana. Toca cuando pase por el centro o un triple para lanzar y alcanza la meta con tus dardos. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["dart-drift"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="dart-drift" build="dart-drift-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/dart-drift.webp">
+      <DartDrift client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="dart-drift" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
