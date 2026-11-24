@@ -1,5 +1,5 @@
 /**
- * Writes the 30 stages of the winter Unity builds (wave 6 and new-games batches 10 and 11) as C# tables, straight from the web
+ * Writes the 30 stages of the winter Unity builds (wave 6 and new-games batches 10 to 12) as C# tables, straight from the web
  * rules in src/lib/games/*.ts, so the Unity and React versions play the very same stages.
  *
  *   npx tsx scripts/unity/export-winter-stages.ts
@@ -20,6 +20,9 @@ import * as jachigi from "../../src/lib/games/jachigi";
 import * as ski from "../../src/lib/games/ski-jump";
 import * as bokjori from "../../src/lib/games/bokjori-run";
 import * as pipe from "../../src/lib/games/snow-halfpipe";
+import * as skate from "../../src/lib/games/speed-skate";
+import * as yeot from "../../src/lib/games/yeot-stretch";
+import * as bia from "../../src/lib/games/biathlon";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -151,4 +154,22 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = pipe.PIPES.map((p) => `        new Level { half = ${n(p.half)}, depth = ${n(p.depth)}, friction = ${n(p.friction)}, pump = ${n(p.pump)}, hits = ${p.hits}, goal = ${n(p.goal)}, par = ${n(p.par)} },`);
   write("snow-halfpipe", "SnowHalfpipe", `    public struct Level { public float half, depth, friction, pump, goal, par; public int hits; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Speed Skate: race length (m), stroke cadence and window (s), rival time, perfect time
+{
+  const rows = skate.RACES.map((r) => `        new Level { length = ${n(r.length)}, cadence = ${n(r.cadence)}, window = ${n(r.window)}, goal = ${n(r.goal)}, par = ${n(r.par)} },`);
+  write("speed-skate", "SpeedSkate", `    public struct Level { public float length, cadence, window, goal, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Yeot Stretch: snap rate of warm taffy (1/s), cooling time (s), folds to make, a perfect puller's folds
+{
+  const rows = yeot.YEOT_STAGES.map((st) => `        new Level { rate = ${n(st.rate)}, cool = ${n(st.cool)}, need = ${st.need}, par = ${st.par} },`);
+  write("yeot-stretch", "YeotStretch", `    public struct Level { public float rate, cool; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Biathlon: ski legs, leg length (m), target radius (px), rival time, perfect time, tremor seed
+{
+  const rows = bia.BIATHLON_STAGES.map((st) => `        new Level { legs = ${st.legs}, leg = ${n(st.leg)}, radius = ${n(st.radius)}, goal = ${n(st.goal)}, par = ${n(st.par)}, seed = ${st.seed}u },`);
+  write("biathlon", "Biathlon", `    public struct Level { public int legs; public float leg, radius, goal, par; public uint seed; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
