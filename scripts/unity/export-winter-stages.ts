@@ -65,6 +65,9 @@ import * as catsGame from "../../src/lib/games/rooftop-cats";
 import * as holeGame from "../../src/lib/games/gulp-hole";
 import * as cakeGame from "../../src/lib/games/cake-thief";
 import * as blanketGame from "../../src/lib/games/blanket-battle";
+import * as duckGame from "../../src/lib/games/duck-parade";
+import * as cableGame from "../../src/lib/games/cable-knot";
+import * as rollerGame from "../../src/lib/games/roller-claim";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -527,4 +530,26 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = blanketGame.BLANKET_STAGES.map((st) => `        new Level { lanes = ${iarr(st.lanes.map((l) => blanketGame.LANE_KINDS.indexOf(l)))}, deck = ${iarr(st.deck)}, rivalDeck = ${iarr(st.rivalDeck)}, rivalSkill = ${n(st.rivalSkill)}, rivalSeed = ${st.rivalSeed}u },`);
   write("blanket-battle", "BlanketBattle", `    public struct Level { public int[] lanes, deck, rivalDeck; public float rivalSkill; public uint rivalSeed; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Duck Parade: rows (kind 0 gates: left op, left n, right op, right n; kind 1 fox: lane, bite%), the stream's need, best
+{
+  const ops = ["+", "-", "x", "/"];
+  const rows = duckGame.DUCK_STAGES.map((st) => {
+    const flat = st.rows.flatMap((r) => (r.kind === "gates" ? [0, ops.indexOf(r.gates[0].op), r.gates[0].n, ops.indexOf(r.gates[1].op), r.gates[1].n] : [1, r.lane, r.bite, 0, 0]));
+    return `        new Level { rows = ${iarr(flat)}, need = ${st.need}, best = ${st.best} },`;
+  });
+  write("duck-parade", "DuckParade", `    public struct Level { public int[] rows; public int need, best; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Cable Knot: sockets (x, y), plug count, cables (a, b), the start, the move limit, par
+{
+  const rows = cableGame.CABLE_STAGES.map((st) => `        new Level { sockets = ${iarr(st.sockets.flatMap((p) => [p.x, p.y]))}, plugs = ${st.plugs}, edges = ${iarr(st.edges.flat())}, start = ${iarr(st.start)}, limit = ${st.limit}, par = ${st.par} },`);
+  write("cable-knot", "CableKnot", `    public struct Level { public int[] sockets, edges, start; public int plugs, limit, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Roller Claim: home cell, balls (x, y, dx, dy), ball speed, goal share, the clock, par
+{
+  const rows = rollerGame.ROLLER_STAGES.map((st) => `        new Level { start = ${iarr(st.start)}, balls = ${iarr(st.balls.flatMap((b) => [b.x, b.y, b.dx, b.dy]))}, ballStep = ${n(st.ballStep)}, goal = ${n(st.goal)}, limit = ${st.limit}, par = ${st.par} },`);
+  write("roller-claim", "RollerClaim", `    public struct Level { public int[] start, balls; public float ballStep, goal; public int limit, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

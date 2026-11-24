@@ -132,6 +132,9 @@ BUILDS = {
     "gulp-hole-unity": ("gulp-hole", "GulpHole/Runtime/GulpHolePlayer.cs", T, "state, starsWon"),
     "cake-thief-unity": ("cake-thief", "CakeThief/Runtime/CakeThiefPlayer.cs", T, "state, starsWon"),
     "blanket-battle-unity": ("blanket-battle", "BlanketBattle/Runtime/BlanketBattlePlayer.cs", T, "state, starsWon"),
+    "duck-parade-unity": ("duck-parade", "DuckParade/Runtime/DuckParadePlayer.cs", T, "state, starsWon"),
+    "cable-knot-unity": ("cable-knot", "CableKnot/Runtime/CableKnotPlayer.cs", T, "state, starsWon"),
+    "roller-claim-unity": ("roller-claim", "RollerClaim/Runtime/RollerClaimPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."
