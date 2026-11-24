@@ -1,8 +1,8 @@
 /**
  * Bridge Walk (다리밟기) — cross the frosty bridges of the first full moon without falling in.
  *
- * On the night of Jeongwol Daeboreum people walk across bridges, one for every year of their age, so
- * their legs stay strong all year. Our walker crosses icy village bridges in the moonlight and keeps
+ * On the night of Jeongwol Daeboreum people walked across bridges so their legs would stay strong
+ * all year (twelve bridges, one for each month). Our walker crosses icy village bridges in the moonlight and keeps
  * walking on their own; you keep them upright. They tip like an upside-down pendulum, and gusts of
  * wind and slick patches of ice push them over. Drag left or right from where you touched to lean the
  * other way: a small drag is a small correction. Over-correct and you tip the other way; lean too far
