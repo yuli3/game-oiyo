@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GondolaQueue from "../../components/games/GondolaQueue";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "곤돌라 줄서기 — 같은 색 등산객 셋을 곤돌라에 태우는 무료 색 맞춰 태우기 퍼즐 30단계",
+    description: "색색 점퍼를 입은 등산객이 정류장에 북적여요. 길이 트인 사람을 골라 같은 색 곤돌라에 셋씩 태우고, 대기석 다섯 자리가 차기 전에 모두 산 위로 올려 보내는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Gondola Queue — Free colour-boarding puzzle: seat three hikers of a colour on each gondola (30 stages)",
+    description: "Hikers in coloured jackets crowd a mountain station. Tap those with a clear way out, seat three of a colour on each gondola, and send everyone up before the five bench seats fill. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ゴンドラ行列 — 同じ色の登山者を3人ずつゴンドラに乗せる無料の色合わせ乗車パズル30面",
+    description: "色とりどりのジャケットの登山者が駅にひしめいています。道のあいた人を選んで同じ色のゴンドラに3人ずつ乗せ、ベンチ5席がうまる前に全員を山の上へ送るUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "缆车排队 — 让同色登山客三人一组坐上缆车的免费按颜色上车谜题30关",
+    description: "穿各色外套的登山客挤满了山间车站。挑出有路可走的人，三人一组坐上同色缆车，在五个候车座位坐满前把所有人送上山。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "File de télécabines — Puzzle gratuit : faites monter trois randonneurs de la même couleur par cabine (30 niveaux)",
+    description: "Des randonneurs en vestes de couleur se pressent à une station de montagne. Touchez ceux qui ont la voie libre, faites-en monter trois de la même couleur par cabine et envoyez tout le monde en haut avant que les cinq places du banc soient prises. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Cola de góndolas — Puzle gratis: sube a tres excursionistas del mismo color en cada góndola (30 niveles)",
+    description: "Excursionistas con chaquetas de colores abarrotan una estación de montaña. Toca a quien tenga el camino libre, sube a tres del mismo color en cada góndola y manda a todos arriba antes de que se llenen los cinco asientos del banco. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["gondola-queue"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="gondola-queue" build="gondola-queue-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/gondola-queue.webp">
+      <GondolaQueue client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="gondola-queue" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
