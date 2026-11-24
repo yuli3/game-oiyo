@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PocketShot from "../../components/games/PocketShot";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "포켓 샷 — 당겼다 놓아 공을 구멍에 넣는 무료 당구 트릭샷 퍼즐 30단계",
+    description: "작은 당구대 위 번호 공을 흰 공으로 맞혀 여섯 구멍에 넣어요. 화면을 당겼다 놓으면 반대 방향으로 쳐지고, 많이 당길수록 세게 쳐요. 정해진 샷 안에 모든 공을 넣는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Pocket Shot — Free trick-shot pool puzzle: pull back, let go, sink every ball (30 stages)",
+    description: "Knock the numbered balls on a small pool table into the six pockets with the white ball. Pull back anywhere and let go to strike the opposite way, harder the further you pull. Sink them all within the shots, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ポケットショット — 引いて離して球をポケットに入れる無料ビリヤードパズル30面",
+    description: "小さなビリヤード台の番号の球を手球で当てて6つのポケットに入れます。画面を引いて離すと反対方向に打て、大きく引くほど強くなります。決まったショット数で全部入れるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "一杆进袋 — 拉杆松手把球打进袋的免费台球妙杆谜题30关",
+    description: "用白球把小台球桌上的号码球撞进六个袋口。在屏幕上向后拉再松手就朝反方向击球，拉得越远越用力。在规定杆数内把球全部打进。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Coup de poche — Puzzle de billard gratuit : tirez, lâchez, empochez tout (30 niveaux)",
+    description: "Envoyez les billes numérotées d'une petite table dans les six poches avec la blanche. Tirez n'importe où et lâchez pour frapper à l'opposé, plus fort si vous tirez loin. Empochez tout dans la limite de coups, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Tiro a la tronera — Puzle de billar gratis: tira, suelta y mete todas las bolas (30 niveles)",
+    description: "Mete con la bola blanca las bolas numeradas de una mesa pequeña en las seis troneras. Tira hacia atrás en cualquier sitio y suelta para golpear al lado contrario, más fuerte cuanto más tires. Mételas todas dentro del límite, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["pocket-shot"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="pocket-shot" build="pocket-shot-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/pocket-shot.webp">
+      <PocketShot client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="pocket-shot" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

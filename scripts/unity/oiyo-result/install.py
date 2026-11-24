@@ -150,6 +150,9 @@ BUILDS = {
     "sleepy-windows-unity": ("sleepy-windows", "SleepyWindows/Runtime/SleepyWindowsPlayer.cs", T, "state, starsWon"),
     "juice-swipe-unity": ("juice-swipe", "JuiceSwipe/Runtime/JuiceSwipePlayer.cs", T, "state, starsWon"),
     "dart-drift-unity": ("dart-drift", "DartDrift/Runtime/DartDriftPlayer.cs", T, "state, starsWon"),
+    "pip-merge-unity": ("pip-merge", "PipMerge/Runtime/PipMergePlayer.cs", T, "state, starsWon"),
+    "vacuum-dash-unity": ("vacuum-dash", "VacuumDash/Runtime/VacuumDashPlayer.cs", T, "state, starsWon"),
+    "pocket-shot-unity": ("pocket-shot", "PocketShot/Runtime/PocketShotPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."
