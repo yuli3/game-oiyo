@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Biathlon from "../../components/games/Biathlon";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "바이애슬론 — 힘껏 달리고 심장을 가라앉혀 쏘는 무료 스키 사격 게임 30단계",
+    description: "스키와 사격을 함께 하는 바이애슬론! 꾹 누르면 힘껏 달려 빨라지지만 심장이 뛰고, 떼면 미끄러지며 숨을 골라요. 사격장에서는 심박만큼 흔들리는 조준점이 과녁에 들어올 때 톡! 빗나가면 벌칙 코스 10초. 상대 기록보다 먼저 들어오는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Biathlon — Free ski-and-shoot game: ski hard, calm your heart, then hit the target (30 stages)",
+    description: "Biathlon: ski, then shoot! Hold to pole hard and speed up as your heart rate climbs; let go to glide and catch your breath. At the range the sight shakes with your heart rate, so tap when it's on the target. Each miss costs a 10-second penalty loop. Beat the rival's time. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "バイアスロン — 全力で滑り、鼓動を静めて的を撃つ無料のスキー射撃ゲーム30ステージ",
+    description: "スキーと射撃のバイアスロン！ 長押しで全力で滑ると速くなる代わりに心拍が上がり、離すと滑りながら息を整えます。射撃場では心拍のぶん揺れる照準が的に入ったらタップ！ 外すと10秒のペナルティループ。ライバルより先にゴールするUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "冬季两项 — 拼命滑雪、平复心跳再射靶的免费滑雪射击游戏30关",
+    description: "滑雪加射击的冬季两项！按住拼命滑会加速，但心跳会变快；松开滑行喘口气。射击场上准星随心率晃动，对准靶子时点一下！脱靶要多滑10秒罚圈。比对手先到终点，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Biathlon — Jeu gratuit de ski et tir : skiez fort, calmez votre cœur, puis visez juste (30 niveaux)",
+    description: "Le biathlon : skier puis tirer ! Maintenez pour pousser fort et accélérer pendant que le pouls grimpe ; lâchez pour glisser et souffler. Au pas de tir, le viseur tremble avec le pouls : touchez quand il est sur la cible. Chaque raté coûte un tour de pénalité de 10 secondes. Battez le temps du rival. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Biatlón — Juego gratis de esquí y tiro: esquía fuerte, calma el corazón y acierta (30 niveles)",
+    description: "Biatlón: ¡esquiar y disparar! Mantén para empujar fuerte y acelerar mientras sube el pulso; suelta para deslizarte y recuperar el aliento. En el campo de tiro la mira tiembla con el pulso: toca cuando esté sobre el blanco. Cada fallo cuesta una vuelta de castigo de 10 segundos. Supera el tiempo del rival. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["biathlon"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="biathlon" build="biathlon-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/biathlon.webp">
+      <Biathlon client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="biathlon" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
