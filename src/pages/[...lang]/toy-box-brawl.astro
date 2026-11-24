@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ToyBoxBrawl from "../../components/games/ToyBoxBrawl";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "장난감 상자 대전 — 동전으로 장난감을 사서 줄을 세우면 알아서 싸우는 무료 오토배틀러 30단계",
+    description: "진열대에서 병정·곰인형·투석기·태엽 로봇·북치기·기사·로켓·오뚝이를 동전으로 사서 다섯까지 줄을 세우면 전투는 저절로 흘러가요. 사는 장난감과 세우는 순서로 상대 상자를 이기는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Toy Box Brawl — Free auto-battler: buy toys with coins, line them up and watch them fight (30 stages)",
+    description: "Buy soldiers, teddies, catapults, wind-up robots, drummers, knights, rockets and roly-polys from the shelf, line up to five, and the battle plays itself. Win by what you buy and the order you set. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "おもちゃ箱バトル — コインでおもちゃを買って並べれば勝手に戦う無料オートバトラー30面",
+    description: "棚から兵隊・テディ・投石機・ぜんまいロボ・太鼓たたき・騎士・ロケット・起き上がりをコインで買って最大5体並べると、戦いは自動で進みます。買うおもちゃと並べる順番で相手の箱に勝つUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "玩具箱大战 — 用金币买玩具排好队，它们会自己战斗的免费自走棋30关",
+    description: "从货架上用金币买士兵、泰迪熊、投石车、发条机器人、鼓手、骑士、火箭和不倒翁，最多排5个，战斗自动进行。靠买什么和排什么顺序战胜对手的箱子。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Bagarre de coffre à jouets — Auto-battler gratuit : achetez des jouets, alignez-les, ils se battent seuls (30 niveaux)",
+    description: "Achetez sur l'étagère soldats, nounours, catapultes, robots, tambours, chevaliers, fusées et culbutos, alignez-en jusqu'à cinq, et le combat se joue seul. Gagnez par vos achats et votre ordre. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Pelea de juguetes — Auto battler gratis: compra juguetes, ponlos en fila y luchan solos (30 niveles)",
+    description: "Compra en el estante soldados, ositos, catapultas, robots, tambores, caballeros, cohetes y tentetiesos, pon hasta cinco en fila y el combate se juega solo. Gana por lo que compras y el orden que eliges. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["toy-box-brawl"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="toy-box-brawl" build="toy-box-brawl-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/toy-box-brawl.webp">
+      <ToyBoxBrawl client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="toy-box-brawl" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

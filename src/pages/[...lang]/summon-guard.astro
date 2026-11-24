@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SummonGuard from "../../components/games/SummonGuard";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "소환 수비대 — 무작위로 오는 수비대를 합쳐 등급을 올리는 무료 랜덤 소환 합성 디펜스 30단계",
+    description: "트랙을 도는 몬스터를 막아요. 동전으로 소환하면 궁수·마법사·얼음술사·대포 중 하나가 무작위로 오고, 같은 수비대 둘을 합치면 다음 등급이 돼요. 몬스터가 25마리 쌓이기 전에 보스까지 막는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Summon Guard — Free random-summon merge defense: merge lucky guards up the ranks (30 stages)",
+    description: "Hold off monsters circling your camp. Each summon brings an archer, mage, frost caster or cannon at random; merge two alike into the next rank. Stop the boss before 25 monsters pile up. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "召喚守備隊 — ランダムに来る守備隊を合体させてランクを上げる無料のランダム召喚合体ディフェンス30面",
+    description: "トラックを回るモンスターを防ぎます。コインで召喚すると弓兵・魔法使い・氷術師・大砲のどれかがランダムに来て、同じ守備隊2人を合体させると次のランクに。モンスターが25体たまる前にボスまで止めるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "召唤守卫 — 合成随机出现的守卫提升等级的免费随机召唤合成塔防30关",
+    description: "挡住绕跑道行进的怪物。用金币召唤，弓箭手、法师、冰法师或大炮随机到来；两名相同守卫合成下一级。在怪物堆到25只之前挡住首领。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Garde invoquée — Défense gratuite à invocation aléatoire et fusion : faites monter vos gardes en rang (30 niveaux)",
+    description: "Repoussez les monstres qui tournent autour du camp. Chaque invocation amène au hasard archer, mage, givreur ou canon ; fusionnez deux gardes identiques au rang suivant. Arrêtez le boss avant 25 monstres. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Guardia invocada — Defensa gratis de invocación al azar y fusión: sube de rango a tus guardias (30 niveles)",
+    description: "Frena a los monstruos que rodean el campamento. Cada invocación trae al azar arquero, mago, mago de hielo o cañón; fusiona dos iguales en el rango siguiente. Para al jefe antes de que se junten 25 monstruos. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["summon-guard"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="summon-guard" build="summon-guard-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/summon-guard.webp">
+      <SummonGuard client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="summon-guard" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

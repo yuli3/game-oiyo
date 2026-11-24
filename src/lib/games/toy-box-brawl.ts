@@ -47,7 +47,8 @@ const prep = (line: Toy[]): Fighter[] => line.map((t) => ({ ...t, shield: t.kind
 
 /** One step of the battle for the log the games replay. */
 export interface BattleEvent { kind: "lob" | "drum" | "hit" | "fall" | "pass" | "rise"; side: 0 | 1; index: number; amount: number }
-export interface BattleResult { won: boolean; left: number; enemyLeft: number; events: BattleEvent[]; rounds: number }
+export interface BattleFrame { ev: BattleEvent; lines: [Toy[], Toy[]] }
+export interface BattleResult { won: boolean; left: number; enemyLeft: number; events: BattleEvent[]; rounds: number; frames: BattleFrame[] }
 
 function damage(f: Fighter, n: number): void {
   if (n <= 0) return;
@@ -59,15 +60,23 @@ function damage(f: Fighter, n: number): void {
 }
 
 /** Plays the battle out. The player's line is side 0, the enemy's side 1; both are front first. */
-export function battle(mine: Toy[], theirs: Toy[]): BattleResult {
+export function battle(mine: Toy[], theirs: Toy[], record = false): BattleResult {
   const sides: [Fighter[], Fighter[]] = [prep(mine), prep(theirs)];
   const events: BattleEvent[] = [];
+  const frames: BattleFrame[] = [];
+  const snap = (): [Toy[], Toy[]] => [sides[0].map((f) => ({ kind: f.kind, atk: f.atk, hp: f.hp })), sides[1].map((f) => ({ kind: f.kind, atk: f.atk, hp: f.hp }))];
+  const log = (...es: BattleEvent[]) => {
+    for (const e of es) {
+      events.push(e);
+      if (record) frames.push({ ev: e, lines: snap() });
+    }
+  };
   // battle-start abilities: drums first (they buff), then catapults
   for (const s of [0, 1] as const)
     sides[s].forEach((f, i) => {
       if (f.kind !== "drum") return;
       for (const g of sides[s]) g.atk += 1;
-      events.push({ kind: "drum", side: s, index: i, amount: 1 });
+      log({ kind: "drum", side: s, index: i, amount: 1 });
     });
   for (const s of [0, 1] as const)
     sides[s].forEach((f, i) => {
@@ -76,7 +85,7 @@ export function battle(mine: Toy[], theirs: Toy[]): BattleResult {
       if (!other.length) return;
       const target = other[other.length - 1];
       damage(target, 3);
-      events.push({ kind: "lob", side: s, index: i, amount: 3 });
+      log({ kind: "lob", side: s, index: i, amount: 3 });
     });
   const sweep = () => {
     for (const s of [0, 1] as const) {
@@ -87,14 +96,14 @@ export function battle(mine: Toy[], theirs: Toy[]): BattleResult {
         if (f.kind === "doll" && !f.revived) {
           f.revived = true;
           f.hp = 1;
-          events.push({ kind: "rise", side: s, index: i, amount: 1 });
+          log({ kind: "rise", side: s, index: i, amount: 1 });
           continue;
         }
-        events.push({ kind: "fall", side: s, index: i, amount: 0 });
+        log({ kind: "fall", side: s, index: i, amount: 0 });
         if (f.kind === "robot" && i + 1 < line.length) {
           line[i + 1].atk += 2;
           line[i + 1].hp += 2;
-          events.push({ kind: "pass", side: s, index: i + 1, amount: 2 });
+          log({ kind: "pass", side: s, index: i + 1, amount: 2 });
         }
         line.splice(i, 1);
         i--;
@@ -111,11 +120,12 @@ export function battle(mine: Toy[], theirs: Toy[]): BattleResult {
     const db = b.atk;
     damage(b, da);
     damage(a, db);
-    events.push({ kind: "hit", side: 0, index: 0, amount: da }, { kind: "hit", side: 1, index: 0, amount: db });
+    log({ kind: "hit", side: 0, index: 0, amount: da }, { kind: "hit", side: 1, index: 0, amount: db });
     sweep();
   }
   const won = sides[0].length > 0 && sides[1].length === 0;
-  return { won, left: sides[0].length, enemyLeft: sides[1].length, events, rounds };
+  if (record) frames.push({ ev: { kind: "hit", side: 0, index: -1, amount: 0 }, lines: snap() });
+  return { won, left: sides[0].length, enemyLeft: sides[1].length, events, rounds, frames };
 }
 
 export const costOf = (line: Kind[]) => line.reduce((s, k) => s + SPECS[k].cost, 0);
