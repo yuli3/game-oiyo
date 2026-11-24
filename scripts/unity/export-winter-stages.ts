@@ -74,6 +74,9 @@ import * as bounceGame from "../../src/lib/games/bounce-down";
 import * as trayGame from "../../src/lib/games/trio-tray";
 import * as corkGame from "../../src/lib/games/cork-spin";
 import * as gondolaGame from "../../src/lib/games/gondola-queue";
+import * as chopGame from "../../src/lib/games/beaver-chop";
+import * as prismGame from "../../src/lib/games/prism-hop";
+import * as floodGame from "../../src/lib/games/paint-flood";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -623,4 +626,34 @@ function write(slug: string, game: string, body: string): void {
     return `        new Level { rows = ${st.rows}, grid = ${iarr(st.grid)}, gondolas = ${iarr(st.gondolas)}, par = ${st.par}, plan = ${iarr(plan)} },`;
   });
   write("gondola-queue", "GondolaQueue", `    public struct Level { public int rows; public int[] grid, gondolas; public int par; public int[] plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Beaver Chop: branches from the bottom log up (-1 left, 0 none, 1 right), logs to chop, the clock's drain
+{
+  const rows = chopGame.CHOP_STAGES.map((st) => `        new Level { branches = ${iarr(st.branches)}, target = ${st.target}, drain = ${n(st.drain)}, ramp = ${n(st.ramp)} },`);
+  write("beaver-chop", "BeaverChop", `    public struct Level { public int[] branches; public int target; public float drain, ramp; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Prism Hop: gates as (kind, y, r, phase, speed, colour) sixes, ledge heights, the clock
+{
+  const rows: string[] = [];
+  for (let i = 0; i < prismGame.STAGE_COUNT; i++) {
+    const st = prismGame.PRISM_STAGES[i];
+    rows.push(`        new Level { gates = ${arr(st.gates.flatMap((g) => [g.kind, g.y, g.r, g.phase, g.speed, g.colour]))}, ledges = ${arr(st.ledges)}, limit = ${n(st.limit)} },`);
+  }
+  write("prism-hop", "PrismHop", `    public struct Level { public float[] gates, ledges; public float limit; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Paint Flood: the canvas, its size and colours, the stroke limit, par, and a careful painter's strokes for the play check
+{
+  const rows: string[] = [];
+  for (let i = 0; i < floodGame.STAGE_COUNT; i++) {
+    const st = floodGame.FLOOD_STAGES[i];
+    const c = floodGame.newCanvas(st);
+    const plan: number[] = [];
+    while (!c.over) { const k = floodGame.nextColour(c, 2); plan.push(k); floodGame.paint(c, k); }
+    if (!c.won || floodGame.starsFor(c) < 3) throw new Error("paint-flood plan does not win");
+    rows.push(`        new Level { cells = ${iarr(st.cells)}, size = ${st.size}, colours = ${st.colours}, limit = ${st.limit}, par = ${st.par}, plan = ${iarr(plan)} },`);
+  }
+  write("paint-flood", "PaintFlood", `    public struct Level { public int[] cells; public int size, colours, limit, par; public int[] plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

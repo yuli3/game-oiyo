@@ -1,0 +1,156 @@
+{
+"All 30 stages": [
+"30단계 전체",
+"全30面",
+"Los 30 niveles",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Out of strokes": [
+"붓질을 다 썼어요",
+"塗れる回数がなくなった",
+"Sin pinceladas",
+"笔数用完了",
+"Plus de coups de pinceau"
+],
+"Paint Flood": [
+"물감 번지기",
+"絵の具ひろがり",
+"Marea de pintura",
+"颜料晕染",
+"Marée de peinture"
+],
+"Painted in {0} strokes": [
+"{0}번 만에 칠했어요",
+"{0}回で塗れた",
+"Pintado en {0} pinceladas",
+"用了 {0} 笔",
+"Peint en {0} coups"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Pick a colour and your paint, from the top-left corner, soaks up every touching square of it. Paint the whole canvas one colour within the strokes.": [
+"색을 고르면 왼쪽 위에서 시작한 내 물감이 맞닿은 같은 색 칸을 모두 빨아들여요. 정해진 붓질 안에 캔버스 전체를 한 색으로!",
+"色を選ぶと左上から始まる自分の絵の具が、となりの同じ色のマスを吸い込みます。決まった回数でキャンバスを1色に！",
+"Elige un color y tu pintura, desde la esquina superior izquierda, absorbe cada casilla vecina de ese color. ¡Todo el lienzo de un color dentro del límite!",
+"选一种颜色，从左上角开始的颜料就会吸收所有相邻的同色方格。在规定笔数内把画布染成一色！",
+"Choisissez une couleur : votre peinture, partie du coin en haut à gauche, absorbe chaque case voisine de cette couleur. Toute la toile d'une couleur dans la limite !"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Rejouer"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ {0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Strokes {0}/{1}": [
+"붓질 {0}/{1}",
+"ひと塗り {0}/{1}",
+"Pinceladas {0}/{1}",
+"笔数 {0}/{1}",
+"Coups {0}/{1}"
+],
+"Tap a paint below to spread from the top-left!": [
+"아래 물감을 눌러 왼쪽 위부터 번져 가요!",
+"下の絵の具をタップして左上から広げよう！",
+"¡Toca una pintura para extenderla desde la esquina!",
+"点下方颜料，从左上角开始晕染！",
+"Touchez une peinture pour l'étaler depuis le coin !"
+],
+"Tap to start": [
+"탭해서 시작",
+"タップでスタート",
+"Toca para empezar",
+"点击开始",
+"Touchez pour commencer"
+],
+"The canvas is one colour!": [
+"캔버스가 한 색이 됐어요!",
+"キャンバスが1色になった！",
+"¡El lienzo es de un solo color!",
+"画布变成一种颜色了！",
+"La toile est d'une seule couleur !"
+],
+"You cleared all 30 stages!": [
+"30단계를 모두 클리어했어요!",
+"全30面をクリアしました！",
+"¡Superaste los 30 niveles!",
+"你通关了全部 30 关！",
+"Vous avez terminé les 30 niveaux !"
+],
+"{0} × {0} canvas": [
+"{0}×{0} 캔버스",
+"{0}×{0} キャンバス",
+"Lienzo de {0} × {0}",
+"{0}×{0} 画布",
+"Toile {0} × {0}"
+]
+}
