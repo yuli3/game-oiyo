@@ -14,7 +14,8 @@ describe("snow-roll", () => {
     expect(z.head).not.toBeNull();
     expect(z.head!.max).toBeLessThan(z.body);
     expect(z.rocks.length + z.fences.length + z.mud.length).toBeGreaterThan(5);
-  });
+    // cold cache: each levelFor builds and autopilot-checks its yard (~4.8 s alone)
+  }, 60_000);
 
   it("every stage is built in time by the autopilot, with 3 stars, and by a sloppy one", () => {
     for (let st = 0; st < STAGE_COUNT; st++) {
