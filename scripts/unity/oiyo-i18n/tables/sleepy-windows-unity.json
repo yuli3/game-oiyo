@@ -1,0 +1,156 @@
+{
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"All asleep in {0} taps": [
+"{0}번 눌러서 모두 재웠어요",
+"{0}回のタップで全員おやすみ",
+"Todos dormidos en {0} toques",
+"{0} 次点击全部入睡",
+"Tous endormis en {0} touches"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Everyone's asleep!": [
+"모두 잠들었어요!",
+"みんな眠った！",
+"¡Todos duermen!",
+"大家都睡着了！",
+"Tout le monde dort !"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Out of taps": [
+"누를 수 있는 횟수를 다 썼어요",
+"タップ回数切れ",
+"Sin toques",
+"点击次数用完了",
+"Plus de touches"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Sleepy Windows": [
+"잠드는 창문",
+"おやすみの窓",
+"Ventanas dormidas",
+"熄灯的窗",
+"Fenêtres endormies"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Tap a lit window to put it to sleep!": [
+"불 켜진 창문을 눌러 재워 봐요!",
+"明かりのついた窓をタップして寝かせよう！",
+"¡Toca una ventana encendida para dormirla!",
+"点亮着的窗让它熄灯！",
+"Touchez une fenêtre allumée pour l'endormir !"
+],
+"Tap a window and its light flips, along with the neighbours above, below and beside. Put every window to sleep within the taps.": [
+"창문을 누르면 그 창문과 위·아래·옆 창문의 불이 함께 바뀌어요. 정해진 횟수 안에 모든 창문을 재워 봐요.",
+"窓をタップすると、その窓と上下左右の窓の明かりが切り替わります。決められた回数で全部の窓を眠らせよう。",
+"Al tocar una ventana cambia su luz y la de sus vecinas de arriba, abajo y los lados. Duerme todas las ventanas con los toques disponibles.",
+"点一扇窗，它和上下左右相邻的窗都会切换灯光。在限定次数内让所有窗都熄灯。",
+"Touchez une fenêtre : sa lumière bascule, avec celles du dessus, du dessous et des côtés. Endormez toutes les fenêtres dans la limite de touches."
+],
+"Tap to start": [
+"탭해서 시작",
+"タップでスタート",
+"Toca para empezar",
+"点击开始",
+"Touchez pour commencer"
+],
+"Taps {0}/{1}": [
+"누름 {0}/{1}",
+"タップ {0}/{1}",
+"Toques {0}/{1}",
+"点击 {0}/{1}",
+"Touches {0}/{1}"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+],
+"{0} × {1} windows": [
+"창문 {0} × {1}",
+"窓 {0} × {1}",
+"{0} × {1} ventanas",
+"{0} × {1} 扇窗",
+"{0} × {1} fenêtres"
+]
+}
