@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import YongalScoop from "../../components/games/YongalScoop";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "용알뜨기 — 흔들리는 바가지를 미리 놓아 우물 속 달을 뜨는 무료 정월 대보름 게임 30단계",
+    description: "대보름 새벽 우물에 비친 달을 처음 떠 오면 한 해 운이 좋대요. 줄에 매단 바가지는 흔들리던 기세를 안고 떨어지니 달 위가 아니라 조금 앞에서 놓아야 해요. 날이 밝기 전에 달을 뜨는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Yongal Scoop — Free Daeboreum game: let the swinging dipper go early and scoop the moon from the well (30 stages)",
+    description: "At Daeboreum dawn, scooping the full moon from the well brings a lucky year. The dipper keeps its swing as it falls, so let go a little before it is over the moon. Scoop enough moons before the sky turns light. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ヨンアルすくい — 揺れるひしゃくを早めに離して井戸の月をすくう無料のテボルムゲーム30ステージ",
+    description: "テボルムの明け方、井戸に映る月を最初にすくうと一年の運が良いとされます。ひしゃくは揺れの勢いのまま落ちるので、月の真上ではなく少し手前で離しましょう。夜明け前に月をすくうUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "舀龙蛋 — 提前松开摆动的瓢，把井里的月亮舀起来的免费正月十五游戏30关",
+    description: "正月十五黎明，第一个把井里的月亮舀起来就会一年好运。瓢带着摆动的势头落下，要在月亮上方之前稍早松手。在天亮前舀到月亮。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Puiser l'œuf du dragon — Jeu gratuit de Daeboreum : lâchez la louche en avance et puisez la lune dans le puits (30 niveaux)",
+    description: "À l'aube de Daeboreum, puiser la pleine lune dans le puits promet une année de chance. La louche garde son élan en tombant : lâchez-la un peu avant qu'elle soit au-dessus de la lune. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Saca el huevo del dragón — Juego gratis de Daeboreum: suelta el cazo antes y saca la luna del pozo (30 niveles)",
+    description: "Al alba de Daeboreum, sacar la luna llena del pozo trae un año de suerte. El cazo conserva su impulso al caer: suéltalo un poco antes de que pase sobre la luna. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["yongal-scoop"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="yongal-scoop" build="yongal-scoop-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/yongal-scoop.webp">
+      <YongalScoop client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="yongal-scoop" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import HwangtaeDry from "../../components/games/HwangtaeDry";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "황태 덕장 — 일기예보를 보고 거적을 내리고 올려 명태를 얼렸다 녹이는 무료 겨울 덕장 게임 30단계",
+    description: "강원도 덕장에서 명태를 밤에 얼리고 낮에 녹이길 되풀이해 황태를 만들어요. 날이 풀리면 상하고 강추위엔 하얗게 얼어요. 일기예보를 보고 거적을 내리고 올리는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Hwangtae Dry — Free winter drying-rack game: read the forecast and work the straw mats to freeze and thaw the pollack (30 stages)",
+    description: "On Gangwon-do's racks, pollack freeze by night and thaw by day until they turn into golden hwangtae. A warm spell spoils them, a hard frost turns them white. Read the forecast and roll the straw mats down or up. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ファンテ干し場 — 天気予報を見てむしろを上げ下げし、スケトウダラを凍らせては解かす無料の冬の干し場ゲーム30ステージ",
+    description: "江原道の干し場で、スケトウダラを夜は凍らせ昼は解かすのを繰り返してファンテを作ります。暖かいと傷み、厳しい寒さでは白く凍ります。天気予報を見てむしろを上げ下げするUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "黄太鱼晾架 — 看天气预报放下卷起草帘，让明太鱼冻了又化的免费冬季晾鱼游戏30关",
+    description: "在江原道的晾架上，明太鱼夜里冻、白天化，反复多次变成黄太鱼。回暖会坏，严寒会冻成白太。看天气预报放下或卷起草帘。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Séchoir à hwangtae — Jeu d'hiver gratuit : lisez la météo et manœuvrez les nattes pour geler et dégeler les lieus (30 niveaux)",
+    description: "Sur les séchoirs du Gangwon-do, les lieus gèlent la nuit et dégèlent le jour jusqu'à devenir un hwangtae doré. Un redoux les gâte, un grand froid les fige tout blancs. Lisez la météo et baissez ou remontez les nattes. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Secadero de hwangtae — Juego invernal gratis: lee el pronóstico y maneja las esteras para helar y deshelar el abadejo (30 niveles)",
+    description: "En los secaderos de Gangwon-do, los abadejos se hielan de noche y se deshielan de día hasta volverse hwangtae dorado. El calor los estropea y una helada fuerte los deja blancos. Lee el pronóstico y baja o sube las esteras. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["hwangtae-dry"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="hwangtae-dry" build="hwangtae-dry-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/hwangtae-dry.webp">
+      <HwangtaeDry client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="hwangtae-dry" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

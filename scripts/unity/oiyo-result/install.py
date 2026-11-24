@@ -102,6 +102,9 @@ BUILDS = {
     "icicle-knock-unity": ("icicle-knock", "IcicleKnock/Runtime/IcicleKnockPlayer.cs", T, "state, starsWon"),
     "ice-road-unity": ("ice-road", "IceRoad/Runtime/IceRoadPlayer.cs", T, "state, starsWon"),
     "mandu-pleat-unity": ("mandu-pleat", "ManduPleat/Runtime/ManduPleatPlayer.cs", T, "state, starsWon"),
+    "kimjang-salt-unity": ("kimjang-salt", "KimjangSalt/Runtime/KimjangSaltPlayer.cs", T, "state, starsWon"),
+    "hwangtae-dry-unity": ("hwangtae-dry", "HwangtaeDry/Runtime/HwangtaeDryPlayer.cs", T, "state, starsWon"),
+    "yongal-scoop-unity": ("yongal-scoop", "YongalScoop/Runtime/YongalScoopPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."
