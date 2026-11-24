@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SkiJump from "../../components/games/SkiJump";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "스키점프 — 꾹 눌러 웅크리고, 도약대 끝에서 떼고, 바람을 타고 멀리 나는 무료 원버튼 겨울 스포츠 게임 30단계",
+    description: "평창의 그 종목, 스키점프! 꾹 눌러 웅크려 도약대를 내려가다 끝에서 손을 떼면 도약, 공중에서는 누르고 떼며 몸 각도를 초록 칸에 맞춰 바람을 타요. 착지 직전에 한 번 더 누르면 텔레마크! K70부터 K140까지 커지는 언덕과 맞바람·돌풍을 넘는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Ski Jump — Free one-button winter sport game: tuck, let go at the lip, ride the air and stick the telemark (30 stages)",
+    description: "The Olympic ski jump in one button! Hold to tuck down the in-run, let go at the lip to spring, then hold and release to keep your body angle in the green band and ride the air. Press again just before touchdown for a telemark. Hills grow from K70 to K140 with head winds, tail winds and gusts. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "スキージャンプ — 長押しでかがみ、踏切の端で離し、風に乗って遠くへ飛ぶ無料のワンボタン冬季スポーツゲーム30ステージ",
+    description: "冬の五輪競技スキージャンプをワンボタンで！ 長押しでかがんで助走、端で離して踏み切り、空中では押す・離すで体の角度を緑の帯に保って風に乗ります。着地直前にもう一度押せばテレマーク！ K70からK140へ大きくなるヒルと向かい風・突風を越えるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "跳台滑雪 — 按住下蹲、台端松手、乘风远飞的免费单键冬季运动游戏30关",
+    description: "冬奥项目跳台滑雪，一个按键就能玩！按住下蹲滑下助滑道，在台端松手起跳，空中通过按住和松开把身体角度保持在绿色区间里乘风飞行。落地前再按一次就是弓步落地！跳台从K70增大到K140，还有逆风和阵风，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Saut à ski — Jeu de sport d'hiver gratuit à un bouton : accroupissez-vous, lâchez au bord, planez et réussissez le télémark (30 niveaux)",
+    description: "Le saut à ski olympique en un seul bouton ! Maintenez pour vous accroupir sur l'élan, lâchez au bord pour l'impulsion, puis maintenez et relâchez pour garder l'angle du corps dans la bande verte et planer. Appuyez encore juste avant de toucher la neige pour un télémark. Des tremplins de K70 à K140, avec vents et rafales. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Salto de esquí — Juego de deporte de invierno gratis con un botón: agáchate, suelta en el borde, vuela y clava el telemark (30 niveles)",
+    description: "¡El salto de esquí olímpico con un solo botón! Mantén para agacharte en la rampa, suelta en el borde para impulsarte, y mantén y suelta para mantener el ángulo del cuerpo en la franja verde y volar. Pulsa otra vez justo antes de tocar la nieve para un telemark. Trampolines de K70 a K140 con viento y ráfagas. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["ski-jump"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="ski-jump" build="ski-jump-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/ski-jump.webp">
+      <SkiJump client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="ski-jump" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
