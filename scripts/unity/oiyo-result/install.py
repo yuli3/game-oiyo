@@ -99,6 +99,9 @@ BUILDS = {
     "avalanche-rescue-unity": ("avalanche-rescue", "AvalancheRescue/Runtime/AvalancheRescuePlayer.cs", T, "state, starsWon"),
     "ogokbap-sort-unity": ("ogokbap-sort", "OgokbapSort/Runtime/OgokbapSortPlayer.cs", T, "state, starsWon"),
     "chestnut-roast-unity": ("chestnut-roast", "ChestnutRoast/Runtime/ChestnutRoastPlayer.cs", T, "state, starsWon"),
+    "icicle-knock-unity": ("icicle-knock", "IcicleKnock/Runtime/IcicleKnockPlayer.cs", T, "state, starsWon"),
+    "ice-road-unity": ("ice-road", "IceRoad/Runtime/IceRoadPlayer.cs", T, "state, starsWon"),
+    "mandu-pleat-unity": ("mandu-pleat", "ManduPleat/Runtime/ManduPleatPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

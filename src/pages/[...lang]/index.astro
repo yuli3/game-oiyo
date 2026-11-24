@@ -15,22 +15,22 @@ export async function getStaticPaths() {
 const { locale } = Astro.props as { locale: Locale };
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 231종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 231종." },
-  en: { title: "OIYO Arcade — 231 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 231 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム231種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム231種。" },
-  zh: { title: "OIYO 街机 — 无需安装的231款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，231款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 231 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 231 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 231 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 231 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 234종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 234종." },
+  en: { title: "OIYO Arcade — 234 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 234 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム234種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム234種。" },
+  zh: { title: "OIYO 街机 — 无需安装的234款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，234款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 234 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 234 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 234 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 234 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 231종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "231 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム231種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的231款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "231 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "231 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 234종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "234 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム234種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的234款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "234 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "234 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -284,6 +284,9 @@ const GAMES: Game[] = [
   { slug: "avalanche-rescue", emoji: "⛑️", cat: "arcade", name: { ko: "눈사태 구조", en: "Avalanche Rescue", ja: "雪崩救助", zh: "雪崩救援", fr: "Secours en avalanche", es: "Rescate en avalancha" } },
   { slug: "ogokbap-sort", emoji: "🍚", cat: "arcade", name: { ko: "오곡밥 담기", en: "Ogokbap Sort", ja: "五穀ご飯の仕分け", zh: "五谷饭分拣", fr: "Tri des cinq grains", es: "Clasifica los cinco granos" } },
   { slug: "chestnut-roast", emoji: "🌰", cat: "arcade", name: { ko: "군밤 굽기", en: "Chestnut Roast", ja: "焼き栗屋", zh: "烤栗子", fr: "Marrons chauds", es: "Castañas asadas" } },
+  { slug: "icicle-knock", emoji: "🧊", cat: "arcade", name: { ko: "고드름 따기", en: "Icicle Knock", ja: "つらら落とし", zh: "敲冰柱", fr: "Chasse aux glaçons", es: "Tira los carámbanos" } },
+  { slug: "ice-road", emoji: "🚚", cat: "arcade", name: { ko: "얼음길 운전", en: "Ice Road", ja: "氷上ロード", zh: "冰路卡车", fr: "Route de glace", es: "Carretera de hielo" } },
+  { slug: "mandu-pleat", emoji: "🥟", cat: "arcade", name: { ko: "만두 빚기", en: "Mandu Pleat", ja: "マンドゥ包み", zh: "包饺子", fr: "Plis de mandu", es: "Pliega los mandu" } },
   { slug: "advent-puzzles", emoji: "🎄", cat: "puzzle", name: { ko: "어드벤트 퍼즐 달력", en: "Advent Puzzle Calendar", ja: "アドベント・パズルカレンダー", zh: "降临节谜题日历", fr: "Calendrier de l'Avent à énigmes", es: "Calendario de Adviento de puzles" } },
   { slug: "sunlit-glass", emoji: "🪟", cat: "puzzle", name: { ko: "햇살 스테인드글라스", en: "Sunlit Glass", ja: "陽だまりステンドグラス", zh: "阳光彩绘玻璃", fr: "Vitrail au soleil", es: "Vitral al Sol" } },
   { slug: "finger-hockey", emoji: "🏒", cat: "arcade", name: { ko: "손가락 에어하키", en: "Finger Air Hockey", ja: "指先エアホッケー", zh: "指尖桌上冰球", fr: "Air hockey du bout des doigts", es: "Air Hockey con el Dedo" } },
@@ -348,6 +351,42 @@ const newReleasesLabel: Record<Locale, { sectionTitle: string; badge: string; su
 const newReleaseLabels = newReleasesLabel[locale] ?? newReleasesLabel.en;
 
 const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; desc: Record<Locale, string> }> = [
+  {
+    slug: "icicle-knock",
+    tag: { ko: "한옥 처마 고드름", en: "Hanok eaves in winter", ja: "韓屋の軒のつらら", zh: "韩屋屋檐冰柱", fr: "Glaçons des toits hanok", es: "Carámbanos de los aleros hanok" },
+    desc: {
+      ko: "떨어질 때 누가 지나갈까?",
+      en: "Who'll be under it when it lands?",
+      ja: "落ちるとき下に誰がいる？",
+      zh: "落地时谁会经过？",
+      fr: "Qui passera dessous à l'impact ?",
+      es: "¿Quién pasará cuando caiga?",
+    },
+  },
+  {
+    slug: "ice-road",
+    tag: { ko: "얼어붙은 호수 횡단", en: "Across a frozen lake", ja: "凍った湖を横断", zh: "横穿冰封湖面", fr: "À travers un lac gelé", es: "Cruzando un lago helado" },
+    desc: {
+      ko: "너무 빠르지도, 느리지도 않게",
+      en: "Not too fast, not too slow",
+      ja: "速すぎず、遅すぎず",
+      zh: "不快也不慢",
+      fr: "Ni trop vite, ni trop lent",
+      es: "Ni muy rápido, ni muy lento",
+    },
+  },
+  {
+    slug: "mandu-pleat",
+    tag: { ko: "설날 아침 만두", en: "Seollal morning mandu", ja: "ソルラルの朝のマンドゥ", zh: "春节早晨的饺子", fr: "Mandu du matin de Seollal", es: "Mandu de la mañana de Seollal" },
+    desc: {
+      ko: "소는 딱 알맞게, 주름은 고르게",
+      en: "Just enough filling, even pleats",
+      ja: "具はほどよく、ひだは均等に",
+      zh: "馅刚刚好，褶要均匀",
+      fr: "Juste assez de farce, des plis réguliers",
+      es: "Relleno justo, pliegues parejos",
+    },
+  },
   {
     slug: "avalanche-rescue",
     tag: { ko: "겨울 산 구조", en: "Winter mountain rescue", ja: "冬山の救助", zh: "冬季山地救援", fr: "Secours en montagne", es: "Rescate de montaña" },

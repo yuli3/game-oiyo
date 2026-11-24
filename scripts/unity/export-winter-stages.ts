@@ -32,6 +32,9 @@ import * as heat from "../../src/lib/games/sell-the-heat";
 import * as aval from "../../src/lib/games/avalanche-rescue";
 import * as ogok from "../../src/lib/games/ogokbap-sort";
 import * as chest from "../../src/lib/games/chestnut-roast";
+import * as icicle from "../../src/lib/games/icicle-knock";
+import * as iceroad from "../../src/lib/games/ice-road";
+import * as mandu from "../../src/lib/games/mandu-pleat";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -238,4 +241,22 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = chest.CHESTNUT_STAGES.map((st) => `        new Level { cook = ${n(st.cook)}, goldHi = ${n(st.goldHi)}, arrivals = ${arr(st.arrivals.flatMap((a) => [a.at, a.angle]))}, need = ${st.need} },`);
   write("chestnut-roast", "ChestnutRoast", `    public struct Level { public float cook, goldHi; public float[] arrivals; public int need; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Icicle Knock: growth per lane, regrow wait, walkers (start time, entry x, signed speed), length, mark, par
+{
+  const rows = icicle.ICICLE_STAGES.map((st) => `        new Level { grow = ${arr(st.grow)}, regrow = ${n(st.regrow)}, walkers = ${arr(st.walkers.flatMap((w) => [w.at, w.from, w.speed]))}, length = ${n(st.length)}, need = ${st.need}, par = ${st.par} },`);
+  write("icicle-knock", "IcicleKnock", `    public struct Level { public float[] grow, walkers; public float regrow, length; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Ice Road: stretches (from, to, wave speed, band half-width), ridges (at, speed limit), length, time limit, par
+{
+  const rows = iceroad.ICE_ROAD_STAGES.map((st) => `        new Level { stretches = ${arr(st.stretches.flatMap((s) => [s.from, s.to, s.wave, s.width]))}, ridges = ${arr(st.ridges.flatMap((r) => [r.at, r.limit]))}, length = ${n(st.length)}, timeLimit = ${n(st.timeLimit)}, par = ${n(st.par)} },`);
+  write("ice-road", "IceRoad", `    public struct Level { public float[] stretches, ridges; public float length, timeLimit, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Mandu Pleat: dumplings (fill rate, band low, band high, pleats, pinch speed, gap tolerance), mark
+{
+  const rows = mandu.MANDU_STAGES.map((st) => `        new Level { dumplings = ${arr(st.dumplings.flatMap((d) => [d.fillRate, d.lo, d.hi, d.pleats, d.speed, d.tol]))}, need = ${st.need} },`);
+  write("mandu-pleat", "ManduPleat", `    public struct Level { public float[] dumplings; public int need; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ManduPleat from "../../components/games/ManduPleat";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "만두 빚기 — 소를 알맞게 넣고 고른 박자로 주름 잡는 무료 설날 만두 게임 30단계",
+    description: "설날 아침 온 가족이 둘러앉아 만두를 빚어요. 꾹 눌러 소를 넣고 초록 띠 안에서 손을 떼요. 적으면 납작, 많으면 터져요. 그다음 고른 박자로 주름을 잡아요. 촘촘하면 찢어지고 벌어지면 덜 여며지는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Mandu Pleat — Free Seollal dumpling game: just enough filling, then pleats on an even beat (30 stages)",
+    description: "Seollal morning, the whole family making mandu. Hold to spoon in filling and let go in the green band: too little is flat, too much bursts. Then pleat on an even beat: too close tears, too far stays open. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "マンドゥ包み — 具をほどよく入れて一定のリズムでひだを寄せる無料のソルラル餃子ゲーム30ステージ",
+    description: "ソルラルの朝、家族みんなでマンドゥを包みます。長押しで具を入れ、緑の帯で離します。少なければぺたんこ、多すぎれば破れます。次は一定のリズムでひだ寄せ。詰めすぎると裂け、空けすぎると閉じないUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "包饺子 — 馅放得刚好、按均匀节拍捏褶的免费春节饺子游戏30关",
+    description: "韩国春节早晨，全家围坐包饺子。按住加馅，在绿色带内松手：太少就扁，太多就破。然后按均匀的节拍捏褶：太密会撕破，太稀捏不严。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Plis de mandu — Jeu gratuit de raviolis de Seollal : juste assez de farce, puis des plis réguliers (30 niveaux)",
+    description: "Matin de Seollal, toute la famille plie des mandu. Maintenez pour garnir et relâchez dans la bande verte : trop peu, c'est plat ; trop, ça éclate. Puis plissez en rythme : trop serré, ça déchire ; trop espacé, ça reste ouvert. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Pliega los mandu — Juego gratis de empanadillas de Seollal: relleno justo y pliegues parejos (30 niveles)",
+    description: "Mañana de Seollal, toda la familia hace mandu. Mantén para rellenar y suelta en la franja verde: poco queda plana, mucho revienta. Luego pliega con ritmo parejo: muy juntos se rasga, muy separados queda abierta. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["mandu-pleat"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="mandu-pleat" build="mandu-pleat-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/mandu-pleat.webp">
+      <ManduPleat client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="mandu-pleat" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
