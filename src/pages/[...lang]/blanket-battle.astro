@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BlanketBattle from "../../components/games/BlanketBattle";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "돗자리 쟁탈전 — 세 돗자리 중 두 곳을 차지하는 무료 3레인 카드 대결 30단계",
+    description: "턴마다 늘어나는 도토리로 동물 카드를 돗자리 세 장에 내려놓아요. 상대가 먼저 펼친 카드를 보고 대응해, 6턴 뒤 세 장 중 두 장을 차지하면 이기는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Blanket Battle — Free three-lane card battle: hold two of the three picnic blankets (30 stages)",
+    description: "Spend acorns that grow each turn to play critter cards onto three blankets. See what the rival lays first, answer it, and after six turns hold two of the three. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "レジャーシート争奪戦 — 3枚のシートのうち2枚を取る無料の3レーンカードバトル30面",
+    description: "ターンごとに増えるどんぐりで動物カードを3枚のシートに出します。相手が先に出したカードを見て応じ、6ターン後に3枚中2枚を取れば勝ちのUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "野餐垫争夺战 — 三块野餐垫占两块的免费三路卡牌对战30关",
+    description: "用每回合增加的橡果，把动物卡牌放到三块野餐垫上。看对手先亮出的牌再应对，6回合后占领三块中的两块就赢。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Bataille de couvertures — Duel de cartes gratuit à trois zones : gardez deux couvertures sur trois (30 niveaux)",
+    description: "Dépensez des glands, plus nombreux à chaque tour, pour poser des cartes d'animaux sur trois couvertures. Voyez ce que pose le rival, répondez, et après six tours gardez-en deux sur trois. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Batalla de mantas — Duelo de cartas gratis a tres zonas: quédate dos mantas de tres (30 niveles)",
+    description: "Gasta bellotas, más cada turno, para poner cartas de bichos en tres mantas. Mira lo que pone el rival, responde y tras seis turnos quédate dos de las tres. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["blanket-battle"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="blanket-battle" build="blanket-battle-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/blanket-battle.webp">
+      <BlanketBattle client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="blanket-battle" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

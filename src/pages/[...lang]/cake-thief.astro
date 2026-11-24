@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CakeThief from "../../components/games/CakeThief";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "케이크 도둑 — 단서로 격자를 채워 범인을 찾는 무료 논리 추리 퍼즐 30단계",
+    description: "동물마다 다른 방에서 다른 물건을 들고 있었어요. 단서를 읽고 격자에 ×와 ●를 표시해, 크림 묻은 물건을 든 범인이 누구고 어디 있었는지 맞혀요. 모든 사건은 추리만으로 답이 하나인 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Cake Thief — Free logic-grid mystery: mark the grid from the clues and name the thief (30 stages)",
+    description: "Each animal was in a different room holding a different thing. Read the clues, mark × and ● on the grid, and name who held the creamy thing and where they were. Every case has one answer reached by reasoning alone. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ケーキどろぼう — 手がかりで表を埋めて犯人を当てる無料の論理推理パズル30面",
+    description: "動物たちはそれぞれ違う部屋で違うものを持っていました。手がかりを読んで表に×と●をつけ、クリームのついたものを持っていた犯人がだれで、どこにいたかを当てます。どの事件も推理だけで答えが一つのUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "蛋糕小偷 — 根据线索填表找出小偷的免费逻辑推理谜题30关",
+    description: "每只动物在不同的房间、拿着不同的东西。读线索、在表格里标×和●，找出拿着沾奶油东西的小偷是谁、在哪。每个案件只靠推理就有唯一答案。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Le voleur de gâteau — Énigme gratuite en grille logique : marquez la grille et désignez le voleur (30 niveaux)",
+    description: "Chaque animal était dans une pièce différente avec un objet différent. Lisez les indices, marquez × et ● dans la grille, et désignez qui tenait l'objet plein de crème et où. Chaque enquête a une seule réponse, trouvée par le raisonnement. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "El ladrón de tarta — Misterio gratis de cuadrícula lógica: marca la cuadrícula y señala al ladrón (30 niveles)",
+    description: "Cada animal estaba en un cuarto distinto con una cosa distinta. Lee las pistas, marca × y ● en la cuadrícula y señala quién tenía la cosa con nata y dónde estaba. Cada caso tiene una sola respuesta, solo razonando. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["cake-thief"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="cake-thief" build="cake-thief-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/cake-thief.webp">
+      <CakeThief client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="cake-thief" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

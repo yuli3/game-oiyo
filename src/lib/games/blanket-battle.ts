@@ -248,9 +248,6 @@ export function pilot(st: BlanketStage, opts: PlayerOpts = {}): Match {
   const { slip = 0, seed = 1, mode = "plan" } = opts;
   const rng = mulberry(seed * 6007 + 21);
   const m = newMatch(st);
-  // the two blankets worth fighting for: sunny first, ants last, small ones (room for two) below plain
-  const pref: Record<LaneKind, number> = { sunny: 0, plain: 1, small: 2, ants: 3 };
-  const targets = shuffle([0, 1, 2], rng).sort((a, b) => pref[st.lanes[a]] - pref[st.lanes[b]]).slice(0, 2);
   while (!m.over) {
     if (mode === "random") {
       for (const i of shuffle(m.hand.map((_, k) => k), rng).reverse()) if (rng() < 0.6) stage(m, Math.min(i, m.hand.length - 1), Math.floor(rng() * LANES));
@@ -330,7 +327,7 @@ export function buildStage(stage: number): BlanketStage {
     const st = layout(stage, attempt);
     if (HUMAN_PLAYERS.filter((o) => pilot(st, o).won).length < 6) continue;
     if (starsFor(pilot(st, { seed: 1 })) < 3) continue;
-    if ([1, 2, 3].some((seed) => pilot(st, { mode: "random", seed }).won)) continue;
+    if ([1, 2, 3, 4, 5, 6].some((seed) => pilot(st, { mode: "random", seed }).won)) continue;
     return st;
   }
   throw new Error(`blanket-battle stage ${stage + 1}: no fair picnic`);
