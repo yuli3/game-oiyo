@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import IceRoad from "../../components/games/IceRoad";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "얼음길 운전 — 위험한 속도 띠를 피해 얼어붙은 호수를 트럭으로 건너는 무료 겨울 운전 게임 30단계",
+    description: "무거운 트럭이 얼음 밑으로 밀어내는 물결과 속도가 같아지면 얼음이 갈라져요. 물 깊이마다 위험한 속도 띠가 달라요. 누르면 가속, 떼면 브레이크. 너무 빠르지도 느리지도 않게 건너는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Ice Road — Free winter driving game: cross a frozen lake while dodging the danger speed (30 stages)",
+    description: "A heavy truck pushes a wave under the ice, and when its speed matches the wave's, the ice cracks. Each depth has its own danger band. Hold to speed up, let go to brake: not too fast, not too slow. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "氷上ロード — 危ない速さの帯を避けて凍った湖をトラックで渡る無料の冬のドライブゲーム30ステージ",
+    description: "重いトラックが氷の下に押し出す波と同じ速さになると氷が割れます。水深ごとに危ない速さの帯が違います。押すと加速、離すとブレーキ。速すぎず遅すぎず渡るUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "冰路卡车 — 避开危险速度带、开卡车横穿冰湖的免费冬季驾驶游戏30关",
+    description: "沉重的卡车在冰下推起一道波，车速与波速一致时冰面就会裂开。每种水深都有各自的危险速度带。按住加速，松开刹车：不快也不慢。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Route de glace — Jeu de conduite d'hiver gratuit : traversez un lac gelé en évitant la vitesse dangereuse (30 niveaux)",
+    description: "Un camion lourd pousse une onde sous la glace ; quand sa vitesse égale celle de l'onde, la glace se fend. Chaque profondeur a sa bande dangereuse. Maintenez pour accélérer, relâchez pour freiner : ni trop vite, ni trop lent. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Carretera de hielo — Juego gratis de conducción invernal: cruza un lago helado esquivando la velocidad peligrosa (30 niveles)",
+    description: "Un camión pesado empuja una onda bajo el hielo y, cuando su velocidad iguala la de la onda, el hielo se agrieta. Cada profundidad tiene su franja peligrosa. Mantén para acelerar, suelta para frenar: ni muy rápido, ni muy lento. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["ice-road"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="ice-road" build="ice-road-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/ice-road.webp">
+      <IceRoad client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="ice-road" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

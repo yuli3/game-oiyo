@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import IcicleKnock from "../../components/games/IcicleKnock";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "고드름 따기 — 아래에 사람이 없을 때 처마 고드름을 떨어뜨리는 무료 겨울 골목 게임 30단계",
+    description: "한옥 골목 처마에 고드름이 자라요. 금이 가면 탭해서 떨어뜨리는데, 땅에 닿을 때 아래를 지나는 사람이 있으면 맞아요. 사람이 지금 어디 있는지보다 떨어질 때 어디 있을지를 읽는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Icicle Knock — Free winter lane game: knock icicles off the eaves when nobody is below (30 stages)",
+    description: "Icicles grow along the eaves of a hanok lane. Tap one once it cracks and it drops, but if a neighbour is walking underneath when it lands, they get bonked. Read where people will be, not where they are. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "つらら落とし — 下に人がいないときに軒先のつららを落とす無料の冬の路地ゲーム30ステージ",
+    description: "韓屋の路地の軒につららが育ちます。ひびが入ったらタップで落とせますが、地面に届くとき下を人が通っていると当たってしまいます。今どこにいるかより、落ちるときどこにいるかを読むUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "敲冰柱 — 趁下面没人时敲下屋檐冰柱的免费冬季胡同游戏30关",
+    description: "韩屋胡同屋檐下长出冰柱。出现裂纹就能点下来，但落地时若有人从下面经过就会砸到。要看行人落地时会在哪儿，而不是现在在哪儿。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Chasse aux glaçons — Jeu de ruelle d'hiver gratuit : décrochez les glaçons quand personne n'est dessous (30 niveaux)",
+    description: "Des glaçons poussent au bord des toits d'une ruelle de hanok. Touchez-en un dès qu'il se fissure et il tombe, mais si un voisin passe dessous à l'impact, il le reçoit. Lisez où seront les passants, pas où ils sont. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Tira los carámbanos — Juego gratis de callejón invernal: tíralos cuando no haya nadie debajo (30 niveles)",
+    description: "En los aleros de un callejón de casas hanok crecen carámbanos. Toca uno cuando se agriete y caerá, pero si pasa un vecino por debajo al caer, le da. Lee dónde estará la gente, no dónde está. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["icicle-knock"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="icicle-knock" build="icicle-knock-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/icicle-knock.webp">
+      <IcicleKnock client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="icicle-knock" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
