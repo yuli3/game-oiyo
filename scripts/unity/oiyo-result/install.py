@@ -93,6 +93,9 @@ BUILDS = {
     "ice-climb-unity": ("ice-climb", "IceClimb/Runtime/IceClimbPlayer.cs", T, "state, starsWon"),
     "bobsleigh-unity": ("bobsleigh", "Bobsleigh/Runtime/BobsleighPlayer.cs", T, "state, starsWon"),
     "tug-of-war-unity": ("tug-of-war", "TugOfWar/Runtime/TugOfWarPlayer.cs", T, "state, starsWon"),
+    "bridge-walk-unity": ("bridge-walk", "BridgeWalk/Runtime/BridgeWalkPlayer.cs", T, "state, starsWon"),
+    "saealsim-roll-unity": ("saealsim-roll", "SaealsimRoll/Runtime/SaealsimRollPlayer.cs", T, "state, starsWon"),
+    "sell-the-heat-unity": ("sell-the-heat", "SellTheHeat/Runtime/SellTheHeatPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."
