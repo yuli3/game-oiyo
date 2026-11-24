@@ -1,5 +1,5 @@
 /**
- * Writes the 30 stages of the winter Unity builds (wave 6 and new-games batches 10 to 12) as C# tables, straight from the web
+ * Writes the 30 stages of the winter Unity builds (wave 6 and new-games batches 10 to 13) as C# tables, straight from the web
  * rules in src/lib/games/*.ts, so the Unity and React versions play the very same stages.
  *
  *   npx tsx scripts/unity/export-winter-stages.ts
@@ -23,6 +23,9 @@ import * as pipe from "../../src/lib/games/snow-halfpipe";
 import * as skate from "../../src/lib/games/speed-skate";
 import * as yeot from "../../src/lib/games/yeot-stretch";
 import * as bia from "../../src/lib/games/biathlon";
+import * as climb from "../../src/lib/games/ice-climb";
+import * as bob from "../../src/lib/games/bobsleigh";
+import * as tug from "../../src/lib/games/tug-of-war";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -172,4 +175,25 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = bia.BIATHLON_STAGES.map((st) => `        new Level { legs = ${st.legs}, leg = ${n(st.leg)}, radius = ${n(st.radius)}, goal = ${n(st.goal)}, par = ${n(st.par)}, seed = ${st.seed}u },`);
   write("biathlon", "Biathlon", `    public struct Level { public int legs; public float leg, radius, goal, par; public uint seed; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Ice Climb: meter rise time (s), band narrowing, the ice on each step (0 thin, 1 firm, 2 hard), time limit
+{
+  const rows = climb.CLIMB_STAGES.map((st) => `        new Level { rise = ${n(st.rise)}, narrow = ${n(st.narrow)}, wall = ${iarr(st.wall)}, limit = ${n(st.limit)}, par = ${n(st.par)} },`);
+  write("ice-climb", "IceClimb", `    public struct Level { public float rise, narrow, limit, par; public int[] wall; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Bobsleigh: length (m), bends (centre m, half-length m, tightness), flip margin, rival time
+{
+  const rows = bob.BOB_TRACKS.map((t) => `        new Level { length = ${n(t.length)}, bends = ${arr(t.bends.flatMap((b) => [b.at, b.half, b.k * 900]))}, flip = ${n(t.flip)}, goal = ${n(t.goal)}, par = ${n(t.par)} },`);
+  write("bobsleigh", "Bobsleigh", `    // bends: (centre, half-length, peak line at 30 m/s) triples; tightness = peak / 900\n    public struct Level { public float length, flip, goal, par; public float[] bends; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Tug of War: their slack and heave forces, heaves (start s, length s), time limit
+{
+  const rows = tug.TUG_STAGES.map((st) => {
+    const waves = st.waves.filter((w) => w.start < st.limit + 2);
+    return `        new Level { slackF = ${n(st.slackF)}, heaveF = ${n(st.heaveF)}, waves = ${arr(waves.flatMap((w) => [w.start, w.heave]))}, limit = ${n(st.limit)}, par = ${n(st.par)} },`;
+  });
+  write("tug-of-war", "TugOfWar", `    public struct Level { public float slackF, heaveF, limit, par; public float[] waves; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
