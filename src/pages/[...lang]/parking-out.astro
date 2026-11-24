@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ParkingOut from "../../components/games/ParkingOut";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "주차장 탈출 — 앞으로만 가는 차들을 순서대로 빼내는 무료 차 빼기 퍼즐 30단계",
+    description: "출근길 주차장이 꽉 막혔어요. 차는 앞을 보는 쪽으로만 곧장 달리고, 길에 다른 차가 있으면 쿵 부딪혀요. 세 번 부딪히기 전에 앞길이 빈 차부터 순서를 찾아 모두 내보내는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Parking Out — Free car-escape puzzle: drive straight-ahead cars out of a jammed car park in the right order (30 stages)",
+    description: "The morning car park is jammed. Every car only drives straight ahead and bumps anything in its way. Find the order, starting with cars whose road is clear, and get them all out before three bumps. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "駐車場から脱出 — 前にしか進めない車を順番に出す無料の車出しパズル30面",
+    description: "朝の駐車場が詰まっています。車は向いている方へまっすぐしか進めず、途中に車があるとゴツンとぶつかります。3回ぶつかる前に、前が空いている車から順番を見つけて全部出すUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "停车场脱困 — 按顺序把只能直行的车开出去的免费挪车谜题30关",
+    description: "早高峰的停车场堵死了。每辆车只能朝车头方向直行，路上有车就会撞上。在撞三次之前，从前方畅通的车开始找顺序，把车全开出去。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Sortie de parking — Casse-tête gratuit : sortez dans le bon ordre des voitures qui ne roulent que tout droit (30 niveaux)",
+    description: "Le parking du matin est bloqué. Chaque voiture ne roule que tout droit et heurte ce qui la gêne. Trouvez l'ordre, en commençant par les voies libres, et sortez-les toutes avant trois chocs. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Salida del aparcamiento — Puzle gratis: saca en orden coches que solo van recto de un aparcamiento atascado (30 niveles)",
+    description: "El aparcamiento de la mañana está atascado. Cada coche solo va recto y choca con lo que tenga delante. Encuentra el orden, empezando por los de camino libre, y sácalos todos antes de tres golpes. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["parking-out"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="parking-out" build="parking-out-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/parking-out.webp">
+      <ParkingOut client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="parking-out" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

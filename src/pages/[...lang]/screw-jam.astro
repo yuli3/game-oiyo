@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ScrewJam from "../../components/games/ScrewJam";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "나사 풀기 — 겹친 나무판의 나사를 빼서 같은 색 상자에 담는 무료 나사 정렬 퍼즐 30단계",
+    description: "겹겹이 박힌 나무판에서 위에 판이 덮이지 않은 나사를 빼요. 나사는 같은 색 상자로 들어가고, 없으면 보관함으로 가요. 보관함이 넘치기 전에 다음 상자 색을 보며 순서를 정해 판을 모두 비우는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Screw Jam — Free screw-sorting puzzle: take screws out of stacked plates and box them by colour (30 stages)",
+    description: "Plates are screwed down on top of one another. Take out screws no plate covers; each goes into a box of its colour, or into the spare tray if none is waiting. Read the colours of the boxes to come and empty the board before the tray overflows. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ネジはずし — 重なった板のネジを抜いて同じ色の箱に入れる無料のネジ仕分けパズル30面",
+    description: "何枚も重なった板から、上に板がかぶっていないネジを抜きます。ネジは同じ色の箱へ、なければ置き場へ。置き場があふれる前に、次に来る箱の色を見て順番を決め、盤面を空にするUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "拧螺丝 — 从叠起来的木板上拧下螺丝、按颜色装盒的免费螺丝分类谜题30关",
+    description: "木板一层层叠着用螺丝固定。拧下上面没有板子压着的螺丝，螺丝进同色盒子，没有就进暂存区。看着接下来的盒子颜色安排顺序，在暂存区溢出前清空棋盘。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Casse-vis — Casse-tête gratuit de tri de vis : retirez les vis de planches empilées et rangez-les par couleur (30 niveaux)",
+    description: "Des planches sont vissées les unes sur les autres. Retirez les vis qu'aucune planche ne recouvre ; chacune va dans une boîte de sa couleur, ou sur le plateau de secours. Lisez les couleurs des prochaines boîtes et videz le plateau avant qu'il ne déborde. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Atasco de tornillos — Puzle gratis de ordenar tornillos: sácalos de tablas apiladas y guárdalos por color (30 niveles)",
+    description: "Hay tablas atornilladas unas sobre otras. Saca los tornillos que ninguna tabla tapa; cada uno va a una caja de su color o, si no hay, a la bandeja. Mira los colores de las próximas cajas y vacía el tablero antes de que la bandeja se desborde. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["screw-jam"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="screw-jam" build="screw-jam-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/screw-jam.webp">
+      <ScrewJam client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="screw-jam" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
