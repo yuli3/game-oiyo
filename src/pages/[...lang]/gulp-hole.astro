@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GulpHole from "../../components/games/GulpHole";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "꿀꺽 구멍 — 공원 물건을 삼킬수록 커지는 구멍을 움직이는 무료 삼키기 게임 30단계",
+    description: "작은 구멍을 끌고 다니며 꽃·고깔부터 벤치·자전거, 나중엔 나무·자동차·매점까지 삼켜요. 삼킬수록 구멍이 넓어지고, 시간 안에 막대를 채우면 통과하는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Gulp Hole — Free swallow-and-grow game: steer a hole that gets bigger with everything it eats (30 stages)",
+    description: "Drag a little hole around the park and swallow flowers and cones, then benches and bikes, and later trees, cars and the kiosk. Every bite widens it; fill the bar before the clock runs out. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ごっくん穴 — 飲み込むほど大きくなる穴を動かす無料の飲み込みゲーム30面",
+    description: "小さな穴を動かして、花やコーンからベンチ・自転車、最後は木・車・売店まで飲み込みます。飲み込むほど穴が広がり、時間内にバーを満たせばクリアのUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "吞吞洞 — 移动越吞越大的洞的免费吞噬游戏30关",
+    description: "拖着小洞在公园里转，从花和路锥吞到长椅、自行车，最后连树、汽车和小卖部都吞下。越吞洞越大，在时间内填满进度条即过关。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Trou glouton — Jeu gratuit où un trou grandit avec tout ce qu'il avale (30 niveaux)",
+    description: "Promenez un petit trou dans le parc et avalez fleurs et cônes, puis bancs et vélos, et plus tard arbres, voitures et le kiosque. Chaque bouchée l'élargit ; remplissez la barre avant la fin du temps. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Agujero glotón — Juego gratis de un agujero que crece con todo lo que traga (30 niveles)",
+    description: "Lleva un agujerito por el parque y trágate flores y conos, luego bancos y bicis, y al final árboles, coches y el quiosco. Cada bocado lo agranda; llena la barra antes de que se acabe el tiempo. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["gulp-hole"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="gulp-hole" build="gulp-hole-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/gulp-hole.webp">
+      <GulpHole client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="gulp-hole" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

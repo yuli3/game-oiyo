@@ -129,6 +129,9 @@ BUILDS = {
     "toy-box-brawl-unity": ("toy-box-brawl", "ToyBoxBrawl/Runtime/ToyBoxBrawlPlayer.cs", T, "state, starsWon"),
     "summon-guard-unity": ("summon-guard", "SummonGuard/Runtime/SummonGuardPlayer.cs", T, "state, starsWon"),
     "rooftop-cats-unity": ("rooftop-cats", "RooftopCats/Runtime/RooftopCatsPlayer.cs", T, "state, starsWon"),
+    "gulp-hole-unity": ("gulp-hole", "GulpHole/Runtime/GulpHolePlayer.cs", T, "state, starsWon"),
+    "cake-thief-unity": ("cake-thief", "CakeThief/Runtime/CakeThiefPlayer.cs", T, "state, starsWon"),
+    "blanket-battle-unity": ("blanket-battle", "BlanketBattle/Runtime/BlanketBattlePlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

@@ -62,6 +62,9 @@ import * as shopGame from "../../src/lib/games/night-checkout";
 import * as toyGame from "../../src/lib/games/toy-box-brawl";
 import * as guardGame from "../../src/lib/games/summon-guard";
 import * as catsGame from "../../src/lib/games/rooftop-cats";
+import * as holeGame from "../../src/lib/games/gulp-hole";
+import * as cakeGame from "../../src/lib/games/cake-thief";
+import * as blanketGame from "../../src/lib/games/blanket-battle";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -497,4 +500,31 @@ function write(slug: string, game: string, body: string): void {
     return `        new Level { time = ${["day", "dusk", "night"].indexOf(st.time)}, sky = "${st.sky}", props = ${arr(props)}, propColours = ${sarr(st.props.map((p) => p.colour))}, cats = ${arr(cats)}, catColours = ${sarr(st.cats.map((c) => c.colour))}, limit = ${st.limit}, par = ${st.par} },`;
   });
   write("rooftop-cats", "RooftopCats", `    public struct Level { public int time, limit, par; public string sky; public float[] props, cats; public string[] propColours, catColours; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Gulp Hole: park things (kind, x, y), the meter, the clock, par
+{
+  const rows = holeGame.HOLE_STAGES.map((st) => `        new Level { things = ${iarr(st.things.flatMap((t) => [t.kind, t.x, t.y]))}, goal = ${st.goal}, limit = ${st.limit}, par = ${st.par} },`);
+  write("gulp-hole", "GulpHole", `    public struct Level { public int[] things; public int goal, limit, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Cake Thief: size, the answer, par, and the words in every language (order: ko, en, ja, zh, fr, es):
+// grid labels (suspects, rooms, items), the clue sentences and the cream clue
+{
+  const LANGS = ["ko", "en", "ja", "zh", "fr", "es"] as const;
+  const esc = (x: string) => x.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const sarr = (xs: string[]) => `new string[] { ${xs.map((x) => `"${esc(x)}"`).join(", ")} }`;
+  const rows = cakeGame.CAKE_STAGES.map((st) => {
+    const labels = LANGS.map((l) => sarr([...st.suspects.map((i) => cakeGame.label(l, "suspects", i)), ...st.rooms.map((i) => cakeGame.label(l, "rooms", i)), ...st.items.map((i) => cakeGame.label(l, "items", i))]));
+    const clues = LANGS.map((l) => sarr(st.clues.map((c) => cakeGame.clueText(st, c, l))));
+    const cream = sarr(LANGS.map((l) => cakeGame.creamText(st, l)));
+    return `        new Level { n = ${st.n}, room = ${iarr(st.room)}, thief = ${st.thief}, par = ${st.par}, labels = new string[][] { ${labels.join(", ")} }, clues = new string[][] { ${clues.join(", ")} }, cream = ${cream} },`;
+  });
+  write("cake-thief", "CakeThief", `    public struct Level { public int n, thief, par; public int[] room; public string[][] labels, clues; public string[] cream; }\n    public static readonly string[] Langs = { "ko", "en", "ja", "zh", "fr", "es" };\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Blanket Battle: blanket quirks (plain, sunny, ants, small), both decks in draw order, the rival's care and luck
+{
+  const rows = blanketGame.BLANKET_STAGES.map((st) => `        new Level { lanes = ${iarr(st.lanes.map((l) => blanketGame.LANE_KINDS.indexOf(l)))}, deck = ${iarr(st.deck)}, rivalDeck = ${iarr(st.rivalDeck)}, rivalSkill = ${n(st.rivalSkill)}, rivalSeed = ${st.rivalSeed}u },`);
+  write("blanket-battle", "BlanketBattle", `    public struct Level { public int[] lanes, deck, rivalDeck; public float rivalSkill; public uint rivalSeed; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
