@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import KimjangSalt from "../../components/games/KimjangSalt";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "김장 배추 절이기 — 줄기는 많이 잎은 조금, 칸마다 소금을 알맞게 뿌리는 무료 김장 게임 30단계",
+    description: "늦가을 김장날, 반 가른 배추에 소금을 뿌려요. 두꺼운 흰 줄기는 많이, 얇은 초록 잎은 조금. 손 아래에 가장 많이, 옆 칸에도 조금 떨어지니 칸마다 막대를 초록 띠에 맞춰요. Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Kimjang Salt — Free kimchi-making game: salt every patch of the cabbage just right (30 stages)",
+    description: "On kimjang day, salt the halved cabbages: plenty on the thick white stems, a little on the thin green leaves. Salt falls thickest under your hand and a little next to it, so bring every patch into its band. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "キムジャン塩漬け — 茎はたっぷり葉は少し、マスごとに塩をちょうどよくふる無料キムチ漬けゲーム30ステージ",
+    description: "晩秋のキムジャンの日、半分に割った白菜に塩をふります。厚い白い茎にはたっぷり、薄い緑の葉には少し。手の下に一番多く、隣のマスにも少し落ちるので、マスごとにバーを緑の帯に合わせましょう。Unity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "腌白菜 — 菜帮多放叶子少放，每格撒盐恰到好处的免费腌泡菜游戏30关",
+    description: "深秋腌泡菜日，给切成两半的白菜撒盐。厚厚的白菜帮多放，薄薄的绿叶少放。手下落盐最多，旁边的格子也会落一点，让每格的条都落进绿色带。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Salage du kimjang — Jeu gratuit de kimchi : salez juste ce qu'il faut chaque zone du chou (30 niveaux)",
+    description: "Le jour du kimjang, salez les choux coupés en deux : beaucoup sur les épaisses côtes blanches, peu sur les fines feuilles vertes. Le sel tombe surtout sous la main et un peu à côté : amenez chaque zone dans sa bande. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Sala las coles del kimjang — Juego gratis de kimchi: sala cada zona de la col en su justa medida (30 niveles)",
+    description: "El día del kimjang, sala las coles partidas: mucha sal en los gruesos tallos blancos y poca en las finas hojas verdes. La sal cae sobre todo bajo la mano y un poco al lado: lleva cada zona a su franja. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["kimjang-salt"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="kimjang-salt" build="kimjang-salt-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/kimjang-salt.webp">
+      <KimjangSalt client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="kimjang-salt" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
