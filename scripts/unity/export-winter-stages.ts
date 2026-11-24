@@ -35,6 +35,9 @@ import * as chest from "../../src/lib/games/chestnut-roast";
 import * as icicle from "../../src/lib/games/icicle-knock";
 import * as iceroad from "../../src/lib/games/ice-road";
 import * as mandu from "../../src/lib/games/mandu-pleat";
+import * as kimjang from "../../src/lib/games/kimjang-salt";
+import * as hwangtae from "../../src/lib/games/hwangtae-dry";
+import * as yongal from "../../src/lib/games/yongal-scoop";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -259,4 +262,22 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = mandu.MANDU_STAGES.map((st) => `        new Level { dumplings = ${arr(st.dumplings.flatMap((d) => [d.fillRate, d.lo, d.hi, d.pleats, d.speed, d.tol]))}, need = ${st.need} },`);
   write("mandu-pleat", "ManduPleat", `    public struct Level { public float[] dumplings; public int need; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Kimjang Salt: salt rate, cabbages (per-patch targets, band share, seconds), mark, par
+{
+  const rows = kimjang.KIMJANG_STAGES.map((st) => `        new Level { rate = ${n(st.rate)}, targets = ${arr(st.cabbages.flatMap((c) => c.target))}, tol = ${n(st.cabbages[0].tol)}, time = ${n(st.cabbages[0].time)}, cabbages = ${st.cabbages.length}, need = ${st.need}, par = ${st.par} },`);
+  write("kimjang-salt", "KimjangSalt", `    public struct Level { public float rate, tol, time; public float[] targets; public int cabbages, need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Hwangtae Dry: days, per-day mean and swing, rack exposures, count, par (hours)
+{
+  const rows = hwangtae.HWANGTAE_STAGES.map((st) => `        new Level { days = ${st.days}, mean = ${arr(st.mean)}, amp = ${arr(st.amp)}, exposure = ${arr(st.racks.map((r) => r.exposure))}, need = ${st.need}, par = ${st.par} },`);
+  write("hwangtae-dry", "HwangtaeDry", `    public struct Level { public int days, need, par; public float[] mean, amp, exposure; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Yongal Scoop: swing, fall, moon, ripple, time, mark, par
+{
+  const rows = yongal.YONGAL_STAGES.map((st) => `        new Level { swingAmp = ${n(st.swingAmp)}, swingPeriod = ${n(st.swingPeriod)}, fall = ${n(st.fall)}, moonR = ${n(st.moonR)}, moonAmp = ${n(st.moonAmp)}, moonPeriod = ${n(st.moonPeriod)}, ripple = ${n(st.ripple)}, time = ${n(st.time)}, need = ${st.need}, par = ${st.par} },`);
+  write("yongal-scoop", "YongalScoop", `    public struct Level { public float swingAmp, swingPeriod, fall, moonR, moonAmp, moonPeriod, ripple, time; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
