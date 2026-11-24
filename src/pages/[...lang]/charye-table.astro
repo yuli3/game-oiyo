@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CharyeTable from "../../components/games/CharyeTable";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "차례상 차리기 — 홍동백서·조율이시, 집안 법도대로 설날 차례상을 차리는 무료 퍼즐 게임 30단계",
+    description: "설날 아침 차례상을 차려요. 반서갱동, 어동육서, 두동미서, 좌포우혜, 그리고 집집마다 다른 과일 법도까지. 향이 다 타기 전에 이 집의 법도대로 상을 올리는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Charye Table — Free Seollal puzzle: set the ancestral table by the house's rules (30 stages)",
+    description: "Set the Seollal ancestral table: rice west and soup east, fish east and meat west, fish heads east, and a fruit rule that differs from house to house. Offer it by this house's rules before the incense burns down. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "茶礼の膳 — 紅東白西・棗栗梨柿、家のしきたりどおりにソルラルの茶礼の膳を整える無料パズル30ステージ",
+    description: "ソルラルの朝の茶礼の膳を整えます。ご飯は西・汁は東、魚は東・肉は西、魚の頭は東、そして家ごとに違う果物のしきたり。線香が燃え尽きる前にこの家のしきたりどおりに供えるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "摆茶礼桌 — 红东白西、枣栗梨柿，按家规摆春节茶礼桌的免费益智游戏30关",
+    description: "摆好春节早晨的茶礼桌：饭西汤东、鱼东肉西、鱼头朝东，还有各家不同的水果规矩。在香烧完前按这家的规矩上供。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Table du charye — Casse-tête gratuit de Seollal : dressez la table des ancêtres selon les règles de la maison (30 niveaux)",
+    description: "Dressez la table rituelle de Seollal : riz à l'ouest et soupe à l'est, poisson à l'est et viande à l'ouest, têtes vers l'est, et une règle des fruits propre à chaque maison. Présentez-la avant que l'encens ne se consume. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Mesa del charye — Puzle gratis de Seollal: pon la mesa de los antepasados según las reglas de la casa (30 niveles)",
+    description: "Pon la mesa ritual de Seollal: arroz al oeste y sopa al este, pescado al este y carne al oeste, cabezas al este, y una regla de la fruta que cambia de casa en casa. Preséntala antes de que se consuma el incienso. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["charye-table"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="charye-table" build="charye-table-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/charye-table.webp">
+      <CharyeTable client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="charye-table" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

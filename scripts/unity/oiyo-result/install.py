@@ -105,6 +105,9 @@ BUILDS = {
     "kimjang-salt-unity": ("kimjang-salt", "KimjangSalt/Runtime/KimjangSaltPlayer.cs", T, "state, starsWon"),
     "hwangtae-dry-unity": ("hwangtae-dry", "HwangtaeDry/Runtime/HwangtaeDryPlayer.cs", T, "state, starsWon"),
     "yongal-scoop-unity": ("yongal-scoop", "YongalScoop/Runtime/YongalScoopPlayer.cs", T, "state, starsWon"),
+    "mungpungji-seal-unity": ("mungpungji-seal", "MungpungjiSeal/Runtime/MungpungjiSealPlayer.cs", T, "state, starsWon"),
+    "charye-table-unity": ("charye-table", "CharyeTable/Runtime/CharyeTablePlayer.cs", T, "state, starsWon"),
+    "yeontan-relay-unity": ("yeontan-relay", "YeontanRelay/Runtime/YeontanRelayPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

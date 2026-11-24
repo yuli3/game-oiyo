@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import YeontanRelay from "../../components/games/YeontanRelay";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "연탄 나르기 — 언덕 계단에서 손에서 손으로 연탄을 넘기는 무료 겨울 봉사 게임 30단계",
+    description: "겨울 언덕 동네 계단에 늘어선 봉사자들이 연탄을 손에서 손으로 넘겨요. 받은 사람이 초록불이 되면 넘기고, 너무 일찍 넘기면 깨지고 오래 들면 놓쳐요. 트럭이 떠나기 전에 광을 채우는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Yeontan Relay — Free winter volunteering game: pass coal briquettes hand to hand up a hillside stair (30 stages)",
+    description: "Volunteers line a hillside stair and pass yeontan hand to hand. Pass when the catcher's light turns green: too early and it breaks, too late and their arms give out. Fill the shed before the truck leaves. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "練炭リレー — 坂の階段で練炭を手から手へ渡す無料の冬のボランティアゲーム30ステージ",
+    description: "冬の坂の町の階段に並んだボランティアが練炭を手から手へ渡します。受け取った人のランプが青になったら渡し、早すぎると割れ、長く持つと落とします。トラックが出る前に物置を満たすUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "传递蜂窝煤 — 在山坡台阶上手递手传蜂窝煤的免费冬季志愿游戏30关",
+    description: "志愿者在冬日山坡社区的台阶上排成一列，手递手传蜂窝煤。接煤的人亮绿灯再传，太早会摔碎，拿太久会掉。在卡车开走前装满煤棚。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Relais de briquettes — Jeu d'hiver gratuit : passez les briquettes de charbon de main en main dans un escalier (30 niveaux)",
+    description: "Des bénévoles s'alignent dans un escalier en pente et se passent les yeontan de main en main. Passez quand le voyant du receveur est vert : trop tôt elle casse, trop tard les bras lâchent. Remplissez la remise avant le départ du camion. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Relevo de briquetas — Juego invernal gratis: pasa briquetas de carbón de mano en mano por una escalera (30 niveles)",
+    description: "Voluntarios en fila en una escalera de ladera se pasan los yeontan de mano en mano. Pasa cuando la luz de quien recibe esté verde: antes se rompe, tarde los brazos ceden. Llena la carbonera antes de que se vaya el camión. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["yeontan-relay"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="yeontan-relay" build="yeontan-relay-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/yeontan-relay.webp">
+      <YeontanRelay client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="yeontan-relay" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

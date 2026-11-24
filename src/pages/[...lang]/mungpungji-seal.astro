@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MungpungjiSeal from "../../components/games/MungpungjiSeal";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "문풍지 바르기 — 문종이에 낀 성에를 읽고 바람구멍에 문풍지를 바르는 무료 한옥 겨울 게임 30단계",
+    description: "한옥 문 틈으로 찬바람이 새요. 틈은 안 보이지만 바람 드는 곳 둘레엔 성에가 껴요. 성에를 읽어 문풍지를 발라 방이 식기 전에 바람을 막는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Mungpungji Seal — Free hanok winter game: read the frost on the paper door and seal the drafts (30 stages)",
+    description: "Cold air seeps through the cracks of a hanok's paper door. The gaps are invisible, but frost gathers around each draft. Read the frost and paste paper strips before the room goes cold. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "目張り紙貼り — 障子の霜を読んですきま風に紙を貼る無料の韓屋の冬ゲーム30ステージ",
+    description: "韓屋の戸のすきまから冷たい風が入ります。すきまは見えませんが、風の入る所の周りには霜がつきます。霜を読んで目張り紙を貼り、部屋が冷える前に風を止めるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "糊门风纸 — 看门纸上的霜，找漏风处糊上纸条的免费韩屋冬季游戏30关",
+    description: "冷风从韩屋门缝里钻进来。缝看不见，但漏风处周围的纸上会结霜。看霜糊上门风纸，在屋里变冷前挡住风。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Calfeutrer la porte — Jeu d'hiver gratuit en hanok : lisez le givre sur la porte de papier et bouchez les courants d'air (30 niveaux)",
+    description: "L'air froid passe par les fentes de la porte de papier d'un hanok. Elles sont invisibles, mais le givre se forme autour de chaque courant d'air. Lisez le givre et collez des bandes avant que la pièce refroidisse. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Sella la puerta de papel — Juego invernal gratis en un hanok: lee la escarcha en la puerta y tapa las corrientes (30 niveles)",
+    description: "El aire frío se cuela por las rendijas de la puerta de papel de un hanok. No se ven, pero la escarcha se forma alrededor de cada corriente. Lee la escarcha y pega tiras antes de que se enfríe la habitación. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["mungpungji-seal"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="mungpungji-seal" build="mungpungji-seal-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/mungpungji-seal.webp">
+      <MungpungjiSeal client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="mungpungji-seal" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
