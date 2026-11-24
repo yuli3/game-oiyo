@@ -111,6 +111,9 @@ BUILDS = {
     "daljip-fire-unity": ("daljip-fire", "DaljipFire/Runtime/DaljipFirePlayer.cs", T, "state, starsWon"),
     "scarf-knit-unity": ("scarf-knit", "ScarfKnit/Runtime/ScarfKnitPlayer.cs", T, "state, starsWon"),
     "ipchun-brush-unity": ("ipchun-brush", "IpchunBrush/Runtime/IpchunBrushPlayer.cs", T, "state, starsWon"),
+    "crane-count-unity": ("crane-count", "CraneCount/Runtime/CraneCountPlayer.cs", T, "state, starsWon"),
+    "rink-resurface-unity": ("rink-resurface", "RinkResurface/Runtime/RinkResurfacePlayer.cs", T, "state, starsWon"),
+    "holiday-ticket-unity": ("holiday-ticket", "HolidayTicket/Runtime/HolidayTicketPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

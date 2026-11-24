@@ -44,6 +44,9 @@ import * as yeontan from "../../src/lib/games/yeontan-relay";
 import * as daljip from "../../src/lib/games/daljip-fire";
 import * as scarf from "../../src/lib/games/scarf-knit";
 import * as ipchun from "../../src/lib/games/ipchun-brush";
+import * as crane from "../../src/lib/games/crane-count";
+import * as rink from "../../src/lib/games/rink-resurface";
+import * as ticket from "../../src/lib/games/holiday-ticket";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -325,4 +328,24 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = ipchun.IPCHUN_STAGES.map((st) => `        new Level { strokes = ${iarr(st.strokes.map((k) => ipchun.STROKES.indexOf(k)))}, tol = ${n(st.tol)}, wTol = ${n(st.wTol)}, mark = ${n(st.mark)} },`);
   write("ipchun-brush", "IpchunBrush", `    public struct Level { public int[] strokes; public float tol, wTol, mark; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Crane Count: each flock's birds (offsets, red-crowned or not, wing phase), seconds on screen, height, direction; tolerance, mark
+{
+  const flock = (f: crane.Flock) =>
+    `new Flock { dx = ${arr(f.birds.map((b) => b.dx))}, dy = ${arr(f.birds.map((b) => b.dy))}, phase = ${arr(f.birds.map((b) => b.phase))}, red = ${iarr(f.birds.map((b) => (b.red ? 1 : 0)))}, time = ${n(f.time)}, y = ${n(f.y)}, dir = ${f.dir} }`;
+  const rows = crane.CRANE_STAGES.map((st) => `        new Level { flocks = new Flock[] { ${st.flocks.map(flock).join(", ")} }, tolerance = ${n(st.tolerance)}, need = ${st.need} },`);
+  write("crane-count", "CraneCount", `    public struct Flock { public float[] dx, dy, phase; public int[] red; public float time, y; public int dir; }\n    public struct Level { public Flock[] flocks; public float tolerance; public int need; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Rink Resurface: machine speed and turn rate, blade width, gouged cells, clock, share to smooth, par
+{
+  const rows = rink.RINK_STAGES.map((st) => `        new Level { speed = ${n(st.speed)}, turn = ${n(st.turn)}, blade = ${n(st.blade)}, gouges = ${iarr(st.gouges)}, time = ${n(st.time)}, need = ${n(st.need)}, par = ${n(st.par)} },`);
+  write("rink-resurface", "RinkResurface", `    public struct Level { public float speed, turn, blade, time, need, par; public int[] gouges; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Holiday Ticket: rows, when each seat goes to another buyer (0 sold already, 1e9 never), the parties in order, clock, par
+{
+  const rows = ticket.TICKET_STAGES.map((st) => `        new Level { rows = ${st.rows}, soldAt = ${arr(st.soldAt.map((t) => (Number.isFinite(t) ? t : 1e9)))}, parties = ${iarr(st.parties)}, time = ${n(st.time)}, par = ${n(st.par)} },`);
+  write("holiday-ticket", "HolidayTicket", `    public struct Level { public int rows; public float[] soldAt; public int[] parties; public float time, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
