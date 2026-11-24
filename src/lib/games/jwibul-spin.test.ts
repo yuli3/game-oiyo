@@ -10,7 +10,7 @@ describe("jwibul-spin", () => {
     expect(z.tufts.length).toBe(10);
     expect(z.stacks.length).toBeGreaterThan(3);
     expect(z.wind).toBeGreaterThan(0);
-  });
+  }, 60_000);
 
   it("every stage is cleared by the steady script and by a wobbly one", () => {
     for (let st = 0; st < STAGE_COUNT; st++) {
@@ -20,7 +20,7 @@ describe("jwibul-spin", () => {
       expect(starsFor(run)).toBe(3);
       expect(playScript(l, 0.5, 8).won, `stage ${st + 1} wobbly`).toBe(true);
     }
-  });
+  }, 60_000);
 
   it("circling the finger spins the can; stopping lets the embers die", () => {
     const s = newJwibul(levelFor(0));

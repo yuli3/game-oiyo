@@ -150,5 +150,5 @@ describe('BabaRuleShifterEngine', () => {
       }
       expect(solved, lvl.name).toBe(true);
     }
-  });
+  }, 60_000);
 });

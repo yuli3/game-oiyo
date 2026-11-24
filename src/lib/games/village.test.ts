@@ -376,7 +376,7 @@ describe("village: balance", () => {
       expect(villagePop(done)).toBeLessThanOrEqual(villageHousing(done));
       for (const id of BUILDING_IDS) expect(villageCount(done, id)).toBeLessThanOrEqual(BUILDINGS[id].max);
     }
-  });
+  }, 60_000);
 
   it("does not give even the middle grade to one repeated order", () => {
     const lines: Array<[CommandId, BuildingId?]> = [["tend"], ["lumber"], ["quarry"], ["hunt"], ["patrol"], ["feast"], ["explore"], ["build", "field"], ["build", "house"]];

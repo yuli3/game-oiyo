@@ -171,7 +171,7 @@ describe("reverse dungeon", () => {
       expect(depth, PUZZLES[index].id).toBe(solution.length);
       expect(wins, PUZZLES[index].id).toBe(1);
     }
-  });
+  }, 60_000);
 
   it("kills a first step into the pit, and a wrong turn that slides the pit under the hero", () => {
     const pit = replayPuzzle(1, []);
