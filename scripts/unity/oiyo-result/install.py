@@ -120,6 +120,9 @@ BUILDS = {
     "odd-commute-unity": ("odd-commute", "OddCommute/Runtime/OddCommutePlayer.cs", T, "state, starsWon"),
     "sofa-carry-unity": ("sofa-carry", "SofaCarry/Runtime/SofaCarryPlayer.cs", T, "state, starsWon"),
     "palm-village-unity": ("palm-village", "PalmVillage/Runtime/PalmVillagePlayer.cs", T, "state, starsWon"),
+    "window-plant-unity": ("window-plant", "WindowPlant/Runtime/WindowPlantPlayer.cs", T, "state, starsWon"),
+    "number-boom-unity": ("number-boom", "NumberBoom/Runtime/NumberBoomPlayer.cs", T, "state, starsWon"),
+    "crown-regions-unity": ("crown-regions", "CrownRegions/Runtime/CrownRegionsPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

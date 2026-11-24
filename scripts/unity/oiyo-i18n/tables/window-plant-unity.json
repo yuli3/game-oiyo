@@ -1,0 +1,205 @@
+{
+"All 30 stages": [
+"30단계 전체",
+"全30面",
+"Los 30 niveles",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a day": [
+"날짜 고르기",
+"日を選ぶ",
+"Elegir día",
+"选择日子",
+"Choisir un jour"
+],
+"Choose a stage": [
+"단계를 골라요",
+"ステージを選ぶ",
+"Elige un nivel",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Day {0}": [
+"{0}일째",
+"{0}日目",
+"Día {0}",
+"第{0}天",
+"Jour {0}"
+],
+"Evening came": [
+"저녁이 됐어요",
+"夕方になった",
+"Llegó la tarde",
+"天黑了",
+"Le soir est venu"
+],
+"Flick bug": [
+"벌레 털기",
+"虫を払う",
+"Quitar bicho",
+"赶虫子",
+"Chasser l'insecte"
+],
+"Height {0} · watered {1} times": [
+"키 {0} · 물 {1}번",
+"高さ {0}・水やり {1}回",
+"Altura {0} · regada {1} veces",
+"高度 {0} · 浇水 {1} 次",
+"Hauteur {0} · arrosée {1} fois"
+],
+"Height {0}/{1}": [
+"키 {0}/{1}",
+"高さ {0}/{1}",
+"Altura {0}/{1}",
+"高度 {0}/{1}",
+"Hauteur {0}/{1}"
+],
+"It shot up!": [
+"쑥쑥 자랐어요!",
+"ぐんぐん育った！",
+"¡Ha crecido mucho!",
+"长得真快！",
+"Elle a bien poussé !"
+],
+"Leave it open beside your work. Water it when the soil is dry, turn it to the sun, flick off bugs, and grow it to the day's height by evening.": [
+"일하는 화면 옆에 켜 두세요. 흙이 마르면 물을 주고, 해 쪽으로 돌리고, 벌레를 털어 저녁까지 목표 키를 채워요.",
+"作業画面の横に開いておこう。土が乾いたら水をやり、日の方へ回し、虫を払って、夕方までに目標の高さへ。",
+"Déjala abierta junto a tu trabajo. Riega cuando la tierra esté seca, gírala hacia el sol, quita los bichos y alcanza la altura del día antes de la tarde.",
+"工作时开在旁边。土干了浇水，转向太阳，赶走虫子，傍晚前长到目标高度。",
+"Laissez-la ouverte à côté de votre travail. Arrosez quand la terre est sèche, tournez-la vers le soleil, chassez les insectes et atteignez la hauteur du jour avant le soir."
+],
+"Leave it open while you work and watch it grow.": [
+"일하는 동안 켜 두면 쑥쑥 자라요.",
+"作業中に開いておくとぐんぐん育つ。",
+"Déjala abierta mientras trabajas y crecerá.",
+"工作时开着，看它慢慢长大。",
+"Laissez-la ouverte pendant le travail : elle pousse."
+],
+"Next day": [
+"다음 날",
+"次の日",
+"Día siguiente",
+"下一天",
+"Jour suivant"
+],
+"Next stage": [
+"다음 단계",
+"次の面",
+"Siguiente nivel",
+"下一关",
+"Niveau suivant"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0}단계 시작",
+"{0}面をプレイ",
+"Jugar nivel {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"다시 시작",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 하기",
+"もう一度",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Stage": [
+"단계",
+"面",
+"Nivel",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"단계 목록",
+"ステージ一覧",
+"Lista de niveles",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"{0}단계",
+"{0}面",
+"Nivel {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Tap to start": [
+"탭해서 시작",
+"タップでスタート",
+"Toca para empezar",
+"点击开始",
+"Touchez pour commencer"
+],
+"The soil is dry": [
+"흙이 말랐어요",
+"土が乾いた",
+"La tierra está seca",
+"土干了",
+"La terre est sèche"
+],
+"Too much water": [
+"물이 너무 많아요",
+"水が多すぎる",
+"Demasiada agua",
+"水太多了",
+"Trop d'eau"
+],
+"Turn pot": [
+"화분 돌리기",
+"鉢を回す",
+"Girar maceta",
+"转花盆",
+"Tourner le pot"
+],
+"Water": [
+"물 주기",
+"水やり",
+"Regar",
+"浇水",
+"Arroser"
+],
+"Window Plant": [
+"창가 화분",
+"窓辺の鉢植え",
+"Planta de ventana",
+"窗边盆栽",
+"Plante de fenêtre"
+],
+"You cleared all 30 stages!": [
+"30단계를 모두 클리어했어요!",
+"全30面をクリアしました！",
+"¡Superaste los 30 niveles!",
+"你通关了全部 30 关！",
+"Vous avez terminé les 30 niveaux !"
+]
+}

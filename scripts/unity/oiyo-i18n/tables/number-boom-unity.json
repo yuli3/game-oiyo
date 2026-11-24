@@ -1,0 +1,191 @@
+{
+"All 30 stages": [
+"30단계 전체",
+"全30面",
+"Los 30 niveles",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Boom! Target smashed": [
+"펑! 목표 돌파",
+"ドカン！目標突破",
+"¡Bum! Meta superada",
+"砰！突破目标",
+"Boum ! Objectif pulvérisé"
+],
+"Choose a run": [
+"판 고르기",
+"ランを選ぶ",
+"Elegir partida",
+"选择局",
+"Choisir une partie"
+],
+"Choose a stage": [
+"단계를 골라요",
+"ステージを選ぶ",
+"Elige un nivel",
+"选择关卡",
+"Choisissez un niveau"
+],
+"From hundreds to 30 zeros in half an hour.": [
+"30분 만에 백에서 0이 서른 개까지!",
+"30分で百から0が30個まで！",
+"¡De cientos a 30 ceros en media hora!",
+"30分钟从几百涨到30个零！",
+"Des centaines à 30 zéros en une demi-heure !"
+],
+"Next run": [
+"다음 판",
+"次のラン",
+"Siguiente partida",
+"下一局",
+"Partie suivante"
+],
+"Next stage": [
+"다음 단계",
+"次の面",
+"Siguiente nivel",
+"下一关",
+"Niveau suivant"
+],
+"Number Boom": [
+"숫자 폭발",
+"数字大爆発",
+"Explosión de números",
+"数字大爆炸",
+"Explosion de nombres"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0}단계 시작",
+"{0}面をプレイ",
+"Jugar nivel {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"다시 시작",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 하기",
+"もう一度",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Run {0}": [
+"{0}번째 판",
+"第{0}ラン",
+"Partida {0}",
+"第{0}局",
+"Partie {0}"
+],
+"Stage": [
+"단계",
+"面",
+"Nivel",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"단계 목록",
+"ステージ一覧",
+"Lista de niveles",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"{0}단계",
+"{0}面",
+"Nivel {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"TAP": [
+"두드리기",
+"連打",
+"TOCA",
+"狂点",
+"TAPER"
+],
+"Tap to start": [
+"탭해서 시작",
+"タップでスタート",
+"Toca para empezar",
+"点击开始",
+"Touchez pour commencer"
+],
+"Target {0}": [
+"목표 {0}",
+"目標 {0}",
+"Meta {0}",
+"目标 {0}",
+"Objectif {0}"
+],
+"The minute is up": [
+"1분이 끝났어요",
+"1分が終わった",
+"Se acabó el minuto",
+"1分钟到了",
+"La minute est finie"
+],
+"Thirty one-minute runs. The first machine makes coins, the others multiply them: spend where it pays most, drum the button, and pass the target.": [
+"1분짜리 판 30개. 첫 기계는 동전을 만들고 나머지는 곱해요. 가장 많이 늘어나는 곳에 쓰고, 버튼을 두드려 목표를 넘겨요.",
+"1分のランが30本。最初の機械がコインを作り、残りは掛け算。一番増える所に使い、ボタンを連打して目標を超えよう。",
+"Treinta partidas de un minuto. La primera máquina fabrica monedas y las demás multiplican: gasta donde más rinda, aporrea el botón y supera la meta.",
+"30局各1分钟。第一台机器造金币，其余做乘法：钱花在涨得最多的地方，狂点按钮，超过目标。",
+"Trente parties d'une minute. La première machine fabrique des pièces, les autres multiplient : investissez là où ça rapporte le plus, martelez le bouton et dépassez l'objectif."
+],
+"You cleared all 30 stages!": [
+"30단계를 모두 클리어했어요!",
+"全30面をクリアしました！",
+"¡Superaste los 30 niveles!",
+"你通关了全部 30 关！",
+"Vous avez terminé les 30 niveaux !"
+],
+"{0} collected": [
+"{0} 모음",
+"{0} 集めた",
+"{0} reunidas",
+"攒了 {0}",
+"{0} récoltés"
+],
+"{0}/s": [
+"초당 {0}",
+"毎秒 {0}",
+"{0}/s",
+"每秒 {0}",
+"{0}/s"
+],
+"{0}s": [
+"{0}초",
+"{0}秒",
+"{0} s",
+"{0}秒",
+"{0} s"
+]
+}
