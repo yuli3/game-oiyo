@@ -90,6 +90,9 @@ BUILDS = {
     "speed-skate-unity": ("speed-skate", "SpeedSkate/Runtime/SpeedSkatePlayer.cs", T, "state, starsWon"),
     "yeot-stretch-unity": ("yeot-stretch", "YeotStretch/Runtime/YeotStretchPlayer.cs", T, "state, starsWon"),
     "biathlon-unity": ("biathlon", "Biathlon/Runtime/BiathlonPlayer.cs", T, "state, starsWon"),
+    "ice-climb-unity": ("ice-climb", "IceClimb/Runtime/IceClimbPlayer.cs", T, "state, starsWon"),
+    "bobsleigh-unity": ("bobsleigh", "Bobsleigh/Runtime/BobsleighPlayer.cs", T, "state, starsWon"),
+    "tug-of-war-unity": ("tug-of-war", "TugOfWar/Runtime/TugOfWarPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

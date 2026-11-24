@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import IceClimb from "../../components/games/IceClimb";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "빙벽 등반 — 얼음마다 알맞은 힘으로 도끼를 찍어 언 폭포를 오르는 무료 겨울 게임 30단계",
+    description: "꽁꽁 언 폭포를 아이스바일로 올라요! 꾹 눌러 힘 막대를 올리고 알맞은 힘에서 떼어 찍어요. 얇은 얼음은 살살, 두꺼운 얼음은 세게 — 너무 세면 얼음이 깨져 미끄러지고, 약하면 튕겨요. 해가 얼음을 녹이기 전에 꼭대기에 오르는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Ice Climb — Free winter game: swing each ice axe with the right strength and climb a frozen waterfall (30 stages)",
+    description: "Climb a frozen waterfall with ice axes! Hold to raise the power bar and let go at the right strength to strike. Thin ice gently, hard ice with a full swing; too hard and it shatters and you slip, too soft and it glances off. Reach the top before the sun softens the ice. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "アイスクライミング — 氷ごとにちょうどいい力でアックスを打ち込み凍った滝を登る無料の冬ゲーム30ステージ",
+    description: "凍った滝をアイスアックスで登ろう！ 長押しで力メーターを上げ、ちょうどいい力で離して打ち込みます。薄い氷はそっと、厚い氷は思い切り——強すぎると割れてずり落ち、弱いとはじかれます。日差しで氷がゆるむ前に頂上を目指すUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "攀冰 — 用合适的力度挥镐、攀登冰瀑的免费冬季游戏30关",
+    description: "用冰镐攀登结冰的瀑布！按住让力度条上升，在合适的力度松手砸下。薄冰要轻，厚冰要狠——太狠冰会碎、人往下滑，太轻会弹开。在太阳把冰晒软前登顶，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Escalade sur glace — Jeu d'hiver gratuit : frappez chaque piolet avec la bonne force et gravissez une cascade gelée (30 niveaux)",
+    description: "Gravissez une cascade gelée aux piolets ! Maintenez pour faire monter la jauge et lâchez à la bonne force pour frapper. Glace fine doucement, glace dure à fond : trop fort, elle casse et vous glissez ; trop doux, ça ricoche. Atteignez le sommet avant que le soleil ramollisse la glace. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Escalada en hielo — Juego de invierno gratis: golpea cada piolet con la fuerza justa y sube una cascada helada (30 niveles)",
+    description: "¡Escala una cascada helada con piolets! Mantén para subir la barra de fuerza y suelta con la fuerza justa para golpear. Hielo fino suave, hielo duro a tope: muy fuerte y se rompe y resbalas; muy flojo y rebota. Llega a la cima antes de que el sol ablande el hielo. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["ice-climb"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="ice-climb" build="ice-climb-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/ice-climb.webp">
+      <IceClimb client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="ice-climb" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
