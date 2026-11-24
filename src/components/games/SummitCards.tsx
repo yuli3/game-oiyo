@@ -171,11 +171,12 @@ function drawCard(ctx: CanvasRenderingContext2D, card: number, x: number, y: num
     ctx.strokeRect(x - 1, y - 1, CW + 2, CH + 2);
     ctx.lineWidth = 1;
   }
+  // rank and suit sit in the lower part, which stays in view when the card above overlaps the top
   ctx.fillStyle = SUIT_COLOURS[suitOf(card)];
   ctx.font = "bold 14px monospace";
   ctx.textAlign = "left";
-  ctx.fillText(RANKS[rankOf(card)], x + 3, y + 14);
-  drawSprite(ctx, SUITS[suitOf(card)], x + CW / 2, y + CH - 13, { scale: 3 });
+  ctx.fillText(RANKS[rankOf(card)], x + 3, y + CH - 8);
+  drawSprite(ctx, SUITS[suitOf(card)], x + CW - 9, y + CH - 24, { scale: 2 });
 }
 
 export default function SummitCards({ locale: pageLocale }: { locale?: string }) {

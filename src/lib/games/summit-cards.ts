@@ -187,7 +187,7 @@ export function pilot(st: SummitStage, opts: ClimberOpts = {}): Climb {
 
 function shape(stage: number) {
   return {
-    stock: Math.max(18, 24 - Math.floor(stage / 5)), // cards in the stock (the rest of the deck is set aside)
+    stock: Math.max(17, 23 - Math.floor(stage / 5)), // cards in the stock (the deck has 24 left after the peaks: one is the first camp card)
     faceDown: stage >= 6,
   };
 }

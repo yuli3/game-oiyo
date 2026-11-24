@@ -35,7 +35,11 @@ describe("summit-cards", () => {
     expect(SUMMIT_STAGES[0].faceDown).toBe(false);
     expect(SUMMIT_STAGES[29].faceDown).toBe(true);
     expect(SUMMIT_STAGES[29].stock.length).toBeLessThan(SUMMIT_STAGES[0].stock.length);
-    for (const st of SUMMIT_STAGES) expect(new Set([...st.peaks, ...st.stock, st.camp]).size).toBe(PEAK_CARDS + st.stock.length + 1);
+    for (const st of SUMMIT_STAGES) {
+      expect(st.camp).toBeGreaterThanOrEqual(0);
+      expect(st.camp).toBeLessThan(52);
+      expect(new Set([...st.peaks, ...st.stock, st.camp]).size).toBe(PEAK_CARDS + st.stock.length + 1);
+    }
   }, T);
 
   it("lets careful players clear every deal with three stars", () => {
