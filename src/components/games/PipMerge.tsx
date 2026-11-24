@@ -263,7 +263,7 @@ export default function PipMerge({ locale: pageLocale }: { locale?: string }) {
         ctx.fillStyle = "#2b8a3e";
         ctx.fillRect(0, 0, W, H);
         ctx.fillStyle = "#37b24d";
-        for (let k = 0; k < 60; k++) ctx.fillRect((k * 71) % W, (k * 113) % H, 2, 2);
+        for (let k = 0; k < 60; k++) ctx.fillRect((k * 151 + ((k * k * 37) % 89)) % W, (k * 263 + ((k * k * 53) % 97)) % H, 2, 2);
         // the next dice
         ctx.fillStyle = "rgba(0,0,0,0.25)";
         ctx.fillRect(BX, 40, 5 * CELL + 4 * GAP, 100);

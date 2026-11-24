@@ -1,0 +1,163 @@
+{
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"All potted!": [
+"모두 넣었어요!",
+"全部入った！",
+"¡Todas dentro!",
+"全部进袋！",
+"Tout est empoché !"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Balls left {0}": [
+"남은 공 {0}",
+"残りの球 {0}",
+"Bolas restantes {0}",
+"剩余球 {0}",
+"Billes restantes {0}"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Cleared in {0} shots": [
+"{0}번 쳐서 모두 넣었어요",
+"{0}回で全部入れた",
+"Mesa limpia en {0} tiros",
+"{0} 杆全部进袋",
+"Table vidée en {0} coups"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Out of shots": [
+"샷을 다 썼어요",
+"ショットがなくなった",
+"Sin tiros",
+"击球次数用完了",
+"Plus de coups"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Pocket Shot": [
+"포켓 샷",
+"ポケットショット",
+"Tiro a la tronera",
+"一杆进袋",
+"Coup de poche"
+],
+"Pull back and let go to strike the white ball!": [
+"당겼다 놓아서 흰 공을 쳐요!",
+"引いて離して手球を打とう！",
+"¡Tira hacia atrás y suelta para golpear la blanca!",
+"向后拉再松手击打白球！",
+"Tirez puis lâchez pour frapper la blanche !"
+],
+"Pull back anywhere and let go to strike the white ball the other way, harder the further you pull. Sink every numbered ball within the shots.": [
+"아무 데서나 당겼다 놓으면 반대 방향으로 흰 공을 쳐요. 많이 당길수록 세게 쳐요. 정해진 샷 안에 번호 공을 모두 넣어 봐요.",
+"どこでも引いて離すと反対方向へ手球を打ちます。大きく引くほど強く打てます。決まったショット数で番号の球を全部入れよう。",
+"Tira hacia atrás en cualquier sitio y suelta para golpear la blanca hacia el otro lado, más fuerte cuanto más tires. Mete todas las bolas numeradas dentro del límite.",
+"在任意处向后拉再松手，就朝反方向击打白球，拉得越远越用力。在规定杆数内把号码球全部打进。",
+"Tirez n'importe où puis lâchez pour frapper la blanche dans l'autre sens, plus fort si vous tirez loin. Empochez toutes les billes numérotées dans la limite."
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Shots {0}/{1}": [
+"샷 {0}/{1}",
+"ショット {0}/{1}",
+"Tiros {0}/{1}",
+"击球 {0}/{1}",
+"Coups {0}/{1}"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Tap to start": [
+"탭해서 시작",
+"タップでスタート",
+"Toca para empezar",
+"点击开始",
+"Touchez pour commencer"
+],
+"The white ball dropped": [
+"흰 공이 빠졌어요",
+"手球が落ちた",
+"La blanca cayó",
+"白球落袋了",
+"La blanche est tombée"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+]
+}

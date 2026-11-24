@@ -83,6 +83,9 @@ import * as slideGame from "../../src/lib/games/coin-slide";
 import * as windowsGame from "../../src/lib/games/sleepy-windows";
 import * as juiceGame from "../../src/lib/games/juice-swipe";
 import * as dartGame from "../../src/lib/games/dart-drift";
+import * as pipGame from "../../src/lib/games/pip-merge";
+import * as vacuumGame from "../../src/lib/games/vacuum-dash";
+import * as poolGame from "../../src/lib/games/pocket-shot";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -708,4 +711,22 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = dartGame.DART_STAGES.map((st) => `        new Level { darts = ${st.darts}, amp = ${arr(st.amp)}, rate = ${arr(st.rate)}, phase = ${arr(st.phase)}, centre = ${arr(st.centre)}, need = ${st.need}, par = ${st.par} },`);
   write("dart-drift", "DartDrift", `    public struct Level { public int darts; public float[] amp, rate, phase, centre; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Pip Merge: stone squares, the dice in order, the goal and par
+{
+  const rows = pipGame.PIP_STAGES.map((st) => `        new Level { rocks = ${iarr(st.rocks)}, dice = ${iarr(st.dice)}, need = ${st.need}, par = ${st.par} },`);
+  write("pip-merge", "PipMerge", `    public struct Level { public int[] rocks, dice; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Vacuum Dash: the room (1 floor / 0 furniture), the start, the plan (0 up, 1 right, 2 down, 3 left), par and the move limit
+{
+  const rows = vacuumGame.VACUUM_STAGES.map((st) => `        new Level { cols = ${st.cols}, rows = ${st.rows}, floor = ${iarr(st.floor.map(Number))}, start = ${st.start}, plan = ${iarr(st.plan)}, par = ${st.par}, limit = ${st.limit} },`);
+  write("vacuum-dash", "VacuumDash", `    public struct Level { public int cols, rows; public int[] floor; public int start; public int[] plan; public int par, limit; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Pocket Shot: the numbered balls (x, y pairs), the white ball's spot, the shots allowed and par
+{
+  const rows = poolGame.POOL_STAGES.map((st) => `        new Level { balls = ${arr(st.balls.flat())}, cue = ${arr(st.cue)}, shots = ${st.shots}, par = ${st.par} },`);
+  write("pocket-shot", "PocketShot", `    public struct Level { public float[] balls, cue; public int shots, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
