@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BokjoriRun from "../../components/games/BokjoriRun";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "복조리 배달 — 섣달그믐 밤 골목을 달리며 담 너머 마당으로 복조리를 던져 넣는 무료 설날 달리기 게임 30단계",
+    description: "섣달그믐 밤, 복조리 배달 출발! 골목을 달리며 오른쪽을 꾹 눌렀다 떼면 복조리가 담을 넘어 날아가요. 등불 켜진 집 마당에 쏙 넣고, 불 꺼진 집은 건너뛰고, 강아지는 점프로 넘어요. 담·대문채·지붕을 피해 거리를 맞추는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Bokjori Run — Free Lunar New Year running game: toss lucky strainers over the walls into the courtyards (30 stages)",
+    description: "Lunar New Year's Eve delivery run! Race down the alley, hold and release the right side to lob a bokjori, a lucky rice strainer, over the wall. Drop it in the yards with a lit lantern, skip the dark houses and jump the dogs. Judge the distance past walls, gate-houses and roofs. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "福ざる配達 — 大みそかの夜、路地を走りながら塀越しに庭へ福ざるを投げ入れる無料のお正月ランゲーム30ステージ",
+    description: "旧暦の大みそかの夜、福ざる(ポクチョリ)配達に出発！ 路地を走りながら右を長押しして離すと、福ざるが塀を越えて飛びます。明かりのともった家の庭に入れ、明かりの消えた家は飛ばし、犬はジャンプで越えます。塀・門屋・屋根をよけて距離を合わせるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "送福笊篱 — 除夕夜沿胡同奔跑、隔墙把福笊篱扔进院子的免费春节跑酷游戏30关",
+    description: "除夕夜，出发送福笊篱！沿着胡同奔跑，按住右边再松手，福笊篱就会越过院墙飞进去。扔进亮着灯笼的人家，跳过没亮灯的，跳过小狗。避开院墙、门房和屋顶把距离掂量准，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "La course aux bokjori — Jeu de course gratuit du Nouvel An lunaire : lancez les passoires porte-bonheur par-dessus les murs (30 niveaux)",
+    description: "La tournée du réveillon lunaire ! Courez dans la ruelle, maintenez puis relâchez à droite pour lancer un bokjori, une passoire porte-bonheur, par-dessus le mur. Visez les cours à la lanterne allumée, évitez les maisons éteintes et sautez les chiens. Dosez la distance entre murs, porches et toits. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Reparto de bokjori — Juego de carreras gratis de Año Nuevo lunar: lanza coladores de la suerte por encima de los muros (30 niveles)",
+    description: "¡El reparto de Nochevieja lunar! Corre por el callejón, mantén y suelta a la derecha para lanzar un bokjori, un colador de la suerte, por encima del muro. Mételo en los patios con el farol encendido, sáltate las casas apagadas y salta a los perros. Calcula la distancia entre muros, porterías y tejados. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["bokjori-run"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="bokjori-run" build="bokjori-run-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/bokjori-run.webp">
+      <BokjoriRun client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="bokjori-run" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

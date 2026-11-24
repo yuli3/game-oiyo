@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SnowHalfpipe from "../../components/games/SnowHalfpipe";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "하프파이프 — 바닥에서 펌핑하고 공중에서 돌아 똑바로 착지하는 무료 스노보드 묘기 게임 30단계",
+    description: "눈 하프파이프에서 스노보드 묘기! 바닥을 지날 때 톡 눌러 펌핑으로 속도를 올리고, 립을 넘어 날아오르면 꾹 눌러 회전, 손을 떼 멈춰요. 반 바퀴 단위로 30° 안에 맞춰 내려와야 착지 성공! 높이 뜰수록 더 많이 돌 수 있는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Snow Halfpipe — Free snowboard trick game: pump in the bottom, spin in the air and stick the landing (30 stages)",
+    description: "Snowboard tricks in a snow halfpipe! Tap as you cross the bottom to pump up speed, fly out over the lip, hold to spin and let go to stop. Land within 30° of a whole half turn to stick it. The higher you fly, the more you can spin. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ハーフパイプ — 底でパンプし、空中で回転してまっすぐ着地する無料のスノーボードトリックゲーム30ステージ",
+    description: "雪のハーフパイプでスノーボードのトリック！ 底を通るときにタップしてパンプで加速、リップを越えて飛んだら長押しで回転、離して止めます。半回転単位から30°以内にそろえて着地すれば成功！ 高く飛ぶほどたくさん回れるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "U型场地滑雪 — 在底部压板加速、空中旋转、稳稳落地的免费单板花式游戏30关",
+    description: "在雪U型场地里玩单板花式！经过底部时点一下压板加速，飞出台唇后按住旋转、松开停止。落地时要在整半圈的30°以内才算成功！飞得越高转得越多，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Halfpipe de neige — Jeu de figures de snowboard gratuit : pompez au fond, tournez en l'air et posez la réception (30 niveaux)",
+    description: "Des figures de snowboard dans un halfpipe de neige ! Touchez en traversant le fond pour pomper, envolez-vous au-dessus du bord, maintenez pour tourner et lâchez pour arrêter. Retombez à moins de 30° d'un demi-tour entier pour réussir. Plus vous montez, plus vous tournez. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Halfpipe de nieve — Juego de trucos de snowboard gratis: bombea en el fondo, gira en el aire y clava el aterrizaje (30 niveles)",
+    description: "¡Trucos de snowboard en un halfpipe de nieve! Toca al cruzar el fondo para bombear velocidad, sal volando por el borde, mantén para girar y suelta para parar. Aterriza a menos de 30° de media vuelta entera para clavarlo. Cuanto más alto, más giros. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["snow-halfpipe"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="snow-halfpipe" build="snow-halfpipe-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/snow-halfpipe.webp">
+      <SnowHalfpipe client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="snow-halfpipe" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
