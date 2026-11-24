@@ -66,7 +66,7 @@ const W = 360;
 const H = 560;
 const TOP = 96;
 const BOTTOM = 548;
-const SEAT_X = [52, 112, 218, 278];
+const SEAT_X = [44, 102, 204, 262];
 const SEAT_W = 54;
 const FOLK: PixelArt = { palette: { k: "#343a40", s: "#f3c9a0", r: "#c92a2a" }, rows: [".kk.", "kssk", ".ss.", "rrrr", "rrrr"] };
 
@@ -219,9 +219,9 @@ export default function HolidayTicket({ locale: pageLocale }: { locale?: string 
         ctx.fillStyle = "#1c3d5a";
         ctx.fillRect(0, 0, W, H);
         ctx.fillStyle = "#e9ecef";
-        ctx.fillRect(40, TOP - 8, W - 80, BOTTOM - TOP + 14);
+        ctx.fillRect(34, TOP - 8, W - 68, BOTTOM - TOP + 14);
         ctx.fillStyle = "#ced4da";
-        ctx.fillRect(170, TOP - 8, 44, BOTTOM - TOP + 14);
+        ctx.fillRect(160, TOP - 8, 40, BOTTOM - TOP + 14);
         const picked = new Set(b.picked);
         const n = b.stage.rows * PER_ROW;
         for (let i = 0; i < n; i++) {

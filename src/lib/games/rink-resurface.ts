@@ -85,7 +85,7 @@ function isGouge(st: RinkStage, cell: number): boolean {
 }
 
 /** Smooths the cells under the blade at the machine's position (a pass counts once per visit). */
-function shave(m: Machine, visited: Set<number>): void {
+function shave(m: Machine, visited: Set<number>, before: Set<number>): void {
   const half = m.stage.blade / 2;
   // the blade is across the direction of travel, at the back of the machine
   const bx = m.x - Math.cos(m.heading) * 14;
@@ -104,6 +104,7 @@ function shave(m: Machine, visited: Set<number>): void {
       const along = Math.abs((p.x - bx) * Math.cos(m.heading) + (p.y - by) * Math.sin(m.heading));
       if (across > half || along > CELL || !onIce(p.x, p.y)) continue;
       visited.add(i);
+      if (before.has(i)) continue; // still under the blade from the last step: the same pass
       const need = isGouge(m.stage, i) ? 2 : 1;
       if (m.passes[i] < need) {
         m.passes[i]++;
@@ -140,8 +141,7 @@ export function stepMachine(m: Machine, steer: number, dt: number, visited: Set<
       // a cell only counts again once the blade has left it
       const before = new Set(visited);
       visited.clear();
-      shave(m, visited);
-      for (const i of before) if (!visited.has(i)) visited.delete(i);
+      shave(m, visited, before);
     }
   }
   if (coverage(m) >= m.stage.need) {
