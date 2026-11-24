@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TugOfWar from "../../components/games/TugOfWar";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "줄다리기 — 상대가 쉴 때 당기고 '영차!'에 버티는 무료 정월 대보름 게임 30단계",
+    description: "정월 대보름 마을 줄다리기! 건너 마을이 '영차!' 하고 당긴 뒤 쉬는 틈에 꾹 눌러 당기고, 구령이 들리면 떼서 버텨요. 상대가 당길 때 같이 당기면 미끄러져 끌려가요. 박자를 읽어 깃발을 우리 선까지 끌어오는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Tug of War — Free first-full-moon festival game: pull while they rest and brace on 'Yeongcha!' (30 stages)",
+    description: "The village tug of war of Jeongwol Daeboreum! The other village shouts 'Yeongcha!' and heaves, then rests: hold to pull in their rest and let go to brace when you hear the call. Pull into their heave and you get yanked. Read their rhythm and haul the flag to your line. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "綱引き — 相手が休む間に引き「ヨンチャ！」で踏ん張る無料の正月テボルムゲーム30ステージ",
+    description: "正月テボルムの村の綱引き！ 向こうの村が「ヨンチャ！」と引いたあとの休みに長押しで引き、掛け声が聞こえたら離して踏ん張ります。相手が引くときに一緒に引くと引きずられます。拍子を読んで旗をこちらの線まで引き寄せるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "拔河 — 对方休息时拉、喊“嘿哟！”时顶住的免费正月十五游戏30关",
+    description: "正月十五的村庄拔河！对面村喊“嘿哟！”用力后会休息，趁这时按住拉，听到口号就松手顶住。在对方发力时一起拉会被拖走。读懂节奏，把旗子拉到我方的线，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Tir à la corde — Jeu gratuit de la première pleine lune : tirez pendant leur pause et tenez au « Yeongcha ! » (30 niveaux)",
+    description: "Le tir à la corde des villages de Jeongwol Daeboreum ! L'autre village crie « Yeongcha ! », tire, puis souffle : maintenez pour tirer pendant leur pause et lâchez pour tenir au cri. Tirez pendant leur effort et vous êtes entraînés. Lisez leur rythme et amenez le drapeau à votre ligne. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Tira y afloja — Juego gratis de la primera luna llena: tira mientras descansan y aguanta con el «¡Yeongcha!» (30 niveles)",
+    description: "¡El tira y afloja entre aldeas de Jeongwol Daeboreum! La otra aldea grita «¡Yeongcha!», tira y luego descansa: mantén para tirar en su descanso y suelta para aguantar al oír el grito. Si tiras durante su tirón, te arrastran. Lee su ritmo y lleva la bandera a tu línea. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["tug-of-war"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="tug-of-war" build="tug-of-war-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/tug-of-war.webp">
+      <TugOfWar client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="tug-of-war" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

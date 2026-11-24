@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Bobsleigh from "../../components/games/Bobsleigh";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "봅슬레이 — 곡선마다 알맞은 높이로 벽을 타고 내려오는 무료 썰매 레이스 게임 30단계",
+    description: "얼음 트랙을 시속 100km 넘게 내려오는 봅슬레이! 곡선에서 꾹 눌러 바깥 벽을 타고 올라가 초록 띠에 맞춰요. 너무 낮으면 미끄러져 느려지고, 너무 높으면 뒤집혀요. 빠를수록 더 높이 타야 하는 라인을 읽어 상대보다 먼저 내려오는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Bobsleigh — Free sliding race game: ride each bend high on the wall without flipping (30 stages)",
+    description: "Bobsleigh down an ice chute at over 100 km/h! In the bends, hold to ride up the outer wall and stay in the green band. Too low and you skid and slow down; too high and you flip. The faster you go, the higher the line. Beat the rival down. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ボブスレー — カーブごとにちょうどいい高さで壁を走る無料のそりレースゲーム30ステージ",
+    description: "氷のコースを時速100km超で滑り降りるボブスレー！ カーブでは長押しで外側の壁を上り、緑の帯に合わせます。低すぎると横すべりして遅くなり、高すぎるとひっくり返ります。速いほど高くなるラインを読んでライバルより先にゴールするUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "雪车 — 每个弯道贴墙走对高度、别翻车的免费雪车竞速游戏30关",
+    description: "以超过每小时100公里的速度冲下冰道！在弯道按住沿外侧墙壁爬升，保持在绿色区间。太低会打滑变慢，太高会翻车；速度越快线路越高。比对手先到终点，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Bobsleigh — Jeu de glisse gratuit : prenez chaque virage haut sur le mur sans vous retourner (30 niveaux)",
+    description: "Dévalez un couloir de glace à plus de 100 km/h ! Dans les virages, maintenez pour monter le mur extérieur et restez dans la bande verte. Trop bas, vous dérapez et ralentissez ; trop haut, vous vous retournez. Plus vous allez vite, plus la ligne est haute. Battez le rival. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Bobsleigh — Juego de deslizamiento gratis: toma cada curva alto en la pared sin volcar (30 niveles)",
+    description: "¡Baja por un canal de hielo a más de 100 km/h! En las curvas, mantén para subir por la pared exterior y quédate en la franja verde. Muy bajo, derrapas y frenas; muy alto, vuelcas. Cuanto más rápido, más alta la línea. Gánale al rival. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["bobsleigh"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="bobsleigh" build="bobsleigh-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/bobsleigh.webp">
+      <Bobsleigh client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="bobsleigh" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
