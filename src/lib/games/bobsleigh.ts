@@ -16,6 +16,7 @@ export const DROP = 1.6; // per second while not (gravity pulls it down the wall
 export const SKID_TOL = 0.12; // below the line by more than this skids
 export const SKID = 0.9; // share of speed lost per second per unit of extra skid
 export const MAX_LINE = 0.92;
+export const FLIP_FLOOR = 0.55; // the sled never flips below this height on the wall
 
 export interface Bend { at: number; half: number; k: number } // centre (m), half-length (m), tightness
 export interface BobTrack {
@@ -56,6 +57,11 @@ export function lineAt(track: BobTrack, s: number, v: number): number {
   return Math.min(MAX_LINE, v * v * curve(track, s));
 }
 
+/** How high on the wall the sled can ride before it flips, for the current ideal line. */
+export function flipHeight(track: BobTrack, line: number): number {
+  return Math.max(FLIP_FLOOR, line + track.flip);
+}
+
 export function newSled(track: BobTrack): Sled {
   return { track, t: 0, s: 0, v: 8, h: 0, holding: false, skidT: 0, over: false, won: false, flipped: false, finish: 0 };
 }
@@ -71,7 +77,7 @@ export function stepSled(sl: Sled, dt: number): SledEvent {
     sl.h = Math.max(0, Math.min(1, sl.h + (sl.holding ? CLIMB : -DROP) * hh));
     const line = lineAt(sl.track, sl.s, sl.v);
     const e = sl.h - line;
-    if (e > sl.track.flip) {
+    if (sl.h > flipHeight(sl.track, line)) {
       sl.over = true;
       sl.flipped = true;
       sl.won = false;

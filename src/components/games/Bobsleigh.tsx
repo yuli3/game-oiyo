@@ -10,7 +10,7 @@ import { useRunRecord } from "../../lib/games/use-run-record";
 import { finaleLabel, loadClearedStages, markStageCleared, nextOpenStage } from "../../lib/games/stage-progress";
 import { normalizeGameLocale } from "../../lib/games/game-text";
 import { drawParticles, drawSprite, spawnBurst, stepParticles, type PixelArt, type PixelParticle } from "../../lib/games/pixel-kit";
-import { BOB_SLUG, BOB_TRACKS, SKID_TOL, STAGE_COUNT, lineAt, newSled, starsFor, stepSled, type Sled } from "../../lib/games/bobsleigh";
+import { BOB_SLUG, BOB_TRACKS, SKID_TOL, STAGE_COUNT, flipHeight, lineAt, newSled, starsFor, stepSled, type Sled } from "../../lib/games/bobsleigh";
 import type { Locale } from "../../lib/i18n";
 
 type L = "ko" | "en" | "ja" | "zh" | "fr" | "es";
@@ -225,7 +225,7 @@ export default function Bobsleigh({ locale: pageLocale }: { locale?: string }) {
         ctx.beginPath();
         ctx.arc(CX, CY, R, Math.PI / 2 - hi * MAX_ANG, Math.PI / 2 - lo * MAX_ANG);
         ctx.stroke();
-        const fl = Math.min(1, ln + sl.track.flip);
+        const fl = Math.min(1, flipHeight(sl.track, ln));
         const fp = wallPoint(fl, R + 22);
         const fq = wallPoint(fl, R - 22);
         ctx.strokeStyle = "#e03131";
