@@ -117,6 +117,9 @@ BUILDS = {
     "draft-manor-unity": ("draft-manor", "DraftManor/Runtime/DraftManorPlayer.cs", T, "state, starsWon"),
     "dispatch-desk-unity": ("dispatch-desk", "DispatchDesk/Runtime/DispatchDeskPlayer.cs", T, "state, starsWon"),
     "parry-duel-unity": ("parry-duel", "ParryDuel/Runtime/ParryDuelPlayer.cs", T, "state, starsWon"),
+    "odd-commute-unity": ("odd-commute", "OddCommute/Runtime/OddCommutePlayer.cs", T, "state, starsWon"),
+    "sofa-carry-unity": ("sofa-carry", "SofaCarry/Runtime/SofaCarryPlayer.cs", T, "state, starsWon"),
+    "palm-village-unity": ("palm-village", "PalmVillage/Runtime/PalmVillagePlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

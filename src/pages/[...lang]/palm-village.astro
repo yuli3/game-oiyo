@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PalmVillage from "../../components/games/PalmVillage";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "손바닥 마을 — 실패 없이 작은 섬에 집·나무·우물·밭·등불을 놓아 아늑한 마을을 꾸미는 무료 디오라마 게임 30단계",
+    description: "배가 실어 오는 마을 조각을 손바닥만 한 섬 어디든 내려놓아요. 실패는 없고, 집 옆 나무와 가까운 우물처럼 잘 어울리게 놓을수록 아늑해져요. 완성한 마을은 사진으로 저장하는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Palm Village — Free cosy diorama game with no way to fail: set houses, trees, a well, fields and lanterns on a tiny island (30 stages)",
+    description: "The boat brings the village's pieces and you set each one anywhere on a palm-sized island. You can't fail, but the better things sit together — trees by houses, a well close by — the cosier it gets. Save a picture of every village. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "手のひら村 — 失敗なしで小さな島に家・木・井戸・畑・灯籠を置いて居心地のいい村をつくる無料のジオラマゲーム30面",
+    description: "船が運ぶ村のパーツを、手のひらほどの島の好きな所に置きます。失敗はなく、家の隣の木や近くの井戸のようにうまく組み合わせるほど居心地がよくなります。完成した村は写真で保存できるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "掌心小村 — 在小岛上摆放房子、树、水井、田地、灯笼，不会失败的温馨小景游戏30关",
+    description: "把船运来的村子部件放在掌心大的小岛任意位置。不会失败，房子旁有树、附近有井，搭配得越好越温馨。建好的村子可以存成图片。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Village de poche — Diorama douillet gratuit et sans échec : posez maisons, arbres, puits, champs et lanternes sur une petite île (30 niveaux)",
+    description: "Le bateau apporte les pièces du village, posez-les n'importe où sur une île grande comme la paume. Impossible d'échouer, mais plus tout s'accorde — arbres près des maisons, puits tout proche —, plus c'est douillet. Gardez l'image de chaque village. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Pueblo de bolsillo — Diorama acogedor gratis sin fallos: coloca casas, árboles, un pozo, huertos y faroles en una isla diminuta (30 niveles)",
+    description: "El barco trae las piezas del pueblo y las colocas donde quieras en una isla del tamaño de la palma. No se puede perder, pero cuanto mejor encaja todo —árboles junto a casas, un pozo cerca— más acogedor queda. Guarda la imagen de cada pueblo. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["palm-village"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="palm-village" build="palm-village-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/palm-village.webp">
+      <PalmVillage client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="palm-village" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
