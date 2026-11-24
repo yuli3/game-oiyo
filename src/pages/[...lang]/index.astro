@@ -15,22 +15,22 @@ export async function getStaticPaths() {
 const { locale } = Astro.props as { locale: Locale };
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 246종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 246종." },
-  en: { title: "OIYO Arcade — 246 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 246 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム246種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム246種。" },
-  zh: { title: "OIYO 街机 — 无需安装的246款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，246款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 246 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 246 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 246 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 246 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 249종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 249종." },
+  en: { title: "OIYO Arcade — 249 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 249 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム249種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム249種。" },
+  zh: { title: "OIYO 街机 — 无需安装的249款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，249款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 249 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 249 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 249 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 249 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 246종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "246 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム246種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的246款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "246 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "246 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 249종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "249 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム249種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的249款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "249 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "249 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -299,6 +299,9 @@ const GAMES: Game[] = [
   { slug: "crane-count", emoji: "🦢", cat: "arcade", name: { ko: "두루미 세기", en: "Crane Count", ja: "ツルを数えろ", zh: "数丹顶鹤", fr: "Compte des grues", es: "Cuenta las grullas" } },
   { slug: "rink-resurface", emoji: "⛸️", cat: "arcade", name: { ko: "빙판 정빙", en: "Rink Resurface", ja: "リンク整氷", zh: "冰场浇冰", fr: "Surfaçage de patinoire", es: "Pulido de pista" } },
   { slug: "holiday-ticket", emoji: "🚄", cat: "arcade", name: { ko: "명절 기차표 예매", en: "Holiday Ticket", ja: "帰省きっぷ予約", zh: "春节抢火车票", fr: "Billet des fêtes", es: "Billete de las fiestas" } },
+  { slug: "draft-manor", emoji: "🗝️", cat: "arcade", name: { ko: "방 뽑기 저택", en: "Draft Manor", ja: "部屋引き屋敷", zh: "抽房宅邸", fr: "Manoir à tirer", es: "Mansión de cartas" } },
+  { slug: "dispatch-desk", emoji: "🚨", cat: "arcade", name: { ko: "출동 배차 센터", en: "Dispatch Desk", ja: "出動指令センター", zh: "出警调度中心", fr: "Central d'urgence", es: "Central de despacho" } },
+  { slug: "parry-duel", emoji: "🗡️", cat: "arcade", name: { ko: "막기 결투", en: "Parry Duel", ja: "パリィ決闘", zh: "格挡决斗", fr: "Duel de parades", es: "Duelo de paradas" } },
   { slug: "advent-puzzles", emoji: "🎄", cat: "puzzle", name: { ko: "어드벤트 퍼즐 달력", en: "Advent Puzzle Calendar", ja: "アドベント・パズルカレンダー", zh: "降临节谜题日历", fr: "Calendrier de l'Avent à énigmes", es: "Calendario de Adviento de puzles" } },
   { slug: "sunlit-glass", emoji: "🪟", cat: "puzzle", name: { ko: "햇살 스테인드글라스", en: "Sunlit Glass", ja: "陽だまりステンドグラス", zh: "阳光彩绘玻璃", fr: "Vitrail au soleil", es: "Vitral al Sol" } },
   { slug: "finger-hockey", emoji: "🏒", cat: "arcade", name: { ko: "손가락 에어하키", en: "Finger Air Hockey", ja: "指先エアホッケー", zh: "指尖桌上冰球", fr: "Air hockey du bout des doigts", es: "Air Hockey con el Dedo" } },
@@ -363,6 +366,42 @@ const newReleasesLabel: Record<Locale, { sectionTitle: string; badge: string; su
 const newReleaseLabels = newReleasesLabel[locale] ?? newReleasesLabel.en;
 
 const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; desc: Record<Locale, string> }> = [
+  {
+    slug: "draft-manor",
+    tag: { ko: "날마다 바뀌는 저택", en: "A new manor every day", ja: "毎日変わる屋敷", zh: "每天都不一样的宅邸", fr: "Un nouveau manoir chaque jour", es: "Una mansión nueva cada día" },
+    desc: {
+      ko: "오늘의 저택, 몇 걸음 남기고 깼어?",
+      en: "Today's manor: how many steps left?",
+      ja: "今日の屋敷、何歩残してクリア？",
+      zh: "今日宅邸，还剩几步通关？",
+      fr: "Le manoir du jour : combien de pas restants ?",
+      es: "La mansión de hoy: ¿cuántos pasos te sobran?",
+    },
+  },
+  {
+    slug: "dispatch-desk",
+    tag: { ko: "야간 상황실", en: "The night desk", ja: "夜勤の指令室", zh: "夜班调度室", fr: "Le standard de nuit", es: "El turno de noche" },
+    desc: {
+      ko: "딱 맞는 대원을 딱 맞게 보내라",
+      en: "The right crew, right on time",
+      ja: "ぴったりの隊員をぴったりに",
+      zh: "派对的人，赶上点",
+      fr: "La bonne équipe, au bon moment",
+      es: "El equipo justo, a tiempo",
+    },
+  },
+  {
+    slug: "parry-duel",
+    tag: { ko: "박자를 외우는 턴제 결투", en: "A turn duel you learn by rhythm", ja: "リズムで覚えるターン制決闘", zh: "靠节奏记招的回合决斗", fr: "Un duel au tour qui s'apprend au rythme", es: "Un duelo por turnos que se aprende con ritmo" },
+    desc: {
+      ko: "원이 닿는 순간 눌러라, 노히트 도전",
+      en: "Tap as the ring lands: go no-hit",
+      ja: "輪が届く瞬間に押せ、ノーダメ挑戦",
+      zh: "圈落下时点击，挑战无伤",
+      fr: "Touchez quand l'anneau arrive : zéro coup reçu",
+      es: "Toca cuando llegue el anillo: reto sin golpes",
+    },
+  },
   {
     slug: "crane-count",
     tag: { ko: "철원 겨울 두루미 조사", en: "Cheorwon's winter crane census", ja: "鉄原の冬のツル調査", zh: "铁原冬季鹤类调查", fr: "Le recensement des grues de Cheorwon", es: "El censo de grullas de Cheorwon" },

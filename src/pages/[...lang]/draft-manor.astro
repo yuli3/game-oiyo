@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DraftManor from "../../components/games/DraftManor";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "방 뽑기 저택 — 방 카드 3장 중 하나를 골라 지으며 금고까지 길을 내는 무료 로그라이트 퍼즐 30단계 + 오늘의 저택",
+    description: "빈 땅뿐인 저택에서 문을 열 때마다 방 카드 3장 중 하나를 골라 지어요. 걸음이 다 떨어지기 전에 열쇠를 모아 맨 위 금고까지 가는 Unity 3D 본편 30단계와, 날마다 모두에게 같은 저택이 나오는 '오늘의 저택'.",
+  },
+  en: {
+    title: "Draft Manor — Free roguelite puzzle: draft one of three room cards at every door and build a way to the vault (30 stages + a daily manor)",
+    description: "The manor is all empty plots. At every door you draft one of three room cards and it is built there. Gather keys and reach the vault at the top before your steps run out. A Unity 3D main game with 30 stages, plus Today's manor, the same for everyone each day.",
+  },
+  ja: {
+    title: "部屋引き屋敷 — 扉ごとに部屋カード3枚から1枚を選んで建て、金庫まで道をつくる無料ローグライトパズル30面＋今日の屋敷",
+    description: "空き地だけの屋敷で、扉を開けるたびに部屋カード3枚から1枚を選んで建てます。歩数が尽きる前に鍵を集めていちばん上の金庫へ向かうUnity 3D本編30面と、毎日みんな同じ屋敷が出る「今日の屋敷」。",
+  },
+  zh: {
+    title: "抽房宅邸 — 每开一扇门就从3张房间卡中选1张建造、一路通往金库的免费肉鸽解谜30关＋今日宅邸",
+    description: "宅邸里只有空地，每开一扇门就从3张房间卡里选1张建在那里。在步数用完前收集钥匙走到最上方的金库。Unity 3D 正式版30关，另有每天所有人都一样的“今日宅邸”。",
+  },
+  fr: {
+    title: "Manoir à tirer — Casse-tête roguelite gratuit : à chaque porte, choisissez une pièce parmi trois et bâtissez le chemin de la salle forte (30 niveaux + manoir du jour)",
+    description: "Le manoir n'est que parcelles vides. À chaque porte, choisissez une carte de pièce parmi trois : elle y est bâtie. Rassemblez les clés et atteignez la salle forte avant d'épuiser vos pas. Un jeu Unity 3D en 30 niveaux, plus le manoir du jour, le même pour tous.",
+  },
+  es: {
+    title: "Mansión de cartas — Puzle roguelite gratis: en cada puerta elige una sala entre tres y construye el camino a la cámara (30 niveles + mansión de hoy)",
+    description: "La mansión son solo parcelas vacías. En cada puerta eliges una carta de sala entre tres y se construye ahí. Reúne las llaves y llega a la cámara antes de quedarte sin pasos. Un juego Unity 3D de 30 niveles y la mansión de hoy, igual para todos cada día.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["draft-manor"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="draft-manor" build="draft-manor-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/draft-manor.webp">
+      <DraftManor client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="draft-manor" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

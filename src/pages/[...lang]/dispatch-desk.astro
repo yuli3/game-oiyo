@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DispatchDesk from "../../components/games/DispatchDesk";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "출동 배차 센터 — 화재·구조·추격 신고에 딱 맞는 대원을 보내는 무료 관리 게임 30단계",
+    description: "야간 상황실에 신고가 쉴 새 없이 들어와요. 힘·돌봄·속도가 다른 대원 중 딱 맞는 사람을 골라 보내고, 모자라면 둘을 합쳐요. 다녀온 대원은 쉬어야 하니 아껴 쓰며 근무를 버티는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Dispatch Desk — Free management game: send the right crew to fires, rescues and chases before time runs out (30 stages)",
+    description: "Calls keep coming in to the night desk. Pick the crew whose power, care or speed fits each call, or send two and add them up. Crews need rest after every call, so spend them wisely to get through the shift. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "出動指令センター — 火事・救助・追跡の通報にぴったりの隊員を送る無料の管理ゲーム30面",
+    description: "夜勤の指令室に通報が次々と入ります。力・救護・速さの違う隊員からぴったりの人を選んで出し、足りなければ2人で合わせます。戻った隊員は休むので、うまくやりくりして勤務を乗り切るUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "出警调度中心 — 给火灾、救援、追捕报警派对队员的免费管理游戏30关",
+    description: "夜班调度室的报警接连不断。从力量、救护、速度各不相同的队员里挑对人派出，不够就两人合力。队员出勤回来要休息，精打细算撑过整个班次。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Central d'urgence — Jeu de gestion gratuit : envoyez la bonne équipe aux incendies, secours et poursuites avant la fin du temps (30 niveaux)",
+    description: "Les appels n'arrêtent pas au standard de nuit. Choisissez l'équipier dont la force, le soin ou la vitesse convient, ou envoyez-en deux pour additionner. Les équipes se reposent après chaque appel : gérez-les pour tenir le service. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Central de despacho — Juego de gestión gratis: manda al equipo justo a incendios, rescates y persecuciones antes de que se acabe el tiempo (30 niveles)",
+    description: "Las llamadas no paran en el turno de noche. Elige a quien tenga la fuerza, el cuidado o la rapidez justa, o manda a dos y suma. El equipo descansa tras cada llamada: adminístralo para aguantar el turno. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["dispatch-desk"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="dispatch-desk" build="dispatch-desk-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/dispatch-desk.webp">
+      <DispatchDesk client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="dispatch-desk" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
