@@ -1,5 +1,5 @@
 /**
- * Writes the 30 stages of the winter Unity builds (wave 6 and new-games batches 10 to 13) as C# tables, straight from the web
+ * Writes the 30 stages of the winter Unity builds (wave 6 and new-games batches 10 to 14) as C# tables, straight from the web
  * rules in src/lib/games/*.ts, so the Unity and React versions play the very same stages.
  *
  *   npx tsx scripts/unity/export-winter-stages.ts
@@ -26,6 +26,9 @@ import * as bia from "../../src/lib/games/biathlon";
 import * as climb from "../../src/lib/games/ice-climb";
 import * as bob from "../../src/lib/games/bobsleigh";
 import * as tug from "../../src/lib/games/tug-of-war";
+import * as bridge from "../../src/lib/games/bridge-walk";
+import * as saeal from "../../src/lib/games/saealsim-roll";
+import * as heat from "../../src/lib/games/sell-the-heat";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -196,4 +199,22 @@ function write(slug: string, game: string, body: string): void {
     return `        new Level { slackF = ${n(st.slackF)}, heaveF = ${n(st.heaveF)}, waves = ${arr(waves.flatMap((w) => [w.start, w.heave]))}, limit = ${n(st.limit)}, par = ${n(st.par)} },`;
   });
   write("tug-of-war", "TugOfWar", `    public struct Level { public float slackF, heaveF, limit, par; public float[] waves; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Bridge Walk: length (m), tip rates on planks and ice, gusts (start s, length s, push), icy stretches (from m, to m)
+{
+  const rows = bridge.BRIDGE_STAGES.map((st) => `        new Level { length = ${n(st.length)}, gravity = ${n(st.gravity)}, iceGravity = ${n(st.iceGravity)}, gusts = ${arr(st.gusts.flatMap((g) => [g.at, g.len, g.push]))}, ice = ${arr(st.ice.flatMap((i) => [i.from, i.to]))} },`);
+  write("bridge-walk", "BridgeWalk", `    public struct Level { public float length, gravity, iceGravity; public float[] gusts, ice; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Saealsim Roll: the pace band (turns per second), balls to roll, time limit
+{
+  const rows = saeal.SAEALSIM_STAGES.map((st) => `        new Level { lo = ${n(st.lo)}, hi = ${n(st.hi)}, need = ${st.need}, limit = ${n(st.limit)}, par = ${n(st.par)} },`);
+  write("saealsim-roll", "SaealsimRoll", `    public struct Level { public float lo, hi, limit, par; public int need; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Sell the Heat: turns (window, start s, real 0/1, hand-up s, call s), morning length, mark
+{
+  const rows = heat.HEAT_STAGES.map((st) => `        new Level { turns = ${arr(st.turns.flatMap((t) => [t.win, t.at, t.real ? 1 : 0, t.tell, t.call]))}, length = ${n(st.length)}, need = ${st.need} },`);
+  write("sell-the-heat", "SellTheHeat", `    // turns: (window, start, real, hand-up after, call after) quintuples\n    public struct Level { public float length; public float[] turns; public int need; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

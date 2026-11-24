@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SellTheHeat from "../../components/games/SellTheHeat";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "더위팔기 — 손을 든 이웃을 먼저 불러 내 더위를 파는 무료 정월 대보름 반응 게임 30단계",
+    description: "정월 대보름 아침의 더위팔기! 창문 너머 이웃이 돌아보고 손을 들면 먼저 톡 눌러 '내 더위 사 가라!' 손을 안 든 이웃을 누르면 실례예요. 먼저 불리면 더위를 사게 돼요. 눈치와 반응으로 더위를 파는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Sell the Heat — Free first-full-moon reaction game: call the neighbour first and sell them your summer heat (30 stages)",
+    description: "Heat selling on Jeongwol Daeboreum morning! When a neighbour at a window turns and raises a hand, tap first: 'Buy my heat!' Tapping one who didn't raise a hand is rude, and if they call first you buy their heat. Read the tells and sell your heat. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "暑さ売り — 手を挙げた隣人を先に呼んで暑さを売る無料の正月テボルム反応ゲーム30ステージ",
+    description: "正月テボルムの朝の暑さ売り！ 窓の隣人が振り向いて手を挙げたら先にタップして「私の暑さを買って！」。手を挙げていない人を押すと失礼、先に呼ばれると暑さを買うことに。合図を読んで暑さを売るUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "卖暑气 — 抢先喊举手的邻居、把暑气卖给他的免费正月十五反应游戏30关",
+    description: "正月十五早上卖暑气！窗边的邻居转过来举手时，抢先点他：“买走我的暑气吧！”点没举手的人算失礼，被对方先喊就买下了他的暑气。看准信号卖掉暑气，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Vends ta chaleur — Jeu de réflexes gratuit de la première pleine lune : appelez le voisin en premier et vendez-lui votre chaleur (30 niveaux)",
+    description: "La vente de chaleur du matin de Jeongwol Daeboreum ! Quand un voisin à sa fenêtre se tourne et lève la main, touchez-le en premier : « Achète ma chaleur ! » Toucher celui qui n'a pas levé la main est impoli, et s'il appelle avant, vous achetez sa chaleur. Lisez les signes et vendez votre chaleur. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Vende tu calor — Juego de reflejos gratis de la primera luna llena: llama primero al vecino y véndele tu calor (30 niveles)",
+    description: "¡La venta del calor de la mañana de Jeongwol Daeboreum! Cuando un vecino en su ventana se gira y levanta la mano, tócalo primero: «¡Cómprame el calor!». Tocar al que no levantó la mano es una grosería, y si te llama antes compras su calor. Lee las señales y vende tu calor. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["sell-the-heat"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="sell-the-heat" build="sell-the-heat-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/sell-the-heat.webp">
+      <SellTheHeat client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="sell-the-heat" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

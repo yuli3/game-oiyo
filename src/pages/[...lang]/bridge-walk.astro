@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BridgeWalk from "../../components/games/BridgeWalk";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "다리밟기 — 바람 부는 얼음 다리를 균형 잡으며 건너는 무료 정월 대보름 게임 30단계",
+    description: "정월 대보름 밤의 다리밟기! 저절로 걷는 사람이 기울어지면 누른 채 반대쪽으로 끌어 바로잡아요. 바람과 미끄러운 얼음판이 몸을 밀고, 너무 세게 바로잡으면 반대로 넘어가요. 개울에 빠지지 않고 건너는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Bridge Walk — Free first-full-moon balance game: cross windy, icy bridges without falling in (30 stages)",
+    description: "The bridge walk of Jeongwol Daeboreum night! The walker walks on their own; when they lean, press and drag the other way to straighten them. Gusts and slick ice push them over, and correcting too hard tips them the other way. Cross without falling in. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "橋踏み — 風の吹く氷の橋をバランスを取りながら渡る無料の正月テボルムゲーム30ステージ",
+    description: "正月テボルムの夜の橋踏み！ 自分で歩く人が傾いたら、押したまま反対側へドラッグして立て直します。風や滑る氷が体を押し、強く立て直しすぎると反対へ倒れます。小川に落ちずに渡りきるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "踏桥 — 在刮风结冰的桥上保持平衡走过去的免费正月十五游戏30关",
+    description: "正月十五夜里的踏桥！人会自己往前走，一倾斜就按住往反方向拖来纠正。风和滑溜的冰面会推他，纠正太猛又会倒向另一边。别掉进小溪走过桥，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Marche sur les ponts — Jeu d'équilibre gratuit de la première pleine lune : traversez des ponts venteux et verglacés (30 niveaux)",
+    description: "La marche sur les ponts de la nuit de Jeongwol Daeboreum ! Le marcheur avance seul ; quand il penche, appuyez et glissez de l'autre côté pour le redresser. Rafales et verglas le poussent, et corriger trop fort le fait basculer de l'autre côté. Traversez sans tomber à l'eau. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Paseo por los puentes — Juego de equilibrio gratis de la primera luna llena: cruza puentes con viento y hielo sin caerte (30 niveles)",
+    description: "¡El paseo por los puentes de la noche de Jeongwol Daeboreum! El caminante avanza solo; cuando se inclina, mantén y arrastra al otro lado para enderezarlo. Las ráfagas y el hielo lo empujan, y si corriges demasiado se cae al otro lado. Cruza sin caer al agua. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["bridge-walk"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="bridge-walk" build="bridge-walk-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/bridge-walk.webp">
+      <BridgeWalk client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="bridge-walk" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

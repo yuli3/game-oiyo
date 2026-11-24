@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SaealsimRoll from "../../components/games/SaealsimRoll";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "새알심 빚기 — 원을 그려 동지 팥죽 새알심을 동글동글 빚는 무료 겨울 게임 30단계",
+    description: "동지에는 팥죽에 새알심! 손가락으로 반죽 위에 원을 그려 동그랗게 빚어요. 알맞은 빠르기로 일정하게 돌리면 둥글어져 퐁당, 너무 빠르면 부스러지고 너무 느리면 빚어지지 않아요. 팥죽이 끓어 넘치기 전에 빚는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Saealsim Roll — Free winter solstice game: draw circles to roll rice balls for red bean porridge (30 stages)",
+    description: "Red bean porridge with rice balls for Dongji! Draw circles on the dough with your finger to roll it round. At a steady pace it rounds off and plops into the pot; too fast and it crumbles, too slow and nothing happens. Roll them before the porridge boils over. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "セアルシム丸め — 円を描いて冬至の小豆がゆの団子を丸める無料の冬ゲーム30ステージ",
+    description: "冬至には小豆がゆに団子！ 指で生地の上に円を描いて丸めます。ちょうどいい速さで一定に回すと丸まってポチャン、速すぎると崩れ、遅すぎると丸まりません。小豆がゆが吹きこぼれる前に丸めるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "搓糯米圆子 — 画圈搓出冬至红豆粥圆子的免费冬季游戏30关",
+    description: "冬至吃加了圆子的红豆粥！用手指在面团上画圈把它搓圆。匀速转对速度就会变圆、扑通下锅；太快会搓碎，太慢搓不圆。在粥煮溢前搓好，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Boulettes du solstice — Jeu d'hiver gratuit : dessinez des cercles pour rouler les boulettes de riz de la soupe aux haricots rouges (30 niveaux)",
+    description: "Soupe de haricots rouges et boulettes de riz pour Dongji ! Dessinez des cercles du doigt sur la pâte pour l'arrondir. À rythme régulier, elle s'arrondit et plouf dans la marmite ; trop vite, elle s'émiette ; trop lent, rien ne roule. Roulez-les avant que la soupe déborde. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Bolitas del solsticio — Juego de invierno gratis: dibuja círculos para rodar las bolitas de arroz de la sopa de judías rojas (30 niveles)",
+    description: "¡Sopa de judías rojas con bolitas de arroz para Dongji! Dibuja círculos con el dedo sobre la masa para redondearla. A ritmo constante se redondea y ¡plop! a la olla; muy rápido se deshace, muy lento no rueda. Hazlas antes de que la sopa se desborde. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["saealsim-roll"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="saealsim-roll" build="saealsim-roll-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/saealsim-roll.webp">
+      <SaealsimRoll client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="saealsim-roll" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
