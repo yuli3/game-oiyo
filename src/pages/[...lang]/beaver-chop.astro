@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BeaverChop from "../../components/games/BeaverChop";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "비버 도끼질 — 가지를 피해 나무를 갉는 무료 반사신경 게임 30단계",
+    description: "비버가 커다란 나무를 아래부터 갉아요. 왼쪽·오른쪽을 눌러 맨 아래 통나무를 갉되, 삐죽 나온 가지를 피해 반대쪽에 서고, 점점 빨리 줄어드는 시계 안에 정해진 통나무를 다 갉는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Beaver Chop — Free chop-and-dodge reflex game: gnaw the tree, dodge the branches (30 stages)",
+    description: "A beaver gnaws a huge tree from the bottom. Tap left or right to bite off the bottom log, stand away from the branches sticking out, and gnaw the logs the stage asks for before a clock that drains faster and faster runs dry. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ビーバーかじり — 枝をよけて木をかじる無料の反射神経ゲーム30面",
+    description: "ビーバーが大きな木を下からかじります。左右をタップしていちばん下の丸太をかじり、突き出た枝の反対側に立って、だんだん速く減る時計のうちに決まった数の丸太をかじるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "海狸啃树 — 躲开树枝啃大树的免费反应游戏30关",
+    description: "海狸从下往上啃一棵大树。点左边或右边啃掉最下面的木段，站到伸出树枝的另一侧，在越减越快的时钟耗尽前啃完规定的木段。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Castor bûcheron — Jeu de réflexes gratuit : rongez l'arbre en évitant les branches (30 niveaux)",
+    description: "Un castor ronge un grand arbre par le bas. Touchez à gauche ou à droite pour croquer la bûche du bas, placez-vous à l'opposé des branches et rongez les bûches demandées avant que l'horloge, de plus en plus rapide, ne se vide. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Castor talador — Juego de reflejos gratis: roe el árbol esquivando las ramas (30 niveles)",
+    description: "Un castor roe un gran árbol desde abajo. Toca a la izquierda o a la derecha para morder el tronco de abajo, ponte del lado contrario a las ramas y roe los troncos que pide el nivel antes de que se vacíe un reloj cada vez más rápido. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["beaver-chop"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="beaver-chop" build="beaver-chop-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/beaver-chop.webp">
+      <BeaverChop client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="beaver-chop" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

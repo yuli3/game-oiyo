@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PaintFlood from "../../components/games/PaintFlood";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "물감 번지기 — 정해진 붓질 안에 캔버스를 한 색으로 칠하는 무료 색 번지기 퍼즐 30단계",
+    description: "왼쪽 위에서 시작한 내 물감 색을 바꾸면, 맞닿은 같은 색 칸을 빨아들이며 번져요. 다음 붓질까지 내다보며 색을 골라 정해진 붓질 안에 캔버스 전체를 한 색으로 만드는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Paint Flood — Free colour-flood puzzle: paint the whole canvas one colour within the strokes (30 stages)",
+    description: "Change the colour of your paint, which starts in the top-left corner, and it soaks up every touching square of that colour. Think a stroke ahead and turn the whole canvas one colour within the strokes. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "絵の具ひろがり — 決まった回数でキャンバスを1色にする無料の色ひろげパズル30面",
+    description: "左上から始まる自分の絵の具の色を変えると、となり合う同じ色のマスを吸い込んで広がります。次のひと塗りまで考えて色を選び、決まった回数でキャンバス全体を1色にするUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "颜料晕染 — 在规定笔数内把画布染成一色的免费颜色扩散谜题30关",
+    description: "改变从左上角开始的颜料颜色，它就会吸收相邻的同色方格向外扩散。多想一步来选色，在规定笔数内把整张画布变成一种颜色。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Marée de peinture — Puzzle gratuit : rendez la toile d'une seule couleur en peu de coups (30 niveaux)",
+    description: "Changez la couleur de votre peinture, partie du coin en haut à gauche, et elle absorbe chaque case voisine de cette couleur. Pensez un coup d'avance et rendez toute la toile d'une seule couleur dans la limite. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Marea de pintura — Puzle gratis: deja el lienzo de un solo color en pocas pinceladas (30 niveles)",
+    description: "Cambia el color de tu pintura, que empieza arriba a la izquierda, y absorberá cada casilla vecina de ese color. Piensa una pincelada por delante y deja todo el lienzo de un color dentro del límite. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["paint-flood"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="paint-flood" build="paint-flood-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/paint-flood.webp">
+      <PaintFlood client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="paint-flood" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

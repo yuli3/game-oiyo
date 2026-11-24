@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PrismHop from "../../components/games/PrismHop";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "프리즘 점프 — 같은 색으로만 통과하는 무료 색 관문 점프 게임 30단계",
+    description: "유리구슬이 빙글빙글 도는 색 고리와 미끄러지는 색 막대 사이를 톡톡 튀어 올라가요. 내 구슬과 같은 색일 때만 지나가고, 프리즘 별에서 색을 바꿔 가며 시간 안에 꼭대기까지 오르는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Prism Hop — Free colour-gate tap game: pass only through your own colour (30 stages)",
+    description: "A glass bead hops up between spinning colour rings and sliding colour bars. Pass only through your own colour, change colour at each prism star, and reach the top in time. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "プリズムホップ — 同じ色だけ通れる無料の色ゲートジャンプゲーム30面",
+    description: "ガラスのビーズが、回る色の輪とすべる色のバーのあいだをぴょんぴょん上ります。自分と同じ色のときだけ通り、プリズムの星で色を変えながら時間内にてっぺんまで上るUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "棱镜弹跳 — 只能穿过同色的免费彩色关口跳跃游戏30关",
+    description: "玻璃珠在旋转的彩色圆环和滑动的彩色横条之间一跳一跳往上爬。只能从同色处穿过，在棱镜星处换色，在时间内到达顶端。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Saut prisme — Jeu de portes de couleur gratuit : ne passez que par votre couleur (30 niveaux)",
+    description: "Une perle de verre saute entre des anneaux de couleur qui tournent et des barres qui glissent. Ne passez que par votre couleur, changez de teinte à chaque étoile prisme et atteignez le sommet à temps. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Salto prisma — Juego gratis de puertas de color: pasa solo por tu color (30 niveles)",
+    description: "Una cuenta de cristal sube saltando entre anillos de colores que giran y barras que se deslizan. Pasa solo por tu color, cambia de tono en cada estrella prisma y llega arriba a tiempo. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["prism-hop"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="prism-hop" build="prism-hop-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/prism-hop.webp">
+      <PrismHop client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="prism-hop" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
