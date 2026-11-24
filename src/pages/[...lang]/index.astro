@@ -15,22 +15,22 @@ export async function getStaticPaths() {
 const { locale } = Astro.props as { locale: Locale };
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 252종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 252종." },
-  en: { title: "OIYO Arcade — 252 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 252 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム252種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム252種。" },
-  zh: { title: "OIYO 街机 — 无需安装的252款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，252款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 252 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 252 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 252 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 252 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 255종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 255종." },
+  en: { title: "OIYO Arcade — 255 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 255 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム255種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム255種。" },
+  zh: { title: "OIYO 街机 — 无需安装的255款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，255款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 255 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 255 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 255 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 255 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 252종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "252 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム252種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的252款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "252 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "252 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 255종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "255 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム255種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的255款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "255 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "255 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -305,6 +305,9 @@ const GAMES: Game[] = [
   { slug: "odd-commute", emoji: "🚇", cat: "arcade", name: { ko: "이상한 출근길", en: "Odd Commute", ja: "おかしな通勤電車", zh: "诡异的通勤车", fr: "Trajet étrange", es: "Viaje raro" } },
   { slug: "sofa-carry", emoji: "🛋️", cat: "arcade", name: { ko: "둘이서 소파 옮기기", en: "Sofa Carry", ja: "2人でソファ運び", zh: "两人搬沙发", fr: "Canapé à deux", es: "Sofá entre dos" } },
   { slug: "palm-village", emoji: "🏝️", cat: "arcade", name: { ko: "손바닥 마을", en: "Palm Village", ja: "手のひら村", zh: "掌心小村", fr: "Village de poche", es: "Pueblo de bolsillo" } },
+  { slug: "window-plant", emoji: "🪴", cat: "arcade", name: { ko: "창가 화분", en: "Window Plant", ja: "窓辺の鉢植え", zh: "窗边盆栽", fr: "Plante de fenêtre", es: "Planta de ventana" } },
+  { slug: "number-boom", emoji: "💥", cat: "arcade", name: { ko: "숫자 폭발", en: "Number Boom", ja: "数字大爆発", zh: "数字大爆炸", fr: "Explosion de nombres", es: "Explosión de números" } },
+  { slug: "crown-regions", emoji: "👑", cat: "arcade", name: { ko: "영토 왕관", en: "Crown Regions", ja: "領地の王冠", zh: "领地王冠", fr: "Couronnes de terres", es: "Coronas de tierras" } },
   { slug: "advent-puzzles", emoji: "🎄", cat: "puzzle", name: { ko: "어드벤트 퍼즐 달력", en: "Advent Puzzle Calendar", ja: "アドベント・パズルカレンダー", zh: "降临节谜题日历", fr: "Calendrier de l'Avent à énigmes", es: "Calendario de Adviento de puzles" } },
   { slug: "sunlit-glass", emoji: "🪟", cat: "puzzle", name: { ko: "햇살 스테인드글라스", en: "Sunlit Glass", ja: "陽だまりステンドグラス", zh: "阳光彩绘玻璃", fr: "Vitrail au soleil", es: "Vitral al Sol" } },
   { slug: "finger-hockey", emoji: "🏒", cat: "arcade", name: { ko: "손가락 에어하키", en: "Finger Air Hockey", ja: "指先エアホッケー", zh: "指尖桌上冰球", fr: "Air hockey du bout des doigts", es: "Air Hockey con el Dedo" } },
@@ -369,6 +372,42 @@ const newReleasesLabel: Record<Locale, { sectionTitle: string; badge: string; su
 const newReleaseLabels = newReleasesLabel[locale] ?? newReleasesLabel.en;
 
 const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; desc: Record<Locale, string> }> = [
+  {
+    slug: "window-plant",
+    tag: { ko: "일하는 화면 옆 방치형", en: "An idle game beside your work", ja: "作業画面の横で放置ゲーム", zh: "放在工作屏幕旁的放置游戏", fr: "Un jeu idle à côté de votre travail", es: "Un juego idle junto a tu trabajo" },
+    desc: {
+      ko: "일하는 동안 옆에 켜 두면 쑥쑥 자라는 화분",
+      en: "Leave it open while you work and watch it grow",
+      ja: "作業中に開いておくとぐんぐん育つ",
+      zh: "工作时开着，看它慢慢长大",
+      fr: "Laissez-la ouverte pendant le travail, elle pousse",
+      es: "Déjala abierta mientras trabajas y crecerá",
+    },
+  },
+  {
+    slug: "number-boom",
+    tag: { ko: "30분짜리 증분형", en: "A 30-minute incremental", ja: "30分で終わる放置系", zh: "30分钟的增量游戏", fr: "Un incrémental de 30 minutes", es: "Un incremental de 30 minutos" },
+    desc: {
+      ko: "30분 만에 숫자가 '양'(10^28)까지",
+      en: "From hundreds to 30 zeros in half an hour",
+      ja: "30分で数字が「穣」まで",
+      zh: "30分钟数字涨到“穰”",
+      fr: "Des centaines à 30 zéros en une demi-heure",
+      es: "De cientos a 30 ceros en media hora",
+    },
+  },
+  {
+    slug: "crown-regions",
+    tag: { ko: "매일 하나씩 푸는 논리 퍼즐", en: "A logic puzzle a day", ja: "毎日1問の論理パズル", zh: "每天一道逻辑谜题", fr: "Un casse-tête logique par jour", es: "Un puzle lógico al día" },
+    desc: {
+      ko: "오늘의 왕관 퍼즐, 몇 초 만에 풀었어?",
+      en: "Today's crowns: how many seconds?",
+      ja: "今日の王冠パズル、何秒で解けた？",
+      zh: "今日王冠，几秒解开？",
+      fr: "Les couronnes du jour : en combien de secondes ?",
+      es: "Las coronas de hoy: ¿en cuántos segundos?",
+    },
+  },
   {
     slug: "odd-commute",
     tag: { ko: "똑같은 칸이 계속되는 출근 열차", en: "A morning train that keeps repeating", ja: "同じ車両が続く通勤電車", zh: "同一节车厢不断重复的早班车", fr: "Un train du matin qui se répète", es: "Un tren matinal que se repite" },

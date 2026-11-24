@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import WindowPlant from "../../components/games/WindowPlant";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "창가 화분 — 일하는 화면 옆에 켜 두고 가끔 물 주고 돌려 주면 자라는 무료 방치형 화분 게임 30단계",
+    description: "창가에 놓인 화분이 하루 동안 자라요. 흙이 마르면 물을 주고(너무 주면 뿌리가 썩어요), 해 쪽으로 화분을 돌리고, 벌레를 털어 주며 저녁까지 목표 키를 채우는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Window Plant — Free idle game for beside your work: water, turn and de-bug a windowsill plant now and then (30 stages)",
+    description: "A pot on the windowsill grows through the day. Water it when the soil is dry (not too much, or the roots rot), turn it to the sun, flick off bugs, and reach the day's height by evening. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "窓辺の鉢植え — 作業画面の横で開いておき、ときどき水やりと向きを変えるだけで育つ無料の放置ゲーム30面",
+    description: "窓辺の鉢が一日かけて育ちます。土が乾いたら水をやり（やりすぎると根腐れ）、日の当たる方へ回し、虫を払って、夕方までに目標の高さへ育てるUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "窗边盆栽 — 工作时开在旁边，偶尔浇水、转盆就能长大的免费放置游戏30关",
+    description: "窗台上的盆栽一整天都在生长。土干了就浇水（浇多了会烂根），把花盆转向太阳，赶走虫子，在傍晚前长到目标高度。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Plante de fenêtre — Jeu idle gratuit à côté de votre travail : arrosez, tournez et débarrassez des insectes une plante de temps en temps (30 niveaux)",
+    description: "Un pot sur le rebord de la fenêtre pousse tout le jour. Arrosez quand la terre est sèche (sans excès, sinon les racines pourrissent), tournez-le vers le soleil, chassez les insectes et atteignez la hauteur du jour avant le soir. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Planta de ventana — Juego idle gratis junto a tu trabajo: riega, gira y quita bichos a una planta de vez en cuando (30 niveles)",
+    description: "Una maceta en el alféizar crece durante el día. Riega cuando la tierra esté seca (sin pasarte o se pudren las raíces), gírala hacia el sol, quita los bichos y alcanza la altura del día antes de la tarde. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["window-plant"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="window-plant" build="window-plant-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/window-plant.webp">
+      <WindowPlant client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="window-plant" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

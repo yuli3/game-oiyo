@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CrownRegions from "../../components/games/CrownRegions";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "영토 왕관 — 가로줄·세로줄·영토마다 왕관 하나, 맞닿지 않게 놓는 무료 매일 논리 퍼즐 30단계 + 오늘의 왕관",
+    description: "여러 색 영토로 나뉜 판에서 모든 줄과 모든 영토에 왕관을 하나씩, 서로 맞닿지 않게 놓아요. 답이 하나뿐이라 추리만으로 풀리는 30단계와, 날마다 모두에게 같은 판이 나오는 '오늘의 왕관'. Unity 3D 본편과 빠른 플레이.",
+  },
+  en: {
+    title: "Crown Regions — Free daily logic puzzle: one crown per row, column and land, none touching (30 stages + today's board)",
+    description: "On a board split into coloured lands, place one crown in every row, column and land, with no two touching. Every board has one answer reached by reasoning alone: 30 stages plus today's board, the same for everyone. A Unity 3D main game plus quick play.",
+  },
+  ja: {
+    title: "領地の王冠 — 行・列・領地ごとに王冠1つ、接しないように置く無料の毎日論理パズル30面＋今日の王冠",
+    description: "色の領地に分かれた盤面で、すべての行・列・領地に王冠を1つずつ、接しないように置きます。答えは1つで推理だけで解ける30面と、毎日みんな同じ盤面の「今日の王冠」。Unity 3D本編とクイックプレイ。",
+  },
+  zh: {
+    title: "领地王冠 — 每行、每列、每块领地各放一顶王冠且互不相邻的免费每日逻辑谜题30关＋今日王冠",
+    description: "在分成多块彩色领地的棋盘上，每行、每列、每块领地各放一顶王冠，彼此不相邻。答案唯一、只靠推理就能解开的30关，再加每天所有人都一样的“今日王冠”。Unity 3D 正式版和快速玩。",
+  },
+  fr: {
+    title: "Couronnes de terres — Casse-tête logique quotidien gratuit : une couronne par ligne, colonne et terre, sans contact (30 niveaux + grille du jour)",
+    description: "Sur une grille divisée en terres de couleur, placez une couronne par ligne, colonne et terre, sans que deux se touchent. Une seule solution par grille, trouvée par le raisonnement : 30 niveaux et la grille du jour, la même pour tous. Un jeu Unity 3D et une version rapide.",
+  },
+  es: {
+    title: "Coronas de tierras — Puzle lógico diario gratis: una corona por fila, columna y tierra, sin tocarse (30 niveles + tablero de hoy)",
+    description: "En un tablero dividido en tierras de colores, coloca una corona en cada fila, columna y tierra, sin que dos se toquen. Cada tablero tiene una sola solución, alcanzable razonando: 30 niveles y el tablero de hoy, igual para todos. Un juego Unity 3D y una versión rápida.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["crown-regions"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="crown-regions" build="crown-regions-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/crown-regions.webp">
+      <CrownRegions client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="crown-regions" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

@@ -53,6 +53,9 @@ import * as parry from "../../src/lib/games/parry-duel";
 import * as commute from "../../src/lib/games/odd-commute";
 import * as sofa from "../../src/lib/games/sofa-carry";
 import * as village from "../../src/lib/games/palm-village";
+import * as plant from "../../src/lib/games/window-plant";
+import * as boom from "../../src/lib/games/number-boom";
+import * as crownGame from "../../src/lib/games/crown-regions";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -400,4 +403,24 @@ function write(slug: string, game: string, body: string): void {
   const g = { land: 0, water: 1, rock: 2 } as const;
   const rows = village.VILLAGE_STAGES.map((st) => `        new Level { cols = ${st.cols}, rows = ${st.rows}, ground = ${iarr(st.ground.map((x) => g[x]))}, pieces = ${iarr(st.pieces.map((p) => village.PIECES.indexOf(p)))}, good = ${st.good}, great = ${st.great} },`);
   write("palm-village", "PalmVillage", `    public struct Level { public int cols, rows, good, great; public int[] ground, pieces; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Window Plant: the day, drying, cloudy spells (from, to; flattened), when bugs land, the height to reach, par
+{
+  const rows = plant.PLANT_STAGES.map((st) => `        new Level { day = ${n(st.day)}, dry = ${n(st.dry)}, clouds = ${arr(st.clouds.flat())}, bugs = ${arr(st.bugs)}, target = ${n(st.target)}, par = ${n(st.par)} },`);
+  write("window-plant", "WindowPlant", `    public struct Level { public float day, dry, target, par; public float[] clouds, bugs; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Number Boom: the chain (base, step, cost, growth per machine), start coins, target, par. Big numbers are doubles.
+{
+  const d = (v: number) => `${v.toPrecision(10).replace("e+", "E+")}d`;
+  const darr = (xs: number[]) => `new double[] { ${xs.map(d).join(", ")} }`;
+  const rows = boom.BOOM_STAGES.map((st) => `        new Level { b = ${darr(st.machines.map((m) => m.base))}, s = ${darr(st.machines.map((m) => m.step))}, c = ${darr(st.machines.map((m) => m.cost))}, g = ${darr(st.machines.map((m) => m.growth))}, start = ${d(st.start)}, target = ${d(st.target)}, par = ${st.par} },`);
+  write("number-boom", "NumberBoom", `    public struct Level { public double[] b, s, c, g; public double start, target; public int par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Crown Regions: board size, land per square, the answer (crowned column per row), par
+{
+  const rows = crownGame.CROWN_STAGES.map((st) => `        new Level { n = ${st.n}, region = ${iarr(st.region)}, answer = ${iarr(st.answer)}, par = ${st.par} },`);
+  write("crown-regions", "CrownRegions", `    public struct Level { public int n, par; public int[] region, answer; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
