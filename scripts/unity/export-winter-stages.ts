@@ -56,6 +56,9 @@ import * as village from "../../src/lib/games/palm-village";
 import * as plant from "../../src/lib/games/window-plant";
 import * as boom from "../../src/lib/games/number-boom";
 import * as crownGame from "../../src/lib/games/crown-regions";
+import * as screwGame from "../../src/lib/games/screw-jam";
+import * as parkGame from "../../src/lib/games/parking-out";
+import * as shopGame from "../../src/lib/games/night-checkout";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -423,4 +426,31 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = crownGame.CROWN_STAGES.map((st) => `        new Level { n = ${st.n}, region = ${iarr(st.region)}, answer = ${iarr(st.answer)}, par = ${st.par} },`);
   write("crown-regions", "CrownRegions", `    public struct Level { public int n, par; public int[] region, answer; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Screw Jam: plates (x, y, w, h, layer), screws (x, y, plate, colour), box colours in order, tray size, best tray, an answer
+{
+  const rows = screwGame.SCREW_STAGES.map((st) => {
+    const plates = st.plates.flatMap((p) => [p.x, p.y, p.w, p.h, p.layer]);
+    const screws = st.screws.flatMap((x) => [x.x, x.y, x.plate, x.colour]);
+    const answer = screwGame.solve({ ...st, tray: st.best }) ?? [];
+    return `        new Level { plates = ${arr(plates)}, screws = ${arr(screws)}, boxes = ${iarr(st.boxes)}, tray = ${st.tray}, best = ${st.best}, answer = ${iarr(answer)} },`;
+  });
+  write("screw-jam", "ScrewJam", `    public struct Level { public float[] plates, screws; public int[] boxes, answer; public int tray, best; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Parking Out: lot size, cars (x, y, dir, len, colour), pillar squares, par
+{
+  const rows = parkGame.PARKING_STAGES.map((st) => `        new Level { w = ${st.w}, h = ${st.h}, cars = ${iarr(st.cars.flatMap((c) => [c.x, c.y, c.dir, c.len, c.colour]))}, pillars = ${iarr(st.pillars)}, par = ${st.par} },`);
+  write("parking-out", "ParkingOut", `    public struct Level { public int w, h, par; public int[] cars, pillars; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Night Checkout: per customer arrival, patience, cash paid (0 card) and item count; items (price, kind, 1+1) flattened
+{
+  const rows = shopGame.CHECKOUT_STAGES.map((st) => {
+    const cs = st.customers;
+    const items = cs.flatMap((c) => c.items.flatMap((it) => [it.price, it.kind, it.twoForOne ? 1 : 0]));
+    return `        new Level { at = ${arr(cs.map((c) => c.at))}, patience = ${arr(cs.map((c) => c.patience))}, paid = ${iarr(cs.map((c) => c.paid))}, count = ${iarr(cs.map((c) => c.items.length))}, items = ${iarr(items)}, showChange = ${st.showChange}, par = ${st.par} },`;
+  });
+  write("night-checkout", "NightCheckout", `    public struct Level { public float[] at, patience; public int[] paid, count, items; public bool showChange; public int par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

@@ -123,6 +123,9 @@ BUILDS = {
     "window-plant-unity": ("window-plant", "WindowPlant/Runtime/WindowPlantPlayer.cs", T, "state, starsWon"),
     "number-boom-unity": ("number-boom", "NumberBoom/Runtime/NumberBoomPlayer.cs", T, "state, starsWon"),
     "crown-regions-unity": ("crown-regions", "CrownRegions/Runtime/CrownRegionsPlayer.cs", T, "state, starsWon"),
+    "screw-jam-unity": ("screw-jam", "ScrewJam/Runtime/ScrewJamPlayer.cs", T, "state, starsWon"),
+    "parking-out-unity": ("parking-out", "ParkingOut/Runtime/ParkingOutPlayer.cs", T, "state, starsWon"),
+    "night-checkout-unity": ("night-checkout", "NightCheckout/Runtime/NightCheckoutPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import NightCheckout from "../../components/games/NightCheckout";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "편의점 야간 계산대 — 물건을 찍고 거스름돈을 세어 건네는 무료 가게 시뮬레이터 30단계",
+    description: "편의점 야간 알바가 되어 줄 선 손님의 물건을 찍고, 1+1을 챙기고, 지폐와 동전으로 거스름돈을 세어 건네요. 계산대 화면이 고장 나면 거스름돈을 직접 계산해요. 항의 세 번 전에 줄을 모두 계산하는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Night Checkout — Free shop simulator: scan items and count out change on a corner shop's night shift (30 stages)",
+    description: "Work the night till at a corner shop: scan each customer's things, mind the buy-one-get-one-free deals, and count out change in notes and coins. When the till's change screen breaks, work it out yourself. Serve the whole queue before three complaints. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "コンビニ夜勤レジ — 商品をスキャンしてお釣りを数えて渡す無料のお店シミュレーター30面",
+    description: "コンビニの夜勤バイトになって、並んだお客さんの商品をスキャンし、1+1を確かめ、お札と硬貨でお釣りを数えて渡します。レジのお釣り表示が壊れたら自分で計算。クレーム3回の前に列を全部さばくUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "便利店夜班收银 — 扫码商品、数好找零递给顾客的免费开店模拟30关",
+    description: "在便利店上夜班：给排队顾客的商品扫码，注意买一送一，用纸币和硬币数好找零。收银机的找零显示坏了就自己算。在被投诉三次之前结完整条队。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Caisse de nuit — Simulateur de boutique gratuit : scannez les articles et rendez la monnaie au service de nuit (30 niveaux)",
+    description: "Tenez la caisse de nuit d'une supérette : scannez les achats, comptez les offres un acheté un offert et rendez la monnaie en billets et pièces. Quand l'écran de monnaie tombe en panne, calculez vous-même. Servez toute la file avant trois plaintes. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Caja de noche — Simulador de tienda gratis: escanea productos y da el cambio en el turno de noche (30 niveles)",
+    description: "Atiende la caja de noche de una tienda de barrio: escanea los productos, ten en cuenta el 2x1 y da el cambio en billetes y monedas. Cuando la pantalla del cambio se rompe, calcúlalo tú. Atiende toda la cola antes de tres quejas. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["night-checkout"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="night-checkout" build="night-checkout-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/night-checkout.webp">
+      <NightCheckout client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="night-checkout" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

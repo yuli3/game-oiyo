@@ -1,0 +1,177 @@
+{
+"All 30 stages": [
+"30단계 전체",
+"全30面",
+"Los 30 niveles",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Bump! Something's in the way": [
+"쿵! 앞에 차가 있어요",
+"ゴツン！前に何かある",
+"¡Pum! Algo bloquea el paso",
+"砰！前面有东西挡着",
+"Bing ! Quelque chose bloque"
+],
+"Bumps {0}/{1}": [
+"부딪힘 {0}/{1}",
+"接触 {0}/{1}",
+"Golpes {0}/{1}",
+"碰撞 {0}/{1}",
+"Chocs {0}/{1}"
+],
+"Choose a stage": [
+"단계를 골라요",
+"ステージを選ぶ",
+"Elige un nivel",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Every car only drives straight ahead. Tap a car with a clear road to drive it out; three bumps and you're out.": [
+"차는 앞으로만 곧장 달려요. 앞길이 빈 차를 눌러 내보내요. 세 번 부딪히면 끝이에요.",
+"車は前にまっすぐしか進めない。前が空いた車を押して出そう。3回ぶつかると終わり。",
+"Cada coche solo va recto. Toca uno con el camino libre para sacarlo; con tres golpes se acaba.",
+"每辆车只能直行。点前方畅通的车把它开出去；撞三次就结束。",
+"Chaque voiture ne roule que tout droit. Touchez-en une à la voie libre ; trois chocs et c'est fini."
+],
+"Next stage": [
+"다음 단계",
+"次の面",
+"Siguiente nivel",
+"下一关",
+"Niveau suivant"
+],
+"Parking Out": [
+"주차장 탈출",
+"駐車場から脱出",
+"Salida del aparcamiento",
+"停车场脱困",
+"Sortie de parking"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0}단계 시작",
+"{0}面をプレイ",
+"Jugar nivel {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"다시 시작",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 하기",
+"もう一度",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Stage": [
+"단계",
+"面",
+"Nivel",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"단계 목록",
+"ステージ一覧",
+"Lista de niveles",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"{0}단계",
+"{0}面",
+"Nivel {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Tap a car with a clear road ahead to drive it out!": [
+"앞길이 빈 차를 눌러 내보내요!",
+"前が空いている車を押して出そう！",
+"¡Toca un coche con el camino libre para sacarlo!",
+"点前方畅通的车把它开出去！",
+"Touchez une voiture à la voie libre pour la sortir !"
+],
+"Tap to start": [
+"탭해서 시작",
+"タップでスタート",
+"Toca para empezar",
+"点击开始",
+"Touchez pour commencer"
+],
+"The attendant sends you away": [
+"관리인이 그만하래요",
+"係員にやめさせられた",
+"El vigilante te echa",
+"管理员不让你再挪了",
+"Le gardien vous renvoie"
+],
+"The car park is empty!": [
+"주차장을 다 비웠어요!",
+"駐車場が空になった！",
+"¡El aparcamiento está vacío!",
+"停车场清空了！",
+"Le parking est vide !"
+],
+"You cleared all 30 stages!": [
+"30단계를 모두 클리어했어요!",
+"全30面をクリアしました！",
+"¡Superaste los 30 niveles!",
+"你通关了全部 30 关！",
+"Vous avez terminé les 30 niveaux !"
+],
+"{0} cars": [
+"차 {0}대",
+"{0}台",
+"{0} coches",
+"{0} 辆车",
+"{0} voitures"
+],
+"{0} cars left": [
+"남은 차 {0}대",
+"残り {0}台",
+"Quedan {0} coches",
+"剩 {0} 辆车",
+"{0} voitures restantes"
+],
+"{0}s": [
+"{0}초",
+"{0}秒",
+"{0} s",
+"{0}秒",
+"{0} s"
+],
+"{0}s · {1} bumps": [
+"{0}초 · 부딪힘 {1}번",
+"{0}秒・接触 {1}回",
+"{0} s · {1} golpes",
+"{0}秒 · 碰撞 {1} 次",
+"{0} s · {1} chocs"
+]
+}
