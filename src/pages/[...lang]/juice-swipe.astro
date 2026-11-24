@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import JuiceSwipe from "../../components/games/JuiceSwipe";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "주스 스와이프 — 날아오르는 과일을 쓱 썰어 주스를 만드는 무료 스와이프 게임 30단계",
+    description: "스무디 가게에서 과일이 공중으로 던져져요. 손가락으로 그어 과일을 썰고, 벌은 건드리지 않게 피해요. 한 번에 여러 개를 썰면 콤보! 목표 개수만큼 썰어 주스를 채우는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Juice Swipe — Free swipe-to-slice game: slice the tossed fruit, spare the bees (30 stages)",
+    description: "At a smoothie stand, fruit is tossed into the air. Swipe to slice it and steer clear of the bees; slice several in one stroke for a combo. Slice the goal to fill the blender, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ジューススワイプ — 飛び上がるフルーツを切ってジュースにする無料のスワイプゲーム30面",
+    description: "スムージー屋さんでフルーツが空中に投げ上げられます。指でなぞってフルーツを切り、ハチにはふれないようによけます。一度に何個も切ればコンボ！目標数を切ってミキサーを満たすUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "果汁划划乐 — 划开飞起的水果做果汁的免费划屏游戏30关",
+    description: "果昔店把水果抛向空中。用手指划过切开水果，小心别碰到蜜蜂；一刀切好几个就是连切！切够目标数量装满搅拌机。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Jus d'un geste — Jeu de découpe gratuit : tranchez les fruits, épargnez les abeilles (30 niveaux)",
+    description: "Au stand de smoothies, des fruits volent en l'air. Glissez pour les trancher et évitez les abeilles ; plusieurs d'un coup font un combo. Tranchez l'objectif pour remplir le mixeur, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Zumo al vuelo — Juego gratis de cortar deslizando: corta la fruta, esquiva las abejas (30 niveles)",
+    description: "En el puesto de batidos lanzan fruta al aire. Desliza para cortarla y no toques las abejas; varias de un trazo son un combo. Corta la meta para llenar la batidora, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["juice-swipe"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="juice-swipe" build="juice-swipe-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/juice-swipe.webp">
+      <JuiceSwipe client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="juice-swipe" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

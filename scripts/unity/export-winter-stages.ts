@@ -80,6 +80,9 @@ import * as floodGame from "../../src/lib/games/paint-flood";
 import * as hoopGame from "../../src/lib/games/hoop-flick";
 import * as summitGame from "../../src/lib/games/summit-cards";
 import * as slideGame from "../../src/lib/games/coin-slide";
+import * as windowsGame from "../../src/lib/games/sleepy-windows";
+import * as juiceGame from "../../src/lib/games/juice-swipe";
+import * as dartGame from "../../src/lib/games/dart-drift";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -687,4 +690,22 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = slideGame.SLIDE_STAGES.map((st) => `        new Level { tokens = ${st.tokens}, posts = ${arr(st.posts.flatMap((p) => [p.x, p.y]))}, need = ${st.need}, par = ${st.par} },`);
   write("coin-slide", "CoinSlide", `    public struct Level { public int tokens; public float[] posts; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Sleepy Windows: the block size, which windows are lit (1/0), par, the tap limit, and the fewest taps for the play check
+{
+  const rows = windowsGame.WINDOWS_STAGES.map((st) => `        new Level { cols = ${st.cols}, rows = ${st.rows}, lit = ${iarr(st.lit.map(Number))}, par = ${st.par}, limit = ${st.limit}, plan = ${iarr(windowsGame.plan(st.lit, st.cols, st.rows))} },`);
+  write("sleepy-windows", "SleepyWindows", `    public struct Level { public int cols, rows; public int[] lit; public int par, limit; public int[] plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Juice Swipe: tosses as (time, x, vx, vy, bee 1/0, fruit kind) sixes, fruit needed, par
+{
+  const rows = juiceGame.JUICE_STAGES.map((st) => `        new Level { tosses = ${arr(st.tosses.flatMap((k) => [k.t, k.x, k.vx, k.vy, k.bee ? 1 : 0, k.kind]))}, need = ${st.need}, par = ${st.par} },`);
+  write("juice-swipe", "JuiceSwipe", `    public struct Level { public float[] tosses; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Dart Drift: darts, the sway (half-widths, speeds, phases, centre), points needed, par
+{
+  const rows = dartGame.DART_STAGES.map((st) => `        new Level { darts = ${st.darts}, amp = ${arr(st.amp)}, rate = ${arr(st.rate)}, phase = ${arr(st.phase)}, centre = ${arr(st.centre)}, need = ${st.need}, par = ${st.par} },`);
+  write("dart-drift", "DartDrift", `    public struct Level { public int darts; public float[] amp, rate, phase, centre; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

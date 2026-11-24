@@ -1,0 +1,163 @@
+{
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Dart Drift": [
+"흔들 다트",
+"ゆらゆらダーツ",
+"Dardos a la deriva",
+"晃晃飞镖",
+"Fléchettes flottantes"
+],
+"Darts {0}": [
+"다트 {0}",
+"ダーツ {0}",
+"Dardos {0}",
+"飞镖 {0}",
+"Fléchettes {0}"
+],
+"Goal reached!": [
+"목표 달성!",
+"目標達成！",
+"¡Meta alcanzada!",
+"达成目标！",
+"Objectif atteint !"
+],
+"Goal {0}": [
+"목표 {0}",
+"目標 {0}",
+"Meta {0}",
+"目标 {0}",
+"Objectif {0}"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Not enough points": [
+"점수가 모자랐어요",
+"得点が足りません",
+"Faltaron puntos",
+"分数不够",
+"Pas assez de points"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Points {0}": [
+"점수 {0}",
+"得点 {0}",
+"Puntos {0}",
+"得分 {0}",
+"Points {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Tap as the ring passes a good spot!": [
+"조준 고리가 좋은 자리를 지날 때 눌러요!",
+"リングが良い所を通る瞬間にタップ！",
+"¡Toca cuando el anillo pase por un buen sitio!",
+"圆圈经过好位置时点击！",
+"Touchez quand l'anneau passe sur une bonne zone !"
+],
+"Tap to start": [
+"탭해서 시작",
+"タップでスタート",
+"Toca para empezar",
+"点击开始",
+"Touchez pour commencer"
+],
+"The aiming ring sways over the board. Tap to throw when it crosses the bullseye or a treble, and reach the goal with your darts.": [
+"조준 고리가 과녁 위에서 흔들려요. 한가운데나 3배 칸을 지날 때 눌러 던지고, 가진 다트로 목표 점수를 넘겨 봐요.",
+"照準リングがボードの上で揺れます。ブルやトリプルを通る瞬間にタップして投げ、手持ちのダーツで目標点に届かせよう。",
+"El anillo de mira se balancea sobre la diana. Toca para lanzar cuando pase por el centro o un triple, y alcanza la meta con tus dardos.",
+"瞄准圈在靶上来回晃动。经过靶心或三倍区时点击投掷，用手中的飞镖达到目标分数。",
+"L'anneau de visée oscille sur la cible. Touchez pour lancer quand il passe sur le centre ou un triple, et atteignez l'objectif avec vos fléchettes."
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+],
+"{0} points": [
+"{0}점",
+"{0}点",
+"{0} puntos",
+"{0} 分",
+"{0} points"
+]
+}

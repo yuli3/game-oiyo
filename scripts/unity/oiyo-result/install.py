@@ -147,6 +147,9 @@ BUILDS = {
     "hoop-flick-unity": ("hoop-flick", "HoopFlick/Runtime/HoopFlickPlayer.cs", T, "state, starsWon"),
     "summit-cards-unity": ("summit-cards", "SummitCards/Runtime/SummitCardsPlayer.cs", T, "state, starsWon"),
     "coin-slide-unity": ("coin-slide", "CoinSlide/Runtime/CoinSlidePlayer.cs", T, "state, starsWon"),
+    "sleepy-windows-unity": ("sleepy-windows", "SleepyWindows/Runtime/SleepyWindowsPlayer.cs", T, "state, starsWon"),
+    "juice-swipe-unity": ("juice-swipe", "JuiceSwipe/Runtime/JuiceSwipePlayer.cs", T, "state, starsWon"),
+    "dart-drift-unity": ("dart-drift", "DartDrift/Runtime/DartDriftPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

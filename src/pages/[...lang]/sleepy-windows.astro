@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SleepyWindows from "../../components/games/SleepyWindows";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "잠드는 창문 — 창문을 눌러 이웃집까지 불을 끄는 무료 불 끄기 퍼즐 30단계",
+    description: "잘 시간인데 아파트에 아직 불 켜진 창문이 있어요. 창문을 누르면 위·아래·옆 이웃 창문까지 함께 바뀌어요. '불 쫓아 내리기' 요령으로 정해진 횟수 안에 모든 창문을 재우는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Sleepy Windows — Free lights-out puzzle: tap windows to put the whole block to sleep (30 stages)",
+    description: "It's bedtime, but some windows in the block are still lit. Tap one and its neighbours above, below and beside flip with it. Chase the lights down and put every window to sleep within the taps. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "おやすみの窓 — 窓をタップしてとなりごと明かりを消す無料の明かり消しパズル30面",
+    description: "寝る時間なのにマンションにまだ明かりのついた窓があります。窓をタップすると上下左右のとなりの窓もいっしょに切り替わります。「明かりを追い下ろす」コツで決まった回数のうちに全部の窓を寝かせるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "熄灯的窗 — 点窗户连邻居一起关灯的免费关灯谜题30关",
+    description: "到睡觉时间了，公寓里还有亮着灯的窗户。点一扇窗，上下左右的邻居窗户也会跟着切换。用“追灯往下”的诀窍，在规定次数内让所有窗户熄灯。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Fenêtres endormies — Puzzle gratuit « éteignez tout » : endormez tout l'immeuble (30 niveaux)",
+    description: "C'est l'heure de dormir, mais des fenêtres de l'immeuble sont encore allumées. Touchez-en une et ses voisines du dessus, du dessous et des côtés basculent avec elle. Chassez la lumière vers le bas et endormez toutes les fenêtres dans la limite. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Ventanas dormidas — Puzle gratis de apagar luces: duerme todo el edificio (30 niveles)",
+    description: "Es hora de dormir, pero aún hay ventanas encendidas en el edificio. Toca una y sus vecinas de arriba, abajo y los lados cambian con ella. Persigue la luz hacia abajo y duerme todas las ventanas dentro del límite. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["sleepy-windows"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="sleepy-windows" build="sleepy-windows-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/sleepy-windows.webp">
+      <SleepyWindows client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="sleepy-windows" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
