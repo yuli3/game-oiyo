@@ -77,12 +77,10 @@ const SKIER: PixelArt = {
 
 interface Pop { text: string; t: number; color: string }
 
-// field metres <-> canvas px
-const scaleFor = (s: RescueStage) => Math.min((W - 20) / s.w, (H - TOP - 20) / s.h);
-const toPx = (s: RescueStage, x: number, y: number) => {
-  const k = scaleFor(s);
-  return { x: W / 2 + (x - s.w / 2) * k, y: H - 10 - y * k };
-};
+// field metres <-> canvas px: the view follows the rescuer at 12 px a metre
+const K = 12;
+const CAM = { x: 0, y: 0 };
+const toPx = (_s: RescueStage, x: number, y: number) => ({ x: W / 2 + (x - CAM.x) * K, y: H * 0.58 - (y - CAM.y) * K });
 
 export default function AvalancheRescue({ locale: pageLocale }: { locale?: string }) {
   const locale = normalizeGameLocale(pageLocale) as L;
@@ -119,6 +117,8 @@ export default function AvalancheRescue({ locale: pageLocale }: { locale?: strin
   const start = useCallback((s: number) => {
     setStage(s);
     rRef.current = newRescue(RESCUE_STAGES[s]);
+    CAM.x = rRef.current.x;
+    CAM.y = rRef.current.y;
     started.current = false;
     input.current = [];
     beepT.current = 0;
@@ -180,6 +180,8 @@ export default function AvalancheRescue({ locale: pageLocale }: { locale?: strin
         }
       }
       flash.current = Math.max(0, flash.current - dt);
+      CAM.x += (r.x - CAM.x) * Math.min(1, dt * 4);
+      CAM.y += (r.y - CAM.y) * Math.min(1, dt * 4);
       stepParticles(parts.current, dt, 200);
       pops.current = pops.current.filter((pp) => (pp.t -= dt) > 0);
 
@@ -189,16 +191,16 @@ export default function AvalancheRescue({ locale: pageLocale }: { locale?: strin
         ctx.fillStyle = "#1c3d6b";
         ctx.fillRect(0, 0, W, H);
         // the avalanche debris field, with rough blocks of snow
-        const k = scaleFor(s);
         const tl = toPx(s, 0, s.h);
         ctx.fillStyle = "#f1f5fa";
-        ctx.fillRect(tl.x, tl.y, s.w * k, s.h * k);
+        ctx.fillRect(tl.x, tl.y, s.w * K, s.h * K);
         ctx.fillStyle = "#dbe4ef";
-        for (let i = 0; i < 60; i++) {
-          const bx = ((i * 37) % 100) / 100;
-          const by = ((i * 61) % 100) / 100;
+        for (let i = 0; i < 160; i++) {
+          const bx = ((i * 37) % 101) / 101;
+          const by = ((i * 61) % 103) / 103;
           const p = toPx(s, bx * s.w, by * s.h);
-          ctx.fillRect(p.x, p.y, 6 + (i % 4) * 3, 4 + (i % 3) * 2);
+          if (p.x < -20 || p.x > W + 20 || p.y < -20 || p.y > H + 20) continue;
+          ctx.fillRect(p.x, p.y, 10 + (i % 4) * 5, 6 + (i % 3) * 3);
         }
         // the dug-out skiers
         s.buried.forEach((b, i) => {
@@ -294,9 +296,7 @@ export default function AvalancheRescue({ locale: pageLocale }: { locale?: strin
     const rect = e.currentTarget.getBoundingClientRect();
     const px = ((e.clientX - rect.left) * W) / rect.width;
     const py = ((e.clientY - rect.top) * H) / rect.height;
-    const s = rRef.current.stage;
-    const k = scaleFor(s);
-    return { px, py, x: s.w / 2 + (px - W / 2) / k, y: (H - 10 - py) / k };
+    return { px, py, x: CAM.x + (px - W / 2) / K, y: CAM.y - (py - H * 0.58) / K };
   };
   const pressing = useRef<"walk" | "dig" | null>(null);
 
@@ -370,7 +370,7 @@ export default function AvalancheRescue({ locale: pageLocale }: { locale?: strin
             const p = fromEvent(e);
             const r = rRef.current;
             const me = toPx(r.stage, r.x, r.y);
-            if (Math.hypot(p.px - me.x, p.py - (me.y - 8)) <= 30) {
+            if (Math.hypot(p.px - me.x, p.py - (me.y - 8)) <= 22) {
               pressing.current = "dig";
               input.current.push({ kind: "dig" });
             } else {
