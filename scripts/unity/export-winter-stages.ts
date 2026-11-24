@@ -47,6 +47,9 @@ import * as ipchun from "../../src/lib/games/ipchun-brush";
 import * as crane from "../../src/lib/games/crane-count";
 import * as rink from "../../src/lib/games/rink-resurface";
 import * as ticket from "../../src/lib/games/holiday-ticket";
+import * as manor from "../../src/lib/games/draft-manor";
+import * as dispatch from "../../src/lib/games/dispatch-desk";
+import * as parry from "../../src/lib/games/parry-duel";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -348,4 +351,27 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = ticket.TICKET_STAGES.map((st) => `        new Level { rows = ${st.rows}, soldAt = ${arr(st.soldAt.map((t) => (Number.isFinite(t) ? t : 1e9)))}, parties = ${iarr(st.parties)}, time = ${n(st.time)}, par = ${n(st.par)} },`);
   write("holiday-ticket", "HolidayTicket", `    public struct Level { public int rows; public float[] soldAt; public int[] parties; public float time, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Draft Manor: grid, steps, keys, par, and the deck (doors ahead/left/right as bits 1/2/4, effect 0 none 1 pantry 2 key, gain)
+{
+  const eff = { none: 0, pantry: 1, key: 2 } as const;
+  const rows = manor.MANOR_STAGES.map((st) => `        new Level { cols = ${st.cols}, rows = ${st.rows}, steps = ${st.steps}, keys = ${st.keys}, par = ${st.par}, exits = ${iarr(st.deck.map((c) => (c.f ? 1 : 0) | (c.l ? 2 : 0) | (c.r ? 4 : 0)))}, effect = ${iarr(st.deck.map((c) => eff[c.effect]))}, gain = ${iarr(st.deck.map((c) => c.gain))} },`);
+  write("draft-manor", "DraftManor", `    public struct Level { public int cols, rows, steps, keys, par; public int[] exits, effect, gain; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Dispatch Desk: crew skills (power, care, speed; flattened), calls (time, x, y, kind 0 fire 1 rescue 2 chase, level, wait), shift, mark, par
+{
+  const kinds = { fire: 0, rescue: 1, chase: 2 } as const;
+  const rows = dispatch.DISPATCH_STAGES.map((st) => `        new Level { skills = ${iarr(st.crew.flatMap((c) => c.skills))}, at = ${arr(st.calls.map((c) => c.at))}, x = ${arr(st.calls.map((c) => c.x))}, y = ${arr(st.calls.map((c) => c.y))}, kind = ${iarr(st.calls.map((c) => kinds[c.kind]))}, level = ${iarr(st.calls.map((c) => c.level))}, wait = ${arr(st.calls.map((c) => c.wait))}, shift = ${n(st.shift)}, need = ${st.need}, par = ${st.par} },`);
+  write("dispatch-desk", "DispatchDesk", `    public struct Level { public int[] skills, kind, level; public float[] at, x, y, wait; public float shift; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Parry Duel: the rival's three combos (swing raise time, wind-up, damage, feint; with combo lengths), health, windows, par
+{
+  const rows = parry.PARRY_STAGES.map((r) => {
+    const all = r.combos.flat();
+    return `        new Level { lengths = ${iarr(r.combos.map((c) => c.length))}, at = ${arr(all.map((s) => s.at))}, windup = ${arr(all.map((s) => s.windup))}, damage = ${iarr(all.map((s) => s.damage))}, feint = ${iarr(all.map((s) => (s.feint ? 1 : 0)))}, hp = ${r.hp}, perfect = ${n(r.perfect)}, good = ${n(r.good)}, par = ${r.par} },`;
+  });
+  write("parry-duel", "ParryDuel", `    public struct Level { public int[] lengths, damage, feint; public float[] at, windup; public int hp, par; public float perfect, good; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

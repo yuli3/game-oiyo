@@ -1,0 +1,177 @@
+{
+"All 30 stages": [
+"30단계 전체",
+"全30面",
+"Los 30 niveles",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"At every door, pick one of three room cards and build it. Reach the vault at the top before your steps run out.": [
+"문을 열 때마다 방 카드 3장 중 하나를 골라 지어요. 걸음이 다 떨어지기 전에 맨 위 금고까지 가요.",
+"扉ごとに部屋カード3枚から1枚を選んで建てよう。歩数が尽きる前にいちばん上の金庫へ。",
+"En cada puerta, elige una de tres cartas de sala y constrúyela. Llega a la cámara de arriba antes de quedarte sin pasos.",
+"每到一扇门，就从3张房间卡中选1张建造。在步数用完前走到最上方的金库。",
+"À chaque porte, choisissez une carte de pièce parmi trois et bâtissez-la. Atteignez la salle forte avant d'épuiser vos pas."
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"단계를 골라요",
+"ステージを選ぶ",
+"Elige un nivel",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Draft Manor": [
+"방 뽑기 저택",
+"部屋引き屋敷",
+"Mansión de cartas",
+"抽房宅邸",
+"Manoir à tirer"
+],
+"Into the vault!": [
+"금고 도착!",
+"金庫に到着！",
+"¡A la cámara!",
+"进入金库！",
+"Dans la salle forte !"
+],
+"Keys {0}/{1}": [
+"열쇠 {0}/{1}",
+"鍵 {0}/{1}",
+"Llaves {0}/{1}",
+"钥匙 {0}/{1}",
+"Clés {0}/{1}"
+],
+"Knocked through a wall (-3 steps)": [
+"벽을 뚫었어요 (-3걸음)",
+"壁を壊した（-3歩）",
+"Pared derribada (-3 pasos)",
+"凿穿了墙（-3步）",
+"Mur défoncé (-3 pas)"
+],
+"Next stage": [
+"다음 단계",
+"次の面",
+"Siguiente nivel",
+"下一关",
+"Niveau suivant"
+],
+"Out of steps": [
+"걸음이 다 떨어졌어요",
+"歩数が尽きました",
+"Sin pasos",
+"步数用完了",
+"Plus de pas"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0}단계 시작",
+"{0}面をプレイ",
+"Jugar nivel {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"다시 시작",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 하기",
+"もう一度",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Stage": [
+"단계",
+"面",
+"Nivel",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"단계 목록",
+"ステージ一覧",
+"Lista de niveles",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"{0}단계",
+"{0}面",
+"Nivel {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Steps {0}": [
+"걸음 {0}",
+"歩数 {0}",
+"Pasos {0}",
+"步数 {0}",
+"Pas {0}"
+],
+"Tap the empty plot above the entrance to draft your first room!": [
+"입구 위의 빈 칸을 눌러 첫 방을 뽑아요!",
+"入口の上の空き地を押して最初の部屋を引こう！",
+"¡Toca la parcela vacía sobre la entrada para sacar tu primera sala!",
+"点入口上方的空地，抽第一个房间！",
+"Touchez la parcelle vide au-dessus de l'entrée pour tirer votre première pièce !"
+],
+"Tap to start": [
+"탭해서 시작",
+"タップでスタート",
+"Toca para empezar",
+"点击开始",
+"Touchez pour commencer"
+],
+"Which room will you build?": [
+"어떤 방을 지을까요?",
+"どの部屋を建てる？",
+"¿Qué sala construyes?",
+"要建哪个房间？",
+"Quelle pièce construire ?"
+],
+"You cleared all 30 stages!": [
+"30단계를 모두 클리어했어요!",
+"全30面をクリアしました！",
+"¡Superaste los 30 niveles!",
+"你通关了全部 30 关！",
+"Vous avez terminé les 30 niveaux !"
+],
+"You need more keys": [
+"열쇠가 더 필요해요",
+"鍵がもっと必要です",
+"Necesitas más llaves",
+"还需要更多钥匙",
+"Il faut plus de clés"
+],
+"{0} steps left": [
+"남은 걸음 {0}",
+"残り歩数 {0}",
+"Quedan {0} pasos",
+"剩余步数 {0}",
+"{0} pas restants"
+]
+}

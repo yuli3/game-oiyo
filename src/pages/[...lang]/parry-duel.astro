@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ParryDuel from "../../components/games/ParryDuel";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "막기 결투 — 턴제로 기술을 고르고 상대 공격은 박자 맞춰 막아 반격하는 무료 결투 게임 30단계",
+    description: "내 차례엔 베기·강타·회복 중 하나를 고르고, 상대 차례엔 원이 닿는 순간 눌러 완벽하게 막고 반격해요. 상대마다 다른 연속 공격의 박자를 외워 이기는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Parry Duel — Free duel game: pick your moves in turns and parry the rival's combos on the beat (30 stages)",
+    description: "On your turn pick a strike, a heavy blow or a mend. On theirs, tap as each ring lands to parry and counter. Learn every rival's combo rhythm to win. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "パリィ決闘 — ターン制で技を選び、相手の連撃はリズムに合わせてパリィして反撃する無料の決闘ゲーム30面",
+    description: "自分の番は斬る・強打・回復から選び、相手の番は輪が届く瞬間に押してパリィし反撃します。相手ごとに違う連撃のリズムを覚えて勝つUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "格挡决斗 — 回合制选招，踩准节奏格挡对手连招并反击的免费决斗游戏30关",
+    description: "我的回合从斩击、重击、疗伤里选一个；对手回合在圈落下时点击，完美格挡并反击。记住每个对手连招的节奏来取胜。Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Duel de parades — Jeu de duel gratuit : choisissez vos coups au tour par tour et parez les séries du rival en rythme (30 niveaux)",
+    description: "À votre tour, frappe, coup lourd ou soin. Au sien, touchez quand chaque anneau arrive pour parer et riposter. Apprenez le rythme de chaque rival pour gagner. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Duelo de paradas — Juego de duelo gratis: elige tus golpes por turnos y para las series del rival al ritmo (30 niveles)",
+    description: "En tu turno, tajo, golpe fuerte o curar. En el suyo, toca cuando llegue cada anillo para parar y contraatacar. Aprende el ritmo de cada rival para ganar. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["parry-duel"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="parry-duel" build="parry-duel-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/parry-duel.webp">
+      <ParryDuel client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="parry-duel" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
