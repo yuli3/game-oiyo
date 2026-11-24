@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import YeotStretch from "../../components/games/YeotStretch";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "엿 늘이기 — 따끈한 엿을 끊기지 않게 길게 늘이고 접어 하얗게 만드는 무료 설날 게임 30단계",
+    description: "설날 흰엿 만들기! 말뚝에 걸린 따끈한 엿을 손가락으로 끌어 길게 늘이고, 접는 선을 넘기면 손을 떼 접어 가닥을 두 배로 늘려요. 짧을 땐 살살, 길어지면 빠르게 — 너무 빨리 당기면 툭 끊어져요. 엿이 식어 굳기 전에 목표만큼 접는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Yeot Taffy Stretch — Free Lunar New Year game: pull warm rice taffy long, fold it and don't let it snap (30 stages)",
+    description: "Make white yeot for Seollal! Drag the warm rice taffy hanging from a peg to stretch it long, then let go past the fold mark to fold it and double the strands. Gently while it's short, faster as it grows — pull too fast and it snaps. Make the folds before it cools and sets. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ヨッ飴のばし — 温かい米飴を切らずに長くのばして折り、白くする無料のお正月ゲーム30ステージ",
+    description: "ソルラルの白いヨッ作り！ くいに掛かった温かい飴を指で引いて長くのばし、折り線を越えたら離して折り、本数を2倍に。短いうちはそっと、長くなったら速く — 引きすぎるとプツッと切れます。冷えて固まる前に目標回数折るUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "拉饴糖 — 把温热的米糖拉长不拉断、折起来拉白的免费春节游戏30关",
+    description: "春节做白饴糖！用手指拖动挂在木桩上的温热饴糖把它拉长，过了折叠线就松手折起，股数翻倍。短时轻轻拉，长了快快拉——拉太快就会啪地断掉。在糖凉透凝固前折够次数，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Caramel yeot étiré — Jeu gratuit du Nouvel An lunaire : étirez le caramel de riz tiède, pliez-le sans le casser (30 niveaux)",
+    description: "Préparez le yeot blanc de Seollal ! Glissez pour étirer le caramel de riz tiède accroché à une cheville, puis lâchez après le repère pour le plier et doubler les brins. Doucement quand il est court, plus vite quand il s'allonge : trop vite, il casse. Faites les plis avant qu'il refroidisse et durcisse. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Estira el caramelo yeot — Juego gratis del Año Nuevo lunar: estira el caramelo de arroz tibio y dóblalo sin romperlo (30 niveles)",
+    description: "¡Haz yeot blanco para Seollal! Arrastra para estirar el caramelo de arroz tibio colgado de una estaca y suelta pasada la marca para doblarlo y duplicar las hebras. Suave cuando es corto, más rápido cuando crece: si tiras muy rápido, se rompe. Haz los pliegues antes de que se enfríe y cuaje. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["yeot-stretch"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="yeot-stretch" build="yeot-stretch-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/yeot-stretch.webp">
+      <YeotStretch client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="yeot-stretch" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

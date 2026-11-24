@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SpeedSkate from "../../components/games/SpeedSkate";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "스피드스케이팅 — 왼발·오른발 박자 맞춰 밀고 곡선은 크로스오버로 도는 무료 빙상 레이스 게임 30단계",
+    description: "400m 빙상 트랙을 도는 스피드스케이팅! 화면 왼쪽·오른쪽을 번갈아 눌러 박자에 맞춰 얼음을 밀고, 곡선에서는 오른발 크로스오버로 오른쪽만 눌러요. 박자가 맞으면 완벽한 밀기, 발을 틀리면 휘청! 상대 기록보다 먼저 결승선을 지나는 Unity 3D 본편 30단계.",
+  },
+  en: {
+    title: "Speed Skate — Free long-track race game: push left, right on the beat and cross over in the curves (30 stages)",
+    description: "Long-track speed skating on a 400 m oval! Tap the left and right halves of the screen in turn to push on the beat, and in the curves tap only right for right-leg crossovers. On the beat is a perfect push; the wrong leg is a wobble. Beat the rival's time. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "スピードスケート — 左右の足をリズムよく蹴り、カーブはクロスオーバーで回る無料レースゲーム30ステージ",
+    description: "400mのリンクを回るスピードスケート！ 画面の左右を交互に押してテンポよく氷を蹴り、カーブでは右足のクロスオーバーで右だけを押します。テンポが合えば完璧な蹴り、足を間違えるとぐらつき！ ライバルより先にゴールを目指すUnity 3D本編の30ステージ。",
+  },
+  zh: {
+    title: "速度滑冰 — 左右腿踩准节拍蹬冰、弯道交叉步的免费冰上竞速游戏30关",
+    description: "在400米大道上滑速度滑冰！交替点屏幕左右两边踩着节拍蹬冰，弯道只点右边做右腿交叉步。踩准节拍就是完美蹬冰，用错腿就会晃！比对手先冲线，Unity 3D 正式版共30关。",
+  },
+  fr: {
+    title: "Patinage de vitesse — Jeu de course gratuit : poussez gauche, droite en rythme et croisez dans les virages (30 niveaux)",
+    description: "Patinage de vitesse sur un anneau de 400 m ! Touchez tour à tour les moitiés gauche et droite de l'écran pour pousser en rythme, et dans les virages seulement à droite pour les croisés. Dans le rythme, c'est une poussée parfaite ; la mauvaise jambe, un déséquilibre. Battez le temps du rival. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Patinaje de velocidad — Juego de carreras gratis: impúlsate izquierda, derecha a ritmo y cruza en las curvas (30 niveles)",
+    description: "¡Patinaje de velocidad en un óvalo de 400 m! Toca por turnos las mitades izquierda y derecha de la pantalla para impulsarte a ritmo, y en las curvas solo la derecha para los cruces. A ritmo es un impulso perfecto; la pierna equivocada, un tambaleo. Supera el tiempo del rival. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["speed-skate"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="speed-skate" build="speed-skate-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/speed-skate.webp">
+      <SpeedSkate client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="speed-skate" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
