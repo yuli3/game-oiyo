@@ -12,6 +12,9 @@ import { getFallbackGameGuide } from "../lib/seo/game-guide-fallback";
 import { videoGameJsonLd, faqPageJsonLd } from "../lib/seo/structured-data";
 import { getGameRecommendations } from "../lib/games/game-recommendations";
 import gameArtDocument from "../../config/game-art-v1.json";
+import GameTile from "./GameTile.astro";
+import type { ImageMetadata } from "astro";
+const recArtSources = import.meta.glob<ImageMetadata>(["../../public/games/*.png", "../../public/games/grok-20261106/*.webp", "../../public/games/*-keyart.webp", "../../public/prototypes/*.webp", "../../public/assets/sprites/**/keyart.webp"], { eager: true, import: "default" });
 
 interface Props { slug: string; locale: Locale; name: string }
 const { slug, locale, name } = Astro.props;
@@ -35,11 +38,13 @@ const H = {
 // 없는 페이지로 보내 404가 된다.
 const relatedLinks = g?.related?.[locale];
 const ruleList = g?.rules ? (g.rules[locale] ?? g.rules.en) : null;
-const recommendedGames = getGameRecommendations(slug, locale, 4);
+const recommendedGames = getGameRecommendations(slug, locale, 6);
 
 // 게임 키아트 이미지 또는 og-image 절대 URL 추출
 const gameArt = gameArtDocument.games as Record<string, string>;
 const artPath = gameArt[slug];
+// 2026-11-24: recommendation cards show the same key art as the hub cards.
+const recArt = (recSlug: string) => (gameArt[recSlug] ? recArtSources[`../../public${gameArt[recSlug]}`] : undefined);
 const siteBase = Astro.site ?? "https://game.oiyo.net";
 const imageUrl = artPath
   ? new URL(artPath, siteBase).toString()
@@ -82,6 +87,16 @@ const COACH_OK = { ko: "알겠어요", en: "Got it", ja: "OK", zh: "知道了", 
         <h2 class="text-lg font-black">{H.how[locale]}</h2>
         <p class="mt-2 text-sm leading-7 text-muted-foreground">{g.how[locale] ?? g.how.en}</p>
       </div>
+      {recommendedGames.length > 0 && (
+        <div>
+          <h2 class="text-lg font-black">{H.recommendations[locale]}</h2>
+          <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {recommendedGames.map((rec) => (
+              <GameTile href={rec.href} slug={rec.slug} name={rec.title} emoji={rec.emoji} art={recArt(rec.slug)} sizes="(min-width: 640px) 160px, 46vw" />
+            ))}
+          </div>
+        </div>
+      )}
       {ruleList && (
         <div>
           <h2 class="text-lg font-black">{H.rules[locale]}</h2>
@@ -115,24 +130,6 @@ const COACH_OK = { ko: "알겠어요", en: "Got it", ja: "OK", zh: "知道了", 
           ))}
         </div>
       </div>
-      {recommendedGames.length > 0 && (
-        <div>
-          <h2 class="text-lg font-black">{H.recommendations[locale]}</h2>
-          <div class="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-            {recommendedGames.map((rec) => (
-              <a
-                href={rec.href}
-                class="group flex flex-col items-center justify-center rounded-xl border border-border bg-card p-3 text-center transition-colors hover:border-primary/50 hover:bg-accent/40"
-              >
-                <span class="text-2xl transition-transform group-hover:scale-110">{rec.emoji}</span>
-                <span class="mt-1.5 text-xs font-bold text-foreground group-hover:text-primary line-clamp-1">
-                  {rec.title}
-                </span>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
       {relatedLinks && relatedLinks.length > 0 && (
         <div>
           <h2 class="text-lg font-black">{H.related[locale]}</h2>

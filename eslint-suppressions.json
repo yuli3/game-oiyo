@@ -17,13 +17,13 @@
   },
   "src/components/games/Achievements.tsx": {
     "shadcn/no-arbitrary-values": {
-      "count": 7
+      "count": 4
     },
     "shadcn/no-inline-styles": {
       "count": 1
     },
     "shadcn/no-restyle": {
-      "count": 26
+      "count": 19
     }
   },
   "src/components/games/AimTrainer.tsx": {
@@ -668,11 +668,6 @@
   },
   "src/pages/404.astro": {
     "shadcn/no-arbitrary-values": {
-      "count": 1
-    }
-  },
-  "src/pages/[...lang]/chess.astro": {
-    "shadcn/no-raw-colors": {
       "count": 1
     }
   },
