@@ -1,0 +1,462 @@
+{
+ "item0_0": {
+  "palette": {
+   "a": "#ffd43b",
+   "k": "#495057"
+  },
+  "rows": [
+   "...aaaa...",
+   "..aaaaaa..",
+   ".aaaaaaaa.",
+   "....kk....",
+   "....kk....",
+   "....kk....",
+   "....kk....",
+   "...kkkk...",
+   "..kkkkkk..",
+   ".........."
+  ]
+ },
+ "item0_1": {
+  "palette": {
+   "a": "#74c0fc",
+   "k": "#495057"
+  },
+  "rows": [
+   "...aaaa...",
+   "..aaaaaa..",
+   ".aaaaaaaa.",
+   "....kk....",
+   "....kk....",
+   "....kk....",
+   "....kk....",
+   "...kkkk...",
+   "..kkkkkk..",
+   ".........."
+  ]
+ },
+ "item1_0": {
+  "palette": {
+   "g": "#40c057",
+   "p": "#e8590c"
+  },
+  "rows": [
+   "..g..g....",
+   ".ggg.gg.g.",
+   "..ggggggg.",
+   ".gggggg...",
+   "...gggg...",
+   "....g.....",
+   "..pppppp..",
+   "..pppppp..",
+   "...pppp...",
+   ".........."
+  ]
+ },
+ "item1_1": {
+  "palette": {
+   "g": "#40c057",
+   "p": "#7048e8"
+  },
+  "rows": [
+   "..g..g....",
+   ".ggg.gg.g.",
+   "..ggggggg.",
+   ".gggggg...",
+   "...gggg...",
+   "....g.....",
+   "..pppppp..",
+   "..pppppp..",
+   "...pppp...",
+   ".........."
+  ]
+ },
+ "item2_0": {
+  "palette": {
+   "k": "#fd7e14",
+   "w": "#212529",
+   "p": "#ff8787"
+  },
+  "rows": [
+   ".k......k.",
+   ".kk....kk.",
+   ".kkkkkkkk.",
+   ".kwkkkkwk.",
+   ".kkkppkkk.",
+   "..kkkkkk..",
+   ".kkkkkkkk.",
+   ".kkkkkkkkk",
+   ".kkkkkkk.k",
+   ".kk.kk.kk."
+  ]
+ },
+ "item2_1": {
+  "palette": {
+   "k": "#495057",
+   "w": "#fcc419",
+   "p": "#ff8787"
+  },
+  "rows": [
+   ".k......k.",
+   ".kk....kk.",
+   ".kkkkkkkk.",
+   ".kwkkkkwk.",
+   ".kkkppkkk.",
+   "..kkkkkk..",
+   ".kkkkkkkk.",
+   ".kkkkkkkkk",
+   ".kkkkkkk.k",
+   ".kk.kk.kk."
+  ]
+ },
+ "item3_0": {
+  "palette": {
+   "c": "#e03131",
+   "w": "#fff9db",
+   "k": "#212529"
+  },
+  "rows": [
+   "..cccccc..",
+   ".cwwwwwwc.",
+   "cwwwkwwwwc",
+   "cwwwkwwwwc",
+   "cwwwkkkwwc",
+   "cwwwwwwwwc",
+   "cwwwwwwwwc",
+   ".cwwwwwwc.",
+   "..cccccc..",
+   ".........."
+  ]
+ },
+ "item3_1": {
+  "palette": {
+   "c": "#2f9e44",
+   "w": "#fff9db",
+   "k": "#212529"
+  },
+  "rows": [
+   "..cccccc..",
+   ".cwwwwwwc.",
+   "cwwwkwwwwc",
+   "cwwwkwwwwc",
+   "cwwwkkkwwc",
+   "cwwwwwwwwc",
+   "cwwwwwwwwc",
+   ".cwwwwwwc.",
+   "..cccccc..",
+   ".........."
+  ]
+ },
+ "item4_0": {
+  "palette": {
+   "f": "#a0652d",
+   "s": "#d0ebff",
+   "y": "#ffd43b",
+   "g": "#69db7c"
+  },
+  "rows": [
+   "ffffffffff",
+   "fssssssyyf",
+   "fsssssyyyf",
+   "fssssssyyf",
+   "fssgggsssf",
+   "fsgggggssf",
+   "fggggggggf",
+   "ffffffffff",
+   "..........",
+   ".........."
+  ]
+ },
+ "item4_1": {
+  "palette": {
+   "f": "#a0652d",
+   "s": "#ffe8cc",
+   "y": "#ff6b6b",
+   "g": "#69db7c"
+  },
+  "rows": [
+   "ffffffffff",
+   "fssssssyyf",
+   "fsssssyyyf",
+   "fssssssyyf",
+   "fssgggsssf",
+   "fsgggggssf",
+   "fggggggggf",
+   "ffffffffff",
+   "..........",
+   ".........."
+  ]
+ },
+ "item5_0": {
+  "palette": {
+   "m": "#4dabf7",
+   "h": "#e7f5ff",
+   "w": "#ced4da"
+  },
+  "rows": [
+   "..........",
+   "...w..w...",
+   "....w..w..",
+   ".mmmmmm...",
+   ".mmmmmmmm.",
+   ".mmhmmm.m.",
+   ".mmhmmmmm.",
+   ".mmmmmm...",
+   "..mmmm....",
+   ".........."
+  ]
+ },
+ "item5_1": {
+  "palette": {
+   "m": "#f783ac",
+   "h": "#fff0f6",
+   "w": "#ced4da"
+  },
+  "rows": [
+   "..........",
+   "...w..w...",
+   "....w..w..",
+   ".mmmmmm...",
+   ".mmmmmmmm.",
+   ".mmhmmm.m.",
+   ".mmhmmmmm.",
+   ".mmmmmm...",
+   "..mmmm....",
+   ".........."
+  ]
+ },
+ "item6_0": {
+  "palette": {
+   "r": "#fa5252",
+   "b": "#339af0",
+   "y": "#fcc419",
+   "g": "#51cf66",
+   "w": "#f8f9fa"
+  },
+  "rows": [
+   "..........",
+   "..........",
+   "..rrrrrr..",
+   "..rwwwwr..",
+   ".bbbbbbbb.",
+   ".bwwwwwwb.",
+   "..yyyyyyy.",
+   "..ywwwwwy.",
+   ".gggggggg.",
+   ".gwwwwwwg."
+  ]
+ },
+ "item6_1": {
+  "palette": {
+   "r": "#be4bdb",
+   "b": "#339af0",
+   "y": "#fcc419",
+   "g": "#ff922b",
+   "w": "#f8f9fa"
+  },
+  "rows": [
+   "..........",
+   "..........",
+   "..rrrrrr..",
+   "..rwwwwr..",
+   ".bbbbbbbb.",
+   ".bwwwwwwb.",
+   "..yyyyyyy.",
+   "..ywwwwwy.",
+   ".gggggggg.",
+   ".gwwwwwwg."
+  ]
+ },
+ "item7_0": {
+  "palette": {
+   "c": "#8a5a2b"
+  },
+  "rows": [
+   ".cc.......",
+   ".cc.......",
+   ".cc.......",
+   ".cc.......",
+   ".cccccccc.",
+   ".cccccccc.",
+   ".c......c.",
+   ".c......c.",
+   ".c......c.",
+   ".........."
+  ]
+ },
+ "item7_1": {
+  "palette": {
+   "c": "#1c7ed6"
+  },
+  "rows": [
+   ".cc.......",
+   ".cc.......",
+   ".cc.......",
+   ".cc.......",
+   ".cccccccc.",
+   ".cccccccc.",
+   ".c......c.",
+   ".c......c.",
+   ".c......c.",
+   ".........."
+  ]
+ },
+ "item8_0": {
+  "palette": {
+   "t": "#c08a4a",
+   "k": "#212529",
+   "n": "#5c3a1e",
+   "l": "#e9c46a"
+  },
+  "rows": [
+   ".tt....tt.",
+   ".tttttttt.",
+   "..tkttkt..",
+   "..ttnntt..",
+   "...tttt...",
+   ".tttttttt.",
+   "tt.tllt.tt",
+   "...tllt...",
+   "..tt..tt..",
+   ".........."
+  ]
+ },
+ "item8_1": {
+  "palette": {
+   "t": "#fcc2d7",
+   "k": "#212529",
+   "n": "#a61e4d",
+   "l": "#fff0f6"
+  },
+  "rows": [
+   ".tt....tt.",
+   ".tttttttt.",
+   "..tkttkt..",
+   "..ttnntt..",
+   "...tttt...",
+   ".tttttttt.",
+   "tt.tllt.tt",
+   "...tllt...",
+   "..tt..tt..",
+   ".........."
+  ]
+ },
+ "item9_0": {
+  "palette": {
+   "y": "#ffd43b",
+   "k": "#212529",
+   "o": "#f76707"
+  },
+  "rows": [
+   "..........",
+   "....yyy...",
+   "...yyyyy..",
+   "...yykyoo.",
+   "...yyyy...",
+   ".y.yyyyy..",
+   ".yyyyyyyy.",
+   ".yyyyyyyy.",
+   "..yyyyyy..",
+   ".........."
+  ]
+ },
+ "item9_1": {
+  "palette": {
+   "y": "#ffffff",
+   "k": "#212529",
+   "o": "#f76707"
+  },
+  "rows": [
+   "..........",
+   "....yyy...",
+   "...yyyyy..",
+   "...yykyoo.",
+   "...yyyy...",
+   ".y.yyyyy..",
+   ".yyyyyyyy.",
+   ".yyyyyyyy.",
+   "..yyyyyy..",
+   ".........."
+  ]
+ },
+ "item10_0": {
+  "palette": {
+   "r": "#f03e3e",
+   "g": "#2f9e44",
+   "v": "#748ffc",
+   "h": "#dbe4ff"
+  },
+  "rows": [
+   "..r..r.r..",
+   ".rrr.rrrr.",
+   "..g..g.g..",
+   "...g.gg...",
+   "....ggg...",
+   "...vvvv...",
+   "..vvvvvv..",
+   "..vvhvvv..",
+   "...vvvv...",
+   ".........."
+  ]
+ },
+ "item10_1": {
+  "palette": {
+   "r": "#fcc419",
+   "g": "#2f9e44",
+   "v": "#748ffc",
+   "h": "#dbe4ff"
+  },
+  "rows": [
+   "..r..r.r..",
+   ".rrr.rrrr.",
+   "..g..g.g..",
+   "...g.gg...",
+   "....ggg...",
+   "...vvvv...",
+   "..vvvvvv..",
+   "..vvhvvv..",
+   "...vvvv...",
+   ".........."
+  ]
+ },
+ "item11_0": {
+  "palette": {
+   "r": "#e8590c",
+   "s": "#495057",
+   "k": "#ffd43b",
+   "a": "#868e96"
+  },
+  "rows": [
+   "......a...",
+   ".....a....",
+   "....a.....",
+   ".rrrrrrrr.",
+   ".rssrrkkr.",
+   ".rssrrkkr.",
+   ".rssrrrrr.",
+   ".rrrrrrrr.",
+   "..r....r..",
+   ".........."
+  ]
+ },
+ "item11_1": {
+  "palette": {
+   "r": "#12b886",
+   "s": "#495057",
+   "k": "#ffd43b",
+   "a": "#868e96"
+  },
+  "rows": [
+   "......a...",
+   ".....a....",
+   "....a.....",
+   ".rrrrrrrr.",
+   ".rssrrkkr.",
+   ".rssrrkkr.",
+   ".rssrrrrr.",
+   ".rrrrrrrr.",
+   "..r....r..",
+   ".........."
+  ]
+ }
+}

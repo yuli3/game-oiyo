@@ -101,6 +101,9 @@ import * as bobaGame from "../../src/lib/games/boba-pins";
 import * as potsGame from "../../src/lib/games/sunny-pots";
 import * as lilyGame from "../../src/lib/games/lily-loop";
 import * as vineGame from "../../src/lib/games/vine-leap";
+import * as beeGame from "../../src/lib/games/bee-lines";
+import * as twinGame from "../../src/lib/games/twin-rooms";
+import * as beadGame from "../../src/lib/games/bead-parade";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -846,4 +849,26 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = vineGame.VINE_STAGES.map((st) => `        new Level { hooks = ${arr(st.hooks.flat())}, bananas = ${arr(st.bananas.flat())}, goal = ${n(st.goal)}, plan = ${arr(st.plan.flat())} },`);
   write("vine-leap", "VineLeap", `    public struct Level { public float[] hooks, bananas; public float goal; public float[] plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Bee Lines: the meadow's size, the flower pairs as (a, b), and the planned trails (how long each is, then the squares)
+{
+  const rows = beeGame.BEE_STAGES.map((st) => `        new Level { n = ${st.n}, pairs = ${iarr(st.pairs.flat())}, planLen = ${iarr(st.plan.map((t) => t.length))}, plan = ${iarr(st.plan.flat())} },`);
+  write("bee-lines", "BeeLines", `    public struct Level { public int n; public int[] pairs, planLen, plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Twin Rooms: the top picture's things as (item, colourway, mirrored 0/1, x, y), and the differences as (kind: 0 gone,
+// 1 colour, 2 mirrored, 3 extra; the thing it changes; then the extra thing as five numbers, or zeros)
+{
+  const kinds: Record<string, number> = { gone: 0, colour: 1, flip: 2, extra: 3 };
+  const rows = twinGame.TWIN_STAGES.map((st) => `        new Level { things = ${iarr(st.things.flatMap((t) => [t.item, t.v, t.flip ? 1 : 0, t.x, t.y]))}, diffs = ${iarr(st.diffs.flatMap((d) => [kinds[d.kind], d.at, ...(d.extra ? [d.extra.item, d.extra.v, d.extra.flip ? 1 : 0, d.extra.x, d.extra.y] : [0, 0, 0, 0, 0])]))} },`);
+  write("twin-rooms", "TwinRooms", `    public struct Level { public int[] things, diffs; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Bead Parade: the track's points (doubles, as the web has them), the colours, the beads front first, the roll speed,
+// the seed for the launcher's colours, and the planned shots as (time, aim x, aim y)
+{
+  const dbl = (xs: number[]) => `new double[] { ${xs.map((v) => String(v)).join(", ")} }`;
+  const rows = beadGame.BEAD_STAGES.map((st) => `        new Level { track = ${dbl(st.track.flat())}, colors = ${st.colors}, beads = ${iarr(st.beads)}, speed = ${st.speed}, seed = ${st.seed}u, plan = ${dbl(st.plan.flat())} },`);
+  write("bead-parade", "BeadParade", `    public struct Level { public double[] track; public int colors; public int[] beads; public double speed; public uint seed; public double[] plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

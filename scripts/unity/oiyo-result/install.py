@@ -168,6 +168,9 @@ BUILDS = {
     "sunny-pots-unity": ("sunny-pots", "SunnyPots/Runtime/SunnyPotsPlayer.cs", T, "state, starsWon"),
     "lily-loop-unity": ("lily-loop", "LilyLoop/Runtime/LilyLoopPlayer.cs", T, "state, starsWon"),
     "vine-leap-unity": ("vine-leap", "VineLeap/Runtime/VineLeapPlayer.cs", T, "state, starsWon"),
+    "bee-lines-unity": ("bee-lines", "BeeLines/Runtime/BeeLinesPlayer.cs", T, "state, starsWon"),
+    "twin-rooms-unity": ("twin-rooms", "TwinRooms/Runtime/TwinRoomsPlayer.cs", T, "state, starsWon"),
+    "bead-parade-unity": ("bead-parade", "BeadParade/Runtime/BeadParadePlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."
