@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SnackSwing from "../../components/games/SnackSwing";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "간식 그네 — 밧줄을 잘라 쿠키를 햄스터 입에 넣는 무료 물리 퍼즐 30단계",
+    description: "밧줄에 매달린 쿠키가 배고픈 햄스터 위에서 흔들려요. 밧줄을 눌러 자르면 남은 밧줄에 그네처럼 흔들리다 떨어져요. 딱 맞는 순간에 잘라 반짝이를 모으고 가시를 피해 햄스터에게 먹이는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Snack Swing — Free rope-snipping physics puzzle: drop the cookie into the hamster's mouth (30 stages)",
+    description: "A cookie hangs from ropes, swaying over a hungry hamster. Tap a rope to snip it, and the cookie swings on what's left before it drops. Snip at just the right moment to collect the sparkles, miss the thorns and feed the hamster, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "おやつブランコ — ロープを切ってクッキーをハムスターの口へ入れる無料物理パズル30面",
+    description: "ロープにぶら下がったクッキーが、おなかをすかせたハムスターの上でゆれます。ロープをタップして切ると、残ったロープでブランコのようにゆれてから落ちます。ちょうどいい瞬間に切ってキラキラを集め、トゲをよけてハムスターに食べさせるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "零食秋千 — 剪断绳子把饼干送进仓鼠嘴里的免费物理谜题30关",
+    description: "挂在绳子上的饼干在饥饿的仓鼠上方摇晃。点绳子把它剪断，饼干会挂在剩下的绳子上荡秋千，然后掉下。在恰好的时机剪断，收集闪光、避开尖刺喂饱仓鼠。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Biscuit balançoire — Puzzle physique gratuit : coupez les cordes pour nourrir le hamster (30 niveaux)",
+    description: "Un biscuit pend à des cordes et se balance au-dessus d'un hamster affamé. Touchez une corde pour la couper : le biscuit se balance sur les autres puis tombe. Coupez pile au bon moment pour ramasser les étincelles, éviter les épines et nourrir le hamster, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Galleta columpio — Puzle de física gratis: corta cuerdas para alimentar al hámster (30 niveles)",
+    description: "Una galleta cuelga de cuerdas y se balancea sobre un hámster hambriento. Toca una cuerda para cortarla: la galleta se columpia en las demás y luego cae. Corta en el momento justo para recoger destellos, esquivar espinas y alimentar al hámster, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["snack-swing"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="snack-swing" build="snack-swing-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/snack-swing.webp">
+      <SnackSwing client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="snack-swing" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

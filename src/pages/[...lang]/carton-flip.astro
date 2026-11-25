@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CartonFlip from "../../components/games/CartonFlip";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "우유팩 플립 — 우유팩을 튕겨 선반에 딱 세우는 무료 던지기 게임 30단계",
+    description: "조리대의 우유팩을 당겼다 놓아 다음 선반으로 튕겨요. 빙글빙글 돌다 똑바로 내려앉으면 성공! 선반을 하나씩 밟아 냉장고 꼭대기까지 오르는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Carton Flip — Free flip-and-land game: flick a milk carton to land standing up (30 stages)",
+    description: "Pull back and flick the milk carton toward the next shelf. It tumbles through the air, and if it lands standing up, it sticks! Climb shelf by shelf to the top of the fridge, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "牛乳パックフリップ — 牛乳パックをはじいて棚にぴたっと立てる無料ゲーム30面",
+    description: "台の牛乳パックを引いて離し、次の棚へはじきます。くるくる回ってまっすぐ着地すれば成功！棚を1つずつ上って冷蔵庫のてっぺんまで行くUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "牛奶盒翻翻 — 弹起牛奶盒稳稳立在架子上的免费游戏30关",
+    description: "把台面上的牛奶盒往后拉再松手，弹向下一个架子。它在空中翻滚，稳稳立住就成功！一层层踩着架子爬到冰箱顶。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Brique en vol — Jeu gratuit : lancez une brique de lait pour qu'elle retombe debout (30 niveaux)",
+    description: "Tirez et lancez la brique de lait vers l'étagère suivante. Elle fait des culbutes, et si elle retombe debout, elle tient ! Montez d'étagère en étagère jusqu'en haut du frigo, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Cartón volteado — Juego gratis: lanza un cartón de leche para que caiga de pie (30 niveles)",
+    description: "Tira y lanza el cartón de leche hacia el siguiente estante. Da volteretas en el aire y, si cae de pie, ¡se queda! Sube estante a estante hasta lo alto de la nevera, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["carton-flip"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="carton-flip" build="carton-flip-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/carton-flip.webp">
+      <CartonFlip client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="carton-flip" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

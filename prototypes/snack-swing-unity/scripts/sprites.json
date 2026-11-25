@@ -1,0 +1,73 @@
+{
+ "hamster": {
+  "palette": {
+   "o": "#f59f00",
+   "l": "#ffd8a8",
+   "w": "#ffffff",
+   "k": "#212529",
+   "p": "#ff8787",
+   "r": "#c92a2a"
+  },
+  "rows": [
+   ".oo......oo.",
+   "oppo....oppo",
+   "oooooooooooo",
+   "olllllllllo.",
+   "olkwllllwklo",
+   "ollllrrlllll",
+   "olllrrrrllll",
+   "ollllrrlllll",
+   ".olllllllllo",
+   "..oooooooo.."
+  ]
+ },
+ "cookie": {
+  "palette": {
+   "c": "#d9a066",
+   "d": "#8a5a2b",
+   "h": "#f1c27d"
+  },
+  "rows": [
+   "..cccc..",
+   ".chccdc.",
+   "cchcccdc",
+   "cdcchccc",
+   "ccccdcch",
+   "cchcccdc",
+   ".cdcchc.",
+   "..cccc.."
+  ]
+ },
+ "sparkle": {
+  "palette": {
+   "y": "#ffd43b",
+   "w": "#fff9db"
+  },
+  "rows": [
+   "...y...",
+   "...y...",
+   "..ywy..",
+   "yywwwyy",
+   "..ywy..",
+   "...y...",
+   "...y..."
+  ]
+ },
+ "thorn": {
+  "palette": {
+   "g": "#2b8a3e",
+   "d": "#1e5f2c",
+   "r": "#e03131"
+  },
+  "rows": [
+   "...r....",
+   "..gg..r.",
+   "r.gdg.g.",
+   ".gdddgg.",
+   "ggddddgr",
+   ".gdddgg.",
+   "r.gdg.g.",
+   "...g..r."
+  ]
+ }
+}
