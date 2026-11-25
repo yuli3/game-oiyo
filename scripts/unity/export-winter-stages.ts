@@ -95,6 +95,9 @@ import * as boingGame from "../../src/lib/games/boing-up";
 import * as snackGame from "../../src/lib/games/snack-swing";
 import * as sunMoonGame from "../../src/lib/games/sun-moon";
 import * as cartonGame from "../../src/lib/games/carton-flip";
+import * as shelfGame from "../../src/lib/games/bakery-shelf";
+import * as chalkGame from "../../src/lib/games/chalk-roll";
+import * as bobaGame from "../../src/lib/games/boba-pins";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -797,4 +800,25 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = cartonGame.CARTON_STAGES.map((st) => `        new Level { shelves = ${arr(st.shelves.flatMap((s) => [s.x0, s.x1, s.y]))}, spin = ${n(st.spin)}, plan = ${arr(st.plan)} },`);
   write("carton-flip", "CartonFlip", `    public struct Level { public float[] shelves; public float spin; public float[] plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Bakery Shelf: per shelf how many rows it has (the front, then the trays behind), every row's three spots (−1 empty),
+// the planned moves as (from shelf, from spot, to shelf, to spot), par and the move limit
+{
+  const rows = shelfGame.SHELF_STAGES.map((st) => `        new Level { rows = ${iarr(st.shelves.map((s) => s.length))}, items = ${iarr(st.shelves.flat(2))}, plan = ${iarr(st.plan.flat())}, par = ${st.par}, limit = ${st.limit} },`);
+  write("bakery-shelf", "BakeryShelf", `    public struct Level { public int[] rows, items, plan; public int par, limit; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Chalk Roll: the marble, the pail (x, rim y, width, depth), ledges as (x0, y0, x1, y1), thumbtacks as (x, y), the
+// chalk there is, the planned line's corners and its length
+{
+  const rows = chalkGame.CHALK_STAGES.map((st) => `        new Level { ball = ${arr(st.ball)}, pail = ${arr([st.pail.x, st.pail.y, st.pail.w, st.pail.h])}, walls = ${arr(st.walls.flat())}, tacks = ${arr(st.tacks.flat())}, ink = ${n(st.ink)}, plan = ${arr(st.plan.flat())}, par = ${n(st.par)} },`);
+  write("chalk-roll", "ChalkRoll", `    public struct Level { public float[] ball, pail, walls, tacks, plan; public float ink, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Boba Pins: the 18 × 28 grid row by row (0 empty, 1 wall, 2 pin, 3 white, 4 brown, 5 chili), how many cells each pin
+// has and those cells, the pins to pull and par
+{
+  const rows = bobaGame.BOBA_STAGES.map((st) => `        new Level { grid = ${iarr(st.grid)}, pinLen = ${iarr(st.pins.map((p) => p.length))}, pinCells = ${iarr(st.pins.flat())}, plan = ${iarr(st.plan)}, par = ${st.par} },`);
+  write("boba-pins", "BobaPins", `    public struct Level { public int[] grid, pinLen, pinCells, plan; public int par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
