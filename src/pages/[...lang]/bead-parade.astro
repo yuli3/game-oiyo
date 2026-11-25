@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BeadParade from "../../components/games/BeadParade";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "구슬 행렬 — 같은 색 셋을 맞춰 구슬 행렬을 터뜨리는 무료 체인 슈터 30단계",
+    description: "알록달록한 구슬 행렬이 나선 길을 따라 굴로 굴러가요. 가운데 꽃 발사대에서 구슬을 쏴 같은 색 셋을 맞추면 펑! 맨 앞 구슬이 굴에 닿기 전에 모두 터뜨리는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Bead Parade — Free bead-chain shooter: match three and pop the parade (30 stages)",
+    description: "A parade of colourful beads rolls along a spiral toward the burrow. Shoot beads from the flower launcher in the middle and match three of a colour to pop them. Clear the parade before the front bead gets there, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ビーズの行列 — 同じ色を3つそろえて行列を消す無料チェーンシューター30面",
+    description: "カラフルなビーズの行列が、うずまきの道を通って巣穴へ転がっていきます。真ん中の花の発射台から玉を撃って同じ色を3つそろえるとはじけます！先頭が巣穴に着く前に全部消すUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "珠子游行 — 凑齐三颗同色珠子消掉队伍的免费珠链射击30关",
+    description: "一队彩色珠子沿着螺旋小路滚向洞口。从中间的花朵发射台射出珠子，凑齐三颗同色就会爆掉！在最前面的珠子到达之前全部消掉。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Le défilé des perles — Tir sur chaîne gratuit : alignez trois perles et faites éclater le défilé (30 niveaux)",
+    description: "Un défilé de perles colorées roule sur une spirale vers le terrier. Tirez des perles depuis le lanceur fleur du centre et alignez-en trois d'une couleur pour les faire éclater. Videz le défilé avant que la première n'arrive, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "El desfile de cuentas — Tirador de cadena gratis: junta tres y haz estallar el desfile (30 niveles)",
+    description: "Un desfile de cuentas de colores rueda por una espiral hacia la madriguera. Dispara cuentas desde el lanzador flor del centro y junta tres de un color para hacerlas estallar. Despeja el desfile antes de que llegue la primera, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["bead-parade"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="bead-parade" build="bead-parade-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/bead-parade.webp">
+      <BeadParade client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="bead-parade" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
