@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TwinRooms from "../../components/games/TwinRooms";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "쌍둥이 방 — 똑같아 보이는 두 방에서 다른 곳을 찾는 무료 다른 그림 찾기 30단계",
+    description: "아늑한 방 그림 두 장, 그런데 몇 군데가 달라요. 사라진 물건, 새로 생긴 물건, 바뀐 색, 반대로 놓인 물건을 찾아 눌러요. 실수 다섯 번 안에 모두 찾는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Twin Rooms — Free spot-the-difference game: find what changed between two cosy rooms (30 stages)",
+    description: "Two pictures of the same cosy room, with a few things different: something missing, something new, a colour changed or a thing turned around. Tap them all before five wrong taps, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ふたごの部屋 — 同じに見える2つの部屋のちがいを探す無料まちがい探し30面",
+    description: "ほっこりした部屋の絵が2枚、でも何か所かちがいます。なくなった物、増えた物、変わった色、反対を向いた物を見つけてタップ。5回まちがえる前に全部見つけるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "双胞胎房间 — 找出两个温馨房间不同之处的免费找不同游戏30关",
+    description: "同一间温馨房间的两幅画，却有几处不一样：不见的东西、多出来的东西、换了的颜色、反过来的摆设。在点错五次之前全部找到。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Chambres jumelles — Jeu des différences gratuit : trouvez ce qui change entre deux chambres douillettes (30 niveaux)",
+    description: "Deux images de la même chambre douillette, avec quelques différences : un objet disparu, un nouveau, une couleur changée ou un objet retourné. Trouvez-les toutes avant cinq erreurs, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Habitaciones gemelas — Juego de las diferencias gratis: encuentra lo que cambia entre dos habitaciones acogedoras (30 niveles)",
+    description: "Dos dibujos de la misma habitación acogedora, con algunas diferencias: algo que falta, algo nuevo, un color cambiado o un objeto al revés. Encuéntralas todas antes de cinco fallos, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["twin-rooms"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="twin-rooms" build="twin-rooms-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/twin-rooms.webp">
+      <TwinRooms client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="twin-rooms" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

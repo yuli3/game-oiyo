@@ -1,0 +1,193 @@
+{
+ "bee": {
+  "palette": {
+   "y": "#ffd43b",
+   "k": "#212529",
+   "w": "#e7f5ff"
+  },
+  "rows": [
+   "..ww.ww.",
+   "...wwww.",
+   ".yykyyk.",
+   "yykyykyy",
+   ".yykyyk.",
+   "..k..k.."
+  ]
+ },
+ "flower0": {
+  "palette": {
+   "p": "#f03e3e",
+   "y": "#ffe066",
+   "w": "#ffffff"
+  },
+  "rows": [
+   ".pp.pp.",
+   "pwppppp",
+   ".ppyyp.",
+   "ppyyypp",
+   ".pyypp.",
+   "ppppwpp",
+   ".pp.pp."
+  ]
+ },
+ "flower1": {
+  "palette": {
+   "p": "#1c7ed6",
+   "y": "#ffe066",
+   "w": "#ffffff"
+  },
+  "rows": [
+   ".pp.pp.",
+   "pwppppp",
+   ".ppyyp.",
+   "ppyyypp",
+   ".pyypp.",
+   "ppppwpp",
+   ".pp.pp."
+  ]
+ },
+ "flower2": {
+  "palette": {
+   "p": "#f59f00",
+   "y": "#ffe066",
+   "w": "#ffffff"
+  },
+  "rows": [
+   ".pp.pp.",
+   "pwppppp",
+   ".ppyyp.",
+   "ppyyypp",
+   ".pyypp.",
+   "ppppwpp",
+   ".pp.pp."
+  ]
+ },
+ "flower3": {
+  "palette": {
+   "p": "#37b24d",
+   "y": "#ffe066",
+   "w": "#ffffff"
+  },
+  "rows": [
+   ".pp.pp.",
+   "pwppppp",
+   ".ppyyp.",
+   "ppyyypp",
+   ".pyypp.",
+   "ppppwpp",
+   ".pp.pp."
+  ]
+ },
+ "flower4": {
+  "palette": {
+   "p": "#ae3ec9",
+   "y": "#ffe066",
+   "w": "#ffffff"
+  },
+  "rows": [
+   ".pp.pp.",
+   "pwppppp",
+   ".ppyyp.",
+   "ppyyypp",
+   ".pyypp.",
+   "ppppwpp",
+   ".pp.pp."
+  ]
+ },
+ "flower5": {
+  "palette": {
+   "p": "#f76707",
+   "y": "#ffe066",
+   "w": "#ffffff"
+  },
+  "rows": [
+   ".pp.pp.",
+   "pwppppp",
+   ".ppyyp.",
+   "ppyyypp",
+   ".pyypp.",
+   "ppppwpp",
+   ".pp.pp."
+  ]
+ },
+ "flower6": {
+  "palette": {
+   "p": "#0ca678",
+   "y": "#ffe066",
+   "w": "#ffffff"
+  },
+  "rows": [
+   ".pp.pp.",
+   "pwppppp",
+   ".ppyyp.",
+   "ppyyypp",
+   ".pyypp.",
+   "ppppwpp",
+   ".pp.pp."
+  ]
+ },
+ "flower7": {
+  "palette": {
+   "p": "#e64980",
+   "y": "#ffe066",
+   "w": "#ffffff"
+  },
+  "rows": [
+   ".pp.pp.",
+   "pwppppp",
+   ".ppyyp.",
+   "ppyyypp",
+   ".pyypp.",
+   "ppppwpp",
+   ".pp.pp."
+  ]
+ },
+ "flower8": {
+  "palette": {
+   "p": "#4263eb",
+   "y": "#ffe066",
+   "w": "#ffffff"
+  },
+  "rows": [
+   ".pp.pp.",
+   "pwppppp",
+   ".ppyyp.",
+   "ppyyypp",
+   ".pyypp.",
+   "ppppwpp",
+   ".pp.pp."
+  ]
+ },
+ "flower9": {
+  "palette": {
+   "p": "#82c91e",
+   "y": "#ffe066",
+   "w": "#ffffff"
+  },
+  "rows": [
+   ".pp.pp.",
+   "pwppppp",
+   ".ppyyp.",
+   "ppyyypp",
+   ".pyypp.",
+   "ppppwpp",
+   ".pp.pp."
+  ]
+ },
+ "flower10": {
+  "palette": {
+   "p": "#868e96",
+   "y": "#ffe066",
+   "w": "#ffffff"
+  },
+  "rows": [
+   ".pp.pp.",
+   "pwppppp",
+   ".ppyyp.",
+   "ppyyypp",
+   ".pyypp.",
+   "ppppwpp",
+   ".pp.pp."
+  ]
+ }
+}

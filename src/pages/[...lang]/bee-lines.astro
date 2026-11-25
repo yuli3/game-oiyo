@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BeeLines from "../../components/games/BeeLines";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "꿀벌 길잇기 — 같은 색 꽃끼리 길을 이어 꽃밭을 채우는 무료 퍼즐 30단계",
+    description: "꽃밭에 같은 색 꽃이 두 송이씩 피어 있어요. 같은 꽃끼리 꿀벌 길을 잇되 길이 겹치지 않게, 모든 칸을 채우면 성공! 5×5부터 9×9까지 넓어지는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Bee Lines — Free connect-the-pairs puzzle: join every flower and fill the meadow (30 stages)",
+    description: "Pairs of flowers bloom across the meadow. Join each to its twin with a bee's trail, never crossing, and fill every square. From 5 × 5 up to 9 × 9, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ミツバチの道つなぎ — 同じ色の花を道でつないで花畑を埋める無料パズル30面",
+    description: "花畑に同じ色の花が2輪ずつ。同じ花どうしをミツバチの道で、重ならないようにつなぎ、すべてのマスを埋めれば成功！5×5から9×9まで広がるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "蜜蜂连线 — 把同色花连起来铺满花田的免费谜题30关",
+    description: "花田里每种颜色的花各开两朵。用蜜蜂小路把同色的花连起来，小路不能交叉，并铺满每一格即成功！从 5×5 到 9×9。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Chemins d'abeille — Puzzle gratuit : reliez chaque fleur à sa jumelle et remplissez la prairie (30 niveaux)",
+    description: "Des paires de fleurs poussent dans la prairie. Reliez chacune à sa jumelle par un chemin d'abeille, sans croisement, et remplissez toutes les cases. De 5 × 5 à 9 × 9, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Caminos de abeja — Puzle gratis: une cada flor con su gemela y llena el prado (30 niveles)",
+    description: "En el prado crecen parejas de flores. Une cada una con su gemela con un camino de abeja, sin cruces, y llena todas las casillas. De 5 × 5 a 9 × 9, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["bee-lines"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="bee-lines" build="bee-lines-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/bee-lines.webp">
+      <BeeLines client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="bee-lines" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

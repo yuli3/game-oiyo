@@ -1,0 +1,38 @@
+{
+ "launcher": {
+  "palette": {
+   "p": "#f783ac",
+   "d": "#d6336c",
+   "y": "#ffd43b",
+   "o": "#f59f00",
+   "g": "#2f9e44"
+  },
+  "rows": [
+   "...pp...",
+   ".pppppp.",
+   "ppdyydpp",
+   "pdyoody.",
+   "pdyoodyp",
+   "ppdyydpp",
+   ".pppppp.",
+   "...gg..."
+  ]
+ },
+ "burrow": {
+  "palette": {
+   "b": "#5c3a1e",
+   "d": "#2b1a0c",
+   "g": "#69db7c"
+  },
+  "rows": [
+   ".gggggg.",
+   "gbbbbbbg",
+   "bbddddbb",
+   "bddddddb",
+   "bddddddb",
+   "bbddddbb",
+   "gbbbbbbg",
+   ".gggggg."
+  ]
+ }
+}

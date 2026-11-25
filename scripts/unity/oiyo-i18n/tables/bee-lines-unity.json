@@ -1,0 +1,156 @@
+{
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Bee Lines": [
+"꿀벌 길잇기",
+"ミツバチの道つなぎ",
+"Caminos de abeja",
+"蜜蜂连线",
+"Chemins d'abeille"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Drag from a flower square by square to its twin to draw a bee's trail. Trails can't cross. Join every pair and fill every square of the meadow.": [
+"꽃에서 같은 꽃까지 칸을 따라 끌어 꿀벌 길을 그려요. 길은 겹칠 수 없어요. 모든 쌍을 잇고 꽃밭의 모든 칸을 채워요.",
+"花から同じ花までマスにそってドラッグし、ミツバチの道を引こう。道は重ねられません。全部の組をつなぎ、花畑のすべてのマスを埋めよう。",
+"Arrastra casilla a casilla de una flor a su gemela para trazar un camino de abeja. Los caminos no se cruzan. Une todas las parejas y llena todas las casillas.",
+"从一朵花沿着格子拖到同色的花，画出蜜蜂小路。小路不能交叉。把所有花连好，铺满花田每一格。",
+"Glissez case par case d'une fleur à sa jumelle pour tracer un chemin d'abeille. Les chemins ne se croisent pas. Reliez toutes les paires et remplissez toutes les cases."
+],
+"Drag from a flower to its twin!": [
+"꽃에서 같은 꽃까지 끌어요!",
+"花から同じ花までドラッグ！",
+"¡Arrastra de una flor a su gemela!",
+"从一朵花拖到同色的花！",
+"Glissez d'une fleur à sa jumelle !"
+],
+"Joined in {0} strokes": [
+"{0}획으로 다 이었어요",
+"{0}筆で全部つないだ",
+"Todo unido en {0} trazos",
+"{0} 笔全部连好",
+"Tout relié en {0} traits"
+],
+"Joined {0}/{1}": [
+"이은 꽃 {0}/{1}",
+"つないだ花 {0}/{1}",
+"Unidas {0}/{1}",
+"已连 {0}/{1}",
+"Reliées {0}/{1}"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Strokes {0}": [
+"획 {0}",
+"筆 {0}",
+"Trazos {0}",
+"笔数 {0}",
+"Traits {0}"
+],
+"Tap to start": [
+"탭해서 시작",
+"タップでスタート",
+"Toca para empezar",
+"点击开始",
+"Touchez pour commencer"
+],
+"The meadow's full of bee trails!": [
+"꽃밭이 꿀벌 길로 가득!",
+"花畑がミツバチの道でいっぱい！",
+"¡El prado está lleno de caminos de abeja!",
+"花田铺满了蜜蜂小路！",
+"La prairie est pleine de chemins d'abeille !"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+],
+"{0} × {1} meadow": [
+"꽃밭 {0} × {1}",
+"花畑 {0} × {1}",
+"Prado {0} × {1}",
+"{0} × {1} 花田",
+"Prairie {0} × {1}"
+]
+}
