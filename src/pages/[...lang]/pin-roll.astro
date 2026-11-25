@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PinRoll from "../../components/games/PinRoll";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "핀 롤 — 튕겨서 굴리는 무료 장난감 볼링, 스트라이크를 노리는 30단계",
+    description: "장난감 볼링 레인에서 공을 놓을 자리를 누르고 위로 튕겨 굴려요. 스트라이크와 스페어로 보너스를 받고, 뒤쪽 단계의 고무 기둥을 피해 목표 점수를 넘기는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Pin Roll — Free flick bowling: flick the ball down a toy lane for strikes (30 stages)",
+    description: "On a toy bowling lane, press where the ball should start and flick it up the lane. Strikes and spares score bonuses; steer round the rubber posts on later stages and pass the goal, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ピンロール — はじいて転がす無料のおもちゃボウリング30面",
+    description: "おもちゃのボウリングレーンで、ボールを置く場所を押して上へはじいて転がします。ストライクとスペアでボーナス、後半のゴムの柱をよけて目標点を超えるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "球瓶滚滚 — 一弹就滚的免费玩具保龄球30关",
+    description: "在玩具保龄球道上，按住放球的位置往上一弹就滚出去。全中和补中有加分，后面的关卡要绕开橡胶柱，超过目标分。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Quilles en folie — Bowling gratuit d'une pichenette : lancez la boule sur une piste miniature (30 niveaux)",
+    description: "Sur une piste de bowling miniature, appuyez au départ de la boule et lancez-la vers le haut. Strikes et spares rapportent des bonus ; contournez les poteaux en caoutchouc et dépassez l'objectif, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Bolos de juguete — Bolos gratis de un toque: lanza la bola por una pista de juguete (30 niveles)",
+    description: "En una pista de bolos de juguete, pulsa donde sale la bola y lánzala pista arriba. Strikes y semiplenos dan puntos extra; esquiva los postes de goma y supera la meta, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["pin-roll"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="pin-roll" build="pin-roll-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/pin-roll.webp">
+      <PinRoll client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="pin-roll" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

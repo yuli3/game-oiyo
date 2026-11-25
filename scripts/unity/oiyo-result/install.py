@@ -153,6 +153,9 @@ BUILDS = {
     "pip-merge-unity": ("pip-merge", "PipMerge/Runtime/PipMergePlayer.cs", T, "state, starsWon"),
     "vacuum-dash-unity": ("vacuum-dash", "VacuumDash/Runtime/VacuumDashPlayer.cs", T, "state, starsWon"),
     "pocket-shot-unity": ("pocket-shot", "PocketShot/Runtime/PocketShotPlayer.cs", T, "state, starsWon"),
+    "jelly-gates-unity": ("jelly-gates", "JellyGates/Runtime/JellyGatesPlayer.cs", T, "state, starsWon"),
+    "upside-dash-unity": ("upside-dash", "UpsideDash/Runtime/UpsideDashPlayer.cs", T, "state, starsWon"),
+    "pin-roll-unity": ("pin-roll", "PinRoll/Runtime/PinRollPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

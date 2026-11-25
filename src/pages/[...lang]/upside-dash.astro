@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import UpsideDash from "../../components/games/UpsideDash";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "거꾸로 대시 — 눌러서 천장과 바닥을 오가는 무료 중력 뒤집기 러너 30단계",
+    description: "자석 로봇이 터널을 달려요. 누르면 바닥에서 천장으로, 천장에서 바닥으로 휙! 가시와 톱니를 피해 뒤집으며 배터리를 모아 끝까지 가는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Upside Dash — Free gravity-flip runner: tap to switch between floor and ceiling (30 stages)",
+    description: "A magnet robot runs down a tunnel. Tap and it flips from the floor to the ceiling and back. Dodge spikes and saws, grab batteries and reach the end, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "さかさまダッシュ — タップで床と天井を行き来する無料の重力反転ランナー30面",
+    description: "磁石ロボットがトンネルを走ります。タップで床から天井へ、天井から床へくるり！トゲとノコギリをよけてバッテリーを集め、最後まで走り切るUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "倒立冲刺 — 点击在地面和天花板之间切换的免费重力翻转跑酷30关",
+    description: "磁铁机器人在隧道里奔跑。点一下就从地面翻到天花板，再翻回来！躲开尖刺和锯片，收集电池跑到终点。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Course à l'envers — Runner gratuit à gravité inversée : touchez pour passer du sol au plafond (30 niveaux)",
+    description: "Un robot aimanté file dans un tunnel. Touchez : il passe du sol au plafond, puis l'inverse. Évitez pointes et scies, ramassez les piles et atteignez la sortie, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Carrera del revés — Runner gratis de gravedad invertida: toca para pasar del suelo al techo (30 niveles)",
+    description: "Un robot imantado corre por un túnel. Toca y pasa del suelo al techo y al revés. Esquiva pinchos y sierras, recoge pilas y llega al final, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["upside-dash"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="upside-dash" build="upside-dash-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/upside-dash.webp">
+      <UpsideDash client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="upside-dash" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

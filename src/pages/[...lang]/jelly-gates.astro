@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import JellyGates from "../../components/games/JellyGates";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "젤리 탈출 — 젤리를 밀어 같은 색 문으로 내보내는 무료 퍼즐 30단계",
+    description: "말랑한 젤리를 밀면 막힐 때까지 쭉 미끄러지고, 같은 색 문에 닿으면 쏙 빠져나가요. 다른 젤리를 받침대로 써서 문 앞에 멈춰 세우고, 정해진 횟수 안에 쟁반을 비우는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Jelly Gates — Free slide-out puzzle: push each jelly out through the gate of its colour (30 stages)",
+    description: "Push a jelly and it slides until something stops it; reach a gate of its colour and it slips out. Use other jellies as stoppers to line up with the gates and clear the tray within the moves, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ゼリー脱出 — ゼリーを押して同じ色の門から出す無料パズル30面",
+    description: "ぷるぷるのゼリーを押すと止まるまですべり、同じ色の門に着けばスポッと抜けます。ほかのゼリーをストッパーにして門の前に止め、決まった回数でトレイを空にするUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "果冻出门 — 推动果冻从同色门出去的免费谜题30关",
+    description: "推一下果冻，它会一直滑到被挡住；碰到同色的门就溜出去。用别的果冻当挡板停在门前，在规定步数内清空托盘。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Gelées en fuite — Puzzle gratuit : poussez chaque gelée par la porte de sa couleur (30 niveaux)",
+    description: "Poussez une gelée : elle glisse jusqu'à ce que quelque chose l'arrête ; devant une porte de sa couleur, elle sort. Servez-vous des autres gelées comme butées et videz le plateau dans la limite, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Fuga de gelatinas — Puzle gratis: saca cada gelatina por la puerta de su color (30 niveles)",
+    description: "Empuja una gelatina y resbala hasta que algo la frena; ante una puerta de su color, sale. Usa otras gelatinas de tope para alinearlas y vacía la bandeja dentro del límite, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["jelly-gates"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="jelly-gates" build="jelly-gates-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/jelly-gates.webp">
+      <JellyGates client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="jelly-gates" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

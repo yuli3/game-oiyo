@@ -86,6 +86,9 @@ import * as dartGame from "../../src/lib/games/dart-drift";
 import * as pipGame from "../../src/lib/games/pip-merge";
 import * as vacuumGame from "../../src/lib/games/vacuum-dash";
 import * as poolGame from "../../src/lib/games/pocket-shot";
+import * as jellyGame from "../../src/lib/games/jelly-gates";
+import * as upsideGame from "../../src/lib/games/upside-dash";
+import * as pinGame from "../../src/lib/games/pin-roll";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -729,4 +732,23 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = poolGame.POOL_STAGES.map((st) => `        new Level { balls = ${arr(st.balls.flat())}, cue = ${arr(st.cue)}, shots = ${st.shots}, par = ${st.par} },`);
   write("pocket-shot", "PocketShot", `    public struct Level { public float[] balls, cue; public int shots, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Jelly Gates: the tray, blocks as (x, y, w, h, colour), gates as (side, from, length, colour), the answer as
+// (block, direction, distance; -1 = out), par and the move limit
+{
+  const rows = jellyGame.JELLY_STAGES.map((st) => `        new Level { cols = ${st.cols}, rows = ${st.rows}, blocks = ${iarr(st.blocks.flatMap((b) => [b.x, b.y, b.w, b.h, b.color]))}, gates = ${iarr(st.gates.flatMap((g) => [g.side, g.from, g.len, g.color]))}, plan = ${iarr(st.plan.flatMap((m) => [m.b, m.d, m.dist]))}, par = ${st.par}, limit = ${st.limit} },`);
+  write("jelly-gates", "JellyGates", `    public struct Level { public int cols, rows; public int[] blocks, gates, plan; public int par, limit; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Upside Dash: speed, length, hazards as (x, width, lane), batteries as (x, y), the planned flips, par
+{
+  const rows = upsideGame.UPSIDE_STAGES.map((st) => `        new Level { speed = ${n(st.speed)}, length = ${n(st.length)}, hazards = ${arr(st.hazards.flatMap((h) => [h.x, h.w, h.lane]))}, batteries = ${arr(st.batteries.flatMap((b) => [b.x, b.y]))}, flips = ${arr(st.flips)}, par = ${st.par} },`);
+  write("upside-dash", "UpsideDash", `    public struct Level { public float speed, length; public float[] hazards, batteries, flips; public int par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Pin Roll: frames, rubber posts as (x, y) pairs, points needed, par
+{
+  const rows = pinGame.PIN_STAGES.map((st) => `        new Level { frames = ${st.frames}, posts = ${arr(st.posts.flat())}, need = ${st.need}, par = ${st.par} },`);
+  write("pin-roll", "PinRoll", `    public struct Level { public int frames; public float[] posts; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

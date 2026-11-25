@@ -1,0 +1,177 @@
+{
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Flick up from where the ball should start!": [
+"공을 놓을 곳에서 위로 튕겨요!",
+"ボールを置きたい場所から上へはじこう！",
+"¡Lanza hacia arriba desde donde saldrá la bola!",
+"在要放球的地方往上弹！",
+"Lancez vers le haut depuis le départ de la boule !"
+],
+"Frame {0}/{1}": [
+"{0}/{1}프레임",
+"{0}/{1}フレーム",
+"Juego {0}/{1}",
+"第 {0}/{1} 局",
+"Manche {0}/{1}"
+],
+"Goal reached!": [
+"목표 달성!",
+"目標達成！",
+"¡Meta alcanzada!",
+"达成目标！",
+"Objectif atteint !"
+],
+"Goal {0}": [
+"목표 {0}",
+"目標 {0}",
+"Meta {0}",
+"目标 {0}",
+"Objectif {0}"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Not enough points": [
+"점수가 모자라요",
+"点数が足りない",
+"Faltan puntos",
+"分数不够",
+"Pas assez de points"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Pin Roll": [
+"핀 롤",
+"ピンロール",
+"Bolos de juguete",
+"球瓶滚滚",
+"Quilles en folie"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Press where the ball should start and flick it up the lane. Two rolls a frame; knock down enough pins over the frames. A strike scores a bonus.": [
+"공을 놓을 자리를 누르고 레인 위로 튕겨요. 한 프레임에 두 번 굴리고, 정해진 프레임 동안 핀을 넉넉히 쓰러뜨려요. 스트라이크는 보너스예요.",
+"ボールを置く場所を押してレーンの上へはじきます。1フレーム2投、決まったフレームでピンをたくさん倒そう。ストライクはボーナス。",
+"Pulsa donde sale la bola y lánzala pista arriba. Dos tiros por juego; derriba suficientes bolos en los juegos del nivel. Un strike da puntos extra.",
+"按住放球的位置，往球道上方一弹。每局投两次，在规定局数里击倒足够多的球瓶。全中有加分。",
+"Appuyez au départ de la boule et lancez-la vers le haut de la piste. Deux lancers par manche ; renversez assez de quilles au fil des manches. Un strike rapporte un bonus."
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Score {0}/{1}": [
+"점수 {0}/{1}",
+"スコア {0}/{1}",
+"Puntos {0}/{1}",
+"得分 {0}/{1}",
+"Score {0}/{1}"
+],
+"Spare!": [
+"스페어!",
+"スペア！",
+"¡Semipleno!",
+"补中！",
+"Spare !"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Strike!": [
+"스트라이크!",
+"ストライク！",
+"¡Strike!",
+"全中！",
+"Strike !"
+],
+"Tap to start": [
+"탭해서 시작",
+"タップでスタート",
+"Toca para empezar",
+"点击开始",
+"Touchez pour commencer"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+],
+"{0} points · {1} strikes": [
+"{0}점 · 스트라이크 {1}번",
+"{0}点・ストライク{1}回",
+"{0} puntos · {1} strikes",
+"{0} 分 · 全中 {1} 次",
+"{0} points · {1} strikes"
+]
+}
