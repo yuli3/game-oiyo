@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GardenPipes from "../../components/games/GardenPipes";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "정원 물길 — 파이프를 돌려 수도꼭지와 꽃을 잇는 무료 퍼즐 30단계",
+    description: "정원에 깔린 파이프 타일을 눌러 돌려요. 막힌 끝 없이 모든 파이프가 이어져 수도꼭지의 물이 닿으면 꽃이 활짝 피어요. 수도꼭지에서부터 차례로 맞춰 정해진 횟수 안에 완성하는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Garden Pipes — Free pipe-turning puzzle: join the tap to every flower (30 stages)",
+    description: "Tap the pipe tiles in a garden to turn them. When every pipe joins up with no open ends and the water from the tap reaches them all, the flowers bloom. Work out from the tap and finish within the turns, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "お庭の水路 — パイプを回して蛇口と花をつなぐ無料パズル30面",
+    description: "庭に並んだパイプのタイルをタップして回します。行き止まりなく全部のパイプがつながり、蛇口の水が届けば花がぱっと咲きます。蛇口から順に合わせ、決まった回数で完成させるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "花园水管 — 转动水管把水龙头和花连起来的免费谜题30关",
+    description: "点击花园里的水管砖转动它们。所有水管接通没有断口，水龙头的水流到每一处，花就全部开放。从水龙头开始依次对准，在规定次数内完成。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Tuyaux du jardin — Puzzle gratuit : tournez les tuyaux pour arroser chaque fleur (30 niveaux)",
+    description: "Touchez les tuiles de tuyaux du jardin pour les tourner. Quand tous les tuyaux se raccordent sans extrémité ouverte et que l'eau du robinet les atteint tous, les fleurs s'ouvrent. Partez du robinet et finissez dans la limite, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Tuberías del jardín — Puzle gratis: gira las tuberías para regar cada flor (30 niveles)",
+    description: "Toca las baldosas de tuberías del jardín para girarlas. Cuando todas se conectan sin extremos abiertos y el agua del grifo llega a todas, florecen las flores. Empieza desde el grifo y termina dentro del límite, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["garden-pipes"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="garden-pipes" build="garden-pipes-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/garden-pipes.webp">
+      <GardenPipes client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="garden-pipes" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

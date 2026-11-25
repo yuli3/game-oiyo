@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GumballVolley from "../../components/games/GumballVolley";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "껌볼 발리 — 겨눠 쏘면 껌볼이 줄줄이 튕기는 무료 숫자 블록 게임 30단계",
+    description: "끌어서 겨누고 놓으면 껌볼이 줄줄이 날아가 벽과 블록에 튕겨요. 맞을 때마다 블록 숫자가 줄고 0이면 터져요. + 방울로 껌볼을 늘리며, 블록이 계산대에 닿기 전에 모두 터뜨리는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Gumball Volley — Free aim-and-volley block game: bounce gumballs through numbered blocks (30 stages)",
+    description: "Drag to aim and let go: a volley of gumballs flies out, bouncing off the walls and the blocks. Every hit takes one off a block's number; at zero it pops. Grab + bubbles for more gumballs and pop every block before one reaches the counter, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ガムボールボレー — ねらって撃てばガムボールが次々はねる無料の数字ブロックゲーム30面",
+    description: "ドラッグでねらって離すと、ガムボールが次々飛び出して壁やブロックにはね返ります。当たるたびにブロックの数字が減り、0で割れます。+の泡でガムボールを増やし、ブロックがカウンターに届く前に全部割るUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "口香糖连射 — 瞄准发射、口香糖球连连反弹的免费数字方块游戏30关",
+    description: "拖动瞄准后松手，口香糖球一个接一个飞出，在墙和方块间反弹。每击中一次方块数字减一，到0就爆开。用+泡泡增加球数，在方块碰到柜台前全部打爆。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Rafale de chewing-gums — Jeu gratuit de salves : faites rebondir les boules sur des blocs numérotés (30 niveaux)",
+    description: "Glissez pour viser et lâchez : une salve de boules de chewing-gum part et rebondit sur les murs et les blocs. Chaque touche retire un au nombre d'un bloc ; à zéro, il éclate. Gagnez des boules avec les bulles + et faites tout éclater avant qu'un bloc touche le comptoir, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Ráfaga de chicles — Juego gratis de ráfagas: haz rebotar chicles entre bloques numerados (30 niveles)",
+    description: "Arrastra para apuntar y suelta: una ráfaga de chicles sale y rebota en paredes y bloques. Cada golpe resta uno al número de un bloque; a cero, revienta. Consigue más chicles con las burbujas + y revienta todo antes de que un bloque llegue al mostrador, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["gumball-volley"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="gumball-volley" build="gumball-volley-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/gumball-volley.webp">
+      <GumballVolley client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="gumball-volley" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
