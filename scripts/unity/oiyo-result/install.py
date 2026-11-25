@@ -156,6 +156,9 @@ BUILDS = {
     "jelly-gates-unity": ("jelly-gates", "JellyGates/Runtime/JellyGatesPlayer.cs", T, "state, starsWon"),
     "upside-dash-unity": ("upside-dash", "UpsideDash/Runtime/UpsideDashPlayer.cs", T, "state, starsWon"),
     "pin-roll-unity": ("pin-roll", "PinRoll/Runtime/PinRollPlayer.cs", T, "state, starsWon"),
+    "garden-pipes-unity": ("garden-pipes", "GardenPipes/Runtime/GardenPipesPlayer.cs", T, "state, starsWon"),
+    "gumball-volley-unity": ("gumball-volley", "GumballVolley/Runtime/GumballVolleyPlayer.cs", T, "state, starsWon"),
+    "boing-up-unity": ("boing-up", "BoingUp/Runtime/BoingUpPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."
