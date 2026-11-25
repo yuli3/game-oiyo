@@ -1,0 +1,37 @@
+{
+ "frog": {
+  "palette": {
+   "c": "#ffffff",
+   "w": "#ffffff",
+   "k": "#212529",
+   "d": "#00000033",
+   "p": "#ff8787"
+  },
+  "rows": [
+   ".ww....ww.",
+   "wkwc..cwkw",
+   "cwwccccwwc",
+   "cccccccccc",
+   "cpccccccpc",
+   ".ckkkkkkc.",
+   "..cccccc..",
+   ".cc.dd.cc."
+  ]
+ },
+ "pad": {
+  "palette": {
+   "g": "#69db7c",
+   "d": "#2f9e44",
+   "l": "#b2f2bb"
+  },
+  "rows": [
+   "..gggggg..",
+   ".gglggggg.",
+   "gglgggg.gg",
+   "gggggg..dg",
+   "ggggggd..g",
+   ".gggggggg.",
+   "..dddddd.."
+  ]
+ }
+}

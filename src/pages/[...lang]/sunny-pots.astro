@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SunnyPots from "../../components/games/SunnyPots";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "햇살 화분 — 화분을 밀어 햇살 자리에 놓는 무료 밀기 퍼즐 30단계",
+    description: "작은 정원사가 햇살 드는 방을 정리해요. 화분을 밀어 노란 햇살 자리에 모두 올리면 꽃이 활짝 피어요. 화분은 밀기만 되고, 막히면 몇 걸음이든 되돌릴 수 있는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Sunny Pots — Free cozy push-block puzzle: push every pot into the sun (30 stages)",
+    description: "A little gardener tidies a sunroom. Push every flower pot onto a patch of sun and the flowers bloom. Pots only push, never pull, and you can undo as many steps as you like, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "日なたの鉢 — 鉢を押して日なたに置く無料押しパズル30面",
+    description: "小さな庭師が日当たりのいい部屋を片付けます。鉢を押して黄色い日なたに全部置くと花がいっせいに咲きます。鉢は押すだけ、つまったら何歩でももどせるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "阳光花盆 — 把花盆推到阳光里的免费推箱谜题30关",
+    description: "小园丁在整理洒满阳光的房间。把花盆都推到黄色阳光格上，花就会盛开。花盆只能推不能拉，卡住了想退几步都行。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Pots au soleil — Puzzle cosy gratuit : poussez chaque pot au soleil (30 niveaux)",
+    description: "Un petit jardinier range une véranda. Poussez chaque pot sur une tache de soleil et les fleurs s'ouvrent. Les pots se poussent sans se tirer, et vous pouvez annuler autant de pas que vous voulez, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Macetas al sol — Puzle acogedor gratis: empuja cada maceta al sol (30 niveles)",
+    description: "Un pequeño jardinero ordena una galería soleada. Empuja cada maceta a una mancha de sol y las flores se abren. Las macetas solo se empujan, nunca se tiran, y puedes deshacer tantos pasos como quieras, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["sunny-pots"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="sunny-pots" build="sunny-pots-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/sunny-pots.webp">
+      <SunnyPots client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="sunny-pots" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

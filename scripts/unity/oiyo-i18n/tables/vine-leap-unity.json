@@ -1,0 +1,156 @@
+{
+"Across with {0} bananas": [
+"바나나 {0}개를 따며 건넜어요",
+"バナナ{0}本をとって渡った",
+"Cruzó con {0} plátanos",
+"摘了 {0} 根香蕉过河",
+"Traversé avec {0} bananes"
+],
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Bananas {0}": [
+"바나나 {0}",
+"バナナ {0}",
+"Plátanos {0}",
+"香蕉 {0}",
+"Bananes {0}"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Hold to grab the nearest vine ahead and swing; let go to fly. Leap from vine to vine across the river to the far bank, picking bananas on the way.": [
+"누르고 있으면 앞쪽에서 가장 가까운 덩굴을 잡고 그네를 타요. 떼면 날아가요. 덩굴에서 덩굴로 강을 건너 건너편 둑까지 가며 바나나를 따요.",
+"押している間、前でいちばん近いつるをつかんでゆれます。離すと飛びます。つるからつるへ川を渡って向こう岸まで、バナナをとりながら進もう。",
+"Mantén pulsado para agarrar la liana más cercana por delante y columpiarte; suelta para volar. Salta de liana en liana sobre el río hasta la otra orilla, cogiendo plátanos.",
+"按住就抓住前方最近的藤蔓荡起来，松手就飞出去。从一根藤蔓跳到另一根，过河到对岸，顺路摘香蕉。",
+"Maintenez pour attraper la liane la plus proche devant et vous balancer ; lâchez pour voler. Passez de liane en liane jusqu'à l'autre rive en cueillant des bananes."
+],
+"Hold to swing, let go to fly!": [
+"누르면 매달리고, 떼면 날아가요!",
+"押してぶら下がり、離して飛ぼう！",
+"¡Mantén para columpiarte, suelta para volar!",
+"按住就荡，松手就飞！",
+"Maintenez pour vous balancer, lâchez pour voler !"
+],
+"Made it to the far bank!": [
+"건너편 강둑에 도착!",
+"向こう岸に着いた！",
+"¡En la otra orilla!",
+"到达对岸了！",
+"Sur l'autre rive !"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Out of hearts": [
+"하트를 다 잃었어요",
+"ハートがなくなった",
+"Sin corazones",
+"爱心用完了",
+"Plus de cœurs"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Tap to leap": [
+"눌러서 뛰어요",
+"タップでジャンプ",
+"Toca para saltar",
+"点击起跳",
+"Touchez pour sauter"
+],
+"Vine Leap": [
+"덩굴 도약",
+"つるジャンプ",
+"Salto de liana",
+"藤蔓飞跃",
+"Saut de liane"
+],
+"Vines {0}": [
+"덩굴 {0}개",
+"つる {0}本",
+"Lianas {0}",
+"藤蔓 {0} 根",
+"Lianes {0}"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+]
+}

@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import LilyLoop from "../../components/games/LilyLoop";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "개구리 한 바퀴 — 개구리를 보내 열매 그림을 먹어 치우는 무료 컨베이어 퍼즐 30단계",
+    description: "색과 숫자가 적힌 개구리를 연잎 길에 보내면 그림 둘레를 한 바퀴 돌며 보이는 자기 색 열매를 냠냠 먹어요. 배가 덜 찬 개구리는 기다리는 자리로. 순서를 잘 골라 그림을 다 먹는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Lily Loop — Free conveyor colour puzzle: send frogs around to eat the berry picture (30 stages)",
+    description: "Send a frog with a colour and a number onto the lily-pad loop, and it rides once around the picture, eating the berries of its colour it can see. Still-hungry frogs wait on a pad. Pick the order and eat the whole picture, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "カエルのひとまわり — カエルを送って実の絵を食べつくす無料コンベアパズル30面",
+    description: "色と数字のついたカエルをハスの葉の道に送ると、絵のまわりを1周して見える自分の色の実をパクパク。食べ足りないカエルは待ちの葉へ。順番をうまく選んで絵を全部食べるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "青蛙绕一圈 — 派青蛙吃光浆果画的免费传送带谜题30关",
+    description: "把带颜色和数字的青蛙送上荷叶路，它会绕画一圈，吃掉看得到的同色浆果；没吃饱的青蛙去等待的荷叶上。选好顺序把整幅画吃光。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "La ronde des grenouilles — Puzzle de couleurs gratuit : envoyez les grenouilles manger le dessin (30 niveaux)",
+    description: "Envoyez sur le chemin de nénuphars une grenouille avec une couleur et un nombre : elle fait le tour du dessin et mange les baies de sa couleur qu'elle voit. Les affamées attendent sur un nénuphar. Choisissez l'ordre et mangez tout le dessin, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "La vuelta de las ranas — Puzle de colores gratis: envía ranas a comerse el dibujo de bayas (30 niveles)",
+    description: "Envía al camino de nenúfares una rana con un color y un número: da una vuelta al dibujo y se come las bayas de su color que ve. Las que siguen con hambre esperan en un nenúfar. Elige el orden y cómete todo el dibujo, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["lily-loop"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="lily-loop" build="lily-loop-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/lily-loop.webp">
+      <LilyLoop client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="lily-loop" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

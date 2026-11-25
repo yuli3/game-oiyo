@@ -165,6 +165,9 @@ BUILDS = {
     "bakery-shelf-unity": ("bakery-shelf", "BakeryShelf/Runtime/BakeryShelfPlayer.cs", T, "state, starsWon"),
     "chalk-roll-unity": ("chalk-roll", "ChalkRoll/Runtime/ChalkRollPlayer.cs", T, "state, starsWon"),
     "boba-pins-unity": ("boba-pins", "BobaPins/Runtime/BobaPinsPlayer.cs", T, "state, starsWon"),
+    "sunny-pots-unity": ("sunny-pots", "SunnyPots/Runtime/SunnyPotsPlayer.cs", T, "state, starsWon"),
+    "lily-loop-unity": ("lily-loop", "LilyLoop/Runtime/LilyLoopPlayer.cs", T, "state, starsWon"),
+    "vine-leap-unity": ("vine-leap", "VineLeap/Runtime/VineLeapPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."
