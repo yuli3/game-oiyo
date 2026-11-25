@@ -1,0 +1,11 @@
+<linker>
+  <!-- Colliders are added at runtime by GameObject.CreatePrimitive, which the
+       linker cannot see, so engine-code stripping removed BoxCollider/MeshCollider
+       and the player logged "Can't add component ... doesn't exist". -->
+  <assembly fullname="UnityEngine.PhysicsModule">
+    <type fullname="UnityEngine.BoxCollider" preserve="all"/>
+    <type fullname="UnityEngine.SphereCollider" preserve="all"/>
+    <type fullname="UnityEngine.CapsuleCollider" preserve="all"/>
+    <type fullname="UnityEngine.MeshCollider" preserve="all"/>
+  </assembly>
+</linker>

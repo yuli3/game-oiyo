@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ChalkRoll from "../../components/games/ChalkRoll";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "분필 굴림길 — 선 하나로 구슬을 양동이에 넣는 무료 물리 퍼즐 30단계",
+    description: "칠판에 분필로 선 하나를 긋고 손을 떼면 유리구슬이 떨어져 선을 따라 굴러가요. 압정과 선반을 피해 작은 양동이에 넣으면 성공! 분필을 아낄수록 별이 많은 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Chalk Roll — Free draw-a-line physics puzzle: roll the marble into the pail (30 stages)",
+    description: "Draw one chalk line on the blackboard, lift your finger, and the glass marble drops and rolls along it. Miss the thumbtacks and ledges and land it in the little pail; the less chalk, the more stars. A Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "チョークころころ — 線1本でビー玉をバケツに入れる無料物理パズル30面",
+    description: "黒板にチョークで線を1本引いて指を離すと、ビー玉が落ちて線の上を転がります。画びょうや棚をよけて小さなバケツに入れば成功！チョークを節約するほど星が増えるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "粉笔滚珠 — 一条线把弹珠送进小桶的免费物理谜题30关",
+    description: "在黑板上用粉笔画一条线，松手后玻璃弹珠就会落下，沿着线滚动。避开图钉和横板，把它送进小桶就成功！粉笔用得越少星越多。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Bille à la craie — Puzzle physique gratuit : tracez une ligne pour mener la bille au seau (30 niveaux)",
+    description: "Tracez une ligne à la craie sur le tableau, levez le doigt, et la bille de verre tombe et roule dessus. Évitez punaises et rebords et posez-la dans le petit seau ; moins de craie, plus d'étoiles. Un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Canica de tiza — Puzle de física gratis: dibuja una línea y lleva la canica al cubito (30 niveles)",
+    description: "Dibuja una línea de tiza en la pizarra, levanta el dedo y la canica de cristal cae y rueda por ella. Esquiva chinchetas y repisas y métela en el cubito; cuanta menos tiza, más estrellas. Un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["chalk-roll"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="chalk-roll" build="chalk-roll-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/chalk-roll.webp">
+      <ChalkRoll client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="chalk-roll" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

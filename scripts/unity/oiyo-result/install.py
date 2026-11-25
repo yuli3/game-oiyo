@@ -162,6 +162,9 @@ BUILDS = {
     "snack-swing-unity": ("snack-swing", "SnackSwing/Runtime/SnackSwingPlayer.cs", T, "state, starsWon"),
     "sun-moon-unity": ("sun-moon", "SunMoon/Runtime/SunMoonPlayer.cs", T, "state, starsWon"),
     "carton-flip-unity": ("carton-flip", "CartonFlip/Runtime/CartonFlipPlayer.cs", T, "state, starsWon"),
+    "bakery-shelf-unity": ("bakery-shelf", "BakeryShelf/Runtime/BakeryShelfPlayer.cs", T, "state, starsWon"),
+    "chalk-roll-unity": ("chalk-roll", "ChalkRoll/Runtime/ChalkRollPlayer.cs", T, "state, starsWon"),
+    "boba-pins-unity": ("boba-pins", "BobaPins/Runtime/BobaPinsPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

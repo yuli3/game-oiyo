@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BakeryShelf from "../../components/games/BakeryShelf";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "빵집 진열대 — 같은 빵 셋을 모아 파는 무료 정렬 퍼즐 30단계",
+    description: "뒤죽박죽 빵집 선반에서 빵을 옮겨 같은 빵 셋을 한 선반에 모으면 바로 팔려요. 앞줄이 비면 뒤 쟁반이 나와요. 정해진 이동 안에 모두 파는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Bakery Shelf — Free triple-sort puzzle: line up three of a kind to sell them (30 stages)",
+    description: "Move breads between the bakery's muddled shelves; three of the same on one shelf sell at once, and the tray behind slides forward. Sell everything within the moves, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "パン屋の棚 — 同じパンを3つそろえて売る無料仕分けパズル30面",
+    description: "ごちゃごちゃのパン屋の棚でパンを動かし、同じパンを3つ1つの棚にそろえるとすぐ売れます。前が空くと後ろのトレーが出てきます。決まった移動で全部売るUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "面包店货架 — 凑齐三个相同面包卖掉的免费整理谜题30关",
+    description: "在乱糟糟的面包店货架之间移动面包，同一层凑齐三个相同的就会立刻卖掉，前排空了后面的托盘就会补上。在规定步数内全部卖光。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "L'étagère du boulanger — Puzzle de tri gratuit : alignez trois pains pareils pour les vendre (30 niveaux)",
+    description: "Déplacez les pains entre les étagères en désordre de la boulangerie : trois pareils sur une étagère se vendent aussitôt, et le plateau de derrière avance. Vendez tout dans la limite de coups, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "La estantería de la panadería — Puzle de ordenar gratis: junta tres panes iguales para venderlos (30 niveles)",
+    description: "Mueve los panes entre los estantes revueltos de la panadería: tres iguales en un estante se venden al momento y la bandeja de detrás avanza. Véndelo todo dentro del límite de movimientos, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["bakery-shelf"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="bakery-shelf" build="bakery-shelf-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/bakery-shelf.webp">
+      <BakeryShelf client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="bakery-shelf" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

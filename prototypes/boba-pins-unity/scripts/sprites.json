@@ -1,0 +1,58 @@
+{
+ "brown": {
+  "palette": {
+   "b": "#5c3a1e",
+   "l": "#9c6b3f",
+   "h": "#e6c49a"
+  },
+  "rows": [
+   ".bbb.",
+   "bhlbb",
+   "blbbb",
+   "bbbbb",
+   ".bbb."
+  ]
+ },
+ "white": {
+  "palette": {
+   "w": "#f1f3f5",
+   "s": "#ced4da",
+   "h": "#ffffff"
+  },
+  "rows": [
+   ".www.",
+   "whwws",
+   "wwwws",
+   "wwwss",
+   ".sss."
+  ]
+ },
+ "chili": {
+  "palette": {
+   "r": "#e03131",
+   "d": "#a51111",
+   "g": "#2f9e44"
+  },
+  "rows": [
+   "...g.",
+   "..rg.",
+   ".rrr.",
+   "rrrd.",
+   ".rd.."
+  ]
+ },
+ "knob": {
+  "palette": {
+   "y": "#fcc419",
+   "o": "#e67700",
+   "w": "#fff3bf"
+  },
+  "rows": [
+   ".yyy.",
+   "ywyyo",
+   "yyyyo",
+   "yyyoo",
+   ".ooo."
+  ]
+ }
+}

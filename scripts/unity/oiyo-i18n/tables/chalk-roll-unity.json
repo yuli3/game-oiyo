@@ -1,0 +1,156 @@
+{
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Chalk Roll": [
+"분필 굴림길",
+"チョークころころ",
+"Canica de tiza",
+"粉笔滚珠",
+"Bille à la craie"
+],
+"Chalk {0}%": [
+"분필 {0}%",
+"チョーク {0}%",
+"Tiza {0} %",
+"粉笔 {0}%",
+"Craie {0} %"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Draw a line, then lift to roll!": [
+"선을 긋고 손을 떼면 굴러가요!",
+"線を引いて離すと転がるよ！",
+"¡Dibuja una línea y suelta para rodar!",
+"画条线，松手就滚！",
+"Tracez une ligne, levez pour rouler !"
+],
+"Draw one chalk line. When you lift your finger the marble drops and rolls along it. Get it into the pail, off the thumbtacks. The less chalk you use, the more stars.": [
+"분필 선을 한 번 그어요. 손을 떼면 구슬이 떨어져 선을 따라 굴러가요. 압정을 피해 양동이에 넣어요. 분필을 아낄수록 별이 많아요.",
+"チョークの線を1本引こう。指を離すとビー玉が落ちて線の上を転がります。画びょうをよけてバケツへ。チョークを節約するほど星が増えます。",
+"Dibuja una línea de tiza. Al levantar el dedo la canica cae y rueda por ella. Métela en el cubito sin tocar las chinchetas. Cuanta menos tiza, más estrellas.",
+"画一条粉笔线。松手后弹珠落下，沿着线滚动。避开图钉把它送进小桶。粉笔用得越少星越多。",
+"Tracez une ligne à la craie. Quand vous levez le doigt, la bille tombe et roule dessus. Mettez-la dans le seau sans toucher les punaises. Moins de craie, plus d'étoiles."
+],
+"In with {0}% of the chalk": [
+"분필 {0}%로 넣었어요",
+"チョーク{0}%で入れた",
+"Dentro con el {0} % de la tiza",
+"用了 {0}% 的粉笔",
+"Dedans avec {0} % de la craie"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Plop, it's in!": [
+"쏙, 들어갔어요!",
+"ぽとん、入った！",
+"¡Plof, dentro!",
+"扑通，进去了！",
+"Plouf, dedans !"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Tap to start": [
+"탭해서 시작",
+"タップでスタート",
+"Toca para empezar",
+"点击开始",
+"Touchez pour commencer"
+],
+"The marble got away": [
+"구슬이 빠져나갔어요",
+"ビー玉が外れた",
+"La canica se escapó",
+"弹珠滚走了",
+"La bille s'est échappée"
+],
+"Thumbtacks {0}": [
+"압정 {0}개",
+"画びょう {0}個",
+"Chinchetas {0}",
+"图钉 {0} 个",
+"Punaises {0}"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+]
+}
