@@ -98,6 +98,9 @@ import * as cartonGame from "../../src/lib/games/carton-flip";
 import * as shelfGame from "../../src/lib/games/bakery-shelf";
 import * as chalkGame from "../../src/lib/games/chalk-roll";
 import * as bobaGame from "../../src/lib/games/boba-pins";
+import * as potsGame from "../../src/lib/games/sunny-pots";
+import * as lilyGame from "../../src/lib/games/lily-loop";
+import * as vineGame from "../../src/lib/games/vine-leap";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -821,4 +824,26 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = bobaGame.BOBA_STAGES.map((st) => `        new Level { grid = ${iarr(st.grid)}, pinLen = ${iarr(st.pins.map((p) => p.length))}, pinCells = ${iarr(st.pins.flat())}, plan = ${iarr(st.plan)}, par = ${st.par} },`);
   write("boba-pins", "BobaPins", `    public struct Level { public int[] grid, pinLen, pinCells, plan; public int par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Sunny Pots: the room's size and cells (1 wall, 0 floor) row by row, the patches of sun, the pots, the gardener, the
+// planned steps (0 up, 1 right, 2 down, 3 left) and par
+{
+  const rows = potsGame.POTS_STAGES.map((st) => `        new Level { w = ${st.w}, h = ${st.h}, cells = ${iarr(st.cells)}, marks = ${iarr(st.marks)}, pots = ${iarr(st.pots)}, player = ${st.player}, plan = ${iarr(st.plan)}, par = ${st.par} },`);
+  write("sunny-pots", "SunnyPots", `    public struct Level { public int w, h; public int[] cells, marks, pots; public int player; public int[] plan; public int par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Lily Loop: the mosaic's size and colour per cell (−1 empty), the colours as r, g, b (0–1), each line's frogs as
+// (colour, berries) with how many each line has, the waiting pads, the planned sends (a line, or 100 + pad) and par
+{
+  const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const rows = lilyGame.LILY_STAGES.map((st) => `        new Level { rows = ${st.rows}, cols = ${st.cols}, cells = ${iarr(st.cells)}, colors = ${arr(st.colors.flatMap(rgb))}, laneLen = ${iarr(st.lanes.map((l) => l.length))}, frogs = ${iarr(st.lanes.flat(2))}, pads = ${st.pads}, plan = ${iarr(st.plan)}, par = ${st.par} },`);
+  write("lily-loop", "LilyLoop", `    public struct Level { public int rows, cols; public int[] cells; public float[] colors; public int[] laneLen, frogs; public int pads; public int[] plan; public int par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Vine Leap: the vines and bananas as (x, y), the far bank's x, and the plan per vine as (hold at, let go at, seconds
+// after the top of the leap, swing angle at the let-go)
+{
+  const rows = vineGame.VINE_STAGES.map((st) => `        new Level { hooks = ${arr(st.hooks.flat())}, bananas = ${arr(st.bananas.flat())}, goal = ${n(st.goal)}, plan = ${arr(st.plan.flat())} },`);
+  write("vine-leap", "VineLeap", `    public struct Level { public float[] hooks, bananas; public float goal; public float[] plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
