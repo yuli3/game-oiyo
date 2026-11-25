@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BobaPins from "../../components/games/BobaPins";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "버블티 핀 뽑기 — 핀을 순서대로 뽑아 버블티를 만드는 무료 퍼즐 30단계",
+    description: "금색 핀을 뽑으면 받치던 펄이 떨어져요. 하얀 펄은 갈색 펄에 닿아야 물들고, 고추는 옆 통으로 보내야 해요. 순서를 잘 골라 모든 펄을 갈색으로 컵에 담는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Boba Pins — Free pull-the-pin puzzle: make the perfect bubble tea (30 stages)",
+    description: "Pull a golden pin and the pearls it held drop. White pearls only turn brown when a brown one touches them, and chili has to go to the side bins first. Pick the order and get every pearl into the cup, all brown, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "タピオカピン抜き — ピンを順に抜いてタピオカミルクティーを作る無料パズル30面",
+    description: "金色のピンを抜くと支えていたタピオカが落ちます。白いタピオカは茶色にふれないと染まらず、唐辛子は先に横の箱へ。順番をうまく選んで全部茶色にしてカップへ入れるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "珍珠奶茶拔针 — 按顺序拔针做出珍珠奶茶的免费谜题30关",
+    description: "拔掉金色的针，针托着的珍珠就会落下。白珍珠要碰到棕色珍珠才会染色，辣椒得先送进旁边的桶。选好顺序，把所有珍珠都变成棕色装进杯子。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Perles et goupilles — Puzzle gratuit : tirez les goupilles dans l'ordre pour un bubble tea parfait (30 niveaux)",
+    description: "Tirez une goupille dorée et les perles qu'elle retenait tombent. Les perles blanches ne brunissent qu'au contact d'une brune, et le piment doit partir d'abord dans les bacs. Choisissez l'ordre et mettez toutes les perles dans le gobelet, toutes brunes, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Perlas y pasadores — Puzle gratis: saca los pasadores en orden para un té de burbujas perfecto (30 niveles)",
+    description: "Saca un pasador dorado y caen las perlas que sostenía. Las perlas blancas solo se vuelven marrones al tocar una marrón, y la guindilla tiene que ir antes a los cubos. Elige el orden y mete todas las perlas en el vaso, todas marrones, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["boba-pins"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="boba-pins" build="boba-pins-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/boba-pins.webp">
+      <BobaPins client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="boba-pins" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
