@@ -2944,7 +2944,9 @@ const cardJsonLd = {
   <section class="border-b-2 border-foreground bg-accent pt-5 pb-6 sm:pt-10 sm:pb-8">
     <div class="mx-auto max-w-6xl px-4">
       <p class="text-xs font-black text-primary">{h.eyebrow}</p>
-      <h1 class="mt-1 text-2xl font-black tracking-tight text-foreground sm:text-4xl">{h.title}</h1>
+      {/* Phone widths: the title takes two lines once the web font is in (one with the fallback in some
+          locales), so it keeps room for both from the first paint. Chinese fits on one. */}
+      <h1 class:list={["mt-1 text-2xl font-black tracking-tight text-foreground sm:text-4xl", locale !== "zh" && "min-h-16 min-[28rem]:min-h-0"]}>{h.title}</h1>
       <p class="mt-1 hidden text-sm text-foreground sm:block">{h.sub}</p>
       <form role="search" action={`/${locale}/#all-games`} data-game-search-form class="mt-4 max-w-xl">
         <label for="game-search" class="sr-only">{u.search}</label>

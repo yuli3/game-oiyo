@@ -57,11 +57,13 @@ const data = JSON.stringify({ locale, copy, entries }).replace(/</g, "\\u003c");
         <span id="todays-game-label" class="text-xs font-black text-primary">📅 {copy.label}</span>
         <span data-todays-name class="truncate text-lg font-black text-foreground">{buildPick.name}</span>
         <span class="text-xs text-muted-foreground">{copy.refresh}</span>
-        <span data-todays-streak hidden class="flex flex-wrap items-center gap-x-2 text-xs font-bold text-foreground">
+        {/* The streak and tomorrow lines are filled in after load: they keep their room from the first paint
+            (invisible, not hidden), so the card doesn't grow. */}
+        <span data-todays-streak class="invisible flex min-h-4 flex-wrap items-center gap-x-2 text-xs font-bold text-foreground">
           <span data-todays-current></span>
           <span data-todays-best class="text-muted-foreground"></span>
         </span>
-        <span data-todays-tomorrow hidden class="text-xs text-muted-foreground">{copy.tomorrow}</span>
+        <span data-todays-tomorrow class="invisible text-xs text-muted-foreground">{copy.tomorrow}</span>
       </span>
       <span class="hidden min-h-11 shrink-0 items-center self-center rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground sm:inline-flex">{copy.play}</span>
     </a>
@@ -106,8 +108,8 @@ const data = JSON.stringify({ locale, copy, entries }).replace(/</g, "\\u003c");
     const best = card.querySelector("[data-todays-best]");
     if (current) current.textContent = `🔥 ${fill(copy.streak, streak.currentStreak)}`;
     if (best) best.textContent = fill(copy.best, streak.maxStreak);
-    card.querySelector<HTMLElement>("[data-todays-streak]")?.removeAttribute("hidden");
-    card.querySelector<HTMLElement>("[data-todays-tomorrow]")?.removeAttribute("hidden");
+    card.querySelector<HTMLElement>("[data-todays-streak]")?.classList.remove("invisible");
+    card.querySelector<HTMLElement>("[data-todays-tomorrow]")?.classList.remove("invisible");
 
     card.addEventListener("click", () => {
       const analytics = window as Window & { gtag?: (...args: unknown[]) => void };
