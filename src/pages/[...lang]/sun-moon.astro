@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SunMoon from "../../components/games/SunMoon";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "해달 타일 — 해와 달을 반반씩 채우는 무료 논리 퍼즐 30단계",
+    description: "칸을 눌러 해와 달을 채워요. 모든 줄에 해와 달이 같은 수, 같은 그림은 셋 연달아 안 되고, =와 ×는 같고 다름을 알려 줘요. 4×4에서 8×8까지, 칸 하나씩 논리로 풀리는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Sun & Moon — Free logic puzzle: half suns, half moons, never three in a row (30 stages)",
+    description: "Tap squares to fill in suns and moons. Every line holds as many of each, no three alike sit in a row, and = and × clues say which squares match. From 4 × 4 to 8 × 8, every grid can be worked out square by square, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "太陽と月のタイル — 太陽と月を半分ずつ埋める無料論理パズル30面",
+    description: "マスをタップして太陽と月を入れます。どの列も同じ数ずつ、同じ絵は3つ続けてはだめ、=と×が同じかちがうかを教えてくれます。4×4から8×8まで、1マスずつ論理で解けるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "日月方格 — 太阳月亮各占一半的免费逻辑谜题30关",
+    description: "点格子填入太阳和月亮。每一行列两者数量相同，同一图案不能连续三个，= 和 × 告诉你两格是否相同。从 4×4 到 8×8，每一格都能靠逻辑推出来。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Soleil et Lune — Puzzle de logique gratuit : moitié soleils, moitié lunes, jamais trois à la suite (30 niveaux)",
+    description: "Touchez les cases pour placer soleils et lunes. Chaque ligne en compte autant de chaque, jamais trois pareils à la suite, et les indices = et × disent quelles cases se ressemblent. De 4 × 4 à 8 × 8, chaque grille se déduit case par case, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Sol y Luna — Puzle lógico gratis: mitad soles, mitad lunas, nunca tres seguidos (30 niveles)",
+    description: "Toca las casillas para poner soles y lunas. Cada línea tiene tantos de cada, nunca tres iguales seguidos, y las pistas = y × dicen qué casillas coinciden. De 4 × 4 a 8 × 8, cada cuadrícula se deduce casilla a casilla, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["sun-moon"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="sun-moon" build="sun-moon-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/sun-moon.webp">
+      <SunMoon client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="sun-moon" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
