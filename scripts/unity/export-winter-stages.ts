@@ -89,6 +89,9 @@ import * as poolGame from "../../src/lib/games/pocket-shot";
 import * as jellyGame from "../../src/lib/games/jelly-gates";
 import * as upsideGame from "../../src/lib/games/upside-dash";
 import * as pinGame from "../../src/lib/games/pin-roll";
+import * as pipesGame from "../../src/lib/games/garden-pipes";
+import * as volleyGame from "../../src/lib/games/gumball-volley";
+import * as boingGame from "../../src/lib/games/boing-up";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -751,4 +754,24 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = pinGame.PIN_STAGES.map((st) => `        new Level { frames = ${st.frames}, posts = ${arr(st.posts.flat())}, need = ${st.need}, par = ${st.par} },`);
   write("pin-roll", "PinRoll", `    public struct Level { public int frames; public float[] posts; public int need, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Garden Pipes: the garden, the tap's tile, each tile's openings in the answer (up 1, right 2, down 4, left 8),
+// the quarter turns each starts away from it, par and the turn limit
+{
+  const rows = pipesGame.PIPES_STAGES.map((st) => `        new Level { cols = ${st.cols}, rows = ${st.rows}, source = ${st.source}, solved = ${iarr(st.solved)}, start = ${iarr(st.start)}, par = ${st.par}, limit = ${st.limit} },`);
+  write("garden-pipes", "GardenPipes", `    public struct Level { public int cols, rows, source; public int[] solved, start; public int par, limit; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Gumball Volley: the rows to come, 7 cells each (0 empty, -1 a + bubble, else a block's number), rows on the board at
+// the start, gumballs to start with, par
+{
+  const rows = volleyGame.VOLLEY_STAGES.map((st) => `        new Level { cells = ${iarr(st.rows.flat())}, start = ${st.start}, balls = ${st.balls}, par = ${st.par} },`);
+  write("gumball-volley", "GumballVolley", `    public struct Level { public int[] cells; public int start, balls, par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Boing Up: leaves as (x, height, kind, sway, sway speed), berries as (x, height), the planned climb, the top, par
+{
+  const rows = boingGame.BOING_STAGES.map((st) => `        new Level { leaves = ${arr(st.leaves.flatMap((l) => [l.x, l.h, l.kind, l.amp, l.rate]))}, berries = ${arr(st.berries.flatMap((b) => [b.x, b.h]))}, path = ${iarr(st.path)}, top = ${n(st.top)}, par = ${st.par} },`);
+  write("boing-up", "BoingUp", `    public struct Level { public float[] leaves, berries; public int[] path; public float top; public int par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }

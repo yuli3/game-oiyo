@@ -1,0 +1,80 @@
+{
+ "bean": {
+  "palette": {
+   "g": "#51cf66",
+   "d": "#2b8a3e",
+   "w": "#ffffff",
+   "k": "#212529",
+   "p": "#ff8787"
+  },
+  "rows": [
+   "...dd...",
+   "..dggd..",
+   ".dggggd.",
+   "dgwkgwkd",
+   "dggggggd",
+   "dgpggpgd",
+   ".dggggd.",
+   "..dddd.."
+  ]
+ },
+ "leaf": {
+  "palette": {
+   "g": "#69db7c",
+   "d": "#2f9e44",
+   "l": "#b2f2bb"
+  },
+  "rows": [
+   "..dddddddddddd..",
+   ".dgglllggggggggd",
+   "dggggggddggggggd",
+   ".dddddddddddddd."
+  ]
+ },
+ "wilt": {
+  "palette": {
+   "y": "#d9a066",
+   "d": "#8a5a2b",
+   "l": "#f1e3c0"
+  },
+  "rows": [
+   "..dddddddddddd..",
+   ".dyylllyyyyyyyyd",
+   "dyyyyyyddyyyyyyd",
+   ".dddddddddddddd."
+  ]
+ },
+ "shroom": {
+  "palette": {
+   "r": "#e03131",
+   "w": "#fff5f5",
+   "s": "#f1e3c0",
+   "d": "#8a5a2b"
+  },
+  "rows": [
+   "...rrrrrrrrrr...",
+   ".rrwwrrrrrwwrrr.",
+   "rrrwwrrrrrwwrrrr",
+   "rrrrrrrrrrrrrrrr",
+   ".....ssssss.....",
+   ".....sddsss....."
+  ]
+ },
+ "berry": {
+  "palette": {
+   "p": "#9c36b5",
+   "l": "#da77f2",
+   "g": "#2f9e44"
+  },
+  "rows": [
+   "...g....",
+   "..gg....",
+   ".pppp...",
+   "plpppp..",
+   "pppppp..",
+   ".pppp...",
+   "........",
+   "........"
+  ]
+ }
+}

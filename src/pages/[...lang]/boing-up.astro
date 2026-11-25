@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BoingUp from "../../components/games/BoingUp";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "뽀잉 점프 — 저절로 튀는 콩을 좌우로 이끌어 꼭대기까지 오르는 무료 점프 게임 30단계",
+    description: "통통 튀는 콩이 콩나무 잎을 밟고 저절로 올라가요. 손가락으로 좌우만 이끌어요. 흔들리는 잎, 한 번 밟으면 떨어지는 시든 잎, 높이 튕기는 버섯을 지나 열매를 따며 꼭대기까지 가는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Boing Up — Free bounce-upward climber: steer a springy bean to the top (30 stages)",
+    description: "A springy bean bounces up a beanstalk by itself; you only steer it left and right. Past drifting leaves, withering leaves that drop after one bounce and mushrooms that spring it high, pick berries all the way to the top, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "ぽよんジャンプ — 勝手に跳ねる豆を左右に導いててっぺんまで登る無料ジャンプゲーム30面",
+    description: "ぽよんと弾む豆が豆の木の葉を踏んでひとりでに登ります。指で左右だけ導きます。ゆれる葉、一度踏むと落ちるしおれた葉、高く弾むキノコを越え、実をとりながらてっぺんまで行くUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "弹弹豆向上跳 — 带着自己弹跳的豆子爬到顶端的免费跳跃游戏30关",
+    description: "弹弹的豆子踩着豆茎的叶子自己往上跳，你只要用手指左右引导。越过晃动的叶子、踩一次就掉的枯叶和弹得很高的蘑菇，一路摘果子爬到顶端。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Haricot rebondissant — Jeu gratuit de grimpe à rebonds : guidez un haricot jusqu'en haut (30 niveaux)",
+    description: "Un haricot rebondissant grimpe tout seul le long d'une tige ; vous le guidez seulement à gauche et à droite. Entre feuilles flottantes, feuilles fanées qui tombent après un rebond et champignons qui propulsent, cueillez des baies jusqu'au sommet, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Judía saltarina — Juego gratis de saltos: guía una judía hasta la cima (30 niveles)",
+    description: "Una judía saltarina sube sola por una mata; tú solo la diriges a izquierda y derecha. Entre hojas que flotan, hojas marchitas que caen tras un rebote y setas que la lanzan alto, recoge bayas hasta la cima, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["boing-up"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="boing-up" build="boing-up-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/boing-up.webp">
+      <BoingUp client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="boing-up" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>
