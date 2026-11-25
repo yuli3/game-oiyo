@@ -1,0 +1,55 @@
+---
+import UnityMainShell from "../../components/games/UnityMainShell.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import VineLeap from "../../components/games/VineLeap";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "덩굴 도약 — 꾹 눌러 매달리고 떼서 날아가는 무료 원버튼 스윙 게임 30단계",
+    description: "누르고 있으면 원숭이가 가장 가까운 덩굴을 잡고 그네를 타고, 떼면 휘익 날아가요. 덩굴에서 덩굴로 강을 건너며 바나나를 따는 Unity 3D 본편과 빠른 플레이 30단계.",
+  },
+  en: {
+    title: "Vine Leap — Free one-button swing game: hold to swing, let go to fly (30 stages)",
+    description: "Hold and the monkey grabs the nearest vine and swings; let go and it flies. Leap from vine to vine across the river, picking bananas out of the air, in a Unity 3D main game plus quick play, 30 stages.",
+  },
+  ja: {
+    title: "つるジャンプ — 押してぶら下がり離して飛ぶ無料ワンボタンスイング30面",
+    description: "押している間サルがいちばん近いつるをつかんでゆれ、離すとびゅーんと飛びます。つるからつるへ川を渡りながらバナナをとるUnity 3D本編とクイックプレイの30ステージ。",
+  },
+  zh: {
+    title: "藤蔓飞跃 — 按住荡、松手飞的免费单键荡秋千游戏30关",
+    description: "按住时小猴子会抓住最近的藤蔓荡起来，松手就飞出去。从一根藤蔓跳到另一根，过河时顺手摘香蕉。Unity 3D 正式版和快速玩共30关。",
+  },
+  fr: {
+    title: "Saut de liane — Jeu gratuit à un bouton : maintenez pour vous balancer, lâchez pour voler (30 niveaux)",
+    description: "Maintenez et le singe attrape la liane la plus proche et se balance ; lâchez et il s'envole. Passez de liane en liane au-dessus de la rivière en cueillant des bananes en plein vol, dans un jeu Unity 3D et une version rapide, 30 niveaux.",
+  },
+  es: {
+    title: "Salto de liana — Juego gratis de un botón: mantén para columpiarte, suelta para volar (30 niveles)",
+    description: "Mantén pulsado y el mono agarra la liana más cercana y se columpia; suelta y sale volando. Salta de liana en liana sobre el río cogiendo plátanos al vuelo, en un juego Unity 3D y una versión rápida, 30 niveles.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["vine-leap"]}>
+  <div class="mx-auto max-w-7xl px-2 py-2 sm:px-4 sm:py-6">
+    <UnityMainShell slug="vine-leap" build="vine-leap-unity" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} poster="/games/unity-posters/vine-leap.webp">
+      <VineLeap client:visible locale={locale} />
+    </UnityMainShell>
+    <div class="mx-auto mt-8 max-w-3xl px-4">
+      <GameGuide slug="vine-leap" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
+  </div>
+</BaseLayout>

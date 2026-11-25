@@ -15,22 +15,22 @@ export async function getStaticPaths() {
 const { locale } = Astro.props as { locale: Locale };
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 297종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 297종." },
-  en: { title: "OIYO Arcade — 297 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 297 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム297種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム297種。" },
-  zh: { title: "OIYO 街机 — 无需安装的297款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，297款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 297 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 297 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 297 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 297 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 300종", description: "체스·스도쿠·워들부터 픽셀 도트 레트로 아케이드까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 300종." },
+  en: { title: "OIYO Arcade — 300 free browser games, no install", description: "Chess, Sudoku, Wordle, and retro pixel dot games: 300 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム300種", description: "チェス・数独・ワードルからドット絵レトロゲームまで、ブラウザですぐ遊べる無料ゲーム300種。" },
+  zh: { title: "OIYO 街机 — 无需安装的300款免费游戏", description: "从国际象棋、数独、猜词到像素复古街机作品，300款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 300 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations pixel rétro : 300 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 300 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y juegos pixel art retro: 300 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 297종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "297 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム297種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的297款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "297 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "297 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 300종", sub: "보드·카드·퍼즐·오리지널 레트로 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "300 free games, right in your browser", sub: "Board, card, puzzle, and retro pixel arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム300種", sub: "ボード・カード・パズル・レトロドット絵作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的300款免费游戏", sub: "棋类、纸牌、益智和像素复古街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "300 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et jeux pixel rétro, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "300 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones retro pixel, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -344,6 +344,9 @@ const GAMES: Game[] = [
   { slug: "garden-pipes", emoji: "🌷", cat: "puzzle", name: { ko: "정원 물길", en: "Garden Pipes", ja: "お庭の水路", zh: "花园水管", fr: "Tuyaux du jardin", es: "Tuberías del jardín" } },
   { slug: "gumball-volley", emoji: "🍬", cat: "arcade", name: { ko: "껌볼 발리", en: "Gumball Volley", ja: "ガムボールボレー", zh: "口香糖连射", fr: "Rafale de chewing-gums", es: "Ráfaga de chicles" } },
   { slug: "boing-up", emoji: "🌱", cat: "arcade", name: { ko: "뽀잉 점프", en: "Boing Up", ja: "ぽよんジャンプ", zh: "弹弹豆向上跳", fr: "Haricot rebondissant", es: "Judía saltarina" } },
+  { slug: "sunny-pots", emoji: "🪴", cat: "puzzle", name: { ko: "햇살 화분", en: "Sunny Pots", ja: "日なたの鉢", zh: "阳光花盆", fr: "Pots au soleil", es: "Macetas al sol" } },
+  { slug: "lily-loop", emoji: "🐸", cat: "puzzle", name: { ko: "개구리 한 바퀴", en: "Lily Loop", ja: "カエルのひとまわり", zh: "青蛙绕一圈", fr: "La ronde des grenouilles", es: "La vuelta de las ranas" } },
+  { slug: "vine-leap", emoji: "🐒", cat: "arcade", name: { ko: "덩굴 도약", en: "Vine Leap", ja: "つるジャンプ", zh: "藤蔓飞跃", fr: "Saut de liane", es: "Salto de liana" } },
   { slug: "bakery-shelf", emoji: "🥐", cat: "puzzle", name: { ko: "빵집 진열대", en: "Bakery Shelf", ja: "パン屋の棚", zh: "面包店货架", fr: "L'étagère du boulanger", es: "La estantería de la panadería" } },
   { slug: "chalk-roll", emoji: "🖍️", cat: "puzzle", name: { ko: "분필 굴림길", en: "Chalk Roll", ja: "チョークころころ", zh: "粉笔滚珠", fr: "Bille à la craie", es: "Canica de tiza" } },
   { slug: "boba-pins", emoji: "🧋", cat: "puzzle", name: { ko: "버블티 핀 뽑기", en: "Boba Pins", ja: "タピオカピン抜き", zh: "珍珠奶茶拔针", fr: "Perles et goupilles", es: "Perlas y pasadores" } },
@@ -414,6 +417,42 @@ const newReleasesLabel: Record<Locale, { sectionTitle: string; badge: string; su
 const newReleaseLabels = newReleasesLabel[locale] ?? newReleasesLabel.en;
 
 const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; desc: Record<Locale, string> }> = [
+  {
+    slug: "sunny-pots",
+    tag: { ko: "아늑한 밀기 퍼즐", en: "A cozy push-block puzzle", ja: "ほっこり押しパズル", zh: "温馨推箱谜题", fr: "Un puzzle cosy de blocs à pousser", es: "Un puzle acogedor de empujar bloques" },
+    desc: {
+      ko: "화분을 밀어 햇살 자리에 쏙, 막히면 한 걸음 되돌리기",
+      en: "Push the pots into the sun, and undo any step",
+      ja: "鉢を押して日なたへ、つまったら1歩もどす",
+      zh: "把花盆推进阳光里，卡住就退一步",
+      fr: "Poussez les pots au soleil, annulez n'importe quel pas",
+      es: "Empuja las macetas al sol y deshaz cualquier paso",
+    },
+  },
+  {
+    slug: "lily-loop",
+    tag: { ko: "컨베이어 색 지우기 퍼즐", en: "A conveyor colour-clear puzzle", ja: "コンベアで色を消すパズル", zh: "传送带消色谜题", fr: "Un puzzle de couleurs sur tapis roulant", es: "Un puzle de colores en cinta" },
+    desc: {
+      ko: "개구리가 한 바퀴 돌며 같은 색만 냠냠",
+      en: "Each frog rides once around and eats only its colour",
+      ja: "カエルが1周して同じ色だけパクパク",
+      zh: "青蛙绕一圈，只吃同色",
+      fr: "Chaque grenouille fait un tour et ne mange que sa couleur",
+      es: "Cada rana da una vuelta y solo come su color",
+    },
+  },
+  {
+    slug: "vine-leap",
+    tag: { ko: "원버튼 스윙 게임", en: "A one-button swing game", ja: "ワンボタンのスイングゲーム", zh: "单键荡秋千游戏", fr: "Un jeu de balancier à un bouton", es: "Un juego de balanceo de un botón" },
+    desc: {
+      ko: "꾹 누르면 매달리고, 떼면 휘익",
+      en: "Hold to swing, let go to fly",
+      ja: "押せばぶら下がり、離せばびゅーん",
+      zh: "按住就荡，松手就飞",
+      fr: "Maintenez pour vous balancer, lâchez pour voler",
+      es: "Mantén para columpiarte, suelta para volar",
+    },
+  },
   {
     slug: "bakery-shelf",
     tag: { ko: "같은 빵 셋 모으기 정렬 퍼즐", en: "A triple goods-sort puzzle", ja: "同じパンを3つそろえる仕分けパズル", zh: "凑三个相同面包的整理谜题", fr: "Un puzzle de tri par trois", es: "Un puzle de ordenar de tres en tres" },
