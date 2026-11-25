@@ -15,6 +15,6 @@ export default defineConfig({
     // workers/* are separate Wrangler/Workers-runtime projects with their own
     // vitest.config.ts (@cloudflare/vitest-pool-workers) — run via
     // `npm test --prefix workers/<name>`, not swept up here.
-    exclude: [...configDefaults.exclude, "workers/**"],
+    exclude: [...configDefaults.exclude, "workers/**", "jam/**"],
   },
 });

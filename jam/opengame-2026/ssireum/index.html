@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SANDPIT KINGS — Ssireum Showdown</title>
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<canvas id="game" aria-label="Sandpit Kings game canvas"></canvas>
+
+<div id="hud" class="hidden">
+  <div class="side p1">
+    <div class="name" id="p1Name">You</div>
+    <div class="bar"><div class="fill" id="p1Stam"></div></div>
+    <div class="wins" id="p1Wins"></div>
+  </div>
+  <div class="center">
+    <div class="round" id="roundLabel">Round 1</div>
+    <div class="timer" id="timer">30</div>
+  </div>
+  <div class="side p2">
+    <div class="name" id="p2Name">CPU</div>
+    <div class="bar"><div class="fill" id="p2Stam"></div></div>
+    <div class="wins" id="p2Wins"></div>
+  </div>
+  <div class="keys" id="keysHint"></div>
+</div>
+
+<div id="screen-title" class="screen">
+  <div class="title-card">
+    <div class="kicker">씨름 · SSIREUM</div>
+    <h1>SANDPIT<br>KINGS</h1>
+    <p class="pitch">Grab the belt. Read the lean. Throw a grown man into the sand.<br>First body part above the knee to touch the sand loses.</p>
+    <div class="menu">
+      <button class="btn" id="btnTour">Village tournament</button>
+      <button class="btn alt" id="btn2p">2 players, one keyboard</button>
+    </div>
+    <div class="howto">
+      <div><b>A / D</b> pull · push</div>
+      <div><b>W</b> 들배지기 lift</div>
+      <div><b>S</b> 안다리 trip</div>
+      <div><b>E</b> 잡채기 twist</div>
+    </div>
+    <p class="rps">Lift beats Twist · Twist beats Trip · Trip beats Lift.<br>Press the winning move while your rival winds up to <b>reverse</b> the throw.</p>
+    <div class="best" id="bestLine"></div>
+  </div>
+</div>
+
+<div id="screen-vs" class="screen hidden">
+  <div class="vs-card">
+    <div class="vs-step" id="vsStep">Bout 1 of 5</div>
+    <div class="vs-name" id="vsName"></div>
+    <div class="vs-title" id="vsTitle"></div>
+    <div class="vs-trait" id="vsTrait"></div>
+    <button class="btn" id="btnFight">Into the sand</button>
+  </div>
+</div>
+
+<div id="screen-end" class="screen hidden">
+  <div class="vs-card">
+    <div class="vs-name" id="endTitle"></div>
+    <div class="vs-trait" id="endText"></div>
+    <div class="menu">
+      <button class="btn" id="btnAgain">Again</button>
+      <button class="btn alt" id="btnMenu">Title</button>
+    </div>
+  </div>
+</div>
+
+<div id="callout" class="callout"></div>
+<div id="flash" class="flash"></div>
+
+<script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
