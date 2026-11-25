@@ -1,0 +1,149 @@
+{
+"A magnet robot runs the tunnel on its own. Tap and it flips between floor and ceiling. Dodge the spikes and saws, grab batteries and reach the end with a heart left.": [
+"자석 로봇이 터널을 저절로 달려요. 누르면 바닥과 천장을 오가요. 가시와 톱니를 피하고 배터리를 모아 하트가 남은 채로 끝까지 가요.",
+"磁石ロボットがトンネルをひとりでに走ります。タップで床と天井を行き来。トゲとノコギリをよけ、バッテリーを集めて、ハートが残ったまま最後まで行こう。",
+"Un robot imantado corre solo por el túnel. Toca y pasa del suelo al techo. Esquiva pinchos y sierras, recoge pilas y llega al final con algún corazón.",
+"磁铁机器人自己在隧道里奔跑。点一下就在地面和天花板之间切换。躲开尖刺和锯片，收集电池，带着剩下的心跑到终点。",
+"Un robot aimanté file tout seul dans le tunnel. Touchez : il passe du sol au plafond. Évitez pointes et scies, ramassez les piles et atteignez la sortie avec un cœur."
+],
+"All 30 stages": [
+"전체 30 스테이지",
+"全30ステージ",
+"Las 30 etapas",
+"全部 30 关",
+"Les 30 niveaux"
+],
+"Back": [
+"뒤로",
+"戻る",
+"Atrás",
+"返回",
+"Retour"
+],
+"Batteries {0}": [
+"배터리 {0}",
+"バッテリー {0}",
+"Pilas {0}",
+"电池 {0}",
+"Piles {0}"
+],
+"Choose a stage": [
+"스테이지를 골라요",
+"ステージを選ぶ",
+"Elige una etapa",
+"选择关卡",
+"Choisissez un niveau"
+],
+"Next stage": [
+"다음 스테이지",
+"次のステージ",
+"Siguiente etapa",
+"下一关",
+"Niveau suivant"
+],
+"Out of hearts": [
+"하트를 다 잃었어요",
+"ハートがなくなった",
+"Sin corazones",
+"心用完了",
+"Plus de cœurs"
+],
+"Paused": [
+"일시 정지",
+"一時停止",
+"En pausa",
+"已暂停",
+"Pause"
+],
+"Play stage {0}": [
+"{0} 스테이지 시작",
+"ステージ{0}を遊ぶ",
+"Jugar etapa {0}",
+"开始第 {0} 关",
+"Jouer le niveau {0}"
+],
+"Restart": [
+"처음부터",
+"やり直す",
+"Reiniciar",
+"重新开始",
+"Recommencer"
+],
+"Resume": [
+"계속하기",
+"再開",
+"Continuar",
+"继续",
+"Reprendre"
+],
+"Retry": [
+"다시 도전",
+"リトライ",
+"Reintentar",
+"重试",
+"Réessayer"
+],
+"Stage": [
+"스테이지",
+"ステージ",
+"Etapa",
+"关卡",
+"Niveau"
+],
+"Stage list": [
+"스테이지 목록",
+"ステージ一覧",
+"Lista de etapas",
+"关卡列表",
+"Liste des niveaux"
+],
+"Stage {0}": [
+"스테이지 {0}",
+"ステージ{0}",
+"Etapa {0}",
+"第 {0} 关",
+"Niveau {0}"
+],
+"Tap to flip upside down!": [
+"눌러서 위아래를 뒤집어요!",
+"タップして上下をひっくり返そう！",
+"¡Toca para dar la vuelta!",
+"点击翻转上下！",
+"Touchez pour passer la tête en bas !"
+],
+"Tap to start": [
+"탭해서 시작",
+"タップでスタート",
+"Toca para empezar",
+"点击开始",
+"Touchez pour commencer"
+],
+"Through the tunnel!": [
+"터널 통과!",
+"トンネル突破！",
+"¡Túnel superado!",
+"穿过隧道！",
+"Tunnel traversé !"
+],
+"Upside Dash": [
+"거꾸로 대시",
+"さかさまダッシュ",
+"Carrera del revés",
+"倒立冲刺",
+"Course à l'envers"
+],
+"You cleared all 30 stages!": [
+"30개 스테이지를 모두 클리어했어요!",
+"全30ステージをクリアしました！",
+"¡Superaste las 30 etapas!",
+"你通关了全部 30 关！",
+"Vous avez réussi les 30 niveaux !"
+],
+"{0} batteries · {1} bumps": [
+"배터리 {0}개 · 부딪힘 {1}번",
+"バッテリー{0}個・衝突{1}回",
+"{0} pilas · {1} choques",
+"电池 {0} 个 · 碰撞 {1} 次",
+"{0} piles · {1} chocs"
+]
+}
