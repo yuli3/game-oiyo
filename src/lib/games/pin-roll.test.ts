@@ -44,16 +44,28 @@ describe("pin-roll", () => {
     for (const st of PIN_STAGES) expect(st.par).toBeGreaterThan(st.need);
   }, T);
 
-  it("lets the careful bowler take three stars on every lane", () => {
-    for (const st of PIN_STAGES) expect(starsFor(pilot(st))).toBe(3);
-  }, T);
+  // Split into groups of lanes so each test stays well inside the time limit on a busy CI runner.
+  for (let from = 0; from < STAGE_COUNT; from += 5) {
+    it(`lets the careful bowler take three stars on lanes ${from + 1}–${from + 5}`, () => {
+      for (const st of PIN_STAGES.slice(from, from + 5)) expect(starsFor(pilot(st))).toBe(3);
+    }, T);
+  }
 
-  // one seed per test, to keep each inside the time limit: at least 27 of the 30 lanes each (108 of 120 in all)
+  // Each human-like seed is played in groups of five lanes; the per-seed test then checks the same bar as
+  // before: at least 27 of the 30 lanes (108 of 120 in all).
+  const humanWins = new Map<number, number[]>();
   for (const o of HUMANS) {
+    for (let from = 0; from < STAGE_COUNT; from += 5) {
+      it(`plays shakier human-like seed ${o.seed} on lanes ${from + 1}–${from + 5}`, () => {
+        let wins = 0;
+        for (const st of PIN_STAGES.slice(from, from + 5)) if (pilot(st, o).won) wins++;
+        humanWins.set(o.seed as number, [...(humanWins.get(o.seed as number) ?? []), wins]);
+      }, T);
+    }
     it(`lets a shakier human-like bowler (seed ${o.seed}) clear almost every lane`, () => {
-      let wins = 0;
-      for (const st of PIN_STAGES) if (pilot(st, o).won) wins++;
-      expect(wins).toBeGreaterThanOrEqual(27);
+      const parts = humanWins.get(o.seed as number) ?? [];
+      expect(parts).toHaveLength(6);
+      expect(parts.reduce((a, b) => a + b, 0)).toBeGreaterThanOrEqual(27);
     }, T);
   }
 

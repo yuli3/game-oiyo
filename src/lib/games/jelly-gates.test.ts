@@ -56,10 +56,21 @@ describe("jelly-gates", () => {
     }
   }, T);
 
+  // Split by seed and by stretches of trays so each test stays well inside the time limit on a busy CI runner;
+  // the last test checks the same total as before: at least 104 of the 120 runs.
+  const humanWins: number[] = [];
+  for (const o of HUMANS) {
+    for (const [from, to] of [[0, 12], [12, 18], [18, 22], [22, 26], [26, 30]]) {
+      it(`plays human-like seed ${o.seed} on trays ${from + 1}–${to}`, () => {
+        let wins = 0;
+        for (const st of JELLY_STAGES.slice(from, to)) if (pilot(st, o).won) wins++;
+        humanWins.push(wins);
+      }, T);
+    }
+  }
   it("lets human-like players who slip more often clear almost every tray", () => {
-    let wins = 0;
-    for (const st of JELLY_STAGES) for (const o of HUMANS) if (pilot(st, o).won) wins++;
-    expect(wins).toBeGreaterThanOrEqual(104);
+    expect(humanWins).toHaveLength(HUMANS.length * 5);
+    expect(humanWins.reduce((a, b) => a + b, 0)).toBeGreaterThanOrEqual(104);
   }, T);
 
   it("rarely clears a tray flicking at random", () => {
