@@ -159,6 +159,9 @@ BUILDS = {
     "garden-pipes-unity": ("garden-pipes", "GardenPipes/Runtime/GardenPipesPlayer.cs", T, "state, starsWon"),
     "gumball-volley-unity": ("gumball-volley", "GumballVolley/Runtime/GumballVolleyPlayer.cs", T, "state, starsWon"),
     "boing-up-unity": ("boing-up", "BoingUp/Runtime/BoingUpPlayer.cs", T, "state, starsWon"),
+    "snack-swing-unity": ("snack-swing", "SnackSwing/Runtime/SnackSwingPlayer.cs", T, "state, starsWon"),
+    "sun-moon-unity": ("sun-moon", "SunMoon/Runtime/SunMoonPlayer.cs", T, "state, starsWon"),
+    "carton-flip-unity": ("carton-flip", "CartonFlip/Runtime/CartonFlipPlayer.cs", T, "state, starsWon"),
 }
 
 MARK = "OiyoResult."

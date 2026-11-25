@@ -92,6 +92,9 @@ import * as pinGame from "../../src/lib/games/pin-roll";
 import * as pipesGame from "../../src/lib/games/garden-pipes";
 import * as volleyGame from "../../src/lib/games/gumball-volley";
 import * as boingGame from "../../src/lib/games/boing-up";
+import * as snackGame from "../../src/lib/games/snack-swing";
+import * as sunMoonGame from "../../src/lib/games/sun-moon";
+import * as cartonGame from "../../src/lib/games/carton-flip";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const n = (v: number) => {
@@ -774,4 +777,24 @@ function write(slug: string, game: string, body: string): void {
 {
   const rows = boingGame.BOING_STAGES.map((st) => `        new Level { leaves = ${arr(st.leaves.flatMap((l) => [l.x, l.h, l.kind, l.amp, l.rate]))}, berries = ${arr(st.berries.flatMap((b) => [b.x, b.h]))}, path = ${iarr(st.path)}, top = ${n(st.top)}, par = ${st.par} },`);
   write("boing-up", "BoingUp", `    public struct Level { public float[] leaves, berries; public int[] path; public float top; public int par; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Snack Swing: the cookie's start, ropes as (peg x, peg y, length), the mouth, sparkles and thorns as (x, y), and the
+// planned snips as (time, rope)
+{
+  const rows = snackGame.SNACK_STAGES.map((st) => `        new Level { start = ${arr(st.start)}, ropes = ${arr(st.ropes.flatMap((r) => [r.ax, r.ay, r.len]))}, mouth = ${arr(st.mouth)}, sparkles = ${arr(st.sparkles.flat())}, thorns = ${arr(st.thorns.flat())}, plan = ${arr(st.plan.flatMap((p) => [p.t, p.rope]))} },`);
+  write("snack-swing", "SnackSwing", `    public struct Level { public float[] start, ropes, mouth, sparkles, thorns, plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Sun & Moon: the grid size, the answer (1 sun, 2 moon), the squares shown, clues as (square, 0 right / 1 below,
+// 1 same / 0 different), the answer's taps in order, par and the tap limit
+{
+  const rows = sunMoonGame.SUNMOON_STAGES.map((st) => `        new Level { n = ${st.n}, answer = ${iarr(st.answer)}, given = ${iarr(st.given)}, clues = ${iarr(st.clues.flatMap((c) => [c.a, c.dir, c.same ? 1 : 0]))}, plan = ${iarr(sunMoonGame.planTaps(st))}, par = ${st.par}, limit = ${st.limit} },`);
+  write("sun-moon", "SunMoon", `    public struct Level { public int n; public int[] answer, given, clues, plan; public int par, limit; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
+}
+
+// Carton Flip: shelves as (left, right, top), the spin (radians per second) and a flick strength that lands on each
+{
+  const rows = cartonGame.CARTON_STAGES.map((st) => `        new Level { shelves = ${arr(st.shelves.flatMap((s) => [s.x0, s.x1, s.y]))}, spin = ${n(st.spin)}, plan = ${arr(st.plan)} },`);
+  write("carton-flip", "CartonFlip", `    public struct Level { public float[] shelves; public float spin; public float[] plan; }\n    public static readonly Level[] All =\n    {\n${rows.join("\n")}\n    };\n`);
 }
